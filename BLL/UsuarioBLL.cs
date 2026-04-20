@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using BE;
 using DAL;
 using SERVICIOS;
@@ -19,8 +20,6 @@ namespace BLL
 
         public Usuario Login(string username, string passwordRaw)
         {
-
-
             Usuario usuarioHash = usuarioDAL.ObtenerPorUsername(username);
             if (usuarioHash == null)
             {
@@ -28,6 +27,7 @@ namespace BLL
             }
 
             bool esValido = passwordHasher.VerifyPassword(passwordRaw, usuarioHash.PasswordHash);
+
             if (esValido)
             {
                 return usuarioHash;
@@ -46,7 +46,7 @@ namespace BLL
             Usuario existente = usuarioDAL.ObtenerPorUsername(username);
             if (existente != null)
             {
-                throw new Exception("El usuario ya existe.");
+                throw new Exception("El nombre de usuario ya existe. Por favor elegí otro.");
             }
 
             string hash = passwordHasher.HashPassword(passwordRaw);
@@ -57,6 +57,39 @@ namespace BLL
             };
 
             return usuarioDAL.Insertar(nuevoUser);
+        }
+
+        public List<Usuario> ObtenerTodos()
+        {
+            return usuarioDAL.ObtenerTodos();
+        }
+
+        public bool Actualizar(int id, string nuevoUsername)
+        {
+            if (string.IsNullOrWhiteSpace(nuevoUsername))
+            {
+                throw new Exception("El nombre de usuario no puede estar vacío.");
+            }
+
+            // Verificar unicidad: si existe otro usuario con ese username, rechazar
+            Usuario existente = usuarioDAL.ObtenerPorUsername(nuevoUsername);
+            if (existente != null && existente.Id != id)
+            {
+                throw new Exception("El nombre de usuario ya existe. Por favor elegí otro.");
+            }
+
+            Usuario usuarioActualizado = new Usuario
+            {
+                Id = id,
+                Username = nuevoUsername
+            };
+
+            return usuarioDAL.Actualizar(usuarioActualizado);
+        }
+
+        public bool Eliminar(int id)
+        {
+            return usuarioDAL.Eliminar(id);
         }
     }
 }

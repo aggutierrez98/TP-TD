@@ -1,6 +1,6 @@
+using ABSTRACCIONES;
 using System;
 using System.Security.Cryptography;
-using ABSTRACCIONES;
 
 namespace SERVICIOS
 {
@@ -21,7 +21,11 @@ namespace SERVICIOS
 
             // Combinamos el salt y el hash en un solo array de bytes (queda como [salt,hash])
             byte[] hashBytes = new byte[SaltSize + HashSize];
+
+            // Copiamos el salt al inicio del array de bytes
             Array.Copy(salt, 0, hashBytes, 0, SaltSize);
+
+            // Copiamos el hash a continuación del salt en el array de bytes
             Array.Copy(hash, 0, hashBytes, SaltSize, HashSize);
 
             return Convert.ToBase64String(hashBytes);
@@ -44,20 +48,9 @@ namespace SERVICIOS
             Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, storedHashSalt, Iterations);
             byte[] testHash = pbkdf2.GetBytes(HashSize);
 
-            // Comparamos hash origina de la BD contra el hash generado a partir del password ingresado
-            bool result = SlowEquals(originalStoredHash, testHash);
-            return result;
+            // Comparamos el hash generado con el hash original guardado en BD
+            return (originalStoredHash.ToString() == testHash.ToString());
         }
 
-        // Compara dos arrays de bytes en tiempo constante para evitar ataques de timing
-        private bool SlowEquals(byte[] a, byte[] b)
-        {
-            uint diff = (uint)a.Length ^ (uint)b.Length;
-            for (int i = 0; i < a.Length && i < b.Length; i++)
-            {
-                diff |= (uint)(a[i] ^ b[i]);
-            }
-            return diff == 0;
-        }
     }
 }

@@ -1,6 +1,4 @@
 using BE;
-using DAL.Mappers;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -9,11 +7,18 @@ namespace DAL
 {
     public class UsuarioDAL
     {
-        private UsuarioMapper mapper;
-
         public UsuarioDAL()
         {
-            mapper = new UsuarioMapper();
+        }
+
+        private Usuario Map(DataRow row)
+        {
+            return new Usuario
+            {
+                Id = (int)row["Id"],
+                Username = row["Username"].ToString(),
+                PasswordHash = row["PasswordHash"].ToString()
+            };
         }
 
         public BE.Usuario ObtenerPorUsername(string username)
@@ -25,14 +30,13 @@ namespace DAL
             };
 
             Access access = new Access();
-
             access.Open();
             DataTable dt = access.Read(query, parametros);
             access.Close();
 
             if (dt.Rows.Count > 0)
             {
-                return mapper.Map(dt.Rows[0]);
+                return Map(dt.Rows[0]);
             }
 
             return null;
@@ -48,12 +52,61 @@ namespace DAL
             };
 
             Access access = new Access();
-
             access.Open();
-            int afactadas = access.Write(query, parametros);
+            int afectadas = access.Write(query, parametros);
             access.Close();
 
-            return afactadas > 0;
+            return afectadas > 0;
+        }
+
+        public List<BE.Usuario> ObtenerTodos()
+        {
+            string query = "SELECT Id, Username, PasswordHash FROM Usuarios ORDER BY Username";
+
+            Access access = new Access();
+            access.Open();
+            DataTable dt = access.Read(query);
+            access.Close();
+
+            List<BE.Usuario> lista = new List<BE.Usuario>();
+            foreach (DataRow row in dt.Rows)
+            {
+                lista.Add(Map(row));
+            }
+            return lista;
+        }
+
+        public bool Actualizar(Usuario usuario)
+        {
+            string query = "UPDATE Usuarios SET Username = @Username WHERE Id = @Id";
+            List<SqlParameter> parametros = new List<SqlParameter>
+            {
+                new SqlParameter("@Username", SqlDbType.VarChar) { Value = usuario.Username },
+                new SqlParameter("@Id", SqlDbType.Int) { Value = usuario.Id }
+            };
+
+            Access access = new Access();
+            access.Open();
+            int afectadas = access.Write(query, parametros);
+            access.Close();
+
+            return afectadas > 0;
+        }
+
+        public bool Eliminar(int id)
+        {
+            string query = "DELETE FROM Usuarios WHERE Id = @Id";
+            List<SqlParameter> parametros = new List<SqlParameter>
+            {
+                new SqlParameter("@Id", SqlDbType.Int) { Value = id }
+            };
+
+            Access access = new Access();
+            access.Open();
+            int afectadas = access.Write(query, parametros);
+            access.Close();
+
+            return afectadas > 0;
         }
     }
 }

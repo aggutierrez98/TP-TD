@@ -3,14 +3,14 @@ using System.Drawing;
 using System.Windows.Forms;
 using BE;
 using BLL;
+using SERVICIOS;
 
 namespace TpIDS
 {
     public partial class FormLogin : Form
     {
         private bool showPassword = false;
-        private UsuarioBLL gestorJugador = new UsuarioBLL();
-        private Usuario usuario;
+        private UsuarioBLL gestorUsuario = new UsuarioBLL();
 
         public FormLogin()
         {
@@ -28,7 +28,7 @@ namespace TpIDS
 
             try
             {
-                usuario = gestorJugador.Login(textBoxNickname.Text, textBoxPassword.Text);
+                Usuario usuario = gestorUsuario.Login(textBoxNickname.Text, textBoxPassword.Text);
 
                 if (usuario == null)
                 {
@@ -38,9 +38,17 @@ namespace TpIDS
 
                 textBoxNickname.Clear();
                 textBoxPassword.Clear();
-                
-                MessageBox.Show($"Bienvenido, {usuario.Username}!", "Éxito");
-                // new FormMenu(usuario).ShowDialog(); // Uncomment when Menu is ready
+
+                // Navegar al formulario de gestión de usuarios
+                FormGestionUsuarios formGestion = new FormGestionUsuarios();
+                formGestion.Show();
+                this.Hide();
+
+                formGestion.FormClosed += (s, args) =>
+                {
+                    Sesion.GetInstance().CerrarSesion();
+                    this.Close();
+                };
             }
             catch (Exception ex)
             {
