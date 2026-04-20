@@ -9,11 +9,18 @@ namespace DAL
 {
     public class UsuarioDAL
     {
-        private UsuarioMapper mapper;
-
         public UsuarioDAL()
         {
-            mapper = new UsuarioMapper();
+        }
+
+        private Usuario Map(DataRow row)
+        {
+            return new Usuario
+            {
+                Id = (int)row["Id"],
+                Username = row["Username"].ToString(),
+                PasswordHash = row["PasswordHash"].ToString()
+            };
         }
 
         public BE.Usuario ObtenerPorUsername(string username)
@@ -32,7 +39,7 @@ namespace DAL
 
             if (dt.Rows.Count > 0)
             {
-                return mapper.Map(dt.Rows[0]);
+                return Map(dt.Rows[0]);
             }
 
             return null;
@@ -48,6 +55,12 @@ namespace DAL
             };
 
             Access access = new Access();
+            access.Open();
+            int afectadas = access.Write(query, parametros);
+            access.Close();
+
+            return afectadas > 0;
+        }
 
             access.Open();
             int afactadas = access.Write(query, parametros);
