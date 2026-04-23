@@ -29,6 +29,7 @@ namespace TpIDS
             try
             {
                 Usuario usuario = gestorUsuario.Login(textBoxNickname.Text, textBoxPassword.Text);
+                Sesion.GetInstance().IniciarSesion(usuario);
 
                 if (usuario == null)
                 {

@@ -56,9 +56,9 @@ namespace TpIDS
             this.label2.AutoSize = true;
             this.label2.Location = new System.Drawing.Point(35, 165);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(108, 13);
+            this.label2.Size = new System.Drawing.Size(149, 13);
             this.label2.TabIndex = 5;
-            this.label2.Text = "Ingrese su nickname:";
+            this.label2.Text = "Ingrese su nombre de usuario:";
             // 
             // label3
             // 
@@ -97,7 +97,6 @@ namespace TpIDS
             this.pictureBoxPassword.TabIndex = 10;
             this.pictureBoxPassword.TabStop = false;
             this.pictureBoxPassword.Click += new System.EventHandler(this.pictureBoxPassword_Click);
-
             // 
             // FormLogin
             // 
@@ -118,6 +117,7 @@ namespace TpIDS
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxPassword)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private System.Windows.Forms.Button buttonIniciarSesion;

@@ -7,10 +7,10 @@ namespace DAL
     {
         internal class Access
         {
-            public const string SQLSERVER_DATA_SOURCE = ".\\SQLEXPRESS";
-            //  Para correr en la UAI localmente
-            //  public const string SQLSERVER_DATA_SOURCE = ".";
-            public const string DATABASE_NAME = "TpCatedraIDS";
+        //public const string SQLSERVER_DATA_SOURCE = ".\\SQLEXPRESS";
+        //  Para correr en la UAI localmente
+        public const string SQLSERVER_DATA_SOURCE = ".";
+        public const string DATABASE_NAME = "TpCatedraIDS";
 
             private SqlConnection conection;
             private SqlTransaction transaction;
