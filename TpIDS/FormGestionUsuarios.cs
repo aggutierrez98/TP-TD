@@ -10,8 +10,6 @@ namespace TpIDS
     public partial class FormGestionUsuarios : Form
     {
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
-
-        /// <summary>Id del usuario actualmente seleccionado en el DataGridView. -1 si ninguno.</summary>
         private int _idSeleccionado = -1;
 
         public FormGestionUsuarios()
@@ -19,43 +17,40 @@ namespace TpIDS
             InitializeComponent();
         }
 
-        // ─── Carga inicial ───────────────────────────────────────────────────────
-
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            // Mostrar quién está logueado en el título
             Usuario sesion = Sesion.GetInstance().GetUsuarioActualUsuario();
             if (sesion != null)
             {
-                labelSesionActual.Text = $"Sesión activa: {sesion.Username}";
+                lblSesionActual.Text = $"Sesion activa: {sesion.Username}";
             }
 
             CargarGrilla();
         }
-
-        // ─── Helpers ─────────────────────────────────────────────────────────────
 
         private void CargarGrilla()
         {
             try
             {
                 List<Usuario> usuarios = usuarioBLL.ObtenerTodos();
-                dataGridViewUsuarios.DataSource = null;
-                dataGridViewUsuarios.DataSource = usuarios;
+                dgvUsuarios.DataSource = null;
+                dgvUsuarios.DataSource = usuarios;
 
-                // Mostrar solo Id y Username; ocultar PasswordHash
-                if (dataGridViewUsuarios.Columns.Contains("PasswordHash"))
-                    dataGridViewUsuarios.Columns["PasswordHash"].Visible = false;
-
-                if (dataGridViewUsuarios.Columns.Contains("Id"))
+                if (dgvUsuarios.Columns.Contains("PasswordHash"))
                 {
-                    dataGridViewUsuarios.Columns["Id"].HeaderText = "ID";
-                    dataGridViewUsuarios.Columns["Id"].Width = 50;
+                    dgvUsuarios.Columns["PasswordHash"].Visible = false;
                 }
-                if (dataGridViewUsuarios.Columns.Contains("Username"))
+
+                if (dgvUsuarios.Columns.Contains("Id"))
                 {
-                    dataGridViewUsuarios.Columns["Username"].HeaderText = "Nombre de usuario";
-                    dataGridViewUsuarios.Columns["Username"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    dgvUsuarios.Columns["Id"].HeaderText = "ID";
+                    dgvUsuarios.Columns["Id"].Width = 50;
+                }
+
+                if (dgvUsuarios.Columns.Contains("Username"))
+                {
+                    dgvUsuarios.Columns["Username"].HeaderText = "Nombre de usuario";
+                    dgvUsuarios.Columns["Username"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
             catch (Exception ex)
@@ -67,39 +62,34 @@ namespace TpIDS
         private void LimpiarSeleccion()
         {
             _idSeleccionado = -1;
-            textBoxUsername.Clear();
-            textBoxPassword.Clear();
-            dataGridViewUsuarios.ClearSelection();
+            txtbNombreUsuario.Clear();
+            txtbPasswordUsuario.Clear();
+            dgvUsuarios.ClearSelection();
         }
 
-        // ─── Selección en grilla ─────────────────────────────────────────────────
-
-        private void dataGridViewUsuarios_SelectionChanged(object sender, EventArgs e)
+        private void dgvUsuarios_SelectionChanged(object sender, EventArgs e)
         {
-            if (dataGridViewUsuarios.SelectedRows.Count == 0)
+            if (dgvUsuarios.SelectedRows.Count == 0)
             {
                 _idSeleccionado = -1;
                 return;
             }
 
-            DataGridViewRow fila = dataGridViewUsuarios.SelectedRows[0];
+            DataGridViewRow fila = dgvUsuarios.SelectedRows[0];
             _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
-            textBoxUsername.Text = fila.Cells["Username"].Value?.ToString();
-            // Al seleccionar, limpiamos la contraseña (solo aplica para Agregar)
-            textBoxPassword.Clear();
+            txtbNombreUsuario.Text = fila.Cells["Username"].Value?.ToString();
+            txtbPasswordUsuario.Clear();
         }
 
-        // ─── Botón Agregar ────────────────────────────────────────────────────────
-
-        private void buttonAgregar_Click(object sender, EventArgs e)
+        private void btnAgregarUsuario_Click(object sender, EventArgs e)
         {
-            string username = textBoxUsername.Text.Trim();
-            string password = textBoxPassword.Text.Trim();
+            string username = txtbNombreUsuario.Text.Trim();
+            string password = txtbPasswordUsuario.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
                 MessageBox.Show(
-                    "Para agregar un usuario debe completar el Nombre de usuario y la Contraseña.",
+                    "Para agregar un usuario debe completar el Nombre de usuario y la Contrasena.",
                     "Datos incompletos",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
@@ -111,7 +101,7 @@ namespace TpIDS
                 bool exito = usuarioBLL.Registrar(username, password);
                 if (exito)
                 {
-                    MessageBox.Show($"Usuario '{username}' creado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Usuario '{username}' creado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
@@ -122,26 +112,24 @@ namespace TpIDS
             }
         }
 
-        // ─── Botón Editar ─────────────────────────────────────────────────────────
-
-        private void buttonEditar_Click(object sender, EventArgs e)
+        private void btnEditarUsuario_Click(object sender, EventArgs e)
         {
             if (_idSeleccionado == -1)
             {
                 MessageBox.Show(
-                    "No hay ningún usuario seleccionado. Seleccioná uno de la lista para editarlo.",
-                    "Sin selección",
+                    "No hay ningun usuario seleccionado. Selecciona uno de la lista para editarlo.",
+                    "Sin seleccion",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
 
-            string nuevoUsername = textBoxUsername.Text.Trim();
+            string nuevoUsername = txtbNombreUsuario.Text.Trim();
 
             if (string.IsNullOrWhiteSpace(nuevoUsername))
             {
                 MessageBox.Show(
-                    "El nombre de usuario no puede estar vacío.",
+                    "El nombre de usuario no puede estar vacio.",
                     "Datos incompletos",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
@@ -153,15 +141,14 @@ namespace TpIDS
                 bool exito = usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername);
                 if (exito)
                 {
-                    // Si el usuario editado es el que está en sesión, actualizamos la sesión también
                     Usuario sesionActual = Sesion.GetInstance().GetUsuarioActualUsuario();
                     if (sesionActual != null && sesionActual.Id == _idSeleccionado)
                     {
                         sesionActual.Username = nuevoUsername;
-                        labelSesionActual.Text = $"Sesión activa: {nuevoUsername}";
+                        lblSesionActual.Text = $"Sesion activa: {nuevoUsername}";
                     }
 
-                    MessageBox.Show($"Usuario actualizado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Usuario actualizado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
@@ -172,49 +159,36 @@ namespace TpIDS
             }
         }
 
-        // ─── Botón Eliminar ───────────────────────────────────────────────────────
-
-        private void buttonEliminar_Click(object sender, EventArgs e)
+        private void btnEliminarUsuario_Click(object sender, EventArgs e)
         {
             if (_idSeleccionado == -1)
             {
                 MessageBox.Show(
-                    "No hay ningún usuario seleccionado. Seleccioná uno de la lista para eliminarlo.",
-                    "Sin selección",
+                    "No hay ningun usuario seleccionado. Selecciona uno de la lista para eliminarlo.",
+                    "Sin seleccion",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
 
-            // Protección: no se puede eliminar al usuario en sesión
-            Usuario sesionActual = Sesion.GetInstance().GetUsuarioActualUsuario();
-            if (sesionActual != null && sesionActual.Id == _idSeleccionado)
-            {
-                MessageBox.Show(
-                    "No podés eliminar tu propio usuario mientras estás con la sesión activa.",
-                    "Operación no permitida",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Stop);
-                return;
-            }
-
-            // Confirmación de seguridad
-            string usernameSeleccionado = dataGridViewUsuarios.SelectedRows[0].Cells["Username"].Value?.ToString();
+            string usernameSeleccionado = dgvUsuarios.SelectedRows[0].Cells["Username"].Value?.ToString();
             DialogResult confirmacion = MessageBox.Show(
-                $"¿Estás seguro de que querés eliminar al usuario '{usernameSeleccionado}'?\n\nEsta acción no se puede deshacer.",
-                "Confirmar eliminación",
+                $"Estas seguro de que queres eliminar al usuario '{usernameSeleccionado}'?\n\nEsta accion no se puede deshacer.",
+                "Confirmar eliminacion",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
 
             if (confirmacion != DialogResult.Yes)
+            {
                 return;
+            }
 
             try
             {
                 bool exito = usuarioBLL.Eliminar(_idSeleccionado);
                 if (exito)
                 {
-                    MessageBox.Show($"Usuario '{usernameSeleccionado}' eliminado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"Usuario '{usernameSeleccionado}' eliminado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
                 }

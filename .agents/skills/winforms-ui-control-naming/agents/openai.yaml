@@ -1,0 +1,4 @@
+interface:
+  display_name: "WinForms UI Control Naming"
+  short_description: "Keep WinForms control names consistent"
+  default_prompt: "Use $winforms-ui-control-naming to apply the repository naming convention to WinForms controls and handlers."

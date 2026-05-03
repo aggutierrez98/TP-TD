@@ -10,74 +10,77 @@ namespace TpIDS
             {
                 components.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
         private void InitializeComponent()
         {
-            this.labelTitulo = new System.Windows.Forms.Label();
-            this.labelSesionActual = new System.Windows.Forms.Label();
-            this.dataGridViewUsuarios = new System.Windows.Forms.DataGridView();
+            this.lblTituloGestionUsuarios = new System.Windows.Forms.Label();
+            this.lblSesionActual = new System.Windows.Forms.Label();
+            this.dgvUsuarios = new System.Windows.Forms.DataGridView();
             this.groupBoxGestion = new System.Windows.Forms.GroupBox();
-            this.labelPassword = new System.Windows.Forms.Label();
-            this.textBoxPassword = new System.Windows.Forms.TextBox();
-            this.labelUsername = new System.Windows.Forms.Label();
-            this.textBoxUsername = new System.Windows.Forms.TextBox();
-            this.buttonAgregar = new System.Windows.Forms.Button();
-            this.buttonEditar = new System.Windows.Forms.Button();
-            this.buttonEliminar = new System.Windows.Forms.Button();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewUsuarios)).BeginInit();
+            this.lblPasswordUsuario = new System.Windows.Forms.Label();
+            this.txtbPasswordUsuario = new System.Windows.Forms.TextBox();
+            this.lblNombreUsuario = new System.Windows.Forms.Label();
+            this.txtbNombreUsuario = new System.Windows.Forms.TextBox();
+            this.btnAgregarUsuario = new System.Windows.Forms.Button();
+            this.btnEditarUsuario = new System.Windows.Forms.Button();
+            this.btnEliminarUsuario = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
             this.groupBoxGestion.SuspendLayout();
             this.SuspendLayout();
             // 
-            // labelTitulo
+            // lblTituloGestionUsuarios
             // 
-            this.labelTitulo.AutoSize = true;
-            this.labelTitulo.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
-            this.labelTitulo.Location = new System.Drawing.Point(12, 15);
-            this.labelTitulo.Name = "labelTitulo";
-            this.labelTitulo.Size = new System.Drawing.Size(220, 25);
-            this.labelTitulo.TabIndex = 0;
-            this.labelTitulo.Text = "Gestión de Usuarios";
+            this.lblTituloGestionUsuarios.AutoSize = true;
+            this.lblTituloGestionUsuarios.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblTituloGestionUsuarios.Location = new System.Drawing.Point(12, 15);
+            this.lblTituloGestionUsuarios.Name = "lblTituloGestionUsuarios";
+            this.lblTituloGestionUsuarios.Size = new System.Drawing.Size(216, 25);
+            this.lblTituloGestionUsuarios.TabIndex = 0;
+            this.lblTituloGestionUsuarios.Text = "Gestion de Usuarios";
             // 
-            // labelSesionActual
+            // lblSesionActual
             // 
-            this.labelSesionActual.AutoSize = true;
-            this.labelSesionActual.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-            this.labelSesionActual.ForeColor = System.Drawing.Color.DimGray;
-            this.labelSesionActual.Location = new System.Drawing.Point(14, 45);
-            this.labelSesionActual.Name = "labelSesionActual";
-            this.labelSesionActual.Size = new System.Drawing.Size(100, 15);
-            this.labelSesionActual.TabIndex = 1;
-            this.labelSesionActual.Text = "Sesión activa: —";
+            this.lblSesionActual.AutoSize = true;
+            this.lblSesionActual.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+            this.lblSesionActual.ForeColor = System.Drawing.Color.DimGray;
+            this.lblSesionActual.Location = new System.Drawing.Point(14, 45);
+            this.lblSesionActual.Name = "lblSesionActual";
+            this.lblSesionActual.Size = new System.Drawing.Size(93, 15);
+            this.lblSesionActual.TabIndex = 1;
+            this.lblSesionActual.Text = "Sesion activa: -";
             // 
-            // dataGridViewUsuarios
+            // dgvUsuarios
             // 
-            this.dataGridViewUsuarios.AllowUserToAddRows = false;
-            this.dataGridViewUsuarios.AllowUserToDeleteRows = false;
-            this.dataGridViewUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
-            this.dataGridViewUsuarios.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dataGridViewUsuarios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewUsuarios.Location = new System.Drawing.Point(15, 70);
-            this.dataGridViewUsuarios.MultiSelect = false;
-            this.dataGridViewUsuarios.Name = "dataGridViewUsuarios";
-            this.dataGridViewUsuarios.ReadOnly = true;
-            this.dataGridViewUsuarios.RowHeadersVisible = false;
-            this.dataGridViewUsuarios.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridViewUsuarios.Size = new System.Drawing.Size(470, 230);
-            this.dataGridViewUsuarios.TabIndex = 2;
-            this.dataGridViewUsuarios.SelectionChanged += new System.EventHandler(this.dataGridViewUsuarios_SelectionChanged);
+            this.dgvUsuarios.AllowUserToAddRows = false;
+            this.dgvUsuarios.AllowUserToDeleteRows = false;
+            this.dgvUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvUsuarios.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvUsuarios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvUsuarios.Location = new System.Drawing.Point(15, 70);
+            this.dgvUsuarios.MultiSelect = false;
+            this.dgvUsuarios.Name = "dgvUsuarios";
+            this.dgvUsuarios.ReadOnly = true;
+            this.dgvUsuarios.RowHeadersVisible = false;
+            this.dgvUsuarios.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvUsuarios.Size = new System.Drawing.Size(470, 230);
+            this.dgvUsuarios.TabIndex = 2;
+            this.dgvUsuarios.SelectionChanged += new System.EventHandler(this.dgvUsuarios_SelectionChanged);
             // 
             // groupBoxGestion
             // 
-            this.groupBoxGestion.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBoxGestion.Controls.Add(this.labelPassword);
-            this.groupBoxGestion.Controls.Add(this.textBoxPassword);
-            this.groupBoxGestion.Controls.Add(this.labelUsername);
-            this.groupBoxGestion.Controls.Add(this.textBoxUsername);
-            this.groupBoxGestion.Controls.Add(this.buttonAgregar);
-            this.groupBoxGestion.Controls.Add(this.buttonEditar);
-            this.groupBoxGestion.Controls.Add(this.buttonEliminar);
+            this.groupBoxGestion.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxGestion.Controls.Add(this.lblPasswordUsuario);
+            this.groupBoxGestion.Controls.Add(this.txtbPasswordUsuario);
+            this.groupBoxGestion.Controls.Add(this.lblNombreUsuario);
+            this.groupBoxGestion.Controls.Add(this.txtbNombreUsuario);
+            this.groupBoxGestion.Controls.Add(this.btnAgregarUsuario);
+            this.groupBoxGestion.Controls.Add(this.btnEditarUsuario);
+            this.groupBoxGestion.Controls.Add(this.btnEliminarUsuario);
             this.groupBoxGestion.Location = new System.Drawing.Point(15, 315);
             this.groupBoxGestion.Name = "groupBoxGestion";
             this.groupBoxGestion.Size = new System.Drawing.Size(470, 175);
@@ -85,101 +88,101 @@ namespace TpIDS
             this.groupBoxGestion.TabStop = false;
             this.groupBoxGestion.Text = "Datos del usuario";
             // 
-            // labelUsername
+            // lblPasswordUsuario
             // 
-            this.labelUsername.AutoSize = true;
-            this.labelUsername.Location = new System.Drawing.Point(10, 28);
-            this.labelUsername.Name = "labelUsername";
-            this.labelUsername.Size = new System.Drawing.Size(108, 13);
-            this.labelUsername.TabIndex = 0;
-            this.labelUsername.Text = "Nombre de usuario:";
+            this.lblPasswordUsuario.AutoSize = true;
+            this.lblPasswordUsuario.Location = new System.Drawing.Point(10, 75);
+            this.lblPasswordUsuario.Name = "lblPasswordUsuario";
+            this.lblPasswordUsuario.Size = new System.Drawing.Size(193, 13);
+            this.lblPasswordUsuario.TabIndex = 2;
+            this.lblPasswordUsuario.Text = "Contrasena (solo para agregar usuario):";
             // 
-            // textBoxUsername
+            // txtbPasswordUsuario
             // 
-            this.textBoxUsername.Location = new System.Drawing.Point(10, 45);
-            this.textBoxUsername.Name = "textBoxUsername";
-            this.textBoxUsername.Size = new System.Drawing.Size(440, 20);
-            this.textBoxUsername.TabIndex = 1;
+            this.txtbPasswordUsuario.Location = new System.Drawing.Point(10, 92);
+            this.txtbPasswordUsuario.Name = "txtbPasswordUsuario";
+            this.txtbPasswordUsuario.PasswordChar = '●';
+            this.txtbPasswordUsuario.Size = new System.Drawing.Size(440, 20);
+            this.txtbPasswordUsuario.TabIndex = 3;
             // 
-            // labelPassword
+            // lblNombreUsuario
             // 
-            this.labelPassword.AutoSize = true;
-            this.labelPassword.Location = new System.Drawing.Point(10, 75);
-            this.labelPassword.Name = "labelPassword";
-            this.labelPassword.Size = new System.Drawing.Size(195, 13);
-            this.labelPassword.TabIndex = 2;
-            this.labelPassword.Text = "Contraseña (solo para Agregar usuario):";
+            this.lblNombreUsuario.AutoSize = true;
+            this.lblNombreUsuario.Location = new System.Drawing.Point(10, 28);
+            this.lblNombreUsuario.Name = "lblNombreUsuario";
+            this.lblNombreUsuario.Size = new System.Drawing.Size(108, 13);
+            this.lblNombreUsuario.TabIndex = 0;
+            this.lblNombreUsuario.Text = "Nombre de usuario:";
             // 
-            // textBoxPassword
+            // txtbNombreUsuario
             // 
-            this.textBoxPassword.Location = new System.Drawing.Point(10, 92);
-            this.textBoxPassword.Name = "textBoxPassword";
-            this.textBoxPassword.PasswordChar = '●';
-            this.textBoxPassword.Size = new System.Drawing.Size(440, 20);
-            this.textBoxPassword.TabIndex = 3;
+            this.txtbNombreUsuario.Location = new System.Drawing.Point(10, 45);
+            this.txtbNombreUsuario.Name = "txtbNombreUsuario";
+            this.txtbNombreUsuario.Size = new System.Drawing.Size(440, 20);
+            this.txtbNombreUsuario.TabIndex = 1;
             // 
-            // buttonAgregar
+            // btnAgregarUsuario
             // 
-            this.buttonAgregar.Location = new System.Drawing.Point(10, 130);
-            this.buttonAgregar.Name = "buttonAgregar";
-            this.buttonAgregar.Size = new System.Drawing.Size(135, 30);
-            this.buttonAgregar.TabIndex = 4;
-            this.buttonAgregar.Text = "Agregar usuario";
-            this.buttonAgregar.UseVisualStyleBackColor = true;
-            this.buttonAgregar.Click += new System.EventHandler(this.buttonAgregar_Click);
+            this.btnAgregarUsuario.Location = new System.Drawing.Point(10, 130);
+            this.btnAgregarUsuario.Name = "btnAgregarUsuario";
+            this.btnAgregarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnAgregarUsuario.TabIndex = 4;
+            this.btnAgregarUsuario.Text = "Agregar usuario";
+            this.btnAgregarUsuario.UseVisualStyleBackColor = true;
+            this.btnAgregarUsuario.Click += new System.EventHandler(this.btnAgregarUsuario_Click);
             // 
-            // buttonEditar
+            // btnEditarUsuario
             // 
-            this.buttonEditar.Location = new System.Drawing.Point(157, 130);
-            this.buttonEditar.Name = "buttonEditar";
-            this.buttonEditar.Size = new System.Drawing.Size(135, 30);
-            this.buttonEditar.TabIndex = 5;
-            this.buttonEditar.Text = "Editar usuario";
-            this.buttonEditar.UseVisualStyleBackColor = true;
-            this.buttonEditar.Click += new System.EventHandler(this.buttonEditar_Click);
+            this.btnEditarUsuario.Location = new System.Drawing.Point(157, 130);
+            this.btnEditarUsuario.Name = "btnEditarUsuario";
+            this.btnEditarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnEditarUsuario.TabIndex = 5;
+            this.btnEditarUsuario.Text = "Editar usuario";
+            this.btnEditarUsuario.UseVisualStyleBackColor = true;
+            this.btnEditarUsuario.Click += new System.EventHandler(this.btnEditarUsuario_Click);
             // 
-            // buttonEliminar
+            // btnEliminarUsuario
             // 
-            this.buttonEliminar.Location = new System.Drawing.Point(305, 130);
-            this.buttonEliminar.Name = "buttonEliminar";
-            this.buttonEliminar.Size = new System.Drawing.Size(135, 30);
-            this.buttonEliminar.TabIndex = 6;
-            this.buttonEliminar.Text = "Eliminar usuario";
-            this.buttonEliminar.UseVisualStyleBackColor = true;
-            this.buttonEliminar.Click += new System.EventHandler(this.buttonEliminar_Click);
+            this.btnEliminarUsuario.Location = new System.Drawing.Point(305, 130);
+            this.btnEliminarUsuario.Name = "btnEliminarUsuario";
+            this.btnEliminarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnEliminarUsuario.TabIndex = 6;
+            this.btnEliminarUsuario.Text = "Eliminar usuario";
+            this.btnEliminarUsuario.UseVisualStyleBackColor = true;
+            this.btnEliminarUsuario.Click += new System.EventHandler(this.btnEliminarUsuario_Click);
             // 
             // FormGestionUsuarios
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(500, 510);
-            this.Controls.Add(this.labelTitulo);
-            this.Controls.Add(this.labelSesionActual);
-            this.Controls.Add(this.dataGridViewUsuarios);
+            this.Controls.Add(this.lblTituloGestionUsuarios);
+            this.Controls.Add(this.lblSesionActual);
+            this.Controls.Add(this.dgvUsuarios);
             this.Controls.Add(this.groupBoxGestion);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "FormGestionUsuarios";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Gestión de Usuarios";
+            this.Text = "Gestion de Usuarios";
             this.Load += new System.EventHandler(this.FormGestionUsuarios_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridViewUsuarios)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).EndInit();
             this.groupBoxGestion.ResumeLayout(false);
             this.groupBoxGestion.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
-        private System.Windows.Forms.Label labelTitulo;
-        private System.Windows.Forms.Label labelSesionActual;
-        private System.Windows.Forms.DataGridView dataGridViewUsuarios;
+        private System.Windows.Forms.Label lblTituloGestionUsuarios;
+        private System.Windows.Forms.Label lblSesionActual;
+        private System.Windows.Forms.DataGridView dgvUsuarios;
         private System.Windows.Forms.GroupBox groupBoxGestion;
-        private System.Windows.Forms.Label labelUsername;
-        private System.Windows.Forms.TextBox textBoxUsername;
-        private System.Windows.Forms.Label labelPassword;
-        private System.Windows.Forms.TextBox textBoxPassword;
-        private System.Windows.Forms.Button buttonAgregar;
-        private System.Windows.Forms.Button buttonEditar;
-        private System.Windows.Forms.Button buttonEliminar;
+        private System.Windows.Forms.Label lblPasswordUsuario;
+        private System.Windows.Forms.TextBox txtbPasswordUsuario;
+        private System.Windows.Forms.Label lblNombreUsuario;
+        private System.Windows.Forms.TextBox txtbNombreUsuario;
+        private System.Windows.Forms.Button btnAgregarUsuario;
+        private System.Windows.Forms.Button btnEditarUsuario;
+        private System.Windows.Forms.Button btnEliminarUsuario;
     }
 }

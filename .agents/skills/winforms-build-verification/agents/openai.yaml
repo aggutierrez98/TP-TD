@@ -1,0 +1,4 @@
+interface:
+  display_name: "WinForms Build Verification"
+  short_description: "Compile the WinForms solution before handoff"
+  default_prompt: "Use $winforms-build-verification to verify that TpIDS.sln builds cleanly with MSBuild before handoff."
