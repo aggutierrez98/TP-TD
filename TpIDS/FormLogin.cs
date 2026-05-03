@@ -1,9 +1,11 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 using BE;
 using BLL;
 using SERVICIOS;
+using TpIDS.Properties;
 
 namespace TpIDS
 {
@@ -15,7 +17,7 @@ namespace TpIDS
         public FormLogin()
         {
             InitializeComponent();
-            try { pictureBoxPassword.Image = Image.FromFile(@"Images\show.png"); } catch { }
+            pictureBoxPassword.Image = Resources.image_hide;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -67,13 +69,14 @@ namespace TpIDS
             if (showPassword)
             {
                 textBoxPassword.PasswordChar = '\0';
-                try { pictureBoxPassword.Image = Image.FromFile(@"Images\hide.png"); } catch { }
+                pictureBoxPassword.Image = Resources.image_hide;
             }
             else
             {
                 textBoxPassword.PasswordChar = '●';
-                try { pictureBoxPassword.Image = Image.FromFile(@"Images\show.png"); } catch { }
+                pictureBoxPassword.Image = Resources.image_show;
             }
         }
+
     }
 }
