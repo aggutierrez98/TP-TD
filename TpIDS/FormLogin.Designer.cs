@@ -54,12 +54,21 @@ namespace TpIDS
             // 
             // lblNickname
             // 
+<<<<<<< HEAD
             this.lblNickname.AutoSize = true;
             this.lblNickname.Location = new System.Drawing.Point(35, 165);
             this.lblNickname.Name = "lblNickname";
             this.lblNickname.Size = new System.Drawing.Size(108, 13);
             this.lblNickname.TabIndex = 5;
             this.lblNickname.Text = "Ingrese su nickname:";
+=======
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(35, 165);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(149, 13);
+            this.label2.TabIndex = 5;
+            this.label2.Text = "Ingrese su nombre de usuario:";
+>>>>>>> main
             // 
             // lblPassword
             // 
@@ -91,6 +100,7 @@ namespace TpIDS
             // 
             // pbPassword
             // 
+<<<<<<< HEAD
             this.pbPassword.Location = new System.Drawing.Point(219, 231);
             this.pbPassword.Name = "pbPassword";
             this.pbPassword.Size = new System.Drawing.Size(19, 20);
@@ -98,6 +108,15 @@ namespace TpIDS
             this.pbPassword.TabIndex = 10;
             this.pbPassword.TabStop = false;
             this.pbPassword.Click += new System.EventHandler(this.pbPassword_Click);
+=======
+            this.pictureBoxPassword.Location = new System.Drawing.Point(219, 231);
+            this.pictureBoxPassword.Name = "pictureBoxPassword";
+            this.pictureBoxPassword.Size = new System.Drawing.Size(19, 20);
+            this.pictureBoxPassword.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBoxPassword.TabIndex = 10;
+            this.pictureBoxPassword.TabStop = false;
+            this.pictureBoxPassword.Click += new System.EventHandler(this.pictureBoxPassword_Click);
+>>>>>>> main
             // 
             // FormLogin
             // 
@@ -118,6 +137,7 @@ namespace TpIDS
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private System.Windows.Forms.Button btnIngreso;

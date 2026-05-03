@@ -15,7 +15,14 @@ namespace DAL
 
         public AccesoDatos()
         {
+<<<<<<< HEAD
         }
+=======
+        //public const string SQLSERVER_DATA_SOURCE = ".\\SQLEXPRESS";
+        //  Para correr en la UAI localmente
+        public const string SQLSERVER_DATA_SOURCE = ".";
+        public const string DATABASE_NAME = "TpCatedraIDS";
+>>>>>>> main
 
         public SqlParameter CreateParameter(string name, SqlDbType dbType, object value)
         {
