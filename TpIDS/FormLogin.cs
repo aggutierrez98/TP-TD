@@ -1,6 +1,4 @@
 using System;
-using System.Drawing;
-using System.IO;
 using System.Windows.Forms;
 using BE;
 using BLL;
@@ -12,17 +10,17 @@ namespace TpIDS
     public partial class FormLogin : Form
     {
         private bool showPassword = false;
-        private UsuarioBLL gestorUsuario = new UsuarioBLL();
+        private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
 
         public FormLogin()
         {
             InitializeComponent();
-            pictureBoxPassword.Image = Resources.image_hide;
+            pbPassword.Image = Resources.image_show;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnIngreso_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(textBoxNickname.Text) || string.IsNullOrWhiteSpace(textBoxPassword.Text))
+            if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
             {
                 MessageBox.Show("Debe completar todos los campos", "Error");
                 return;
@@ -30,7 +28,7 @@ namespace TpIDS
 
             try
             {
-                Usuario usuario = gestorUsuario.Login(textBoxNickname.Text, textBoxPassword.Text);
+                Usuario usuario = gestorUsuario.Login(txtbNickname.Text, txtbPassword.Text);
 
                 if (usuario == null)
                 {
@@ -38,18 +36,17 @@ namespace TpIDS
                     return;
                 }
 
-                textBoxNickname.Clear();
-                textBoxPassword.Clear();
+                txtbNickname.Clear();
+                txtbPassword.Clear();
 
-                // Navegar al formulario de gestión de usuarios
                 FormGestionUsuarios formGestion = new FormGestionUsuarios();
                 formGestion.Show();
-                this.Hide();
+                Hide();
 
                 formGestion.FormClosed += (s, args) =>
                 {
                     Sesion.GetInstance().CerrarSesion();
-                    this.Close();
+                    Close();
                 };
             }
             catch (Exception ex)
@@ -58,25 +55,24 @@ namespace TpIDS
             }
         }
 
-        private void buttonRegistro_Click(object sender, EventArgs e)
+        private void btnRegistro_Click(object sender, EventArgs e)
         {
             new FormRegistro().ShowDialog();
         }
 
-        private void pictureBoxPassword_Click(object sender, EventArgs e)
+        private void pbPassword_Click(object sender, EventArgs e)
         {
             showPassword = !showPassword;
             if (showPassword)
             {
-                textBoxPassword.PasswordChar = '\0';
-                pictureBoxPassword.Image = Resources.image_hide;
+                txtbPassword.PasswordChar = '\0';
+                pbPassword.Image = Resources.image_hide;
             }
             else
             {
-                textBoxPassword.PasswordChar = '●';
-                pictureBoxPassword.Image = Resources.image_show;
+                txtbPassword.PasswordChar = '●';
+                pbPassword.Image = Resources.image_show;
             }
         }
-
     }
 }

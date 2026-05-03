@@ -1,24 +1,24 @@
 using System;
-using System.Drawing;
 using System.Windows.Forms;
 using BLL;
+using TpIDS.Properties;
 
 namespace TpIDS
 {
     public partial class FormRegistro : Form
     {
         private bool showPassword = false;
-        private UsuarioBLL gestorJugador = new UsuarioBLL();
+        private readonly UsuarioBLL gestorJugador = new UsuarioBLL();
 
         public FormRegistro()
         {
             InitializeComponent();
-            try { pictureBoxPassword.Image = Image.FromFile(@"Images\show.png"); } catch { }
+            pbPassword.Image = Resources.image_show;
         }
 
-        private void buttonRegistro_Click(object sender, EventArgs e)
+        private void btnRegistro_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(textBoxNickname.Text) || string.IsNullOrWhiteSpace(textBoxPassword.Text))
+            if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
             {
                 MessageBox.Show("Debe completar todos los campos", "Error");
                 return;
@@ -26,11 +26,12 @@ namespace TpIDS
 
             try
             {
-                bool success = gestorJugador.Registrar(textBoxNickname.Text, textBoxPassword.Text);
+                bool success = gestorJugador.Registrar(txtbNickname.Text, txtbPassword.Text);
+
                 if (success)
                 {
-                    MessageBox.Show("Usuario registrado con éxito", "Ahora usa las credenciales para ingresar...");
-                    this.Close();
+                    MessageBox.Show("Usuario registrado con exito", "Ahora usa las credenciales para ingresar...");
+                    Close();
                 }
             }
             catch (Exception ex)
@@ -39,18 +40,18 @@ namespace TpIDS
             }
         }
 
-        private void pictureBoxPassword_Click(object sender, EventArgs e)
+        private void pbPassword_Click(object sender, EventArgs e)
         {
             showPassword = !showPassword;
             if (showPassword)
             {
-                textBoxPassword.PasswordChar = '\0';
-                try { pictureBoxPassword.Image = Image.FromFile(@"Images\hide.png"); } catch { }
+                txtbPassword.PasswordChar = '\0';
+                pbPassword.Image = Resources.image_hide;
             }
             else
             {
-                textBoxPassword.PasswordChar = '●';
-                try { pictureBoxPassword.Image = Image.FromFile(@"Images\show.png"); } catch { }
+                txtbPassword.PasswordChar = '●';
+                pbPassword.Image = Resources.image_show;
             }
         }
     }

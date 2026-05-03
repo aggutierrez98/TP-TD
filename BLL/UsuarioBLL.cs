@@ -89,6 +89,13 @@ namespace BLL
 
         public bool Eliminar(int id)
         {
+            // Protección: no se puede eliminar al usuario en sesión
+            Usuario sesionActual = Sesion.GetInstance().GetUsuarioActualUsuario();
+            if (sesionActual != null && sesionActual.Id == id)
+            {
+                return false;
+            }
+
             return usuarioDAL.Eliminar(id);
         }
     }
