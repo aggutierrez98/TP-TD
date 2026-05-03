@@ -28,18 +28,15 @@ namespace TpIDS
 
             try
             {
-<<<<<<< HEAD
                 Usuario usuario = gestorUsuario.Login(txtbNickname.Text, txtbPassword.Text);
-=======
-                Usuario usuario = gestorUsuario.Login(textBoxNickname.Text, textBoxPassword.Text);
-                Sesion.GetInstance().IniciarSesion(usuario);
->>>>>>> main
 
                 if (usuario == null)
                 {
                     MessageBox.Show("Credenciales incorrectas", "Error");
                     return;
                 }
+
+                Sesion.GetInstance().IniciarSesion(usuario);
 
                 txtbNickname.Clear();
                 txtbPassword.Clear();
