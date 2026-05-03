@@ -1,0 +1,4 @@
+interface:
+  display_name: "TP Delivery Standards"
+  short_description: "Enforce TP constraints and delivery standards"
+  default_prompt: "Use $tp-delivery-standards to apply the TP technical, documentation, and delivery constraints before closing the task."

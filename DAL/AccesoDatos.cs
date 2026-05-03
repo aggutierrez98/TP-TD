@@ -1,157 +1,203 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
 namespace DAL
+{
+    internal sealed class AccesoDatos : IDisposable
     {
-        internal class Access
+        private static readonly string[] ConnectionStringNames = { "TpIDS", "TpIDS-UAI" };
+
+        private SqlConnection connection;
+        private SqlTransaction transaction;
+
+        public AccesoDatos()
         {
-            public const string SQLSERVER_DATA_SOURCE = ".\\SQLEXPRESS";
-            //  Para correr en la UAI localmente
-            //  public const string SQLSERVER_DATA_SOURCE = ".";
-            public const string DATABASE_NAME = "TpCatedraIDS";
+        }
 
-            private SqlConnection conection;
-            private SqlTransaction transaction;
-
-            public void Open()
+        public SqlParameter CreateParameter(string name, SqlDbType dbType, object value)
+        {
+            return new SqlParameter(name, dbType)
             {
-                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-                builder.DataSource = SQLSERVER_DATA_SOURCE;
-                builder.InitialCatalog = DATABASE_NAME;
-                builder.IntegratedSecurity = true;
-                conection = new SqlConnection(builder.ConnectionString);
-                conection.Open();
-            }
+                Value = value ?? DBNull.Value
+            };
+        }
 
-            public void Close()
-            {
-                conection.Close();
-                conection = null;
-                GC.Collect();
-            }
+        public int Write(string sql, List<SqlParameter> parameters = null)
+        {
+            return ExecuteInTransaction(
+                sql,
+                parameters,
+                CommandType.Text,
+                command => command.ExecuteNonQuery());
+        }
 
-            public void StartTransaction()
-            {
-                transaction = conection.BeginTransaction();
-            }
-
-            public void RollbackTransaction()
-            {
-                transaction.Rollback();
-                transaction = null;
-            }
-
-            public void ConfirmTransaction()
-            {
-                transaction.Commit();
-                transaction = null;
-            }
-
-            private SqlCommand CreateCommand(string sql, List<SqlParameter> parameters = null)
-            {
-                SqlCommand cmd = new SqlCommand();
-                cmd.CommandText = sql;
-                cmd.CommandType = CommandType.Text;
-                cmd.Connection = conection;
-
-                if (transaction != null)
+        public int WriteWithResult(string sql, List<SqlParameter> parameters = null)
+        {
+            return ExecuteInTransaction(
+                sql,
+                parameters,
+                CommandType.Text,
+                command =>
                 {
-                    cmd.Transaction = transaction;
-                }
-                if (parameters != null)
+                    object result = command.ExecuteScalar();
+                    return result == null || result == DBNull.Value ? 0 : Convert.ToInt32(result);
+                });
+        }
+
+        public DataTable Read(string sql, List<SqlParameter> parameters = null)
+        {
+            return ExecuteInTransaction(
+                sql,
+                parameters,
+                CommandType.Text,
+                command =>
                 {
-                    cmd.Parameters.AddRange(parameters.ToArray());
-                }
-                return cmd;
-            }
+                    DataTable table = new DataTable();
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(command))
+                    {
+                        adapter.Fill(table);
+                    }
 
-            public SqlParameter CreateParameter(string name, string value)
+                    return table;
+                });
+        }
+
+        private T ExecuteInTransaction<T>(
+            string sql,
+            List<SqlParameter> parameters,
+            CommandType commandType,
+            Func<SqlCommand, T> operation)
+        {
+            EnsureConnectionOpen();
+            StartTransaction();
+
+            using (SqlCommand command = CreateCommand(sql, commandType, parameters))
             {
-
-                SqlParameter p = new SqlParameter(name, value);
-                p.DbType = DbType.String;
-                return p;
-            }
-
-
-            public SqlParameter CreateParameter(string name, int value)
-            {
-
-                SqlParameter p = new SqlParameter(name, value);
-                p.DbType = DbType.Int32;
-                return p;
-            }
-
-            public int Write(string sql, List<SqlParameter> parameters = null)
-            {
-                int affectedRowsCount = 0;
-                SqlCommand cmd = CreateCommand(sql, parameters);
                 try
                 {
-                    affectedRowsCount = cmd.ExecuteNonQuery();
+                    T result = operation(command);
+                    ConfirmTransaction();
+                    return result;
                 }
-                catch (Exception ex)
+                catch (SqlException ex)
                 {
-                    Console.WriteLine(ex);
-                    affectedRowsCount = -1;
+                    RollbackTransaction();
+                    throw new Exception("Error de SQL.", ex);
                 }
-                cmd.Parameters.Clear();
-                return affectedRowsCount;
-            }
-
-            public int WriteWithResult(string sql, List<SqlParameter> parameters = null)
-            {
-                //int idReturned = 0;
-                SqlCommand cmd = CreateCommand(sql, parameters);
-                int idInserted = 0;
-                try
+                catch
                 {
-                    //affectedRowsCount = cmd.ExecuteNonQuery();
-                    idInserted = Convert.ToInt32(cmd.ExecuteScalar());
-                    //if (result != null && result != DBNull.Value)
-                    //{
-                    //    idReturned = Convert.ToInt32(result);
-                    //}
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                    //idReturned = -1;
-                }
-                cmd.Parameters.Clear();
-                //return idReturned;
-
-                //if (idInserted == DBNull.Value)
-                //{
-                //    return null;
-                //}
-
-                return idInserted;
-            }
-
-            public DataTable Read(string sql, List<SqlParameter> parameters = null)
-            {
-                SqlDataAdapter adapter = new SqlDataAdapter();
-                adapter.SelectCommand = CreateCommand(sql, parameters);
-
-                DataTable table = new DataTable();
-
-                try
-                {
-                    adapter.Fill(table);
-                    adapter.Dispose();
-                    adapter = null;
-
-                }
-                catch (Exception error)
-                {
-                    Console.WriteLine(error.Message);
+                    RollbackTransaction();
                     throw;
                 }
+            }
+        }
 
-                return table;
+        private void EnsureConnectionOpen()
+        {
+            if (connection != null && connection.State == ConnectionState.Open)
+            {
+                return;
+            }
+
+            Exception lastException = null;
+
+            foreach (string connectionStringName in ConnectionStringNames)
+            {
+                ConnectionStringSettings connectionSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
+                if (connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.ConnectionString))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    connection = new SqlConnection(connectionSettings.ConnectionString);
+                    connection.Open();
+                    return;
+                }
+                catch (SqlException ex)
+                {
+                    lastException = ex;
+
+                    if (connection != null)
+                    {
+                        connection.Dispose();
+                        connection = null;
+                    }
+                }
+            }
+
+            if (lastException != null)
+            {
+                throw new Exception("No se pudo conectar a ninguna de las conexiones configuradas.", lastException);
+            }
+
+            throw new InvalidOperationException(
+                "No se encontro ninguna connection string valida en la configuracion para TpIDS.");
+        }
+
+        private void StartTransaction()
+        {
+            if (transaction == null)
+            {
+                transaction = connection.BeginTransaction();
+            }
+        }
+
+        private void ConfirmTransaction()
+        {
+            if (transaction != null)
+            {
+                transaction.Commit();
+                transaction.Dispose();
+                transaction = null;
+            }
+        }
+
+        private void RollbackTransaction()
+        {
+            if (transaction != null)
+            {
+                transaction.Rollback();
+                transaction.Dispose();
+                transaction = null;
+            }
+        }
+
+        private SqlCommand CreateCommand(string sql, CommandType commandType, List<SqlParameter> parameters = null)
+        {
+            SqlCommand command = new SqlCommand(sql, connection, transaction);
+            command.CommandType = commandType;
+
+            if (parameters != null && parameters.Count > 0)
+            {
+                command.Parameters.AddRange(parameters.ToArray());
+            }
+
+            return command;
+        }
+
+        public void Dispose()
+        {
+            if (transaction != null)
+            {
+                transaction.Dispose();
+                transaction = null;
+            }
+
+            if (connection != null && connection.State != ConnectionState.Closed)
+            {
+                connection.Close();
+            }
+
+            if (connection != null)
+            {
+                connection.Dispose();
+                connection = null;
             }
         }
     }
+}

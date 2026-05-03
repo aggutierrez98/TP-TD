@@ -1,0 +1,4 @@
+interface:
+  display_name: "DAL SQL Access Patterns"
+  short_description: "Centralize SQL access and transactions"
+  default_prompt: "Use $dal-sql-access-patterns to keep DAL SQL access centralized in AccesoDatos with ConfigurationManager and mandatory transactions."
