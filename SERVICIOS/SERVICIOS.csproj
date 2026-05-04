@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -41,8 +42,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Idioma.cs" />
+    <Compile Include="IdiomaService.cs" />
     <Compile Include="PasswordHasher.cs" />
+    <Compile Include="Palabra.cs" />
     <Compile Include="Sesion.cs" />
+    <Compile Include="Traduccion.cs" />
+    <Compile Include="UsuarioPreferencia.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

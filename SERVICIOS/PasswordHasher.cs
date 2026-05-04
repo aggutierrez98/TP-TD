@@ -48,8 +48,21 @@ namespace SERVICIOS
             Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, storedHashSalt, Iterations);
             byte[] testHash = pbkdf2.GetBytes(HashSize);
 
-            // Comparamos el hash generado con el hash original guardado en BD
-            return (originalStoredHash.ToString() == testHash.ToString());
+            // Comparamos byte a byte para evitar falsos negativos.
+            if (originalStoredHash.Length != testHash.Length)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < originalStoredHash.Length; i++)
+            {
+                if (originalStoredHash[i] != testHash[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
     }

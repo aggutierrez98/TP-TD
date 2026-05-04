@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
@@ -7,7 +8,7 @@ using TpIDS.Properties;
 
 namespace TpIDS
 {
-    public partial class FormLogin : Form
+    public partial class FormLogin : Form, IObservador
     {
         private bool showPassword = false;
         private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
@@ -16,6 +17,9 @@ namespace TpIDS
         {
             InitializeComponent();
             pbPassword.Image = Resources.image_show;
+            ConfigurarTags();
+            Load += FormLogin_Load;
+            FormClosed += FormLogin_FormClosed;
         }
 
         private void btnIngreso_Click(object sender, EventArgs e)
@@ -35,8 +39,6 @@ namespace TpIDS
                     MessageBox.Show("Credenciales incorrectas", "Error");
                     return;
                 }
-
-                Sesion.GetInstance().IniciarSesion(usuario);
 
                 txtbNickname.Clear();
                 txtbPassword.Clear();
@@ -75,6 +77,32 @@ namespace TpIDS
                 txtbPassword.PasswordChar = '●';
                 pbPassword.Image = Resources.image_show;
             }
+        }
+
+        public void Actualizar(IIdioma idioma)
+        {
+            IdiomaFormHelper.Aplicar(this, idioma);
+        }
+
+        private void ConfigurarTags()
+        {
+            Tag = "FormLogin.Title";
+            lblNickname.Tag = "FormLogin.NicknameLabel";
+            lblPassword.Tag = "FormLogin.PasswordLabel";
+            btnIngreso.Tag = "FormLogin.LoginButton";
+            lblRegistro.Tag = "FormLogin.RegisterPrompt";
+            btnRegistro.Tag = "FormLogin.RegisterButton";
+        }
+
+        private void FormLogin_Load(object sender, EventArgs e)
+        {
+            Sesion.GetInstance().RegistrarObservador(this);
+            Actualizar(Sesion.GetInstance().IdiomaActual);
+        }
+
+        private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Sesion.GetInstance().DesregistrarObservador(this);
         }
     }
 }

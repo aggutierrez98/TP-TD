@@ -27,6 +27,8 @@ namespace TpIDS
             this.btnAgregarUsuario = new System.Windows.Forms.Button();
             this.btnEditarUsuario = new System.Windows.Forms.Button();
             this.btnEliminarUsuario = new System.Windows.Forms.Button();
+            this.btnConfiguracion = new System.Windows.Forms.Button();
+            this.btnGestionIdiomas = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
             this.groupBoxGestion.SuspendLayout();
             this.SuspendLayout();
@@ -151,11 +153,33 @@ namespace TpIDS
             this.btnEliminarUsuario.UseVisualStyleBackColor = true;
             this.btnEliminarUsuario.Click += new System.EventHandler(this.btnEliminarUsuario_Click);
             // 
+            // btnConfiguracion
+            // 
+            this.btnConfiguracion.Location = new System.Drawing.Point(15, 500);
+            this.btnConfiguracion.Name = "btnConfiguracion";
+            this.btnConfiguracion.Size = new System.Drawing.Size(220, 30);
+            this.btnConfiguracion.TabIndex = 4;
+            this.btnConfiguracion.Text = "Configuracion";
+            this.btnConfiguracion.UseVisualStyleBackColor = true;
+            this.btnConfiguracion.Click += new System.EventHandler(this.btnConfiguracion_Click);
+            // 
+            // btnGestionIdiomas
+            // 
+            this.btnGestionIdiomas.Location = new System.Drawing.Point(265, 500);
+            this.btnGestionIdiomas.Name = "btnGestionIdiomas";
+            this.btnGestionIdiomas.Size = new System.Drawing.Size(220, 30);
+            this.btnGestionIdiomas.TabIndex = 5;
+            this.btnGestionIdiomas.Text = "Gestion de idiomas";
+            this.btnGestionIdiomas.UseVisualStyleBackColor = true;
+            this.btnGestionIdiomas.Click += new System.EventHandler(this.btnGestionIdiomas_Click);
+            // 
             // FormGestionUsuarios
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 510);
+            this.ClientSize = new System.Drawing.Size(500, 545);
+            this.Controls.Add(this.btnGestionIdiomas);
+            this.Controls.Add(this.btnConfiguracion);
             this.Controls.Add(this.lblTituloGestionUsuarios);
             this.Controls.Add(this.lblSesionActual);
             this.Controls.Add(this.dgvUsuarios);
@@ -184,5 +208,7 @@ namespace TpIDS
         private System.Windows.Forms.Button btnAgregarUsuario;
         private System.Windows.Forms.Button btnEditarUsuario;
         private System.Windows.Forms.Button btnEliminarUsuario;
+        private System.Windows.Forms.Button btnConfiguracion;
+        private System.Windows.Forms.Button btnGestionIdiomas;
     }
 }

@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionUsuarios : Form
+    public partial class FormGestionUsuarios : Form, IObservador
     {
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
         private int _idSeleccionado = -1;
@@ -15,17 +16,17 @@ namespace TpIDS
         public FormGestionUsuarios()
         {
             InitializeComponent();
+            ConfigurarTags();
+            FormClosed += FormGestionUsuarios_FormClosed;
         }
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
+            Sesion.GetInstance().RegistrarObservador(this);
             Usuario sesion = Sesion.GetInstance().GetUsuarioActualUsuario();
-            if (sesion != null)
-            {
-                lblSesionActual.Text = $"Sesion activa: {sesion.Username}";
-            }
-
+            ActualizarSesionActualLabel(sesion);
             CargarGrilla();
+            Actualizar(Sesion.GetInstance().IdiomaActual);
         }
 
         private void CargarGrilla()
@@ -43,13 +44,13 @@ namespace TpIDS
 
                 if (dgvUsuarios.Columns.Contains("Id"))
                 {
-                    dgvUsuarios.Columns["Id"].HeaderText = "ID";
+                    dgvUsuarios.Columns["Id"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Id");
                     dgvUsuarios.Columns["Id"].Width = 50;
                 }
 
                 if (dgvUsuarios.Columns.Contains("Username"))
                 {
-                    dgvUsuarios.Columns["Username"].HeaderText = "Nombre de usuario";
+                    dgvUsuarios.Columns["Username"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Username");
                     dgvUsuarios.Columns["Username"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 }
             }
@@ -197,6 +198,73 @@ namespace TpIDS
             {
                 MessageBox.Show("Error al eliminar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        public void Actualizar(IIdioma idioma)
+        {
+            IdiomaFormHelper.Aplicar(this, idioma);
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualUsuario());
+            ActualizarEncabezadosGrilla(idioma);
+        }
+
+        private void ConfigurarTags()
+        {
+            Tag = "FormGestionUsuarios.Title";
+            lblTituloGestionUsuarios.Tag = "FormGestionUsuarios.TitleLabel";
+            groupBoxGestion.Tag = "FormGestionUsuarios.UserDataGroup";
+            lblNombreUsuario.Tag = "FormGestionUsuarios.UsernameLabel";
+            lblPasswordUsuario.Tag = "FormGestionUsuarios.PasswordLabel";
+            btnAgregarUsuario.Tag = "FormGestionUsuarios.AddButton";
+            btnEditarUsuario.Tag = "FormGestionUsuarios.EditButton";
+            btnEliminarUsuario.Tag = "FormGestionUsuarios.DeleteButton";
+            btnConfiguracion.Tag = "FormGestionUsuarios.ConfigurationButton";
+            btnGestionIdiomas.Tag = "FormGestionUsuarios.LanguageManagementButton";
+        }
+
+        private void ActualizarSesionActualLabel(Usuario usuario)
+        {
+            string prefijo = ObtenerTextoActual("FormGestionUsuarios.SessionLabelPrefix");
+            string nombreUsuario = usuario == null ? "-" : usuario.Username;
+            lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
+        }
+
+        private void ActualizarEncabezadosGrilla(IIdioma idioma)
+        {
+            if (idioma == null || dgvUsuarios.Columns.Count == 0)
+            {
+                return;
+            }
+
+            if (dgvUsuarios.Columns.Contains("Id"))
+            {
+                dgvUsuarios.Columns["Id"].HeaderText = idioma.ObtenerTexto("FormGestionUsuarios.Grid.Id");
+            }
+
+            if (dgvUsuarios.Columns.Contains("Username"))
+            {
+                dgvUsuarios.Columns["Username"].HeaderText = idioma.ObtenerTexto("FormGestionUsuarios.Grid.Username");
+            }
+        }
+
+        private string ObtenerTextoActual(string key)
+        {
+            IIdioma idioma = Sesion.GetInstance().IdiomaActual;
+            return idioma == null ? key : idioma.ObtenerTexto(key);
+        }
+
+        private void btnConfiguracion_Click(object sender, EventArgs e)
+        {
+            new FormConfiguracionUsuario().ShowDialog(this);
+        }
+
+        private void btnGestionIdiomas_Click(object sender, EventArgs e)
+        {
+            new FormGestionIdiomas().Show(this);
+        }
+
+        private void FormGestionUsuarios_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Sesion.GetInstance().DesregistrarObservador(this);
         }
     }
 }
