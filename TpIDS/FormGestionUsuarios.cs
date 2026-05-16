@@ -1,32 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
-using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionUsuarios : Form, IObservador
+    public partial class FormGestionUsuarios : Form
     {
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
+        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private readonly Action<Idioma> observadorIdioma;
         private int _idSeleccionado = -1;
+
+        private GroupBox groupBoxPermisosUsuario;
+        private TreeView tvwPermisosUsuario;
+        private Button btnGuardarPermisosUsuario;
+        private Button btnGestionPermisos;
 
         public FormGestionUsuarios()
         {
             InitializeComponent();
+            observadorIdioma = Actualizar;
+            InicializarControlesPermisos();
+            ConfigurarLayout();
             ConfigurarTags();
             FormClosed += FormGestionUsuarios_FormClosed;
         }
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(this);
-            Usuario sesion = Sesion.GetInstance().GetUsuarioActualUsuario();
-            ActualizarSesionActualLabel(sesion);
+            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             CargarGrilla();
             Actualizar(Sesion.GetInstance().IdiomaActual);
+        }
+
+        private void InicializarControlesPermisos()
+        {
+            groupBoxPermisosUsuario = new GroupBox
+            {
+                Name = "groupBoxPermisosUsuario",
+                Location = new Point(500, 70),
+                Size = new Size(465, 460)
+            };
+
+            tvwPermisosUsuario = new TreeView
+            {
+                Name = "tvwPermisosUsuario",
+                CheckBoxes = true,
+                HideSelection = false,
+                Location = new Point(10, 25),
+                Size = new Size(445, 385)
+            };
+
+            btnGuardarPermisosUsuario = new Button
+            {
+                Name = "btnGuardarPermisosUsuario",
+                Location = new Point(10, 420),
+                Size = new Size(445, 30)
+            };
+            btnGuardarPermisosUsuario.Click += btnGuardarPermisosUsuario_Click;
+
+            btnGestionPermisos = new Button
+            {
+                Name = "btnGestionPermisos",
+                Size = new Size(150, 30)
+            };
+            btnGestionPermisos.Click += btnGestionPermisos_Click;
+
+            groupBoxPermisosUsuario.Controls.Add(tvwPermisosUsuario);
+            groupBoxPermisosUsuario.Controls.Add(btnGuardarPermisosUsuario);
+            Controls.Add(groupBoxPermisosUsuario);
+            Controls.Add(btnGestionPermisos);
+        }
+
+        private void ConfigurarLayout()
+        {
+            ClientSize = new Size(980, 585);
+            dgvUsuarios.Size = new Size(470, 230);
+            groupBoxGestion.Size = new Size(470, 175);
+            btnConfiguracion.Location = new Point(15, 540);
+            btnConfiguracion.Size = new Size(145, 30);
+            btnGestionIdiomas.Location = new Point(170, 540);
+            btnGestionIdiomas.Size = new Size(145, 30);
+            btnGestionPermisos.Location = new Point(325, 540);
         }
 
         private void CargarGrilla()
@@ -40,6 +101,11 @@ namespace TpIDS
                 if (dgvUsuarios.Columns.Contains("PasswordHash"))
                 {
                     dgvUsuarios.Columns["PasswordHash"].Visible = false;
+                }
+
+                if (dgvUsuarios.Columns.Contains("Permisos"))
+                {
+                    dgvUsuarios.Columns["Permisos"].Visible = false;
                 }
 
                 if (dgvUsuarios.Columns.Contains("Id"))
@@ -66,6 +132,7 @@ namespace TpIDS
             txtbNombreUsuario.Clear();
             txtbPasswordUsuario.Clear();
             dgvUsuarios.ClearSelection();
+            tvwPermisosUsuario.Nodes.Clear();
         }
 
         private void dgvUsuarios_SelectionChanged(object sender, EventArgs e)
@@ -73,6 +140,7 @@ namespace TpIDS
             if (dgvUsuarios.SelectedRows.Count == 0)
             {
                 _idSeleccionado = -1;
+                tvwPermisosUsuario.Nodes.Clear();
                 return;
             }
 
@@ -80,6 +148,7 @@ namespace TpIDS
             _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
             txtbNombreUsuario.Text = fila.Cells["Username"].Value?.ToString();
             txtbPasswordUsuario.Clear();
+            CargarPermisosUsuario();
         }
 
         private void btnAgregarUsuario_Click(object sender, EventArgs e)
@@ -142,10 +211,10 @@ namespace TpIDS
                 bool exito = usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername);
                 if (exito)
                 {
-                    Usuario sesionActual = Sesion.GetInstance().GetUsuarioActualUsuario();
-                    if (sesionActual != null && sesionActual.Id == _idSeleccionado)
+                    int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+                    if (usuarioActualId.HasValue && usuarioActualId.Value == _idSeleccionado)
                     {
-                        sesionActual.Username = nuevoUsername;
+                        Sesion.GetInstance().ActualizarUsuarioActualNombre(nuevoUsername);
                         lblSesionActual.Text = $"Sesion activa: {nuevoUsername}";
                     }
 
@@ -200,11 +269,101 @@ namespace TpIDS
             }
         }
 
-        public void Actualizar(IIdioma idioma)
+        private void CargarPermisosUsuario()
+        {
+            tvwPermisosUsuario.Nodes.Clear();
+
+            if (_idSeleccionado == -1)
+            {
+                return;
+            }
+
+            try
+            {
+                List<PermisoNodo> catalogo = permisoBLL.ObtenerCatalogo();
+                HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
+
+                foreach (PermisoNodo raiz in catalogo)
+                {
+                    tvwPermisosUsuario.Nodes.Add(CrearNodoPermiso(raiz, permisosAsignados));
+                }
+
+                tvwPermisosUsuario.ExpandAll();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar permisos del usuario: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private TreeNode CrearNodoPermiso(PermisoNodo permiso, ISet<int> permisosAsignados)
+        {
+            TreeNode nodo = new TreeNode(permiso.Nombre)
+            {
+                Tag = permiso,
+                Checked = permisosAsignados.Contains(permiso.Id)
+            };
+
+            foreach (PermisoNodo hijo in permiso.HijosNodos)
+            {
+                nodo.Nodes.Add(CrearNodoPermiso(hijo, permisosAsignados));
+            }
+
+            return nodo;
+        }
+
+        private void btnGuardarPermisosUsuario_Click(object sender, EventArgs e)
+        {
+            if (_idSeleccionado == -1)
+            {
+                MessageBox.Show("Debe seleccionar un usuario para guardar sus permisos.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                List<int> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
+                    .Distinct()
+                    .ToList();
+
+                permisoBLL.GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados);
+
+                int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+                if (usuarioActualId.HasValue && usuarioActualId.Value == _idSeleccionado)
+                {
+                    Sesion.GetInstance().ActualizarPermisosUsuarioActual(permisoBLL.ObtenerPermisosDirectosUsuario(_idSeleccionado));
+                }
+
+                MessageBox.Show("Permisos guardados correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al guardar permisos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private List<int> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
+        {
+            List<int> ids = new List<int>();
+            foreach (TreeNode nodo in nodos)
+            {
+                if (nodo.Checked && nodo.Tag is PermisoNodo permiso)
+                {
+                    ids.Add(permiso.Id);
+                }
+
+                ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
+            }
+
+            return ids;
+        }
+
+        public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualUsuario());
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             ActualizarEncabezadosGrilla(idioma);
+            RecargarTextosPermiso(idioma);
         }
 
         private void ConfigurarTags()
@@ -219,16 +378,19 @@ namespace TpIDS
             btnEliminarUsuario.Tag = "FormGestionUsuarios.DeleteButton";
             btnConfiguracion.Tag = "FormGestionUsuarios.ConfigurationButton";
             btnGestionIdiomas.Tag = "FormGestionUsuarios.LanguageManagementButton";
+            groupBoxPermisosUsuario.Tag = "FormGestionUsuarios.PermissionTreeGroup";
+            btnGuardarPermisosUsuario.Tag = "FormGestionUsuarios.SavePermissionsButton";
+            btnGestionPermisos.Tag = "FormGestionUsuarios.PermissionManagementButton";
         }
 
-        private void ActualizarSesionActualLabel(Usuario usuario)
+        private void ActualizarSesionActualLabel(string username)
         {
             string prefijo = ObtenerTextoActual("FormGestionUsuarios.SessionLabelPrefix");
-            string nombreUsuario = usuario == null ? "-" : usuario.Username;
+            string nombreUsuario = string.IsNullOrWhiteSpace(username) ? "-" : username;
             lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
         }
 
-        private void ActualizarEncabezadosGrilla(IIdioma idioma)
+        private void ActualizarEncabezadosGrilla(Idioma idioma)
         {
             if (idioma == null || dgvUsuarios.Columns.Count == 0)
             {
@@ -246,9 +408,21 @@ namespace TpIDS
             }
         }
 
+        private void RecargarTextosPermiso(Idioma idioma)
+        {
+            if (idioma == null)
+            {
+                return;
+            }
+
+            btnGestionPermisos.Text = idioma.ObtenerTexto("FormGestionUsuarios.PermissionManagementButton");
+            btnGuardarPermisosUsuario.Text = idioma.ObtenerTexto("FormGestionUsuarios.SavePermissionsButton");
+            groupBoxPermisosUsuario.Text = idioma.ObtenerTexto("FormGestionUsuarios.PermissionTreeGroup");
+        }
+
         private string ObtenerTextoActual(string key)
         {
-            IIdioma idioma = Sesion.GetInstance().IdiomaActual;
+            Idioma idioma = Sesion.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTexto(key);
         }
 
@@ -262,9 +436,19 @@ namespace TpIDS
             new FormGestionIdiomas().Show(this);
         }
 
+        private void btnGestionPermisos_Click(object sender, EventArgs e)
+        {
+            using (FormGestionPermisos formGestionPermisos = new FormGestionPermisos())
+            {
+                formGestionPermisos.ShowDialog(this);
+            }
+
+            CargarPermisosUsuario();
+        }
+
         private void FormGestionUsuarios_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(this);
+            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

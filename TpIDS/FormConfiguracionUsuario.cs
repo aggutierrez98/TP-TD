@@ -2,20 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using ABSTRACCIONES;
-using BE;
 using BLL;
 using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormConfiguracionUsuario : Form, IObservador
+    public partial class FormConfiguracionUsuario : Form
     {
         private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly Action<Idioma> observadorIdioma;
 
         public FormConfiguracionUsuario()
         {
             InitializeComponent();
+            observadorIdioma = Actualizar;
             ConfigurarTags();
             Load += FormConfiguracionUsuario_Load;
             FormClosed += FormConfiguracionUsuario_FormClosed;
@@ -23,7 +23,7 @@ namespace TpIDS
 
         private void FormConfiguracionUsuario_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(this);
+            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
             CargarUsuarioActual();
             CargarIdiomas();
             Actualizar(Sesion.GetInstance().IdiomaActual);
@@ -31,8 +31,8 @@ namespace TpIDS
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
         {
-            Usuario usuario = Sesion.GetInstance().GetUsuarioActualUsuario();
-            if (usuario == null)
+            int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
+            if (!usuarioId.HasValue)
             {
                 MessageBox.Show("No hay una sesion activa.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Close();
@@ -47,7 +47,7 @@ namespace TpIDS
 
             try
             {
-                bool guardado = idiomaBLL.GuardarPreferencia(usuario.Id, idioma.Id);
+                bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
                 if (guardado)
                 {
                     MessageBox.Show("La configuracion se guardo correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -59,7 +59,7 @@ namespace TpIDS
             }
         }
 
-        public void Actualizar(IIdioma idioma)
+        public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
             CargarUsuarioActual();
@@ -75,9 +75,9 @@ namespace TpIDS
 
         private void CargarUsuarioActual()
         {
-            Usuario usuario = Sesion.GetInstance().GetUsuarioActualUsuario();
             string prefijo = ObtenerTextoActual("FormConfiguracionUsuario.CurrentUserPrefix");
-            lblUsuarioActual.Text = string.Format("{0} {1}", prefijo, usuario == null ? "-" : usuario.Username);
+            string username = Sesion.GetInstance().GetUsuarioActualNombre();
+            lblUsuarioActual.Text = string.Format("{0} {1}", prefijo, string.IsNullOrWhiteSpace(username) ? "-" : username);
         }
 
         private void CargarIdiomas()
@@ -88,7 +88,7 @@ namespace TpIDS
             cmbIdiomas.ValueMember = "Id";
             cmbIdiomas.DataSource = idiomas;
 
-            IIdioma idiomaActual = Sesion.GetInstance().IdiomaActual;
+            Idioma idiomaActual = Sesion.GetInstance().IdiomaActual;
             if (idiomaActual != null)
             {
                 Idioma idiomaSeleccionado = idiomas.FirstOrDefault(item => item.Id == idiomaActual.Id);
@@ -101,13 +101,13 @@ namespace TpIDS
 
         private string ObtenerTextoActual(string key)
         {
-            IIdioma idioma = Sesion.GetInstance().IdiomaActual;
+            Idioma idioma = Sesion.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTexto(key);
         }
 
         private void FormConfiguracionUsuario_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(this);
+            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

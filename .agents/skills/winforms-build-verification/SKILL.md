@@ -11,7 +11,7 @@ Aplicar esta skill cada vez que se cambie cualquier proyecto de la solucion.
 
 1. Leer primero `.agents/01-stack-dotnet-winforms.md` y `.agents/02-architecture-7-layers.md`.
 2. Implementar el cambio solicitado.
-3. Compilar `TpIDS.sln` antes de responder al usuario.
+3. Compilar `TpIDS.sln` antes de responder al usuario. Ese build tambien debe dejar en verde la guardia automatica de arquitectura.
 4. Si la compilacion falla, corregir y recompilar.
 5. Cerrar la tarea solo con compilacion exitosa.
 
@@ -28,6 +28,7 @@ Esto es obligatorio especialmente cuando el cambio toca:
 - cambios de nombres
 - eventos
 - archivos `.csproj`
+- movimiento de clases entre capas
 
 ## Response rule
 

@@ -155,6 +155,131 @@ BEGIN
 END
 GO
 
+IF OBJECT_ID('dbo.Permiso', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Permiso
+    (
+        Id INT IDENTITY(1,1) NOT NULL,
+        Nombre VARCHAR(100) NOT NULL,
+        CONSTRAINT PK_Permiso PRIMARY KEY CLUSTERED (Id)
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UQ_Permiso_Nombre'
+      AND object_id = OBJECT_ID('dbo.Permiso'))
+BEGIN
+    ALTER TABLE dbo.Permiso
+    ADD CONSTRAINT UQ_Permiso_Nombre UNIQUE (Nombre);
+END
+GO
+
+IF OBJECT_ID('dbo.Grupo', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.Grupo
+    (
+        GrupoId INT NOT NULL,
+        PermisoId INT NOT NULL
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.key_constraints
+    WHERE name = 'PK_Grupo'
+      AND parent_object_id = OBJECT_ID('dbo.Grupo'))
+BEGIN
+    ALTER TABLE dbo.Grupo
+    ADD CONSTRAINT PK_Grupo PRIMARY KEY CLUSTERED (GrupoId, PermisoId);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_Grupo_Grupo')
+BEGIN
+    ALTER TABLE dbo.Grupo
+    ADD CONSTRAINT FK_Grupo_Grupo FOREIGN KEY (GrupoId) REFERENCES dbo.Permiso(Id);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_Grupo_Permiso')
+BEGIN
+    ALTER TABLE dbo.Grupo
+    ADD CONSTRAINT FK_Grupo_Permiso FOREIGN KEY (PermisoId) REFERENCES dbo.Permiso(Id);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = 'CK_Grupo_Distinto')
+BEGIN
+    ALTER TABLE dbo.Grupo
+    ADD CONSTRAINT CK_Grupo_Distinto CHECK (GrupoId <> PermisoId);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.indexes
+    WHERE name = 'UQ_Grupo_PermisoId'
+      AND object_id = OBJECT_ID('dbo.Grupo'))
+BEGIN
+    CREATE UNIQUE INDEX UQ_Grupo_PermisoId
+        ON dbo.Grupo (PermisoId);
+END
+GO
+
+IF OBJECT_ID('dbo.UsuarioPermiso', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UsuarioPermiso
+    (
+        UsuarioId INT NOT NULL,
+        PermisoId INT NOT NULL
+    );
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.key_constraints
+    WHERE name = 'PK_UsuarioPermiso'
+      AND parent_object_id = OBJECT_ID('dbo.UsuarioPermiso'))
+BEGIN
+    ALTER TABLE dbo.UsuarioPermiso
+    ADD CONSTRAINT PK_UsuarioPermiso PRIMARY KEY CLUSTERED (UsuarioId, PermisoId);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_UsuarioPermiso_Usuario')
+BEGIN
+    ALTER TABLE dbo.UsuarioPermiso
+    ADD CONSTRAINT FK_UsuarioPermiso_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id);
+END
+GO
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.foreign_keys
+    WHERE name = 'FK_UsuarioPermiso_Permiso')
+BEGIN
+    ALTER TABLE dbo.UsuarioPermiso
+    ADD CONSTRAINT FK_UsuarioPermiso_Permiso FOREIGN KEY (PermisoId) REFERENCES dbo.Permiso(Id);
+END
+GO
+
 IF EXISTS (SELECT 1 FROM dbo.Idioma)
 BEGIN
     ;WITH Defaults AS

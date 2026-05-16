@@ -64,6 +64,9 @@
     <Compile Include="FormGestionIdiomas.Designer.cs">
       <DependentUpon>FormGestionIdiomas.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormGestionPermisos.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormRegistro.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -106,10 +109,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ABSTRACCIONES\ABSTRACCIONES.csproj">
-      <Project>{a189ef4f-9396-463b-8987-2cd21717610c}</Project>
-      <Name>ABSTRACCIONES</Name>
-    </ProjectReference>
     <ProjectReference Include="..\BE\BE.csproj">
       <Project>{faea6c55-0705-4f3b-8e31-6adeecb20d6f}</Project>
       <Name>BE</Name>

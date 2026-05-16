@@ -1,13 +1,19 @@
+using System.Collections.Generic;
+
 namespace ABSTRACCIONES
 {
     public interface ISesion
     {
-        void IniciarSesion(object usuario);
+        void IniciarSesion(IUsuarioAutenticado usuario);
 
         void CerrarSesion();
 
-        object GetUsuarioActual();
+        IUsuarioAutenticado GetUsuarioActual();
 
         bool HaySesionActiva();
+
+        bool TienePermiso(string nombrePermiso);
+
+        IList<IPermiso> ObtenerPermisosEfectivos();
     }
 }

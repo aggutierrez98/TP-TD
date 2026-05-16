@@ -15,11 +15,13 @@ Leer siempre:
 2. `.agents/02-architecture-7-layers.md`
 3. [references/plan-entregas-resumen.md](references/plan-entregas-resumen.md)
 
+Si el cambio toca referencias entre proyectos, movimiento de clases entre capas, nuevas entidades, servicios, repositorios o contratos, aplicar tambien `.agents/skills/architecture-dependency-guard/SKILL.md`.
+
 ## Core constraints
 
 1. Respetar .NET Framework 4.7.2 y WinForms.
 2. No introducir tecnologias incompatibles con el stack.
-3. Respetar la arquitectura de 7 capas y la separacion UI/BLL/DAL/BE/SERVICIOS/ABSTRACCIONES.
+3. Respetar la arquitectura de 7 capas y la matriz obligatoria de dependencias UI/BLL/DAL/BE/SERVICIOS/ABSTRACCIONES.
 4. Mantener coherencia entre implementacion y artefactos de analisis/diseno.
 5. Compilar la solucion antes de cerrar la tarea.
 

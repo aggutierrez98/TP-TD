@@ -1,0 +1,116 @@
+@startuml
+title T04 - Composite de permisos por capas
+
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "ABSTRACCIONES" {
+  interface IPermiso {
+    +Id : int
+    +Nombre : string
+    +EsGrupo : bool
+    +Hijos : IList<IPermiso>
+    +Agregar(permiso)
+    +Quitar(permiso)
+    +Contiene(id)
+    +ObtenerPermisosHoja()
+  }
+
+  interface IUsuarioAutenticado {
+    +Id : int
+    +Username : string
+    +Permisos : IList<IPermiso>
+  }
+
+  interface ISesion {
+    +IniciarSesion(usuario)
+    +CerrarSesion()
+    +GetUsuarioActual()
+    +HaySesionActiva()
+    +TienePermiso(nombrePermiso)
+    +ObtenerPermisosEfectivos()
+  }
+}
+
+package "BE" {
+  class Usuario {
+    +Id : int
+    +Username : string
+    +PasswordHash : string
+    +Permisos : IList<IPermiso>
+  }
+}
+
+package "SERVICIOS" {
+  abstract class PermisoNodo {
+    +Id : int
+    +Nombre : string
+    +Hijos : IList<IPermiso>
+    +HijosNodos : IList<PermisoNodo>
+  }
+
+  class PermisoSimple
+  class GrupoPermiso
+  class PermisoRelacion {
+    +GrupoId : int
+    +PermisoId : int
+  }
+
+  class PermisoService {
+    +ConstruirArbol(nodos, relaciones)
+    +Aplanar(raices)
+    +ObtenerRelaciones(raices)
+    +ValidarSinCiclos(raices)
+    +ValidarNombresUnicos(nodos)
+    +ValidarGruposNoVacios(nodos)
+    +ObtenerPermisosEfectivos(permisosAsignados)
+  }
+
+  class Sesion {
+    -_usuarioActual : IUsuarioAutenticado
+    +IdiomaActual : Idioma
+  }
+}
+
+package "DAL" {
+  class PermisoDAL
+  class UsuarioPermisoDAL
+}
+
+package "BLL" {
+  class PermisoBLL
+  class UsuarioBLL
+}
+
+package "UI" {
+  class FormGestionPermisos
+  class FormGestionUsuarios
+}
+
+IPermiso <|.. PermisoNodo
+PermisoNodo <|-- PermisoSimple
+PermisoNodo <|-- GrupoPermiso
+IUsuarioAutenticado <|.. Usuario
+ISesion <|.. Sesion
+
+Usuario --> IPermiso : permisos directos
+Sesion --> IUsuarioAutenticado
+Sesion --> PermisoService
+PermisoBLL --> PermisoDAL
+PermisoBLL --> UsuarioPermisoDAL
+PermisoBLL --> PermisoService
+UsuarioBLL --> PermisoBLL
+FormGestionPermisos --> PermisoBLL
+FormGestionUsuarios --> PermisoBLL
+
+note right of Sesion
+SERVICIOS no conoce BE.Usuario.
+Sesion opera solo con IUsuarioAutenticado.
+end note
+
+note bottom of Usuario
+BE depende solo de ABSTRACCIONES.
+El usuario conserva solo estado.
+end note
+
+@enduml

@@ -3,21 +3,22 @@ using System.Collections.Generic;
 using BE;
 using DAL;
 using SERVICIOS;
-using ABSTRACCIONES;
 
 namespace BLL
 {
     public class UsuarioBLL
     {
         private readonly UsuarioDAL usuarioDAL;
-        private readonly IPasswordHasher passwordHasher;
+        private readonly PasswordHasher passwordHasher;
         private readonly IdiomaBLL idiomaBLL;
+        private readonly PermisoBLL permisoBLL;
 
         public UsuarioBLL()
         {
             usuarioDAL = new UsuarioDAL();
             passwordHasher = new PasswordHasher();
             idiomaBLL = new IdiomaBLL();
+            permisoBLL = new PermisoBLL();
         }
 
         public Usuario Login(string username, string passwordRaw)
@@ -32,7 +33,9 @@ namespace BLL
 
             if (esValido)
             {
-                Sesion.GetInstance().IniciarSesion(usuarioHash);
+                permisoBLL.CargarPermisosEnUsuario(usuarioHash);
+                Sesion.GetInstance().IniciarSesion(usuarioHash.Id, usuarioHash.Username);
+                Sesion.GetInstance().ActualizarPermisosUsuarioActual(permisoBLL.ObtenerPermisosDirectosUsuario(usuarioHash.Id));
                 idiomaBLL.AplicarIdiomaSesionUsuario(usuarioHash.Id);
                 return usuarioHash;
             }
@@ -94,8 +97,8 @@ namespace BLL
         public bool Eliminar(int id)
         {
             // Protección: no se puede eliminar al usuario en sesión
-            Usuario sesionActual = Sesion.GetInstance().GetUsuarioActualUsuario();
-            if (sesionActual != null && sesionActual.Id == id)
+            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            if (usuarioActualId.HasValue && usuarioActualId.Value == id)
             {
                 return false;
             }

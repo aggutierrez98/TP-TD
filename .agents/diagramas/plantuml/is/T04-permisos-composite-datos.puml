@@ -1,0 +1,48 @@
+@startuml
+title T04 - Modelo de datos de permisos
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK>>
+  --
+  Username : varchar(50)
+  PasswordHash : varchar(max)
+}
+
+entity "Permiso" as Permiso {
+  *Id : int <<PK>>
+  --
+  Nombre : varchar(100) <<UQ>>
+}
+
+entity "Grupo" as Grupo {
+  *GrupoId : int <<PK, FK>>
+  *PermisoId : int <<PK, FK, UQ>>
+}
+
+entity "UsuarioPermiso" as UsuarioPermiso {
+  *UsuarioId : int <<PK, FK>>
+  *PermisoId : int <<PK, FK>>
+}
+
+Permiso ||--o{ Grupo : padre
+Permiso ||--o| Grupo : hijo
+Usuarios ||--o{ UsuarioPermiso
+Permiso ||--o{ UsuarioPermiso
+
+note right of Grupo
+Representa la relacion arbol del Composite.
+Restricciones:
+- GrupoId <> PermisoId
+- PermisoId con un solo padre
+end note
+
+note bottom of UsuarioPermiso
+El usuario puede tener asignado
+un permiso hoja o un grupo.
+end note
+
+@enduml

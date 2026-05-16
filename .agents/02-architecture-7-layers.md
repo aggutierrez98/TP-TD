@@ -1,10 +1,29 @@
 # Arquitectura de 7 Capas
 
-Este proyecto implementa rigurosamente el modelo de 7 capas:
+Este proyecto implementa rigurosamente el modelo de 7 capas. La matriz de dependencias entre proyectos es obligatoria y debe respetarse siempre.
 
-1. **UI/PRESENTACION**: Interacción con el usuario de manera directa a través de formularios. Esta capa exclusivamente se comunicará con **BLL** apoyada en entidades de **BE**.
-2. **BLL (Business Logic Layer)**: Centraliza validaciones, reglas de negocio y oficia como puente validando datos antes de que interactúen con el almacenamiento o los servicios.
-3. **DAL (Data Access Layer)**: Lógica de acceso y persistencia en BD, de forma completamente agnóstica de la tecnología final desde la perspectiva de la BLL.
-4. **BE (Business Entities)**: Transversal a todo el sistema. Consta de clases de dominio donde NO se admiten métodos de comportamiento, únicamente el estado (Propiedades).
-5. **Servicios (SERVICIOS)**: Transversal; alberga servicios (Autenticación, Hash, Auditoría, Sesiones) consumibles por cualquier componente.
-6. **Abstracciones (ABSTRACCIONES)**: Aplica el principio de Inversión de Dependencias. Conserva interfaces asegurándose de que los diferentes módulos no requieran la implementación del otro para compilar.
+## Matriz obligatoria de dependencias
+
+Solo se permiten estas dependencias de compilacion:
+
+1. **UI/PRESENTACION (`TpIDS`)** -> `BLL`, `BE`, `SERVICIOS`
+2. **BLL** -> `DAL`, `BE`, `SERVICIOS`
+3. **DAL** -> `BE`, `SERVICIOS`
+4. **BE** -> `ABSTRACCIONES`
+5. **SERVICIOS** -> `ABSTRACCIONES`
+6. **ABSTRACCIONES** -> sin dependencias
+
+Cualquier referencia fuera de esa matriz esta prohibida.
+
+## Regla de uso
+
+1. La UI puede conocer `SERVICIOS` y `BE`, pero los casos de uso y flujos de negocio deben entrar por `BLL`.
+2. `BLL` centraliza validaciones, reglas de negocio y coordinacion entre `DAL` y `SERVICIOS`.
+3. `DAL` maneja persistencia y no debe ser invocada desde `UI`.
+4. `BE` contiene entidades de negocio y solo puede depender de contratos definidos en `ABSTRACCIONES`.
+5. `SERVICIOS` es la capa concreta reusable y solo puede depender de `ABSTRACCIONES`.
+6. `ABSTRACCIONES` debe contener solo interfaces o contratos. No debe contener implementaciones concretas.
+
+## Guard rail automatica
+
+La solucion incorpora una validacion automatica durante el build para revisar esta matriz sobre los `.csproj`. Si una capa referencia a otra no permitida, el build debe fallar.

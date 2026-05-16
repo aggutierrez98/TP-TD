@@ -13,11 +13,11 @@ namespace SERVICIOS
 
         public bool Default { get; set; }
 
-        public IList<ITraduccion> Traducciones { get; set; }
+        public List<Traduccion> Traducciones { get; set; }
 
         public Idioma()
         {
-            Traducciones = new List<ITraduccion>();
+            Traducciones = new List<Traduccion>();
         }
 
         public string ObtenerTexto(string key)
@@ -45,6 +45,12 @@ namespace SERVICIOS
                 item.Palabra != null &&
                 string.Equals(item.Palabra.Key, key, StringComparison.OrdinalIgnoreCase) &&
                 !string.IsNullOrWhiteSpace(item.Valor));
+        }
+
+        IList<ITraduccion> IIdioma.Traducciones
+        {
+            get { return Traducciones.Cast<ITraduccion>().ToList(); }
+            set { Traducciones = value == null ? new List<Traduccion>() : value.OfType<Traduccion>().ToList(); }
         }
     }
 }
