@@ -10,6 +10,12 @@ namespace SERVICIOS
 
         public string Valor { get; set; }
 
-        public IPalabra Palabra { get; set; }
+        public Palabra Palabra { get; set; }
+
+        IPalabra ITraduccion.Palabra
+        {
+            get { return Palabra; }
+            set { Palabra = value as Palabra; }
+        }
     }
 }

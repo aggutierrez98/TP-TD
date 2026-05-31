@@ -42,15 +42,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IIdioma.cs" />
-    <Compile Include="IIdiomaRepository.cs" />
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
     <Compile Include="IPasswordHasher.cs" />
     <Compile Include="IPalabra.cs" />
+    <Compile Include="IPermiso.cs" />
     <Compile Include="ISesion.cs" />
     <Compile Include="ITraduccion.cs" />
+    <Compile Include="IUsuarioAutenticado.cs" />
     <Compile Include="IUsuarioPreferencia.cs" />
-    <Compile Include="IUsuarioPreferenciaRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

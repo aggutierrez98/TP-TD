@@ -1,11 +1,11 @@
 using System.Windows.Forms;
-using ABSTRACCIONES;
+using SERVICIOS;
 
 namespace TpIDS
 {
     internal static class IdiomaFormHelper
     {
-        public static void Aplicar(Form form, IIdioma idioma)
+        public static void Aplicar(Form form, Idioma idioma)
         {
             if (form == null || idioma == null)
             {
@@ -20,7 +20,7 @@ namespace TpIDS
             Aplicar(form.Controls, idioma);
         }
 
-        private static void Aplicar(Control.ControlCollection controls, IIdioma idioma)
+        private static void Aplicar(Control.ControlCollection controls, Idioma idioma)
         {
             foreach (Control control in controls)
             {

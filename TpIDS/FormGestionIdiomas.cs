@@ -2,20 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionIdiomas : Form, IObservador
+    public partial class FormGestionIdiomas : Form
     {
         private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly Action<Idioma> observadorIdioma;
         private bool cargandoIdiomas;
 
         public FormGestionIdiomas()
         {
             InitializeComponent();
+            observadorIdioma = Actualizar;
             ConfigurarTags();
             Load += FormGestionIdiomas_Load;
             FormClosed += FormGestionIdiomas_FormClosed;
@@ -23,7 +24,7 @@ namespace TpIDS
 
         private void FormGestionIdiomas_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(this);
+            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
             CargarIdiomas(null);
             Actualizar(Sesion.GetInstance().IdiomaActual);
         }
@@ -273,7 +274,7 @@ namespace TpIDS
             CargarTraduccionSeleccionada();
         }
 
-        public void Actualizar(IIdioma idioma)
+        public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
             ActualizarEncabezadosGrilla(idioma);
@@ -378,7 +379,7 @@ namespace TpIDS
 
         private void RefrescarSesionSiCorresponde(int idiomaIdAfectado)
         {
-            IIdioma idiomaActual = Sesion.GetInstance().IdiomaActual;
+            Idioma idiomaActual = Sesion.GetInstance().IdiomaActual;
             Idioma idiomaDefault = idiomaBLL.ObtenerIdiomaDefault();
 
             if (idiomaActual != null && idiomaActual.Id == idiomaIdAfectado)
@@ -394,7 +395,7 @@ namespace TpIDS
             }
         }
 
-        private void ActualizarEncabezadosGrilla(IIdioma idioma)
+        private void ActualizarEncabezadosGrilla(Idioma idioma)
         {
             if (idioma == null || dgvTraducciones.Columns.Count == 0)
             {
@@ -435,7 +436,7 @@ namespace TpIDS
 
         private void FormGestionIdiomas_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(this);
+            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
         }
 
         private class TraduccionGridItem

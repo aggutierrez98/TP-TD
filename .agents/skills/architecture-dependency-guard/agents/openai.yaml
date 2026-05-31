@@ -1,0 +1,4 @@
+interface:
+  display_name: "Architecture Dependency Guard"
+  short_description: "Enforce the TpIDS layer dependency matrix"
+  default_prompt: "Use $architecture-dependency-guard to keep every change inside the mandatory TpIDS dependency matrix before closing the task."

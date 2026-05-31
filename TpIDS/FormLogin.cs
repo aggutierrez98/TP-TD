@@ -1,6 +1,5 @@
 using System;
 using System.Windows.Forms;
-using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
@@ -8,14 +7,16 @@ using TpIDS.Properties;
 
 namespace TpIDS
 {
-    public partial class FormLogin : Form, IObservador
+    public partial class FormLogin : Form
     {
         private bool showPassword = false;
         private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
+        private readonly Action<Idioma> observadorIdioma;
 
         public FormLogin()
         {
             InitializeComponent();
+            observadorIdioma = Actualizar;
             pbPassword.Image = Resources.image_show;
             ConfigurarTags();
             Load += FormLogin_Load;
@@ -74,12 +75,12 @@ namespace TpIDS
             }
             else
             {
-                txtbPassword.PasswordChar = '●';
+                txtbPassword.PasswordChar = '*';
                 pbPassword.Image = Resources.image_show;
             }
         }
 
-        public void Actualizar(IIdioma idioma)
+        public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
         }
@@ -96,13 +97,13 @@ namespace TpIDS
 
         private void FormLogin_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(this);
+            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
             Actualizar(Sesion.GetInstance().IdiomaActual);
         }
 
         private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(this);
+            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

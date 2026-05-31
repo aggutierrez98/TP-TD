@@ -1,14 +1,13 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using ABSTRACCIONES;
 using SERVICIOS;
 
 namespace DAL
 {
-    public class UsuarioPreferenciaDAL : IUsuarioPreferenciaRepository
+    public class UsuarioPreferenciaDAL
     {
-        public IUsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
+        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
         {
             const string query = @"
 SELECT UsuarioId, IdiomaId
@@ -37,7 +36,7 @@ WHERE UsuarioId = @UsuarioId";
             }
         }
 
-        public bool Guardar(IUsuarioPreferencia preferencia)
+        public bool Guardar(UsuarioPreferencia preferencia)
         {
             const string query = @"
 IF EXISTS (

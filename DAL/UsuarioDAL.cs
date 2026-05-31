@@ -95,6 +95,7 @@ namespace DAL
         {
             string query = @"
 DELETE FROM UsuarioPreferencias WHERE UsuarioId = @Id;
+DELETE FROM UsuarioPermiso WHERE UsuarioId = @Id;
 DELETE FROM Usuarios WHERE Id = @Id";
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {

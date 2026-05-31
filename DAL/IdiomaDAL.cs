@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using ABSTRACCIONES;
 using SERVICIOS;
 
 namespace DAL
 {
-    public class IdiomaDAL : IIdiomaRepository
+    public class IdiomaDAL
     {
-        public IList<IIdioma> ObtenerIdiomas()
+        public List<Idioma> ObtenerIdiomas()
         {
             const string query = "SELECT Id, Nombre, [Default] FROM Idioma ORDER BY Nombre";
 
@@ -19,12 +18,11 @@ namespace DAL
                 DataTable dataTable = accesoDatos.Read(query);
                 return dataTable.Rows.Cast<DataRow>()
                     .Select(MapIdiomaSimple)
-                    .Cast<IIdioma>()
                     .ToList();
             }
         }
 
-        public IList<IPalabra> ObtenerPalabras()
+        public List<Palabra> ObtenerPalabras()
         {
             const string query = "SELECT Id, [Key] FROM Palabra ORDER BY [Key]";
 
@@ -33,12 +31,11 @@ namespace DAL
                 DataTable dataTable = accesoDatos.Read(query);
                 return dataTable.Rows.Cast<DataRow>()
                     .Select(MapPalabra)
-                    .Cast<IPalabra>()
                     .ToList();
             }
         }
 
-        public IIdioma ObtenerIdiomaCompleto(int idiomaId)
+        public Idioma ObtenerIdiomaCompleto(int idiomaId)
         {
             const string query = @"
 SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], t.Valor
@@ -93,7 +90,7 @@ ORDER BY p.[Key]";
             }
         }
 
-        public IIdioma ObtenerIdiomaDefault()
+        public Idioma ObtenerIdiomaDefault()
         {
             const string query = "SELECT TOP 1 Id FROM Idioma WHERE [Default] = 1 ORDER BY Id";
 
@@ -110,7 +107,7 @@ ORDER BY p.[Key]";
             }
         }
 
-        public int InsertarIdioma(IIdioma idioma)
+        public int InsertarIdioma(Idioma idioma)
         {
             const string query = @"
 INSERT INTO Idioma (Nombre, [Default])
@@ -129,7 +126,7 @@ VALUES (@Nombre, @Default)";
             }
         }
 
-        public bool ActualizarIdioma(IIdioma idioma)
+        public bool ActualizarIdioma(Idioma idioma)
         {
             const string query = "UPDATE Idioma SET Nombre = @Nombre WHERE Id = @Id";
 
@@ -160,6 +157,41 @@ DELETE FROM Idioma WHERE Id = @IdiomaId;";
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
+            }
+        }
+
+        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
+        {
+            const string query = @"
+UPDATE UsuarioPreferencias
+SET IdiomaId = @IdiomaDestinoId
+WHERE IdiomaId = @IdiomaOrigenId;
+
+INSERT INTO Traduccion (IdiomaId, PalabraId, Valor)
+SELECT @IdiomaDestinoId, t.PalabraId, t.Valor
+FROM Traduccion t
+WHERE t.IdiomaId = @IdiomaOrigenId
+  AND NOT EXISTS (
+      SELECT 1
+      FROM Traduccion td
+      WHERE td.IdiomaId = @IdiomaDestinoId
+        AND td.PalabraId = t.PalabraId);
+
+DELETE FROM Traduccion
+WHERE IdiomaId = @IdiomaOrigenId;
+
+DELETE FROM Idioma
+WHERE Id = @IdiomaOrigenId;";
+
+            using (AccesoDatos accesoDatos = new AccesoDatos())
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@IdiomaOrigenId", SqlDbType.Int, idiomaOrigenId),
+                    accesoDatos.CreateParameter("@IdiomaDestinoId", SqlDbType.Int, idiomaDestinoId)
+                };
+
+                return accesoDatos.Write(query, parametros) >= 0;
             }
         }
 

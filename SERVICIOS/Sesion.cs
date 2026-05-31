@@ -1,21 +1,22 @@
 using ABSTRACCIONES;
-using BE;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace SERVICIOS
 {
-    public class Sesion : ISesion, IObservado
+    public class Sesion : ISesion
     {
         private static Sesion _instancia;
 
-        private readonly List<IObservador> _observadoresRegistrados;
-        private Usuario _usuarioActual;
-        private IIdioma _idiomaActual;
+        private readonly List<System.Action<Idioma>> _observadoresRegistrados;
+        private readonly PermisoService _permisoService;
+        private IUsuarioAutenticado _usuarioActual;
+        private Idioma _idiomaActual;
 
         private Sesion()
         {
-            _observadoresRegistrados = new List<IObservador>();
+            _observadoresRegistrados = new List<System.Action<Idioma>>();
+            _permisoService = new PermisoService();
         }
 
         public static Sesion GetInstance()
@@ -27,14 +28,23 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        public IIdioma IdiomaActual
+        public Idioma IdiomaActual
         {
             get { return _idiomaActual; }
         }
 
-        public void IniciarSesion(object usuario)
+        public void IniciarSesion(IUsuarioAutenticado usuario)
         {
-            _usuarioActual = usuario as Usuario;
+            _usuarioActual = usuario;
+        }
+
+        public void IniciarSesion(int usuarioId, string username)
+        {
+            _usuarioActual = new UsuarioAutenticadoSesion
+            {
+                Id = usuarioId,
+                Username = username
+            };
         }
 
         public void CerrarSesion()
@@ -44,7 +54,7 @@ namespace SERVICIOS
             _observadoresRegistrados.Clear();
         }
 
-        public object GetUsuarioActual()
+        public IUsuarioAutenticado GetUsuarioActual()
         {
             return _usuarioActual;
         }
@@ -54,17 +64,48 @@ namespace SERVICIOS
             return _usuarioActual != null;
         }
 
-        public void IniciarSesion(Usuario usuario)
+        public int? GetUsuarioActualId()
         {
-            _usuarioActual = usuario;
+            return _usuarioActual == null ? (int?)null : _usuarioActual.Id;
         }
 
-        public Usuario GetUsuarioActualUsuario()
+        public string GetUsuarioActualNombre()
         {
-            return _usuarioActual;
+            return _usuarioActual == null ? null : _usuarioActual.Username;
         }
 
-        public void RegistrarObservador(IObservador observador)
+        public void ActualizarUsuarioActualNombre(string username)
+        {
+            if (_usuarioActual == null)
+            {
+                return;
+            }
+
+            _usuarioActual.Username = username;
+        }
+
+        private void AplicarPermisosUsuarioActual(IList<IPermiso> permisos)
+        {
+            if (_usuarioActual == null)
+            {
+                return;
+            }
+
+            _usuarioActual.Permisos = permisos ?? new List<IPermiso>();
+        }
+
+        public void ActualizarPermisosUsuarioActual(object permisos)
+        {
+            if (_usuarioActual == null)
+            {
+                return;
+            }
+
+            IList<IPermiso> permisosConvertidos = permisos as IList<IPermiso>;
+            AplicarPermisosUsuarioActual(permisosConvertidos ?? new List<IPermiso>());
+        }
+
+        public void RegistrarObservador(System.Action<Idioma> observador)
         {
             if (observador == null || _observadoresRegistrados.Contains(observador))
             {
@@ -74,7 +115,7 @@ namespace SERVICIOS
             _observadoresRegistrados.Add(observador);
         }
 
-        public void DesregistrarObservador(IObservador observador)
+        public void DesregistrarObservador(System.Action<Idioma> observador)
         {
             if (observador == null)
             {
@@ -86,13 +127,13 @@ namespace SERVICIOS
 
         public void ActualizarObservadores()
         {
-            foreach (IObservador observador in _observadoresRegistrados.ToList())
+            foreach (System.Action<Idioma> observador in _observadoresRegistrados.ToList())
             {
-                observador.Actualizar(_idiomaActual);
+                observador(_idiomaActual);
             }
         }
 
-        public void CambiarIdioma(IIdioma idioma)
+        public void CambiarIdioma(Idioma idioma)
         {
             _idiomaActual = idioma;
 
@@ -100,6 +141,27 @@ namespace SERVICIOS
             {
                 ActualizarObservadores();
             }
+        }
+
+        public bool TienePermiso(string nombrePermiso)
+        {
+            if (string.IsNullOrWhiteSpace(nombrePermiso) || _usuarioActual == null || _usuarioActual.Permisos == null)
+            {
+                return false;
+            }
+
+            return _permisoService.ObtenerPermisosReconocidos(_usuarioActual.Permisos)
+                .Any(item => string.Equals(item.Nombre, nombrePermiso, System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        public IList<IPermiso> ObtenerPermisosEfectivos()
+        {
+            if (_usuarioActual == null || _usuarioActual.Permisos == null)
+            {
+                return new List<IPermiso>();
+            }
+
+            return _permisoService.ObtenerPermisosEfectivos(_usuarioActual.Permisos);
         }
     }
 }
