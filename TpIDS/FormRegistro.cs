@@ -1,11 +1,13 @@
 using System;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
+using SERVICIOS;
 using TpIDS.Properties;
 
 namespace TpIDS
 {
-    public partial class FormRegistro : Form
+    public partial class FormRegistro : Form, IObservador
     {
         private bool showPassword = false;
         private readonly UsuarioBLL gestorJugador = new UsuarioBLL();
@@ -14,6 +16,9 @@ namespace TpIDS
         {
             InitializeComponent();
             pbPassword.Image = Resources.image_show;
+            ConfigurarTags();
+            Load += FormRegistro_Load;
+            FormClosed += FormRegistro_FormClosed;
         }
 
         private void btnRegistro_Click(object sender, EventArgs e)
@@ -53,6 +58,30 @@ namespace TpIDS
                 txtbPassword.PasswordChar = '●';
                 pbPassword.Image = Resources.image_show;
             }
+        }
+
+        public void Actualizar(IIdioma idioma)
+        {
+            IdiomaFormHelper.Aplicar(this, idioma);
+        }
+
+        private void ConfigurarTags()
+        {
+            Tag = "FormRegistro.Title";
+            lblNickname.Tag = "FormRegistro.NicknameLabel";
+            lblPassword.Tag = "FormRegistro.PasswordLabel";
+            btnRegistro.Tag = "FormRegistro.RegisterButton";
+        }
+
+        private void FormRegistro_Load(object sender, EventArgs e)
+        {
+            Sesion.GetInstance().RegistrarObservador(this);
+            Actualizar(Sesion.GetInstance().IdiomaActual);
+        }
+
+        private void FormRegistro_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Sesion.GetInstance().DesregistrarObservador(this);
         }
     }
 }

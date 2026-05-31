@@ -1,6 +1,6 @@
 ---
 name: winforms-ui-control-naming
-description: Apply the repository naming convention for WinForms visual controls and event handlers in `.cs` and `.Designer.cs` forms. Use when creating, renaming, or wiring `TextBox`, `DataGridView`, `Label`, `Button`, `PictureBox`, or WinForms events so control names use the required prefixes and handlers use `<controlName>_<Event>`.
+description: Apply the repository naming convention for WinForms visual controls and event handlers in `.cs` and `.Designer.cs` forms. Use when creating, renaming, or wiring `TextBox`, `DataGridView`, `Label`, `Button`, `PictureBox`, `ComboBox`, or WinForms events so control names use the required prefixes and handlers use `<controlName>_<Event>`.
 ---
 
 # WinForms UI Control Naming

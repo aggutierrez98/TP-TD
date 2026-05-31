@@ -7,6 +7,7 @@
 - `Label` -> `lbl`
 - `Button` -> `btn`
 - `PictureBox` -> `pb`
+- `ComboBox` -> `cmb`
 
 ## Repository rule
 
@@ -23,6 +24,7 @@ Para mantener formularios WinForms legibles y consistentes, usar:
 - `lblSesionActual`
 - `btnIngreso`
 - `pbPassword`
+- `cmbIdiomas`
 
 Handlers:
 

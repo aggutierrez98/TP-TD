@@ -93,7 +93,9 @@ namespace DAL
 
         public bool Eliminar(int id)
         {
-            string query = "DELETE FROM Usuarios WHERE Id = @Id";
+            string query = @"
+DELETE FROM UsuarioPreferencias WHERE UsuarioId = @Id;
+DELETE FROM Usuarios WHERE Id = @Id";
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
                 List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>

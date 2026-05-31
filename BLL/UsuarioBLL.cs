@@ -9,13 +9,15 @@ namespace BLL
 {
     public class UsuarioBLL
     {
-        private UsuarioDAL usuarioDAL;
-        private IPasswordHasher passwordHasher;
+        private readonly UsuarioDAL usuarioDAL;
+        private readonly IPasswordHasher passwordHasher;
+        private readonly IdiomaBLL idiomaBLL;
 
         public UsuarioBLL()
         {
             usuarioDAL = new UsuarioDAL();
             passwordHasher = new PasswordHasher();
+            idiomaBLL = new IdiomaBLL();
         }
 
         public Usuario Login(string username, string passwordRaw)
@@ -30,6 +32,8 @@ namespace BLL
 
             if (esValido)
             {
+                Sesion.GetInstance().IniciarSesion(usuarioHash);
+                idiomaBLL.AplicarIdiomaSesionUsuario(usuarioHash.Id);
                 return usuarioHash;
             }
 
