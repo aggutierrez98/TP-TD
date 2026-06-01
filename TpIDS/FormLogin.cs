@@ -10,6 +10,7 @@ namespace TpIDS
     public partial class FormLogin : Form
     {
         private bool showPassword = false;
+        private readonly IdiomaBLL gestorIdioma = new IdiomaBLL();
         private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
         private readonly Action<Idioma> observadorIdioma;
 
@@ -97,8 +98,17 @@ namespace TpIDS
 
         private void FormLogin_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            try
+            {
+                gestorIdioma.InicializarAplicacion();
+                Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+                Actualizar(Sesion.GetInstance().IdiomaActual);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al inicializar idiomas: " + ex.Message, "Error");
+                Close();
+            }
         }
 
         private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)

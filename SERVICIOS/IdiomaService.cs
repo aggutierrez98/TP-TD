@@ -16,6 +16,7 @@ namespace SERVICIOS
             "EspaÃƒÂ±ol"
         };
 
+        // TODO: levantar de un JSON el idioma base en vez de hardcode
         private static readonly Dictionary<string, string> TraduccionesBase = new Dictionary<string, string>
         {
             { "FormLogin.Title", "Menu de ingreso" },
