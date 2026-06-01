@@ -9,6 +9,7 @@ namespace SERVICIOS
         private static Sesion _instancia;
 
         private readonly List<System.Action<Idioma>> _observadoresRegistrados;
+        private readonly BitacoraSesionService _bitacoraSesionService;
         private readonly PermisoService _permisoService;
         private IUsuarioAutenticado _usuarioActual;
         private Idioma _idiomaActual;
@@ -16,6 +17,7 @@ namespace SERVICIOS
         private Sesion()
         {
             _observadoresRegistrados = new List<System.Action<Idioma>>();
+            _bitacoraSesionService = new BitacoraSesionService();
             _permisoService = new PermisoService();
         }
 
@@ -62,6 +64,13 @@ namespace SERVICIOS
         public bool HaySesionActiva()
         {
             return _usuarioActual != null;
+        }
+
+        public void ConfigurarBitacora(
+            System.Func<EventoBitacora, object, int> registrador,
+            System.Func<FiltroBitacora, IList<EventoBitacora>> consultor)
+        {
+            _bitacoraSesionService.Configurar(registrador, consultor);
         }
 
         public int? GetUsuarioActualId()
@@ -162,6 +171,53 @@ namespace SERVICIOS
             }
 
             return _permisoService.ObtenerPermisosEfectivos(_usuarioActual.Permisos);
+        }
+
+        public void RegistrarOperacion(string actividad, string informacion, string origen, object contextoPersistencia = null)
+        {
+            RegistrarEventoBitacora(actividad, informacion, "Informacion", origen, false, contextoPersistencia);
+        }
+
+        public void RegistrarFalloNegocio(string actividad, string informacion, string origen, object contextoPersistencia = null)
+        {
+            RegistrarEventoBitacora(actividad, informacion, "Advertencia", origen, false, contextoPersistencia);
+        }
+
+        public void RegistrarExcepcionTecnica(string actividad, System.Exception exception, string origen, object contextoPersistencia = null)
+        {
+            string informacion = exception == null
+                ? "Sin detalle."
+                : string.Format("{0}: {1}", exception.GetType().Name, exception.Message);
+
+            RegistrarEventoBitacora(actividad, informacion, "Error", origen, true, contextoPersistencia);
+        }
+
+        public IList<EventoBitacora> ConsultarBitacora(FiltroBitacora filtro)
+        {
+            return _bitacoraSesionService.Consultar(filtro);
+        }
+
+        private void RegistrarEventoBitacora(
+            string actividad,
+            string informacion,
+            string nivel,
+            string origen,
+            bool esTecnica,
+            object contextoPersistencia)
+        {
+            EventoBitacora evento = new EventoBitacora
+            {
+                FechaHora = System.DateTime.Now,
+                UsuarioId = GetUsuarioActualId(),
+                UsernameSnapshot = GetUsuarioActualNombre(),
+                Actividad = actividad,
+                Informacion = informacion,
+                Nivel = nivel,
+                Origen = origen,
+                EsTecnica = esTecnica
+            };
+
+            _bitacoraSesionService.Registrar(evento, contextoPersistencia);
         }
     }
 }

@@ -7,7 +7,7 @@ namespace DAL
 {
     public class UsuarioPermisoDAL
     {
-        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId)
+        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
 SELECT PermisoId
@@ -15,7 +15,10 @@ FROM UsuarioPermiso
 WHERE UsuarioId = @UsuarioId
 ORDER BY PermisoId";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
@@ -27,11 +30,21 @@ ORDER BY PermisoId";
                     .Select(row => (int)row["PermisoId"])
                     .ToList();
             }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
         }
 
-        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId)
+        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId, AccesoDatos accesoDatos = null)
         {
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
@@ -44,14 +57,21 @@ WHERE UsuarioId = @UsuarioId;";
 
                 for (int i = 0; i < permisosId.Count; i++)
                 {
-                    query += $@"
+                    query += string.Format(@"
 INSERT INTO UsuarioPermiso (UsuarioId, PermisoId)
-VALUES (@UsuarioId, @PermisoId{i});";
+VALUES (@UsuarioId, @PermisoId{0});", i);
 
                     parametros.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, permisosId[i]));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
             }
         }
     }

@@ -40,7 +40,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de idioma");
             }
         }
 
@@ -64,7 +64,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Edicion de idioma");
             }
         }
 
@@ -99,7 +99,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Baja de idioma");
             }
         }
 
@@ -130,7 +130,7 @@ namespace TpIDS
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    UiExceptionHandler.Mostrar(ex, "Importacion de traducciones");
                 }
             }
         }
@@ -145,16 +145,15 @@ namespace TpIDS
 
             try
             {
-                idiomaBLL.GuardarTraduccion(idioma.Id, txtbKeyManual.Text, txtbValorManual.Text);
-                txtbKeyManual.Clear();
-                txtbValorManual.Clear();
-                RecargarIdiomaSeleccionado(idioma.Id);
+                string keySeleccionada = txtbKeyManual.Text;
+                idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
+                RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
                 RefrescarSesionSiCorresponde(idioma.Id);
                 MessageBox.Show("Traduccion guardada correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Guardado de traduccion");
             }
         }
 
@@ -194,7 +193,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Baja de traduccion");
             }
         }
 
@@ -206,7 +205,7 @@ namespace TpIDS
             }
 
             LimpiarEdicionManual();
-            CargarDetalleIdioma(idioma.Id);
+            CargarDetalleIdioma(idioma.Id, null);
         }
 
         private void dgvTraducciones_CellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -246,19 +245,19 @@ namespace TpIDS
                 {
                     if (!IsDisposed)
                     {
-                        RecargarIdiomaSeleccionado(idioma.Id);
+                        RecargarIdiomaSeleccionado(idioma.Id, item.Key);
                     }
                 }));
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Edicion inline de traduccion");
 
                 BeginInvoke(new Action(() =>
                 {
                     if (!IsDisposed)
                     {
-                        RecargarIdiomaSeleccionado(idioma.Id);
+                        RecargarIdiomaSeleccionado(idioma.Id, item.Key);
                     }
                 }));
             }
@@ -322,11 +321,11 @@ namespace TpIDS
 
             if (cmbIdiomas.SelectedItem is Idioma idioma)
             {
-                CargarDetalleIdioma(idioma.Id);
+                CargarDetalleIdioma(idioma.Id, null);
             }
         }
 
-        private void CargarDetalleIdioma(int idiomaId)
+        private void CargarDetalleIdioma(int idiomaId, string keySeleccionada)
         {
             Idioma idioma = idiomaBLL.ObtenerIdioma(idiomaId);
             if (idioma == null)
@@ -364,17 +363,23 @@ namespace TpIDS
                     PalabraId = item.PalabraId,
                     Key = item.Palabra.Key,
                     Valor = item.Valor,
-                    EsKeyBase = EsKeyBase(item.Palabra.Key)
+                    EsKeyBase = item.Palabra.EsBase
                 })
                 .ToList();
 
             ActualizarEncabezadosGrilla(Sesion.GetInstance().IdiomaActual);
-            CargarTraduccionSeleccionada();
+            SeleccionarTraduccion(keySeleccionada);
         }
 
         private void RecargarIdiomaSeleccionado(int idiomaId)
         {
+            RecargarIdiomaSeleccionado(idiomaId, null);
+        }
+
+        private void RecargarIdiomaSeleccionado(int idiomaId, string keySeleccionada)
+        {
             CargarIdiomas(idiomaId);
+            SeleccionarTraduccion(keySeleccionada);
         }
 
         private void RefrescarSesionSiCorresponde(int idiomaIdAfectado)
@@ -418,20 +423,48 @@ namespace TpIDS
             txtbValorManual.Text = item.Valor;
         }
 
+        private void SeleccionarTraduccion(string keySeleccionada)
+        {
+            if (dgvTraducciones.Rows.Count == 0)
+            {
+                LimpiarEdicionManual();
+                return;
+            }
+
+            DataGridViewRow fila = null;
+
+            if (!string.IsNullOrWhiteSpace(keySeleccionada))
+            {
+                fila = dgvTraducciones.Rows
+                    .Cast<DataGridViewRow>()
+                    .FirstOrDefault(item =>
+                    {
+                        TraduccionGridItem traduccion = item.DataBoundItem as TraduccionGridItem;
+                        return traduccion != null &&
+                               string.Equals(traduccion.Key, keySeleccionada, StringComparison.Ordinal);
+                    });
+            }
+
+            if (fila == null)
+            {
+                fila = dgvTraducciones.Rows[0];
+            }
+
+            dgvTraducciones.ClearSelection();
+            fila.Selected = true;
+
+            if (fila.Cells.Count > 0)
+            {
+                dgvTraducciones.CurrentCell = fila.Cells[0];
+            }
+
+            CargarTraduccionSeleccionada();
+        }
+
         private void LimpiarEdicionManual()
         {
             txtbKeyManual.Clear();
             txtbValorManual.Clear();
-        }
-
-        private static bool EsKeyBase(string key)
-        {
-            return !string.IsNullOrWhiteSpace(key) &&
-                   (key.StartsWith("FormLogin.", StringComparison.Ordinal) ||
-                    key.StartsWith("FormRegistro.", StringComparison.Ordinal) ||
-                    key.StartsWith("FormGestionUsuarios.", StringComparison.Ordinal) ||
-                    key.StartsWith("FormConfiguracionUsuario.", StringComparison.Ordinal) ||
-                    key.StartsWith("FormGestionIdiomas.", StringComparison.Ordinal));
         }
 
         private void FormGestionIdiomas_FormClosed(object sender, FormClosedEventArgs e)

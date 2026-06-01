@@ -41,15 +41,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IEventoBitacora.cs" />
+    <Compile Include="IFiltroBitacora.cs" />
     <Compile Include="IIdioma.cs" />
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
     <Compile Include="IPasswordHasher.cs" />
     <Compile Include="IPalabra.cs" />
     <Compile Include="IPermiso.cs" />
+    <Compile Include="IResultadoComparacionEstado.cs" />
     <Compile Include="ISesion.cs" />
+    <Compile Include="IServicioHistorialEstados.cs" />
     <Compile Include="ITraduccion.cs" />
     <Compile Include="IUsuarioAutenticado.cs" />
+    <Compile Include="IUsuarioSnapshot.cs" />
     <Compile Include="IUsuarioPreferencia.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

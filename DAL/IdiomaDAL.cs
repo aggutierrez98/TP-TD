@@ -24,7 +24,7 @@ namespace DAL
 
         public List<Palabra> ObtenerPalabras()
         {
-            const string query = "SELECT Id, [Key] FROM Palabra ORDER BY [Key]";
+            const string query = "SELECT Id, [Key], EsBase FROM Palabra ORDER BY [Key]";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -38,12 +38,21 @@ namespace DAL
         public Idioma ObtenerIdiomaCompleto(int idiomaId)
         {
             const string query = @"
-SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], t.Valor
+SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
 FROM Idioma i
-LEFT JOIN Traduccion t ON t.IdiomaId = i.Id
-LEFT JOIN Palabra p ON p.Id = t.PalabraId
+INNER JOIN Palabra p ON p.EsBase = 1
+LEFT JOIN Traduccion t ON t.IdiomaId = i.Id AND t.PalabraId = p.Id
 WHERE i.Id = @IdiomaId
-ORDER BY p.[Key]";
+
+UNION ALL
+
+SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
+FROM Idioma i
+INNER JOIN Traduccion t ON t.IdiomaId = i.Id
+INNER JOIN Palabra p ON p.Id = t.PalabraId
+WHERE i.Id = @IdiomaId
+  AND p.EsBase = 0
+ORDER BY [Key]";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -55,7 +64,20 @@ ORDER BY p.[Key]";
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 if (dataTable.Rows.Count == 0)
                 {
-                    return null;
+                    const string queryIdioma = "SELECT Id, Nombre, [Default] FROM Idioma WHERE Id = @IdiomaId";
+                    DataTable dataTableIdioma = accesoDatos.Read(queryIdioma, parametros);
+                    if (dataTableIdioma.Rows.Count == 0)
+                    {
+                        return null;
+                    }
+
+                    DataRow rowIdioma = dataTableIdioma.Rows[0];
+                    return new Idioma
+                    {
+                        Id = Convert.ToInt32(rowIdioma["Id"]),
+                        Nombre = rowIdioma["Nombre"].ToString(),
+                        Default = Convert.ToBoolean(rowIdioma["Default"])
+                    };
                 }
 
                 DataRow primeraFila = dataTable.Rows[0];
@@ -81,7 +103,8 @@ ORDER BY p.[Key]";
                         Palabra = new Palabra
                         {
                             Id = Convert.ToInt32(row["PalabraId"]),
-                            Key = row["Key"].ToString()
+                            Key = row["Key"].ToString(),
+                            EsBase = Convert.ToBoolean(row["EsBase"])
                         }
                     });
                 }
@@ -195,7 +218,7 @@ WHERE Id = @IdiomaOrigenId;";
             }
         }
 
-        public int ObtenerOCrearPalabra(string key)
+        public int ObtenerOCrearPalabra(string key, bool esBase)
         {
             const string query = @"
 DECLARE @PalabraId INT;
@@ -206,10 +229,17 @@ WHERE [Key] = @Key;
 
 IF @PalabraId IS NULL
 BEGIN
-    INSERT INTO Palabra ([Key])
-    VALUES (@Key);
+    INSERT INTO Palabra ([Key], EsBase)
+    VALUES (@Key, @EsBase);
 
     SET @PalabraId = SCOPE_IDENTITY();
+END
+ELSE IF @EsBase = 1
+BEGIN
+    UPDATE Palabra
+    SET EsBase = 1
+    WHERE Id = @PalabraId
+      AND EsBase = 0;
 END
 
 SELECT @PalabraId;";
@@ -218,7 +248,8 @@ SELECT @PalabraId;";
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Key", SqlDbType.VarChar, key)
+                    accesoDatos.CreateParameter("@Key", SqlDbType.VarChar, key),
+                    accesoDatos.CreateParameter("@EsBase", SqlDbType.Bit, esBase)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);
@@ -309,7 +340,8 @@ SET [Default] = CASE WHEN Id = @IdiomaId THEN 1 ELSE 0 END;";
             return new Palabra
             {
                 Id = Convert.ToInt32(row["Id"]),
-                Key = row["Key"].ToString()
+                Key = row["Key"].ToString(),
+                EsBase = Convert.ToBoolean(row["EsBase"])
             };
         }
     }

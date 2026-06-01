@@ -42,7 +42,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error de registro: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Registro de usuario");
             }
         }
 

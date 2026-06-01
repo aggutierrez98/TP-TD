@@ -57,7 +57,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error en el login: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Login");
             }
         }
 
@@ -106,7 +106,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al inicializar idiomas: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Inicializacion de idiomas");
                 Close();
             }
         }

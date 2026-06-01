@@ -7,14 +7,17 @@ namespace DAL
 {
     public class UsuarioPreferenciaDAL
     {
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
+        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
 SELECT UsuarioId, IdiomaId
 FROM UsuarioPreferencias
 WHERE UsuarioId = @UsuarioId";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
@@ -34,12 +37,29 @@ WHERE UsuarioId = @UsuarioId";
                     IdiomaId = (int)row["IdiomaId"]
                 };
             }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
         }
 
-        public bool Guardar(UsuarioPreferencia preferencia)
+        public bool Guardar(UsuarioPreferencia preferencia, AccesoDatos accesoDatos = null)
+        {
+            return Guardar(preferencia == null ? 0 : preferencia.UsuarioId, preferencia == null ? (int?)null : preferencia.IdiomaId, accesoDatos);
+        }
+
+        public bool Guardar(int usuarioId, int? idiomaId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-IF EXISTS (
+IF @IdiomaId IS NULL
+BEGIN
+    DELETE FROM UsuarioPreferencias
+    WHERE UsuarioId = @UsuarioId;
+END
+ELSE IF EXISTS (
     SELECT 1
     FROM UsuarioPreferencias
     WHERE UsuarioId = @UsuarioId)
@@ -54,15 +74,25 @@ BEGIN
     VALUES (@UsuarioId, @IdiomaId);
 END";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, preferencia.UsuarioId),
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, preferencia.IdiomaId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
+                return accesoDatos.Write(query, parametros) >= 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
             }
         }
     }

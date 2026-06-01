@@ -224,7 +224,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de permiso");
             }
         }
 
@@ -250,7 +250,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de permiso hijo");
             }
         }
 
@@ -336,7 +336,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar el catalogo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Guardado de catalogo de permisos");
             }
         }
 

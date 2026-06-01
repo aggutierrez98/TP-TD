@@ -8,10 +8,12 @@ namespace BE
         public int Id { get; set; }
         public string Username { get; set; }
         public string PasswordHash { get; set; }
+        public bool Activo { get; set; }
         public IList<IPermiso> Permisos { get; set; }
 
         public Usuario()
         {
+            Activo = true;
             Permisos = new List<IPermiso>();
         }
 
@@ -19,6 +21,7 @@ namespace BE
             : this()
         {
             Username = username;
+            Activo = true;
         }
     }
 }

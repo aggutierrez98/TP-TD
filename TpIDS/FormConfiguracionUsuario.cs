@@ -55,7 +55,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Guardado de configuracion de usuario");
             }
         }
 

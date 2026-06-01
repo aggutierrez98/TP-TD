@@ -1,112 +1,225 @@
-using BE;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlClient;
+using BE;
 
 namespace DAL
 {
     public class UsuarioDAL
     {
-        public UsuarioDAL()
-        {
-        }
-
         private Usuario Map(DataRow row)
         {
             return new Usuario
             {
                 Id = (int)row["Id"],
                 Username = row["Username"].ToString(),
-                PasswordHash = row["PasswordHash"].ToString()
+                PasswordHash = row["PasswordHash"].ToString(),
+                Activo = (bool)row["Activo"]
             };
         }
 
-        public BE.Usuario ObtenerPorUsername(string username)
+        public Usuario ObtenerPorId(int id, AccesoDatos accesoDatos = null)
         {
-            string query = "SELECT Id, Username, PasswordHash FROM Usuarios WHERE Username = @Username";
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            const string query = @"
+SELECT Id, Username, PasswordHash, Activo
+FROM Usuarios
+WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
-                List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return dataTable.Rows.Count == 0 ? null : Map(dataTable.Rows[0]);
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public Usuario ObtenerPorUsername(string username, AccesoDatos accesoDatos = null)
+        {
+            const string query = @"
+SELECT Id, Username, PasswordHash, Activo
+FROM Usuarios
+WHERE Username = @Username";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, username)
                 };
 
-                DataTable dt = accesoDatos.Read(query, parametros);
-
-                if (dt.Rows.Count > 0)
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return dataTable.Rows.Count == 0 ? null : Map(dataTable.Rows[0]);
+            }
+            finally
+            {
+                if (dispose)
                 {
-                    return Map(dt.Rows[0]);
+                    accesoDatos.Dispose();
                 }
-
-                return null;
             }
         }
 
-        public bool Insertar(Usuario usuario)
+        public int InsertarYObtenerId(Usuario usuario, AccesoDatos accesoDatos = null)
         {
-            string query = "INSERT INTO Usuarios (Username, PasswordHash) VALUES (@Username, @PasswordHash)";
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            const string query = @"
+INSERT INTO Usuarios (Username, PasswordHash, Activo)
+OUTPUT INSERTED.Id
+VALUES (@Username, @PasswordHash, @Activo)";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
-                List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>
+                List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
-                    accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash)
+                    accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
+                    accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo)
                 };
 
-                int afectadas = accesoDatos.Write(query, parametros);
-
-                return afectadas > 0;
+                return accesoDatos.WriteWithResult(query, parametros);
             }
-        }
-
-        public List<BE.Usuario> ObtenerTodos()
-        {
-            string query = "SELECT Id, Username, PasswordHash FROM Usuarios ORDER BY Username";
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            finally
             {
-                DataTable dt = accesoDatos.Read(query);
-
-                List<BE.Usuario> lista = new List<BE.Usuario>();
-                foreach (DataRow row in dt.Rows)
+                if (dispose)
                 {
-                    lista.Add(Map(row));
+                    accesoDatos.Dispose();
                 }
-                return lista;
             }
         }
 
-        public bool Actualizar(Usuario usuario)
+        public bool Insertar(Usuario usuario, AccesoDatos accesoDatos = null)
         {
-            string query = "UPDATE Usuarios SET Username = @Username WHERE Id = @Id";
+            return InsertarYObtenerId(usuario, accesoDatos) > 0;
+        }
+
+        public List<Usuario> ObtenerTodos()
+        {
+            const string query = @"
+SELECT Id, Username, PasswordHash, Activo
+FROM Usuarios
+ORDER BY Activo DESC, Username";
+
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
-                List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>
+                DataTable dataTable = accesoDatos.Read(query);
+                List<Usuario> usuarios = new List<Usuario>();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    usuarios.Add(Map(row));
+                }
+
+                return usuarios;
+            }
+        }
+
+        public bool Actualizar(Usuario usuario, AccesoDatos accesoDatos = null)
+        {
+            const string query = @"
+UPDATE Usuarios
+SET Username = @Username
+WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
-                int afectadas = accesoDatos.Write(query, parametros);
-
-                return afectadas > 0;
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
             }
         }
 
-        public bool Eliminar(int id)
+        public bool GuardarEstadoCompleto(Usuario usuario, AccesoDatos accesoDatos = null)
         {
-            string query = @"
-DELETE FROM UsuarioPreferencias WHERE UsuarioId = @Id;
-DELETE FROM UsuarioPermiso WHERE UsuarioId = @Id;
-DELETE FROM Usuarios WHERE Id = @Id";
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            const string query = @"
+UPDATE Usuarios
+SET Username = @Username,
+    PasswordHash = @PasswordHash,
+    Activo = @Activo
+WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
             {
-                List<System.Data.SqlClient.SqlParameter> parametros = new List<System.Data.SqlClient.SqlParameter>
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id),
+                    accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
+                    accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
+                    accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public bool Desactivar(int id, AccesoDatos accesoDatos = null)
+        {
+            const string query = @"
+UPDATE Usuarios
+SET Activo = 0
+WHERE Id = @Id
+  AND Activo = 1";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
                 };
 
-                int afectadas = accesoDatos.Write(query, parametros);
-
-                return afectadas > 0;
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
             }
         }
     }
