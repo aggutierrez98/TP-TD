@@ -25,7 +25,7 @@ INSERT INTO UsuarioHistorial
     Activo,
     IdiomaId
 )
-OUTPUT INSERTED.Id
+OUTPUT INSERTED.HistorialId
 VALUES
 (
     @UsuarioId,

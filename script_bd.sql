@@ -511,6 +511,72 @@ BEGIN
 END
 
 SET @PalabraId = NULL;
+SELECT @PalabraId = Id FROM dbo.Palabra WHERE [Key] = N'FormBitacora.Level.Error';
+IF @PalabraId IS NULL
+BEGIN
+    INSERT INTO dbo.Palabra ([Key], EsBase) VALUES (N'FormBitacora.Level.Error', 1);
+    SET @PalabraId = SCOPE_IDENTITY();
+END
+ELSE
+BEGIN
+    UPDATE dbo.Palabra SET EsBase = 1 WHERE Id = @PalabraId;
+END
+IF EXISTS (SELECT 1 FROM dbo.Traduccion WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId)
+BEGIN
+    UPDATE dbo.Traduccion
+    SET Valor = CASE WHEN NULLIF(LTRIM(RTRIM(Valor)), '') IS NULL THEN N'Error' ELSE Valor END
+    WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor) VALUES (@PalabraId, @IdiomaBaseId, N'Error');
+END
+
+SET @PalabraId = NULL;
+SELECT @PalabraId = Id FROM dbo.Palabra WHERE [Key] = N'FormBitacora.Level.Information';
+IF @PalabraId IS NULL
+BEGIN
+    INSERT INTO dbo.Palabra ([Key], EsBase) VALUES (N'FormBitacora.Level.Information', 1);
+    SET @PalabraId = SCOPE_IDENTITY();
+END
+ELSE
+BEGIN
+    UPDATE dbo.Palabra SET EsBase = 1 WHERE Id = @PalabraId;
+END
+IF EXISTS (SELECT 1 FROM dbo.Traduccion WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId)
+BEGIN
+    UPDATE dbo.Traduccion
+    SET Valor = CASE WHEN NULLIF(LTRIM(RTRIM(Valor)), '') IS NULL THEN N'Informacion' ELSE Valor END
+    WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor) VALUES (@PalabraId, @IdiomaBaseId, N'Informacion');
+END
+
+SET @PalabraId = NULL;
+SELECT @PalabraId = Id FROM dbo.Palabra WHERE [Key] = N'FormBitacora.Level.Warning';
+IF @PalabraId IS NULL
+BEGIN
+    INSERT INTO dbo.Palabra ([Key], EsBase) VALUES (N'FormBitacora.Level.Warning', 1);
+    SET @PalabraId = SCOPE_IDENTITY();
+END
+ELSE
+BEGIN
+    UPDATE dbo.Palabra SET EsBase = 1 WHERE Id = @PalabraId;
+END
+IF EXISTS (SELECT 1 FROM dbo.Traduccion WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId)
+BEGIN
+    UPDATE dbo.Traduccion
+    SET Valor = CASE WHEN NULLIF(LTRIM(RTRIM(Valor)), '') IS NULL THEN N'Advertencia' ELSE Valor END
+    WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId;
+END
+ELSE
+BEGIN
+    INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor) VALUES (@PalabraId, @IdiomaBaseId, N'Advertencia');
+END
+
+SET @PalabraId = NULL;
 SELECT @PalabraId = Id FROM dbo.Palabra WHERE [Key] = N'FormBitacora.LevelLabel';
 IF @PalabraId IS NULL
 BEGIN

@@ -10,6 +10,10 @@ namespace TpIDS
 {
     public class FormBitacora : Form
     {
+        private const string NivelInformacion = "Informacion";
+        private const string NivelAdvertencia = "Advertencia";
+        private const string NivelError = "Error";
+
         private readonly BitacoraBLL _bitacoraBLL;
         private readonly Action<Idioma> _observadorIdioma;
 
@@ -145,6 +149,7 @@ namespace TpIDS
             dgvBitacora.RowHeadersVisible = false;
             dgvBitacora.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvBitacora.Size = new Size(944, 360);
+            dgvBitacora.CellFormatting += dgvBitacora_CellFormatting;
 
             AutoScaleDimensions = new SizeF(6F, 13F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -163,19 +168,37 @@ namespace TpIDS
         private void FormBitacora_Load(object sender, EventArgs e)
         {
             Sesion.GetInstance().RegistrarObservador(_observadorIdioma);
-            CargarNiveles();
-            Buscar();
             Actualizar(Sesion.GetInstance().IdiomaActual);
+            Buscar();
         }
 
-        private void CargarNiveles()
+        private void CargarNiveles(Idioma idioma)
         {
-            cmbNivelBitacora.Items.Clear();
-            cmbNivelBitacora.Items.Add(string.Empty);
-            cmbNivelBitacora.Items.Add("Informacion");
-            cmbNivelBitacora.Items.Add("Advertencia");
-            cmbNivelBitacora.Items.Add("Error");
-            cmbNivelBitacora.SelectedIndex = 0;
+            string nivelSeleccionado = cmbNivelBitacora.SelectedValue == null
+                ? string.Empty
+                : cmbNivelBitacora.SelectedValue.ToString();
+
+            List<NivelBitacoraItem> niveles = new List<NivelBitacoraItem>
+            {
+                new NivelBitacoraItem { Codigo = string.Empty, Texto = string.Empty },
+                new NivelBitacoraItem { Codigo = NivelInformacion, Texto = ObtenerTextoNivel(idioma, NivelInformacion) },
+                new NivelBitacoraItem { Codigo = NivelAdvertencia, Texto = ObtenerTextoNivel(idioma, NivelAdvertencia) },
+                new NivelBitacoraItem { Codigo = NivelError, Texto = ObtenerTextoNivel(idioma, NivelError) }
+            };
+
+            cmbNivelBitacora.DataSource = null;
+            cmbNivelBitacora.DisplayMember = "Texto";
+            cmbNivelBitacora.ValueMember = "Codigo";
+            cmbNivelBitacora.DataSource = niveles;
+
+            if (niveles.Any(item => string.Equals(item.Codigo, nivelSeleccionado, StringComparison.Ordinal)))
+            {
+                cmbNivelBitacora.SelectedValue = nivelSeleccionado;
+            }
+            else
+            {
+                cmbNivelBitacora.SelectedIndex = 0;
+            }
         }
 
         private void btnBuscarBitacora_Click(object sender, EventArgs e)
@@ -193,7 +216,7 @@ namespace TpIDS
                     FechaHasta = chkbFechaHastaBitacora.Checked ? (DateTime?)dtpFechaHastaBitacora.Value : null,
                     Usuario = txtbUsuarioBitacora.Text.Trim(),
                     Actividad = txtbActividadBitacora.Text.Trim(),
-                    Nivel = cmbNivelBitacora.SelectedItem == null ? null : cmbNivelBitacora.SelectedItem.ToString(),
+                    Nivel = ObtenerNivelSeleccionado(),
                     EsTecnica = chkbSoloTecnicaBitacora.Checked ? (bool?)true : null
                 };
 
@@ -229,6 +252,7 @@ namespace TpIDS
         public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
+            CargarNiveles(idioma);
         }
 
         private void ConfigurarTags()
@@ -248,6 +272,57 @@ namespace TpIDS
         private void FormBitacora_FormClosed(object sender, FormClosedEventArgs e)
         {
             Sesion.GetInstance().DesregistrarObservador(_observadorIdioma);
+        }
+
+        private string ObtenerNivelSeleccionado()
+        {
+            string nivel = cmbNivelBitacora.SelectedValue == null
+                ? null
+                : cmbNivelBitacora.SelectedValue.ToString();
+
+            return string.IsNullOrWhiteSpace(nivel) ? null : nivel;
+        }
+
+        private string ObtenerTextoNivel(Idioma idioma, string codigoNivel)
+        {
+            switch (codigoNivel)
+            {
+                case NivelInformacion:
+                    return idioma == null ? NivelInformacion : idioma.ObtenerTexto("FormBitacora.Level.Information");
+                case NivelAdvertencia:
+                    return idioma == null ? NivelAdvertencia : idioma.ObtenerTexto("FormBitacora.Level.Warning");
+                case NivelError:
+                    return idioma == null ? NivelError : idioma.ObtenerTexto("FormBitacora.Level.Error");
+                default:
+                    return codigoNivel;
+            }
+        }
+
+        private void dgvBitacora_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.Value == null || !dgvBitacora.Columns.Contains("Nivel"))
+            {
+                return;
+            }
+
+            if (e.ColumnIndex != dgvBitacora.Columns["Nivel"].Index)
+            {
+                return;
+            }
+
+            string textoNivel = ObtenerTextoNivel(Sesion.GetInstance().IdiomaActual, e.Value.ToString());
+            if (!string.Equals(textoNivel, e.Value.ToString(), StringComparison.Ordinal))
+            {
+                e.Value = textoNivel;
+                e.FormattingApplied = true;
+            }
+        }
+
+        private sealed class NivelBitacoraItem
+        {
+            public string Codigo { get; set; }
+
+            public string Texto { get; set; }
         }
     }
 }

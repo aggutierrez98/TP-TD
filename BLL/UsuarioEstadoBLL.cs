@@ -79,7 +79,7 @@ namespace BLL
             }
 
             AgregarDiferencia(diferencias, "Username", versionAnterior == null ? null : versionAnterior.Username, versionActual.Username);
-            AgregarDiferencia(diferencias, "PasswordHash", versionAnterior == null ? null : versionAnterior.PasswordHash, versionActual.PasswordHash);
+            AgregarCambioProtegidoPassword(diferencias, versionActual, versionAnterior);
             AgregarDiferencia(diferencias, "Activo", versionAnterior == null ? null : versionAnterior.Activo.ToString(), versionActual.Activo.ToString());
             AgregarDiferencia(diferencias, "IdiomaId", versionAnterior == null ? null : FormatearNullable(versionAnterior.IdiomaId), FormatearNullable(versionActual.IdiomaId));
             AgregarDiferencia(diferencias, "Permisos", versionAnterior == null ? null : FormatearPermisos(versionAnterior.PermisosIds), FormatearPermisos(versionActual.PermisosIds));
@@ -124,6 +124,24 @@ namespace BLL
                 Campo = campo,
                 ValorAnterior = string.IsNullOrWhiteSpace(anterior) ? "-" : anterior,
                 ValorNuevo = string.IsNullOrWhiteSpace(actual) ? "-" : actual
+            });
+        }
+
+        private void AgregarCambioProtegidoPassword(ICollection<ResultadoComparacionEstado> diferencias, UsuarioHistorialSnapshot versionActual, UsuarioHistorialSnapshot versionAnterior)
+        {
+            string hashAnterior = versionAnterior == null ? null : versionAnterior.PasswordHash;
+            string hashActual = versionActual == null ? null : versionActual.PasswordHash;
+
+            if (string.Equals(hashAnterior ?? string.Empty, hashActual ?? string.Empty, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            diferencias.Add(new ResultadoComparacionEstado
+            {
+                Campo = "PasswordHash",
+                ValorAnterior = string.IsNullOrWhiteSpace(hashAnterior) ? "-" : "Configurada",
+                ValorNuevo = string.IsNullOrWhiteSpace(hashActual) ? "-" : "Actualizada"
             });
         }
 
