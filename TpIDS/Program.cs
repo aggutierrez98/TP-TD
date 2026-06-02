@@ -15,7 +15,7 @@ namespace TpIDS
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += Application_ThreadException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            InfraestructuraBLL.Inicializar();
+            BootstrapAplicacionBLL.Inicializar();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new FormLogin());

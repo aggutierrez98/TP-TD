@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using DAL;
 using SERVICIOS;
 
 namespace BLL
 {
-    public static class InfraestructuraBLL
+    public static class InicializacionHistorialBLL
     {
         private static readonly object Sync = new object();
         private static bool _inicializado;
@@ -23,15 +22,7 @@ namespace BLL
                     return;
                 }
 
-                InicializadorEsquemaBLL.AsegurarEsquema();
-
-                BitacoraDAL bitacoraDAL = new BitacoraDAL();
                 UsuarioHistorialDAL usuarioHistorialDAL = new UsuarioHistorialDAL();
-
-                Sesion.GetInstance().ConfigurarBitacora(
-                    (evento, contexto) => bitacoraDAL.Guardar(evento, contexto as AccesoDatos),
-                    filtro => bitacoraDAL.Buscar(filtro));
-
                 HistorialEstadosService.GetInstance().Configurar(
                     (snapshot, contexto) => usuarioHistorialDAL.GuardarVersion(snapshot, contexto as AccesoDatos),
                     usuarioId => usuarioHistorialDAL.ObtenerVersiones(usuarioId),
@@ -40,6 +31,5 @@ namespace BLL
                 _inicializado = true;
             }
         }
-
     }
 }

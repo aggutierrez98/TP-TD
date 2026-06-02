@@ -1,5 +1,5 @@
 @startuml
-title T04 - Composite de permisos por capas
+title T04 - Perfiles de usuario - Composite por capas
 
 skinparam classAttributeIconSize 0
 hide empty members
@@ -19,16 +19,16 @@ package "ABSTRACCIONES" {
   interface IUsuarioAutenticado {
     +Id : int
     +Username : string
-    +Permisos : IList<IPermiso>
   }
 
   interface ISesion {
     +IniciarSesion(usuario)
     +CerrarSesion()
     +GetUsuarioActual()
+    +GetUsuarioActualId()
+    +GetUsuarioActualNombre()
+    +ActualizarUsuarioActualNombre(username)
     +HaySesionActiva()
-    +TienePermiso(nombrePermiso)
-    +ObtenerPermisosEfectivos()
   }
 }
 
@@ -56,19 +56,16 @@ package "SERVICIOS" {
     +PermisoId : int
   }
 
-  class PermisoService {
-    +ConstruirArbol(nodos, relaciones)
-    +Aplanar(raices)
-    +ObtenerRelaciones(raices)
-    +ValidarSinCiclos(raices)
-    +ValidarNombresUnicos(nodos)
-    +ValidarGruposNoVacios(nodos)
-    +ObtenerPermisosEfectivos(permisosAsignados)
+  class PermisoService
+  class AutorizacionService {
+    +ActualizarPermisosUsuarioActual(permisos)
+    +Limpiar()
+    +TienePermiso(nombrePermiso)
+    +ObtenerPermisosEfectivos()
   }
 
   class Sesion {
     -_usuarioActual : IUsuarioAutenticado
-    +IdiomaActual : Idioma
   }
 }
 
@@ -93,24 +90,34 @@ PermisoNodo <|-- GrupoPermiso
 IUsuarioAutenticado <|.. Usuario
 ISesion <|.. Sesion
 
-Usuario --> IPermiso : permisos directos
+Usuario --> IPermiso : permisos de negocio
 Sesion --> IUsuarioAutenticado
-Sesion --> PermisoService
+AutorizacionService --> PermisoService
 PermisoBLL --> PermisoDAL
 PermisoBLL --> UsuarioPermisoDAL
 PermisoBLL --> PermisoService
+PermisoBLL --> AutorizacionService : refresca runtime
+UsuarioBLL --> Sesion : autenticacion
 UsuarioBLL --> PermisoBLL
+UsuarioBLL --> AutorizacionService : carga permisos activos
 FormGestionPermisos --> PermisoBLL
 FormGestionUsuarios --> PermisoBLL
 
 note right of Sesion
-SERVICIOS no conoce BE.Usuario.
-Sesion opera solo con IUsuarioAutenticado.
+Sesion solo mantiene identidad
+del usuario autenticado.
+No resuelve permisos.
+end note
+
+note right of AutorizacionService
+Servicio runtime desacoplado
+para autorizacion del usuario activo.
 end note
 
 note bottom of Usuario
-BE depende solo de ABSTRACCIONES.
-El usuario conserva solo estado.
+BE conoce ABSTRACCIONES.
+BLL y UI consumen SERVICIOS
+sin depender directamente de ABSTRACCIONES.
 end note
 
 @enduml

@@ -35,10 +35,10 @@ namespace TpIDS
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             CargarGrilla();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void InicializarControlesDinamicos()
@@ -257,10 +257,6 @@ namespace TpIDS
                 return;
             }
 
-            string usernameSeleccionado = dgvUsuarios.SelectedRows[0].Cells["Username"].Value == null
-                ? string.Empty
-                : dgvUsuarios.SelectedRows[0].Cells["Username"].Value.ToString();
-
             DialogResult confirmacion = MessageBox.Show(
                 "Se desactivara logicamente el usuario seleccionado. Desea continuar?",
                 "Confirmar baja logica",
@@ -344,13 +340,6 @@ namespace TpIDS
                     .ToList();
 
                 permisoBLL.GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados);
-
-                int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
-                if (usuarioActualId.HasValue && usuarioActualId.Value == _idSeleccionado)
-                {
-                    Sesion.GetInstance().ActualizarPermisosUsuarioActual(permisoBLL.ObtenerPermisosDirectosUsuario(_idSeleccionado));
-                }
-
                 MessageBox.Show("Permisos guardados correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -449,7 +438,7 @@ namespace TpIDS
 
         private string ObtenerTextoActual(string key)
         {
-            Idioma idioma = Sesion.GetInstance().IdiomaActual;
+            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTexto(key);
         }
 
@@ -501,7 +490,7 @@ namespace TpIDS
 
         private void FormGestionUsuarios_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

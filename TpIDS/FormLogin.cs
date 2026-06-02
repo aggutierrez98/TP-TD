@@ -51,7 +51,7 @@ namespace TpIDS
 
                 formGestion.FormClosed += (s, args) =>
                 {
-                    Sesion.GetInstance().CerrarSesion();
+                    gestorUsuario.CerrarSesionActual();
                     Close();
                 };
             }
@@ -101,8 +101,8 @@ namespace TpIDS
             try
             {
                 gestorIdioma.InicializarAplicacion();
-                Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-                Actualizar(Sesion.GetInstance().IdiomaActual);
+                IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
+                Actualizar(IdiomaService.GetInstance().IdiomaActual);
             }
             catch (Exception ex)
             {
@@ -113,7 +113,7 @@ namespace TpIDS
 
         private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

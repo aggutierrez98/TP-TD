@@ -8,12 +8,12 @@ namespace BLL
     {
         public BitacoraBLL()
         {
-            InfraestructuraBLL.Inicializar();
+            BootstrapAplicacionBLL.Inicializar();
         }
 
         public List<EventoBitacora> Buscar(FiltroBitacora filtro)
         {
-            return Sesion.GetInstance()
+            return BitacoraService.GetInstance()
                 .ConsultarBitacora(filtro)
                 .OfType<EventoBitacora>()
                 .ToList();

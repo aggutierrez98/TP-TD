@@ -24,9 +24,9 @@ namespace TpIDS
 
         private void FormGestionIdiomas_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
             CargarIdiomas(null);
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnAgregarIdioma_Click(object sender, EventArgs e)
@@ -35,7 +35,7 @@ namespace TpIDS
             {
                 int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
                 CargarIdiomas(idiomaId);
-                RefrescarSesionSiCorresponde(idiomaId);
+                RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
                 MessageBox.Show("Idioma creado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -58,7 +58,7 @@ namespace TpIDS
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);
-                    RefrescarSesionSiCorresponde(idioma.Id);
+                    RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                     MessageBox.Show("Idioma actualizado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -93,7 +93,7 @@ namespace TpIDS
                 if (eliminado)
                 {
                     CargarIdiomas(null);
-                    RefrescarSesionSiCorresponde(idioma.Id);
+                    RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                     MessageBox.Show("Idioma eliminado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
@@ -125,7 +125,7 @@ namespace TpIDS
                 {
                     idiomaBLL.ImportarJson(idioma.Id, openFileDialog.FileName);
                     RecargarIdiomaSeleccionado(idioma.Id);
-                    RefrescarSesionSiCorresponde(idioma.Id);
+                    RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                     MessageBox.Show("Traducciones importadas correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
@@ -148,7 +148,7 @@ namespace TpIDS
                 string keySeleccionada = txtbKeyManual.Text;
                 idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
                 RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
-                RefrescarSesionSiCorresponde(idioma.Id);
+                RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                 MessageBox.Show("Traduccion guardada correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -188,7 +188,7 @@ namespace TpIDS
                 {
                     LimpiarEdicionManual();
                     RecargarIdiomaSeleccionado(idioma.Id);
-                    RefrescarSesionSiCorresponde(idioma.Id);
+                    RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                 }
             }
             catch (Exception ex)
@@ -239,7 +239,7 @@ namespace TpIDS
                 idiomaBLL.GuardarTraduccion(idioma.Id, item.Key, valorEditado);
                 txtbKeyManual.Text = item.Key;
                 txtbValorManual.Text = valorEditado;
-                RefrescarSesionSiCorresponde(idioma.Id);
+                RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
 
                 BeginInvoke(new Action(() =>
                 {
@@ -367,7 +367,7 @@ namespace TpIDS
                 })
                 .ToList();
 
-            ActualizarEncabezadosGrilla(Sesion.GetInstance().IdiomaActual);
+            ActualizarEncabezadosGrilla(IdiomaService.GetInstance().IdiomaActual);
             SeleccionarTraduccion(keySeleccionada);
         }
 
@@ -382,21 +382,21 @@ namespace TpIDS
             SeleccionarTraduccion(keySeleccionada);
         }
 
-        private void RefrescarSesionSiCorresponde(int idiomaIdAfectado)
+        private void RefrescarIdiomaRuntimeSiCorresponde(int idiomaIdAfectado)
         {
-            Idioma idiomaActual = Sesion.GetInstance().IdiomaActual;
+            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
             Idioma idiomaDefault = idiomaBLL.ObtenerIdiomaDefault();
 
             if (idiomaActual != null && idiomaActual.Id == idiomaIdAfectado)
             {
                 Idioma idiomaRecargado = idiomaBLL.ObtenerIdioma(idiomaIdAfectado);
-                Sesion.GetInstance().CambiarIdioma(idiomaRecargado ?? idiomaDefault);
+                IdiomaService.GetInstance().CambiarIdioma(idiomaRecargado ?? idiomaDefault);
                 return;
             }
 
             if (idiomaDefault != null && idiomaActual != null && idiomaDefault.Id == idiomaActual.Id)
             {
-                Sesion.GetInstance().CambiarIdioma(idiomaDefault);
+                IdiomaService.GetInstance().CambiarIdioma(idiomaDefault);
             }
         }
 
@@ -469,7 +469,7 @@ namespace TpIDS
 
         private void FormGestionIdiomas_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
 
         private class TraduccionGridItem

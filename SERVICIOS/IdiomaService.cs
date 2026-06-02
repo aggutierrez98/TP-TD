@@ -5,53 +5,63 @@ namespace SERVICIOS
 {
     public class IdiomaService
     {
-        public string NormalizarNombre(string nombre)
-        {
-            if (string.IsNullOrWhiteSpace(nombre))
-            {
-                throw new ExcepcionNegocio("El nombre del idioma no puede estar vacio.");
-            }
+        private static IdiomaService _instancia;
 
-            return nombre.Trim();
+        private readonly List<System.Action<Idioma>> _observadoresRegistrados;
+        private Idioma _idiomaActual;
+
+        private IdiomaService()
+        {
+            _observadoresRegistrados = new List<System.Action<Idioma>>();
         }
 
-        public void ValidarNombreDuplicado(IEnumerable<Idioma> idiomas, string nombre, int? idiomaId)
+        public static IdiomaService GetInstance()
         {
-            bool existe = idiomas.Any(item =>
-                (!idiomaId.HasValue || item.Id != idiomaId.Value) &&
-                string.Equals(item.Nombre, nombre, System.StringComparison.OrdinalIgnoreCase));
-
-            if (existe)
+            if (_instancia == null)
             {
-                throw new ExcepcionNegocio("Ya existe un idioma con ese nombre.");
+                _instancia = new IdiomaService();
             }
+
+            return _instancia;
         }
 
-        public bool EstaCompleto(Idioma idioma)
+        public Idioma IdiomaActual
         {
-            if (idioma == null)
-            {
-                return false;
-            }
-
-            List<Traduccion> traduccionesBase = idioma.Traducciones
-                .Where(item => item.Palabra != null && item.Palabra.EsBase)
-                .ToList();
-
-            return traduccionesBase.Count > 0 &&
-                   traduccionesBase.All(item => !string.IsNullOrWhiteSpace(item.Valor));
+            get { return _idiomaActual; }
         }
 
-        public void ValidarIdiomaSeleccionable(Idioma idioma)
+        public void RegistrarObservador(System.Action<Idioma> observador)
         {
-            if (idioma == null)
+            if (observador == null || _observadoresRegistrados.Contains(observador))
             {
-                throw new ExcepcionNegocio("No se encontro el idioma seleccionado.");
+                return;
             }
 
-            if (!EstaCompleto(idioma))
+            _observadoresRegistrados.Add(observador);
+        }
+
+        public void DesregistrarObservador(System.Action<Idioma> observador)
+        {
+            if (observador == null)
             {
-                throw new ExcepcionNegocio("El idioma seleccionado no esta completo y no puede usarse en la sesion.");
+                return;
+            }
+
+            _observadoresRegistrados.Remove(observador);
+        }
+
+        public void CambiarIdioma(Idioma idioma)
+        {
+            _idiomaActual = idioma;
+
+            if (_idiomaActual == null)
+            {
+                return;
+            }
+
+            foreach (System.Action<Idioma> observador in _observadoresRegistrados.ToList())
+            {
+                observador(_idiomaActual);
             }
         }
     }

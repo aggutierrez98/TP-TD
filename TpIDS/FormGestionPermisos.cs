@@ -146,10 +146,10 @@ namespace TpIDS
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-            RecargarTiposPermiso(Sesion.GetInstance().IdiomaActual);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
+            RecargarTiposPermiso(IdiomaService.GetInstance().IdiomaActual);
             CargarCatalogo();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void CargarCatalogo()
@@ -389,7 +389,7 @@ namespace TpIDS
 
         private void FormGestionPermisos_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

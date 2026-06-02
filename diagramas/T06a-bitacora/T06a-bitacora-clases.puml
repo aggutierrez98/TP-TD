@@ -1,0 +1,50 @@
+@startuml
+title T06a - Bitacora desacoplada - Diagrama de clases
+
+package "UI" {
+  class FormBitacora
+  class FormGestionUsuarios
+}
+
+package "BLL" {
+  class BitacoraBLL
+  class ManejadorExcepcionesBLL
+  class InicializacionBitacoraBLL
+  class BootstrapAplicacionBLL
+}
+
+package "SERVICIOS" {
+  class Sesion
+  class BitacoraService
+  class EventoBitacora
+  class FiltroBitacora
+}
+
+package "DAL" {
+  class BitacoraDAL
+  class AccesoDatos
+}
+
+FormBitacora --> BitacoraBLL
+FormGestionUsuarios --> FormBitacora
+BitacoraBLL --> BitacoraService
+ManejadorExcepcionesBLL --> BitacoraService
+InicializacionBitacoraBLL --> BitacoraService
+InicializacionBitacoraBLL --> BitacoraDAL
+BitacoraService ..> Sesion : proveedor de usuario
+BitacoraService --> EventoBitacora
+BitacoraService --> BitacoraDAL : delegado configurado
+BitacoraDAL --> AccesoDatos
+
+note right of BitacoraService
+Servicio runtime transversal.
+No conoce DAL por referencia directa.
+Recibe persistencia y contexto
+desde la inicializacion tecnica.
+end note
+
+note right of Sesion
+Sesion no es fachada de bitacora.
+Solo expone identidad para snapshot.
+end note
+@enduml

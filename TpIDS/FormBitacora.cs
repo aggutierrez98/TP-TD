@@ -167,8 +167,8 @@ namespace TpIDS
 
         private void FormBitacora_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(_observadorIdioma);
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            IdiomaService.GetInstance().RegistrarObservador(_observadorIdioma);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
             Buscar();
         }
 
@@ -271,7 +271,7 @@ namespace TpIDS
 
         private void FormBitacora_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(_observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(_observadorIdioma);
         }
 
         private string ObtenerNivelSeleccionado()
@@ -310,7 +310,7 @@ namespace TpIDS
                 return;
             }
 
-            string textoNivel = ObtenerTextoNivel(Sesion.GetInstance().IdiomaActual, e.Value.ToString());
+            string textoNivel = ObtenerTextoNivel(IdiomaService.GetInstance().IdiomaActual, e.Value.ToString());
             if (!string.Equals(textoNivel, e.Value.ToString(), StringComparison.Ordinal))
             {
                 e.Value = textoNivel;

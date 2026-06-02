@@ -12,15 +12,15 @@ namespace BLL
     {
         private readonly IdiomaDAL _idiomaDAL;
         private readonly UsuarioPreferenciaDAL _usuarioPreferenciaDAL;
-        private readonly IdiomaService _idiomaService;
+        private readonly IdiomaCatalogoService _idiomaCatalogoService;
         private readonly UsuarioEstadoBLL _usuarioEstadoBLL;
 
         public IdiomaBLL()
         {
-            InfraestructuraBLL.Inicializar();
+            BootstrapAplicacionBLL.Inicializar();
             _idiomaDAL = new IdiomaDAL();
             _usuarioPreferenciaDAL = new UsuarioPreferenciaDAL();
-            _idiomaService = new IdiomaService();
+            _idiomaCatalogoService = new IdiomaCatalogoService();
             _usuarioEstadoBLL = new UsuarioEstadoBLL();
         }
 
@@ -31,7 +31,7 @@ namespace BLL
             Idioma idiomaDefault = ObtenerIdiomaDefault();
             if (idiomaDefault != null)
             {
-                Sesion.GetInstance().CambiarIdioma(idiomaDefault);
+                IdiomaService.GetInstance().CambiarIdioma(idiomaDefault);
             }
         }
 
@@ -66,13 +66,13 @@ namespace BLL
                 throw new ExcepcionNegocio("No se encontro un idioma default configurado.");
             }
 
-            Sesion.GetInstance().CambiarIdioma(idioma);
+            IdiomaService.GetInstance().CambiarIdioma(idioma);
         }
 
         public bool GuardarPreferencia(int usuarioId, int idiomaId)
         {
             Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
-            _idiomaService.ValidarIdiomaSeleccionable(idioma);
+            _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -87,7 +87,7 @@ namespace BLL
                     }
 
                     _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionIdiomaPreferido", "Actualizacion de la preferencia de idioma del usuario.", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Actualizacion preferencia idioma", "Se actualizo el idioma preferido del usuario ID " + usuarioId + ".", "IdiomaBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion preferencia idioma", "Se actualizo el idioma preferido del usuario ID " + usuarioId + ".", "IdiomaBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -108,8 +108,8 @@ namespace BLL
 
         public int CrearIdioma(string nombre, bool idiomaDefault)
         {
-            string nombreNormalizado = _idiomaService.NormalizarNombre(nombre);
-            _idiomaService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, null);
+            string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
+            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, null);
 
             int idiomaId = _idiomaDAL.InsertarIdioma(new Idioma
             {
@@ -123,14 +123,14 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            Sesion.GetInstance().RegistrarOperacion("Alta de idioma", "Se creo el idioma " + nombreNormalizado + ".", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Alta de idioma", "Se creo el idioma " + nombreNormalizado + ".", "IdiomaBLL");
             return idiomaId;
         }
 
         public bool ActualizarIdioma(int idiomaId, string nombre, bool idiomaDefault)
         {
-            string nombreNormalizado = _idiomaService.NormalizarNombre(nombre);
-            _idiomaService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, idiomaId);
+            string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
+            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, idiomaId);
 
             bool actualizado = _idiomaDAL.ActualizarIdioma(new Idioma
             {
@@ -157,7 +157,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            Sesion.GetInstance().RegistrarOperacion("Edicion de idioma", "Se actualizo el idioma " + nombreNormalizado + ".", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Edicion de idioma", "Se actualizo el idioma " + nombreNormalizado + ".", "IdiomaBLL");
             return true;
         }
 
@@ -195,7 +195,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            Sesion.GetInstance().RegistrarOperacion("Baja de idioma", "Se elimino el idioma " + idioma.Nombre + ".", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Baja de idioma", "Se elimino el idioma " + idioma.Nombre + ".", "IdiomaBLL");
             return true;
         }
 
@@ -213,7 +213,7 @@ namespace BLL
 
             int palabraId = _idiomaDAL.ObtenerOCrearPalabra(key.Trim(), false);
             _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
-            Sesion.GetInstance().RegistrarOperacion("Actualizacion traduccion", "Se guardo la traduccion " + key.Trim() + " para el idioma ID " + idiomaId + ".", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion traduccion", "Se guardo la traduccion " + key.Trim() + " para el idioma ID " + idiomaId + ".", "IdiomaBLL");
         }
 
         public bool EliminarTraduccion(int idiomaId, int palabraId)
@@ -241,7 +241,7 @@ namespace BLL
             bool eliminado = _idiomaDAL.EliminarTraduccion(idiomaId, palabraId);
             if (eliminado)
             {
-                Sesion.GetInstance().RegistrarOperacion("Baja de traduccion", "Se elimino la traduccion " + traduccion.Palabra.Key + " del idioma ID " + idiomaId + ".", "IdiomaBLL");
+                BitacoraService.GetInstance().RegistrarOperacion("Baja de traduccion", "Se elimino la traduccion " + traduccion.Palabra.Key + " del idioma ID " + idiomaId + ".", "IdiomaBLL");
             }
 
             return eliminado;
@@ -277,19 +277,19 @@ namespace BLL
                 GuardarTraduccion(idiomaId, item.Key, item.Value);
             }
 
-            Sesion.GetInstance().RegistrarOperacion("Importacion de traducciones", "Se importaron traducciones JSON para el idioma ID " + idiomaId + ".", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Importacion de traducciones", "Se importaron traducciones JSON para el idioma ID " + idiomaId + ".", "IdiomaBLL");
         }
 
         public bool EstaCompleto(int idiomaId)
         {
-            return _idiomaService.EstaCompleto(_idiomaDAL.ObtenerIdiomaCompleto(idiomaId));
+            return _idiomaCatalogoService.EstaCompleto(_idiomaDAL.ObtenerIdiomaCompleto(idiomaId));
         }
 
         public void AplicarIdiomaSesion(int idiomaId)
         {
             Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
-            _idiomaService.ValidarIdiomaSeleccionable(idioma);
-            Sesion.GetInstance().CambiarIdioma(idioma);
+            _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
+            IdiomaService.GetInstance().CambiarIdioma(idioma);
         }
 
         public void GenerarDiccionarios()
@@ -305,7 +305,7 @@ namespace BLL
             if (preferencia != null)
             {
                 Idioma idiomaPreferido = _idiomaDAL.ObtenerIdiomaCompleto(preferencia.IdiomaId);
-                if (idiomaPreferido != null && _idiomaService.EstaCompleto(idiomaPreferido))
+                if (idiomaPreferido != null && _idiomaCatalogoService.EstaCompleto(idiomaPreferido))
                 {
                     return idiomaPreferido;
                 }

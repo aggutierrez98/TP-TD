@@ -14,17 +14,22 @@
 
 Guardar diagramas en:
 
-- `.agents/diagramas/plantuml/is/`
-- `.agents/diagramas/plantuml/td/`
+- `diagramas/<requisito>/`
+
+Ejemplos:
+
+- `diagramas/T04-perfiles-usuario/`
+- `diagramas/T05-multidioma/`
+- `diagramas/T06a-bitacora/`
 
 ## Suggested file naming
 
-Usar nombres ordenables por requerimiento tecnico:
+Usar nombres ordenables por requerimiento tecnico dentro de la carpeta del requisito. El tipo de diagrama debe estar en el nombre del archivo:
 
-- `is-i1-t01-arquitectura-base-componentes.puml`
-- `is-i1-t02-login-usuarios-clases.puml`
-- `is-i2-t07-dv-secuencia.puml`
-- `td-i4-a01-instalador-casos-de-uso.puml`
+- `diagramas/T02-login-logout/T02-login-logout-secuencia.puml`
+- `diagramas/T04-perfiles-usuario/T04-perfiles-usuario-composite-clases.puml`
+- `diagramas/T05-multidioma/T05-multidioma-observer-clases.puml`
+- `diagramas/T07-digitos-verificadores/T07-digitos-verificadores-secuencia.puml`
 
 ## Sync rule
 

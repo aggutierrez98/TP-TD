@@ -17,7 +17,7 @@ namespace BLL
 
         public UsuarioBLL()
         {
-            InfraestructuraBLL.Inicializar();
+            BootstrapAplicacionBLL.Inicializar();
             _usuarioDAL = new UsuarioDAL();
             _passwordHasher = new PasswordHasher();
             _idiomaBLL = new IdiomaBLL();
@@ -29,36 +29,42 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(passwordRaw))
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de login con campos vacios.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de login con campos vacios.", "UsuarioBLL");
                 throw new ExcepcionNegocio("El usuario y la contrasena no pueden estar vacios.");
             }
 
             Usuario usuario = _usuarioDAL.ObtenerPorUsername(username.Trim());
             if (usuario == null)
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Login fallido", "Usuario inexistente: " + username.Trim() + ".", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Usuario inexistente: " + username.Trim() + ".", "UsuarioBLL");
                 return null;
             }
 
             if (!usuario.Activo)
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de acceso sobre usuario inactivo: " + usuario.Username + ".", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de acceso sobre usuario inactivo: " + usuario.Username + ".", "UsuarioBLL");
                 return null;
             }
 
             bool esValido = _passwordHasher.VerifyPassword(passwordRaw, usuario.PasswordHash);
             if (!esValido)
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Login fallido", "Credenciales invalidas para el usuario " + usuario.Username + ".", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Credenciales invalidas para el usuario " + usuario.Username + ".", "UsuarioBLL");
                 return null;
             }
 
             _permisoBLL.CargarPermisosEnUsuario(usuario);
             Sesion.GetInstance().IniciarSesion(usuario.Id, usuario.Username);
-            Sesion.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuario.Id));
+            AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuario.Id));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuario.Id);
-            Sesion.GetInstance().RegistrarOperacion("Login exitoso", "Ingreso del usuario " + usuario.Username + ".", "UsuarioBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Login exitoso", "Ingreso del usuario " + usuario.Username + ".", "UsuarioBLL");
             return usuario;
+        }
+
+        public void CerrarSesionActual()
+        {
+            AutorizacionService.GetInstance().Limpiar();
+            Sesion.GetInstance().CerrarSesion();
         }
 
         public bool Registrar(string username, string passwordRaw)
@@ -68,7 +74,7 @@ namespace BLL
 
             if (string.IsNullOrWhiteSpace(usernameNormalizado) || string.IsNullOrWhiteSpace(passwordNormalizada))
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "Se intento registrar un usuario con datos incompletos.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "Se intento registrar un usuario con datos incompletos.", "UsuarioBLL");
                 throw new ExcepcionNegocio("El usuario y la contrasena no pueden estar vacios.");
             }
 
@@ -81,7 +87,7 @@ namespace BLL
                     Usuario existente = _usuarioDAL.ObtenerPorUsername(usernameNormalizado, accesoDatos);
                     if (existente != null)
                     {
-                        Sesion.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "El nombre de usuario " + usernameNormalizado + " ya existe.", "UsuarioBLL", accesoDatos);
+                        BitacoraService.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "El nombre de usuario " + usernameNormalizado + " ya existe.", "UsuarioBLL", accesoDatos);
                         throw new ExcepcionNegocio("El nombre de usuario ya existe. Por favor elegi otro.");
                     }
 
@@ -93,7 +99,7 @@ namespace BLL
 
                     nuevoUsuario.Id = _usuarioDAL.InsertarYObtenerId(nuevoUsuario, accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(nuevoUsuario.Id, "Alta", "Alta inicial del usuario.", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Alta de usuario", "Se creo el usuario " + usernameNormalizado + ".", "UsuarioBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Alta de usuario", "Se creo el usuario " + usernameNormalizado + ".", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -120,7 +126,7 @@ namespace BLL
             string usernameNormalizado = (nuevoUsername ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(usernameNormalizado))
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "Se intento guardar un nombre vacio para el usuario ID " + id + ".", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "Se intento guardar un nombre vacio para el usuario ID " + id + ".", "UsuarioBLL");
                 throw new ExcepcionNegocio("El nombre de usuario no puede estar vacio.");
             }
 
@@ -144,7 +150,7 @@ namespace BLL
                     Usuario existente = _usuarioDAL.ObtenerPorUsername(usernameNormalizado, accesoDatos);
                     if (existente != null && existente.Id != id)
                     {
-                        Sesion.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "El nombre de usuario " + usernameNormalizado + " ya existe.", "UsuarioBLL", accesoDatos);
+                        BitacoraService.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "El nombre de usuario " + usernameNormalizado + " ya existe.", "UsuarioBLL", accesoDatos);
                         throw new ExcepcionNegocio("El nombre de usuario ya existe. Por favor elegi otro.");
                     }
 
@@ -156,9 +162,8 @@ namespace BLL
                     }
 
                     _usuarioEstadoBLL.GuardarVersionActual(id, "Edicion", "Actualizacion del nombre de usuario.", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Edicion de usuario", "Se actualizo el usuario " + usernameNormalizado + ".", "UsuarioBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Edicion de usuario", "Se actualizo el usuario " + usernameNormalizado + ".", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
-                    return true;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -171,6 +176,13 @@ namespace BLL
                     throw new ExcepcionTecnica("No se pudo actualizar el usuario.", ex);
                 }
             }
+
+            if (Sesion.GetInstance().GetUsuarioActualId() == id)
+            {
+                Sesion.GetInstance().ActualizarUsuarioActualNombre(usernameNormalizado);
+            }
+
+            return true;
         }
 
         public bool Eliminar(int id)
@@ -178,7 +190,7 @@ namespace BLL
             int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == id)
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Baja de usuario rechazada", "Se intento desactivar al usuario en sesion.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Baja de usuario rechazada", "Se intento desactivar al usuario en sesion.", "UsuarioBLL");
                 throw new ExcepcionNegocio("No se puede desactivar al usuario que tiene la sesion activa.");
             }
 
@@ -206,7 +218,7 @@ namespace BLL
                     }
 
                     _usuarioEstadoBLL.GuardarVersionActual(id, "BajaLogica", "Desactivacion del usuario.", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Baja logica de usuario", "Se desactivo el usuario " + usuario.Username + ".", "UsuarioBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Baja logica de usuario", "Se desactivo el usuario " + usuario.Username + ".", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -278,7 +290,7 @@ namespace BLL
 
                     _usuarioEstadoBLL.AplicarSnapshot(snapshot, accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(snapshot.UsuarioId, "Restauracion", "Restauracion desde historial #" + historialId + ".", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Restauracion de usuario", "Se restauro el usuario " + snapshot.Username + " desde el historial #" + historialId + ".", "UsuarioBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Restauracion de usuario", "Se restauro el usuario " + snapshot.Username + " desde el historial #" + historialId + ".", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -312,7 +324,7 @@ namespace BLL
             }
 
             Sesion.GetInstance().ActualizarUsuarioActualNombre(usuario.Username);
-            Sesion.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
+            AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
         }
     }

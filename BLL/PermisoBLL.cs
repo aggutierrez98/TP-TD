@@ -18,7 +18,7 @@ namespace BLL
 
         public PermisoBLL()
         {
-            InfraestructuraBLL.Inicializar();
+            BootstrapAplicacionBLL.Inicializar();
             _permisoDAL = new PermisoDAL();
             _usuarioPermisoDAL = new UsuarioPermisoDAL();
             _permisoService = new PermisoService();
@@ -37,7 +37,7 @@ namespace BLL
         {
             if (raices == null || raices.Count == 0)
             {
-                Sesion.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
                 throw new ExcepcionNegocio("Debe existir al menos un permiso o grupo.");
             }
 
@@ -78,7 +78,7 @@ namespace BLL
                 .ToList();
 
             _permisoDAL.EliminarPermisos(idsEliminados);
-            Sesion.GetInstance().RegistrarOperacion("Actualizacion catalogo de permisos", "Se guardo el catalogo general de permisos.", "PermisoBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion catalogo de permisos", "Se guardo el catalogo general de permisos.", "PermisoBLL");
         }
 
         public List<int> ObtenerPermisoIdsDeUsuario(int usuarioId)
@@ -106,7 +106,7 @@ namespace BLL
                         accesoDatos);
 
                     _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionPermisos", "Actualizacion de permisos del usuario.", accesoDatos);
-                    Sesion.GetInstance().RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -119,6 +119,12 @@ namespace BLL
                     accesoDatos.RollbackTransactionScope();
                     throw new ExcepcionTecnica("No se pudieron guardar los permisos del usuario.", ex);
                 }
+            }
+
+            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            if (usuarioActualId.HasValue && usuarioActualId.Value == usuarioId)
+            {
+                AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
             }
         }
 

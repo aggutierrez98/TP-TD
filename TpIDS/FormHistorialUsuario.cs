@@ -106,10 +106,10 @@ namespace TpIDS
 
         private void FormHistorialUsuario_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(_observadorIdioma);
+            IdiomaService.GetInstance().RegistrarObservador(_observadorIdioma);
             lblUsuarioHistorial.Text = "Usuario: " + _username;
             CargarHistorial();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnRefrescarHistorial_Click(object sender, EventArgs e)
@@ -209,7 +209,7 @@ namespace TpIDS
 
         private void FormHistorialUsuario_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(_observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(_observadorIdioma);
         }
     }
 }

@@ -23,10 +23,10 @@ namespace TpIDS
 
         private void FormConfiguracionUsuario_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
             CargarUsuarioActual();
             CargarIdiomas();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
@@ -88,7 +88,7 @@ namespace TpIDS
             cmbIdiomas.ValueMember = "Id";
             cmbIdiomas.DataSource = idiomas;
 
-            Idioma idiomaActual = Sesion.GetInstance().IdiomaActual;
+            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
             if (idiomaActual != null)
             {
                 Idioma idiomaSeleccionado = idiomas.FirstOrDefault(item => item.Id == idiomaActual.Id);
@@ -101,13 +101,13 @@ namespace TpIDS
 
         private string ObtenerTextoActual(string key)
         {
-            Idioma idioma = Sesion.GetInstance().IdiomaActual;
+            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTexto(key);
         }
 
         private void FormConfiguracionUsuario_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }
