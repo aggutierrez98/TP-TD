@@ -1,0 +1,48 @@
+@startuml
+title T06b - Historial y recuperacion de Usuario - Clases
+
+package "BE" {
+  class Usuario {
+    Id
+    Username
+    PasswordHash
+    Activo
+  }
+}
+
+package "BLL" {
+  class UsuarioBLL
+  class UsuarioEstadoBLL
+  class InfraestructuraBLL
+}
+
+package "SERVICIOS" {
+  class HistorialEstadosService
+  class UsuarioHistorialSnapshot
+  class ResultadoComparacionEstado
+}
+
+package "DAL" {
+  class UsuarioDAL
+  class UsuarioPermisoDAL
+  class UsuarioPreferenciaDAL
+  class UsuarioHistorialDAL
+  class AccesoDatos
+}
+
+UsuarioBLL --> UsuarioEstadoBLL
+UsuarioEstadoBLL --> UsuarioDAL
+UsuarioEstadoBLL --> UsuarioPermisoDAL
+UsuarioEstadoBLL --> UsuarioPreferenciaDAL
+UsuarioEstadoBLL --> HistorialEstadosService
+HistorialEstadosService --> UsuarioHistorialDAL : delegado configurado
+UsuarioHistorialDAL --> AccesoDatos
+UsuarioEstadoBLL --> UsuarioHistorialSnapshot
+UsuarioEstadoBLL --> ResultadoComparacionEstado
+
+note right of Usuario
+Entidad anemica.
+Solo estado.
+Sin metodos de memento.
+end note
+@enduml

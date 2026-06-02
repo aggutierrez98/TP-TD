@@ -1,0 +1,29 @@
+@startuml
+title T06a - Flujo de falla de negocio vs excepcion tecnica
+
+actor Usuario
+participant UI
+participant BLL
+participant "BitacoraService" as BitacoraService
+participant "ManejadorExcepcionesBLL" as ManejadorExcepcionesBLL
+participant DAL
+
+group Falla de negocio
+Usuario -> UI : accion invalida
+UI -> BLL : ejecutar caso de uso
+BLL -> BitacoraService : RegistrarFalloNegocio(...)
+BLL --> UI : ExcepcionNegocio
+UI --> Usuario : mensaje funcional
+end
+
+group Excepcion tecnica
+Usuario -> UI : accion
+UI -> BLL : ejecutar caso de uso
+BLL -> DAL : operacion transaccional
+DAL --> BLL : ExcepcionTecnica
+BLL --> UI : ExcepcionTecnica
+UI -> ManejadorExcepcionesBLL : ObtenerMensajeUsuario(...)
+ManejadorExcepcionesBLL -> BitacoraService : RegistrarExcepcionTecnica(...)
+UI --> Usuario : mensaje seguro
+end
+@enduml

@@ -43,7 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AccesoDatos.cs" />
+    <Compile Include="BitacoraDAL.cs" />
     <Compile Include="IdiomaDAL.cs" />
+    <Compile Include="InicializadorEsquemaDAL.cs" />
     <Compile Include="PermisoDAL.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -51,6 +53,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="UsuarioDAL.cs" />
+    <Compile Include="UsuarioHistorialDAL.cs" />
     <Compile Include="UsuarioPermisoDAL.cs" />
     <Compile Include="UsuarioPreferenciaDAL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

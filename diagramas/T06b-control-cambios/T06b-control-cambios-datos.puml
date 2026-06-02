@@ -1,0 +1,47 @@
+@startuml
+title T06b - Historial de Usuario - DER
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK>>
+  --
+  Username : varchar(50)
+  PasswordHash : varchar(max)
+  Activo : bit
+}
+
+entity "UsuarioPreferencias" as UsuarioPreferencias {
+  *UsuarioId : int <<PK,FK>>
+  --
+  IdiomaId : int <<FK>>
+}
+
+entity "UsuarioPermiso" as UsuarioPermiso {
+  *UsuarioId : int <<PK,FK>>
+  *PermisoId : int <<PK,FK>>
+}
+
+entity "UsuarioHistorial" as UsuarioHistorial {
+  *HistorialId : int <<PK>>
+  --
+  UsuarioId : int <<FK>>
+  FechaHora : datetime
+  ActorUsuarioId : int
+  ActorUsernameSnapshot : varchar(50)
+  Accion : varchar(100)
+  Observaciones : varchar(500)
+  Username : varchar(50)
+  PasswordHash : varchar(max)
+  Activo : bit
+  IdiomaId : int
+}
+
+entity "UsuarioHistorialPermiso" as UsuarioHistorialPermiso {
+  *HistorialId : int <<PK,FK>>
+  *PermisoId : int <<PK>>
+}
+
+Usuarios ||--o{ UsuarioHistorial
+UsuarioHistorial ||--o{ UsuarioHistorialPermiso
+Usuarios ||--o| UsuarioPreferencias
+Usuarios ||--o{ UsuarioPermiso
+@enduml

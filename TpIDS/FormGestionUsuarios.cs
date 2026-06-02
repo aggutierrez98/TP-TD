@@ -20,12 +20,14 @@ namespace TpIDS
         private TreeView tvwPermisosUsuario;
         private Button btnGuardarPermisosUsuario;
         private Button btnGestionPermisos;
+        private Button btnHistorialUsuario;
+        private Button btnBitacora;
 
         public FormGestionUsuarios()
         {
             InitializeComponent();
             observadorIdioma = Actualizar;
-            InicializarControlesPermisos();
+            InicializarControlesDinamicos();
             ConfigurarLayout();
             ConfigurarTags();
             FormClosed += FormGestionUsuarios_FormClosed;
@@ -33,13 +35,13 @@ namespace TpIDS
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             CargarGrilla();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
-        private void InicializarControlesPermisos()
+        private void InicializarControlesDinamicos()
         {
             groupBoxPermisosUsuario = new GroupBox
             {
@@ -68,26 +70,44 @@ namespace TpIDS
             btnGestionPermisos = new Button
             {
                 Name = "btnGestionPermisos",
-                Size = new Size(150, 30)
+                Size = new Size(170, 30)
             };
             btnGestionPermisos.Click += btnGestionPermisos_Click;
+
+            btnHistorialUsuario = new Button
+            {
+                Name = "btnHistorialUsuario",
+                Size = new Size(170, 30)
+            };
+            btnHistorialUsuario.Click += btnHistorialUsuario_Click;
+
+            btnBitacora = new Button
+            {
+                Name = "btnBitacora",
+                Size = new Size(170, 30)
+            };
+            btnBitacora.Click += btnBitacora_Click;
 
             groupBoxPermisosUsuario.Controls.Add(tvwPermisosUsuario);
             groupBoxPermisosUsuario.Controls.Add(btnGuardarPermisosUsuario);
             Controls.Add(groupBoxPermisosUsuario);
             Controls.Add(btnGestionPermisos);
+            Controls.Add(btnHistorialUsuario);
+            Controls.Add(btnBitacora);
         }
 
         private void ConfigurarLayout()
         {
-            ClientSize = new Size(980, 585);
+            ClientSize = new Size(1140, 585);
             dgvUsuarios.Size = new Size(470, 230);
             groupBoxGestion.Size = new Size(470, 175);
             btnConfiguracion.Location = new Point(15, 540);
-            btnConfiguracion.Size = new Size(145, 30);
-            btnGestionIdiomas.Location = new Point(170, 540);
-            btnGestionIdiomas.Size = new Size(145, 30);
-            btnGestionPermisos.Location = new Point(325, 540);
+            btnConfiguracion.Size = new Size(170, 30);
+            btnGestionIdiomas.Location = new Point(195, 540);
+            btnGestionIdiomas.Size = new Size(170, 30);
+            btnGestionPermisos.Location = new Point(375, 540);
+            btnHistorialUsuario.Location = new Point(555, 540);
+            btnBitacora.Location = new Point(735, 540);
         }
 
         private void CargarGrilla()
@@ -117,12 +137,17 @@ namespace TpIDS
                 if (dgvUsuarios.Columns.Contains("Username"))
                 {
                     dgvUsuarios.Columns["Username"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Username");
-                    dgvUsuarios.Columns["Username"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                }
+
+                if (dgvUsuarios.Columns.Contains("Activo"))
+                {
+                    dgvUsuarios.Columns["Activo"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Active");
+                    dgvUsuarios.Columns["Activo"].Width = 65;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar usuarios: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Carga de usuarios");
             }
         }
 
@@ -146,7 +171,7 @@ namespace TpIDS
 
             DataGridViewRow fila = dgvUsuarios.SelectedRows[0];
             _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
-            txtbNombreUsuario.Text = fila.Cells["Username"].Value?.ToString();
+            txtbNombreUsuario.Text = fila.Cells["Username"].Value == null ? string.Empty : fila.Cells["Username"].Value.ToString();
             txtbPasswordUsuario.Clear();
             CargarPermisosUsuario();
         }
@@ -168,17 +193,16 @@ namespace TpIDS
 
             try
             {
-                bool exito = usuarioBLL.Registrar(username, password);
-                if (exito)
+                if (usuarioBLL.Registrar(username, password))
                 {
-                    MessageBox.Show($"Usuario '{username}' creado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Usuario creado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de usuario");
             }
         }
 
@@ -195,7 +219,6 @@ namespace TpIDS
             }
 
             string nuevoUsername = txtbNombreUsuario.Text.Trim();
-
             if (string.IsNullOrWhiteSpace(nuevoUsername))
             {
                 MessageBox.Show(
@@ -208,16 +231,9 @@ namespace TpIDS
 
             try
             {
-                bool exito = usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername);
-                if (exito)
+                if (usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername))
                 {
-                    int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
-                    if (usuarioActualId.HasValue && usuarioActualId.Value == _idSeleccionado)
-                    {
-                        Sesion.GetInstance().ActualizarUsuarioActualNombre(nuevoUsername);
-                        lblSesionActual.Text = $"Sesion activa: {nuevoUsername}";
-                    }
-
+                    ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
                     MessageBox.Show("Usuario actualizado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
@@ -225,7 +241,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Edicion de usuario");
             }
         }
 
@@ -234,17 +250,16 @@ namespace TpIDS
             if (_idSeleccionado == -1)
             {
                 MessageBox.Show(
-                    "No hay ningun usuario seleccionado. Selecciona uno de la lista para eliminarlo.",
+                    "No hay ningun usuario seleccionado. Selecciona uno de la lista para desactivarlo.",
                     "Sin seleccion",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
             }
 
-            string usernameSeleccionado = dgvUsuarios.SelectedRows[0].Cells["Username"].Value?.ToString();
             DialogResult confirmacion = MessageBox.Show(
-                $"Estas seguro de que queres eliminar al usuario '{usernameSeleccionado}'?\n\nEsta accion no se puede deshacer.",
-                "Confirmar eliminacion",
+                "Se desactivara logicamente el usuario seleccionado. Desea continuar?",
+                "Confirmar baja logica",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning);
 
@@ -255,24 +270,22 @@ namespace TpIDS
 
             try
             {
-                bool exito = usuarioBLL.Eliminar(_idSeleccionado);
-                if (exito)
+                if (usuarioBLL.Eliminar(_idSeleccionado))
                 {
-                    MessageBox.Show($"Usuario '{usernameSeleccionado}' eliminado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Usuario desactivado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al eliminar: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Baja logica de usuario");
             }
         }
 
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
-
             if (_idSeleccionado == -1)
             {
                 return;
@@ -292,7 +305,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al cargar permisos del usuario: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Carga de permisos del usuario");
             }
         }
 
@@ -327,18 +340,11 @@ namespace TpIDS
                     .ToList();
 
                 permisoBLL.GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados);
-
-                int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
-                if (usuarioActualId.HasValue && usuarioActualId.Value == _idSeleccionado)
-                {
-                    Sesion.GetInstance().ActualizarPermisosUsuarioActual(permisoBLL.ObtenerPermisosDirectosUsuario(_idSeleccionado));
-                }
-
                 MessageBox.Show("Permisos guardados correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar permisos: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Guardado de permisos de usuario");
             }
         }
 
@@ -347,7 +353,8 @@ namespace TpIDS
             List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
-                if (nodo.Checked && nodo.Tag is PermisoNodo permiso)
+                PermisoNodo permiso = nodo.Tag as PermisoNodo;
+                if (nodo.Checked && permiso != null)
                 {
                     ids.Add(permiso.Id);
                 }
@@ -381,6 +388,8 @@ namespace TpIDS
             groupBoxPermisosUsuario.Tag = "FormGestionUsuarios.PermissionTreeGroup";
             btnGuardarPermisosUsuario.Tag = "FormGestionUsuarios.SavePermissionsButton";
             btnGestionPermisos.Tag = "FormGestionUsuarios.PermissionManagementButton";
+            btnHistorialUsuario.Tag = "FormGestionUsuarios.HistoryButton";
+            btnBitacora.Tag = "FormGestionUsuarios.BitacoraButton";
         }
 
         private void ActualizarSesionActualLabel(string username)
@@ -406,6 +415,11 @@ namespace TpIDS
             {
                 dgvUsuarios.Columns["Username"].HeaderText = idioma.ObtenerTexto("FormGestionUsuarios.Grid.Username");
             }
+
+            if (dgvUsuarios.Columns.Contains("Activo"))
+            {
+                dgvUsuarios.Columns["Activo"].HeaderText = idioma.ObtenerTexto("FormGestionUsuarios.Grid.Active");
+            }
         }
 
         private void RecargarTextosPermiso(Idioma idioma)
@@ -417,12 +431,14 @@ namespace TpIDS
 
             btnGestionPermisos.Text = idioma.ObtenerTexto("FormGestionUsuarios.PermissionManagementButton");
             btnGuardarPermisosUsuario.Text = idioma.ObtenerTexto("FormGestionUsuarios.SavePermissionsButton");
+            btnHistorialUsuario.Text = idioma.ObtenerTexto("FormGestionUsuarios.HistoryButton");
+            btnBitacora.Text = idioma.ObtenerTexto("FormGestionUsuarios.BitacoraButton");
             groupBoxPermisosUsuario.Text = idioma.ObtenerTexto("FormGestionUsuarios.PermissionTreeGroup");
         }
 
         private string ObtenerTextoActual(string key)
         {
-            Idioma idioma = Sesion.GetInstance().IdiomaActual;
+            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTexto(key);
         }
 
@@ -446,9 +462,35 @@ namespace TpIDS
             CargarPermisosUsuario();
         }
 
+        private void btnHistorialUsuario_Click(object sender, EventArgs e)
+        {
+            if (_idSeleccionado == -1)
+            {
+                MessageBox.Show("Debe seleccionar un usuario para ver su historial.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (FormHistorialUsuario formHistorialUsuario = new FormHistorialUsuario(_idSeleccionado, txtbNombreUsuario.Text.Trim()))
+            {
+                formHistorialUsuario.ShowDialog(this);
+            }
+
+            CargarGrilla();
+            CargarPermisosUsuario();
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+        }
+
+        private void btnBitacora_Click(object sender, EventArgs e)
+        {
+            using (FormBitacora formBitacora = new FormBitacora())
+            {
+                formBitacora.ShowDialog(this);
+            }
+        }
+
         private void FormGestionUsuarios_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

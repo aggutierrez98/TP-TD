@@ -42,8 +42,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BootstrapAplicacionBLL.cs" />
+    <Compile Include="BitacoraBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
+    <Compile Include="InicializacionBitacoraBLL.cs" />
+    <Compile Include="InicializacionEsquemaBLL.cs" />
+    <Compile Include="InicializacionHistorialBLL.cs" />
+    <Compile Include="InicializadorEsquemaBLL.cs" />
+    <Compile Include="ManejadorExcepcionesBLL.cs" />
     <Compile Include="PermisoBLL.cs" />
+    <Compile Include="UsuarioEstadoBLL.cs" />
     <Compile Include="UsuarioBLL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

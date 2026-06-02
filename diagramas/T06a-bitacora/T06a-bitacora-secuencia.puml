@@ -1,0 +1,20 @@
+@startuml
+title T06a - Registro de operacion en bitacora desacoplada
+
+actor Usuario
+participant "FormGestionUsuarios" as UI
+participant "UsuarioBLL" as BLL
+participant "BitacoraService" as BitacoraService
+participant "Sesion" as Sesion
+participant "BitacoraDAL" as BitacoraDAL
+participant "AccesoDatos" as AccesoDatos
+
+Usuario -> UI : editar usuario
+UI -> BLL : Actualizar(...)
+BLL -> BitacoraService : RegistrarOperacion(..., contextoTx)
+BitacoraService -> Sesion : GetUsuarioActualId()\nGetUsuarioActualNombre()
+BitacoraService -> BitacoraDAL : Guardar(evento, contextoTx)
+BitacoraDAL -> AccesoDatos : INSERT Bitacora
+BLL --> UI : exito
+UI --> Usuario : confirmacion
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+title T06a - Bitacora - DER
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK>>
+  --
+  Username : varchar(50)
+  PasswordHash : varchar(max)
+  Activo : bit
+}
+
+entity "Bitacora" as Bitacora {
+  *Id : int <<PK>>
+  --
+  FechaHora : datetime
+  UsuarioId : int <<FK>>
+  UsernameSnapshot : varchar(50)
+  Actividad : varchar(100)
+  Informacion : varchar(500)
+  Nivel : varchar(20)
+  Origen : varchar(100)
+  EsTecnica : bit
+}
+
+Usuarios ||--o{ Bitacora
+@enduml

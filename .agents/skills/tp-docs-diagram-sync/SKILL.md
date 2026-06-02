@@ -27,21 +27,26 @@ No actualizar el Google Doc sin antes actualizar el PlantUML fuente cuando el ca
 ## Code to docs workflow
 
 1. Identificar requerimiento tecnico afectado.
-2. Ubicar o crear el `.puml` correspondiente en `.agents/diagramas/plantuml/`.
-3. Actualizar narrativa tecnica y funcional que cambie por el codigo.
-4. Recién despues copiar/exportar la imagen al Google Doc.
-5. Compilar la solucion al final para asegurar que el estado documentado coincide con un build valido.
+2. Determinar el requisito del TP impactado antes de tocar diagramas (`T02`, `T03`, `T04`, `T05`, `T06a`, `T06b`, `T07`, etc.).
+3. Ubicar o crear el `.puml` correspondiente en `diagramas/<requisito>/`.
+4. Si el diagrama existente esta en una carpeta vieja, moverlo primero a la estructura nueva y luego editarlo ahi.
+5. Actualizar narrativa tecnica y funcional que cambie por el codigo.
+6. Recién despues copiar/exportar la imagen al Google Doc.
+7. Compilar la solucion al final para asegurar que el estado documentado coincide con un build valido.
 
 ## Docs to code workflow
 
 1. Leer el cambio pedido en el documento formal.
 2. Determinar si es aclaracion documental o cambio real de comportamiento.
 3. Si impacta comportamiento, actualizar codigo respetando stack y arquitectura.
-4. Actualizar PlantUML y luego el documento formal.
-5. Compilar la solucion.
+4. Identificar requisito y archivo destino bajo `diagramas/<requisito>/`.
+5. Actualizar PlantUML y luego el documento formal.
+6. Compilar la solucion.
 
 ## Diagram rule
 
 - Todo diagrama UML debe crearse en PlantUML.
-- Guardar el `.puml` en el repo con nombres ordenables por requerimiento tecnico.
+- Guardar el `.puml` en el repo bajo `diagramas/<requisito>/`.
+- Mantener una carpeta por requisito; el tipo de diagrama debe quedar expresado en el nombre del archivo.
+- Usar nombres ordenables y descriptivos.
 - No dejar diagramas solo como imagen embebida en documentos.

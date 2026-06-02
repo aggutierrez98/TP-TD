@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using SERVICIOS;
 
 namespace DAL
 {
-    internal sealed class AccesoDatos : IDisposable
+    public sealed class AccesoDatos : IDisposable
     {
         private static readonly string[] ConnectionStringNames = { "TpIDS", "TpIDS-UAI" };
 
@@ -65,6 +66,22 @@ namespace DAL
                 });
         }
 
+        public void BeginTransactionScope()
+        {
+            EnsureConnectionOpen();
+            StartTransaction();
+        }
+
+        public void CommitTransactionScope()
+        {
+            ConfirmTransaction();
+        }
+
+        public void RollbackTransactionScope()
+        {
+            RollbackTransaction();
+        }
+
         private T ExecuteInTransaction<T>(
             string sql,
             List<SqlParameter> parameters,
@@ -72,20 +89,29 @@ namespace DAL
             Func<SqlCommand, T> operation)
         {
             EnsureConnectionOpen();
-            StartTransaction();
+            bool transaccionCreadaEnLlamada = false;
+            if (transaction == null)
+            {
+                StartTransaction();
+                transaccionCreadaEnLlamada = true;
+            }
 
             using (SqlCommand command = CreateCommand(sql, commandType, parameters))
             {
                 try
                 {
                     T result = operation(command);
-                    ConfirmTransaction();
+                    if (transaccionCreadaEnLlamada)
+                    {
+                        ConfirmTransaction();
+                    }
+
                     return result;
                 }
                 catch (SqlException ex)
                 {
                     RollbackTransaction();
-                    throw new Exception("Error de SQL.", ex);
+                    throw new ExcepcionTecnica("Error de SQL.", ex);
                 }
                 catch
                 {
@@ -132,7 +158,7 @@ namespace DAL
 
             if (lastException != null)
             {
-                throw new Exception("No se pudo conectar a ninguna de las conexiones configuradas.", lastException);
+                throw new ExcepcionTecnica("No se pudo conectar a ninguna de las conexiones configuradas.", lastException);
             }
 
             throw new InvalidOperationException(

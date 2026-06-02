@@ -42,7 +42,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error de registro: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Registro de usuario");
             }
         }
 
@@ -76,13 +76,13 @@ namespace TpIDS
 
         private void FormRegistro_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void FormRegistro_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

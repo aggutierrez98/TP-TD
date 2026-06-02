@@ -42,7 +42,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AutorizacionService.cs" />
+    <Compile Include="BitacoraService.cs" />
+    <Compile Include="EventoBitacora.cs" />
+    <Compile Include="ExcepcionNegocio.cs" />
+    <Compile Include="ExcepcionTecnica.cs" />
+    <Compile Include="FiltroBitacora.cs" />
+    <Compile Include="HistorialEstadosService.cs" />
     <Compile Include="Idioma.cs" />
+    <Compile Include="IdiomaCatalogoService.cs" />
     <Compile Include="IdiomaService.cs" />
     <Compile Include="GrupoPermiso.cs" />
     <Compile Include="PermisoNodo.cs" />
@@ -51,9 +59,11 @@
     <Compile Include="PermisoSimple.cs" />
     <Compile Include="PasswordHasher.cs" />
     <Compile Include="Palabra.cs" />
+    <Compile Include="ResultadoComparacionEstado.cs" />
     <Compile Include="Sesion.cs" />
     <Compile Include="Traduccion.cs" />
     <Compile Include="UsuarioAutenticadoSesion.cs" />
+    <Compile Include="UsuarioHistorialSnapshot.cs" />
     <Compile Include="UsuarioPreferencia.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

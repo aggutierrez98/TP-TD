@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace ABSTRACCIONES
 {
     public interface ISesion
@@ -10,10 +8,12 @@ namespace ABSTRACCIONES
 
         IUsuarioAutenticado GetUsuarioActual();
 
+        int? GetUsuarioActualId();
+
+        string GetUsuarioActualNombre();
+
+        void ActualizarUsuarioActualNombre(string username);
+
         bool HaySesionActiva();
-
-        bool TienePermiso(string nombrePermiso);
-
-        IList<IPermiso> ObtenerPermisosEfectivos();
     }
 }

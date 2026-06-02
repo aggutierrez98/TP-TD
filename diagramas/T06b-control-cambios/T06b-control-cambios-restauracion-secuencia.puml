@@ -1,0 +1,25 @@
+@startuml
+title T06b - Restauracion de estado de Usuario
+
+actor Administrador
+participant "FormHistorialUsuario" as UI
+participant "UsuarioBLL" as UsuarioBLL
+participant "UsuarioEstadoBLL" as EstadoBLL
+participant "HistorialEstadosService" as Historial
+participant "UsuarioHistorialDAL" as HistorialDAL
+participant "UsuarioDAL" as UsuarioDAL
+participant "UsuarioPermisoDAL" as UsuarioPermisoDAL
+participant "UsuarioPreferenciaDAL" as UsuarioPreferenciaDAL
+
+Administrador -> UI : restaurar version
+UI -> UsuarioBLL : RestaurarVersion(historialId)
+UsuarioBLL -> EstadoBLL : ObtenerVersion(historialId)
+EstadoBLL -> Historial : ObtenerVersionUsuario(historialId)
+Historial -> HistorialDAL : SELECT snapshot
+UsuarioBLL -> EstadoBLL : AplicarSnapshot(snapshot, tx)
+EstadoBLL -> UsuarioDAL : UPDATE Usuarios
+EstadoBLL -> UsuarioPermisoDAL : REEMPLAZAR UsuarioPermiso
+EstadoBLL -> UsuarioPreferenciaDAL : UPSERT/DELETE UsuarioPreferencias
+UsuarioBLL -> EstadoBLL : GuardarVersionActual(..., "Restauracion")
+UI <-- UsuarioBLL : exito
+@enduml

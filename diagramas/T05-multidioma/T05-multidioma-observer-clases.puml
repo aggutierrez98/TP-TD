@@ -1,0 +1,56 @@
+@startuml
+title T05 - Multidioma - Observer desacoplado
+
+package "UI" {
+  class FormLogin
+  class FormRegistro
+  class FormGestionUsuarios
+  class FormGestionIdiomas
+  class FormBitacora
+}
+
+package "BLL" {
+  class IdiomaBLL
+}
+
+package "SERVICIOS" {
+  class IdiomaService {
+    +IdiomaActual : Idioma
+    +RegistrarObservador(observador)
+    +DesregistrarObservador(observador)
+    +CambiarIdioma(idioma)
+  }
+
+  class IdiomaCatalogoService
+  class Idioma
+}
+
+package "DAL" {
+  class IdiomaDAL
+  class UsuarioPreferenciaDAL
+}
+
+IdiomaBLL --> IdiomaDAL
+IdiomaBLL --> UsuarioPreferenciaDAL
+IdiomaBLL --> IdiomaCatalogoService
+IdiomaBLL --> IdiomaService : aplica idioma runtime
+IdiomaService --> Idioma
+
+FormLogin --> IdiomaService
+FormRegistro --> IdiomaService
+FormGestionUsuarios --> IdiomaService
+FormGestionIdiomas --> IdiomaService
+FormBitacora --> IdiomaService
+
+note right of IdiomaService
+Sujeto del Observer en runtime.
+Notifica formularios abiertos
+mediante callbacks concretos.
+No depende de Sesion.
+end note
+
+note right of IdiomaCatalogoService
+Servicio de catalogo y validacion.
+No mantiene estado runtime.
+end note
+@enduml

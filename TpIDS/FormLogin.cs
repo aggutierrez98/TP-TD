@@ -51,13 +51,13 @@ namespace TpIDS
 
                 formGestion.FormClosed += (s, args) =>
                 {
-                    Sesion.GetInstance().CerrarSesion();
+                    gestorUsuario.CerrarSesionActual();
                     Close();
                 };
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error en el login: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Login");
             }
         }
 
@@ -101,19 +101,19 @@ namespace TpIDS
             try
             {
                 gestorIdioma.InicializarAplicacion();
-                Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-                Actualizar(Sesion.GetInstance().IdiomaActual);
+                IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
+                Actualizar(IdiomaService.GetInstance().IdiomaActual);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al inicializar idiomas: " + ex.Message, "Error");
+                UiExceptionHandler.Mostrar(ex, "Inicializacion de idiomas");
                 Close();
             }
         }
 
         private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

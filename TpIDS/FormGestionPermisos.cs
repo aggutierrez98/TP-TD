@@ -146,10 +146,10 @@ namespace TpIDS
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
-            Sesion.GetInstance().RegistrarObservador(observadorIdioma);
-            RecargarTiposPermiso(Sesion.GetInstance().IdiomaActual);
+            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
+            RecargarTiposPermiso(IdiomaService.GetInstance().IdiomaActual);
             CargarCatalogo();
-            Actualizar(Sesion.GetInstance().IdiomaActual);
+            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void CargarCatalogo()
@@ -224,7 +224,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de permiso");
             }
         }
 
@@ -250,7 +250,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Alta de permiso hijo");
             }
         }
 
@@ -336,7 +336,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al guardar el catalogo: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiExceptionHandler.Mostrar(ex, "Guardado de catalogo de permisos");
             }
         }
 
@@ -389,7 +389,7 @@ namespace TpIDS
 
         private void FormGestionPermisos_FormClosed(object sender, FormClosedEventArgs e)
         {
-            Sesion.GetInstance().DesregistrarObservador(observadorIdioma);
+            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

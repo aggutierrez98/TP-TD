@@ -10,47 +10,53 @@ namespace BLL
 {
     public class PermisoBLL
     {
-        private readonly PermisoDAL permisoDAL;
-        private readonly UsuarioPermisoDAL usuarioPermisoDAL;
-        private readonly PermisoService permisoService;
+        private readonly PermisoDAL _permisoDAL;
+        private readonly UsuarioPermisoDAL _usuarioPermisoDAL;
+        private readonly PermisoService _permisoService;
+        private readonly UsuarioDAL _usuarioDAL;
+        private readonly UsuarioEstadoBLL _usuarioEstadoBLL;
 
         public PermisoBLL()
         {
-            permisoDAL = new PermisoDAL();
-            usuarioPermisoDAL = new UsuarioPermisoDAL();
-            permisoService = new PermisoService();
+            BootstrapAplicacionBLL.Inicializar();
+            _permisoDAL = new PermisoDAL();
+            _usuarioPermisoDAL = new UsuarioPermisoDAL();
+            _permisoService = new PermisoService();
+            _usuarioDAL = new UsuarioDAL();
+            _usuarioEstadoBLL = new UsuarioEstadoBLL();
         }
 
         public List<PermisoNodo> ObtenerCatalogo()
         {
-            List<PermisoNodo> nodos = permisoDAL.ObtenerNodos();
-            List<PermisoRelacion> relaciones = permisoDAL.ObtenerRelaciones();
-            return permisoService.ConstruirArbol(nodos, relaciones).ToList();
+            List<PermisoNodo> nodos = _permisoDAL.ObtenerNodos();
+            List<PermisoRelacion> relaciones = _permisoDAL.ObtenerRelaciones();
+            return _permisoService.ConstruirArbol(nodos, relaciones).ToList();
         }
 
         public void GuardarCatalogo(List<PermisoNodo> raices)
         {
             if (raices == null || raices.Count == 0)
             {
-                throw new Exception("Debe existir al menos un permiso o grupo.");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
+                throw new ExcepcionNegocio("Debe existir al menos un permiso o grupo.");
             }
 
-            permisoService.ValidarSinCiclos(raices);
+            _permisoService.ValidarSinCiclos(raices);
 
-            List<PermisoNodo> nodos = permisoService.Aplanar(raices).ToList();
+            List<PermisoNodo> nodos = _permisoService.Aplanar(raices).ToList();
             foreach (PermisoNodo nodo in nodos)
             {
-                permisoService.ValidarNombre(nodo.Nombre);
+                _permisoService.ValidarNombre(nodo.Nombre);
                 nodo.Nombre = nodo.Nombre.Trim();
             }
 
-            permisoService.ValidarNombresUnicos(nodos);
-            permisoService.ValidarGruposNoVacios(nodos);
+            _permisoService.ValidarNombresUnicos(nodos);
+            _permisoService.ValidarGruposNoVacios(nodos);
 
-            List<PermisoNodo> existentes = permisoDAL.ObtenerNodos();
+            List<PermisoNodo> existentes = _permisoDAL.ObtenerNodos();
             foreach (PermisoNodo nodoNuevo in nodos.Where(item => item.Id == 0))
             {
-                nodoNuevo.Id = permisoDAL.InsertarPermiso(nodoNuevo.Nombre);
+                nodoNuevo.Id = _permisoDAL.InsertarPermiso(nodoNuevo.Nombre);
             }
 
             foreach (PermisoNodo nodoExistente in nodos.Where(item => item.Id > 0))
@@ -59,11 +65,11 @@ namespace BLL
                 if (original != null &&
                     !string.Equals(original.Nombre, nodoExistente.Nombre, StringComparison.OrdinalIgnoreCase))
                 {
-                    permisoDAL.ActualizarNombre(nodoExistente.Id, nodoExistente.Nombre);
+                    _permisoDAL.ActualizarNombre(nodoExistente.Id, nodoExistente.Nombre);
                 }
             }
 
-            permisoDAL.ReemplazarRelaciones(permisoService.ObtenerRelaciones(raices).ToList());
+            _permisoDAL.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList());
 
             List<int> idsActuales = nodos.Select(item => item.Id).Distinct().ToList();
             List<int> idsEliminados = existentes
@@ -71,33 +77,69 @@ namespace BLL
                 .Where(id => !idsActuales.Contains(id))
                 .ToList();
 
-            permisoDAL.EliminarPermisos(idsEliminados);
+            _permisoDAL.EliminarPermisos(idsEliminados);
+            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion catalogo de permisos", "Se guardo el catalogo general de permisos.", "PermisoBLL");
         }
 
         public List<int> ObtenerPermisoIdsDeUsuario(int usuarioId)
         {
-            return usuarioPermisoDAL.ObtenerPermisoIdsPorUsuario(usuarioId);
+            return _usuarioPermisoDAL.ObtenerPermisoIdsPorUsuario(usuarioId);
         }
 
         public void GuardarPermisosUsuario(int usuarioId, List<int> permisosId)
         {
-            usuarioPermisoDAL.ReemplazarPermisosUsuario(
-                usuarioId,
-                permisosId == null ? new List<int>() : permisosId.Distinct().ToList());
+            using (AccesoDatos accesoDatos = new AccesoDatos())
+            {
+                accesoDatos.BeginTransactionScope();
+
+                try
+                {
+                    Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
+                    if (usuario == null)
+                    {
+                        throw new ExcepcionNegocio("No se encontro el usuario seleccionado.");
+                    }
+
+                    _usuarioPermisoDAL.ReemplazarPermisosUsuario(
+                        usuarioId,
+                        permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
+                        accesoDatos);
+
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionPermisos", "Actualizacion de permisos del usuario.", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos);
+                    accesoDatos.CommitTransactionScope();
+                }
+                catch (ExcepcionNegocio)
+                {
+                    accesoDatos.RollbackTransactionScope();
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    accesoDatos.RollbackTransactionScope();
+                    throw new ExcepcionTecnica("No se pudieron guardar los permisos del usuario.", ex);
+                }
+            }
+
+            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            if (usuarioActualId.HasValue && usuarioActualId.Value == usuarioId)
+            {
+                AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
+            }
         }
 
         public object ObtenerPermisosDirectosUsuario(int usuarioId)
         {
             List<int> permisosId = ObtenerPermisoIdsDeUsuario(usuarioId);
             List<PermisoNodo> catalogo = ObtenerCatalogo();
-            Dictionary<int, PermisoNodo> indice = permisoService.Aplanar(catalogo).ToDictionary(item => item.Id);
+            Dictionary<int, PermisoNodo> indice = _permisoService.Aplanar(catalogo).ToDictionary(item => item.Id);
 
             List<PermisoNodo> permisos = permisosId
                 .Where(indice.ContainsKey)
                 .Select(id => indice[id])
                 .ToList();
 
-            return permisoService.CrearColeccionPermisos(permisos);
+            return _permisoService.CrearColeccionPermisos(permisos);
         }
 
         public void CargarPermisosEnUsuario(Usuario usuario)
