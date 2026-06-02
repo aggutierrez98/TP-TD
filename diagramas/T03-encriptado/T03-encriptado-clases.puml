@@ -64,10 +64,4 @@ UsuarioBLL --> UsuarioDAL
 UsuarioDAL --> AccesoDatos
 UsuarioDAL --> Usuario
 
-note bottom of PasswordHasher
-  Implementa hashing PBKDF2 con salt aleatorio
-  y multiples iteraciones antes de persistir.
-  Tambien verifica hashes almacenados al loguear.
-end note
-
 @enduml

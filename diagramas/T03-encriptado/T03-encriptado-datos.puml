@@ -13,9 +13,4 @@ entity "Usuarios" as Usuarios {
   Activo : bit <<NOT NULL>>
 }
 
-note right of Usuarios
-  La contrasena en claro no se persiste.
-  Solo se almacena PasswordHash.
-end note
-
 @enduml

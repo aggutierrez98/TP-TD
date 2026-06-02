@@ -34,10 +34,4 @@ Permiso ||--o| Grupo : FK_Grupo_Permiso
 Usuarios ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Usuario
 Permiso ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Permiso
 
-note right of Grupo
-  Restricciones reales del script:
-  - CK_Grupo_Distinto: GrupoId <> PermisoId
-  - UQ_Grupo_PermisoId: un permiso solo puede tener un padre
-end note
-
 @enduml

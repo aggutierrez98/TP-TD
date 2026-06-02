@@ -13,10 +13,4 @@ entity "Usuarios" as Usuarios {
   Activo : bit <<NOT NULL>>
 }
 
-note right of Usuarios
-  T02 valida identidad contra esta tabla.
-  La sesion activa vive solo en memoria
-  y no se persiste en la base.
-end note
-
 @enduml

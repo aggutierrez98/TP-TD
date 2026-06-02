@@ -154,9 +154,4 @@ AutorizacionService --> PermisoService
 FormGestionPermisos --> PermisoBLL
 FormGestionUsuarios --> PermisoBLL
 
-note right of AutorizacionService
-  Runtime de autorizacion desacoplado.
-  Sesion no resuelve permisos.
-end note
-
 @enduml

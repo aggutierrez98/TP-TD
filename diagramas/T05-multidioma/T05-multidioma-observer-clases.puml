@@ -193,10 +193,4 @@ FormConfiguracionUsuario --> IdiomaService
 FormBitacora --> IdiomaService
 FormHistorialUsuario --> IdiomaService
 
-note right of IdiomaService
-  Sujeto del Observer en runtime.
-  Mantiene IdiomaActual y notifica
-  formularios abiertos por callback.
-end note
-
 @enduml

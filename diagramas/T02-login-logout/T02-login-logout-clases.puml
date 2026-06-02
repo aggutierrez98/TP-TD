@@ -135,15 +135,4 @@ UsuarioAutenticadoSesion ..|> IUsuarioAutenticado
 Usuario ..|> IUsuarioAutenticado
 Sesion --> IUsuarioAutenticado : _usuarioActual
 
-note right of Sesion
-  Sesion mantiene solo identidad
-  y estado de autenticacion runtime.
-end note
-
-note bottom of UsuarioBLL
-  Login inicializa sesion, permisos runtime,
-  idioma runtime y bitacora.
-  Logout limpia autorizacion y sesion.
-end note
-
 @enduml

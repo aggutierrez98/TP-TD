@@ -28,10 +28,4 @@ entity "Bitacora" as Bitacora {
 
 Usuarios ||--o{ Bitacora : FK_Bitacora_Usuario
 
-note right of Bitacora
-  Indices reales:
-  - IX_Bitacora_FechaHora
-  - IX_Bitacora_UsuarioId_Actividad
-end note
-
 @enduml
