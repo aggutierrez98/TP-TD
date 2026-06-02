@@ -1,0 +1,21 @@
+@startuml
+title T03 - Gestion de Encriptado - DER
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL>>
+}
+
+note right of Usuarios
+  La contrasena en claro no se persiste.
+  Solo se almacena PasswordHash.
+end note
+
+@enduml

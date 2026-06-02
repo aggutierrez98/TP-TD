@@ -1,50 +1,158 @@
 @startuml
-title T06a - Bitacora desacoplada - Diagrama de clases
+title T06a - Gestion de Bitacora - Clases
 
-package "UI" {
-  class FormBitacora
-  class FormGestionUsuarios
-}
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
 
-package "BLL" {
-  class BitacoraBLL
-  class ManejadorExcepcionesBLL
-  class InicializacionBitacoraBLL
-  class BootstrapAplicacionBLL
+package "ABSTRACCIONES" {
+  interface IEventoBitacora {
+    +Id : int
+    +FechaHora : DateTime
+    +UsuarioId : int?
+    +UsernameSnapshot : string
+    +Actividad : string
+    +Informacion : string
+    +Nivel : string
+    +Origen : string
+    +EsTecnica : bool
+  }
+
+  interface IFiltroBitacora {
+    +FechaDesde : DateTime?
+    +FechaHasta : DateTime?
+    +Usuario : string
+    +Actividad : string
+    +Nivel : string
+    +EsTecnica : bool?
+  }
 }
 
 package "SERVICIOS" {
-  class Sesion
-  class BitacoraService
-  class EventoBitacora
-  class FiltroBitacora
+  class Idioma
+
+  class EventoBitacora {
+    +Id : int
+    +FechaHora : DateTime
+    +UsuarioId : int?
+    +UsernameSnapshot : string
+    +Actividad : string
+    +Informacion : string
+    +Nivel : string
+    +Origen : string
+    +EsTecnica : bool
+  }
+
+  class FiltroBitacora {
+    +FechaDesde : DateTime?
+    +FechaHasta : DateTime?
+    +Usuario : string
+    +Actividad : string
+    +Nivel : string
+    +EsTecnica : bool?
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +Configurar(registrador, consultor, obtenedorUsuarioId, obtenedorUsername) : void
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string, contextoPersistencia : object = null) : void
+    +ConsultarBitacora(filtro : FiltroBitacora) : IList<EventoBitacora>
+  }
+
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+    +GetUsuarioActualId() : int?
+    +GetUsuarioActualNombre() : string
+  }
+}
+
+package "BE" {
+  class Usuario {
+    +Id : int
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+  }
+}
+
+package "BLL" {
+  class UsuarioBLL {
+    +Actualizar(id : int, nuevoUsername : string) : bool
+  }
+
+  class UsuarioEstadoBLL {
+    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+  }
+
+  class BitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+
+  class ManejadorExcepcionesBLL {
+    +ObtenerMensajeUsuario(exception : Exception, actividad : string) : string
+    +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
+  }
+
+  class InicializacionBitacoraBLL {
+    +Inicializar() : void
+  }
+
+  class BootstrapAplicacionBLL {
+    +Inicializar() : void
+  }
 }
 
 package "DAL" {
-  class BitacoraDAL
-  class AccesoDatos
+  class UsuarioDAL {
+    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
+    +Actualizar(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class BitacoraDAL {
+    +Guardar(evento : EventoBitacora, accesoDatos : AccesoDatos = null) : int
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+
+  class AccesoDatos {
+    +BeginTransactionScope() : void
+    +CommitTransactionScope() : void
+    +RollbackTransactionScope() : void
+  }
 }
 
-FormBitacora --> BitacoraBLL
-FormGestionUsuarios --> FormBitacora
+package "UI" {
+  class FormGestionUsuarios
+
+  class FormBitacora {
+    +Actualizar(idioma : Idioma) : void
+  }
+}
+
+IEventoBitacora <|.. EventoBitacora
+IFiltroBitacora <|.. FiltroBitacora
+
 BitacoraBLL --> BitacoraService
+UsuarioBLL --> UsuarioDAL
+UsuarioBLL --> UsuarioEstadoBLL
+UsuarioBLL --> BitacoraService
+ManejadorExcepcionesBLL --> BootstrapAplicacionBLL
 ManejadorExcepcionesBLL --> BitacoraService
-InicializacionBitacoraBLL --> BitacoraService
 InicializacionBitacoraBLL --> BitacoraDAL
-BitacoraService ..> Sesion : proveedor de usuario
+InicializacionBitacoraBLL --> BitacoraService
 BitacoraService --> EventoBitacora
-BitacoraService --> BitacoraDAL : delegado configurado
+BitacoraService --> FiltroBitacora
+BitacoraService ..> Sesion : proveedores de identidad
+UsuarioDAL --> AccesoDatos
 BitacoraDAL --> AccesoDatos
+FormGestionUsuarios --> UsuarioBLL
+FormBitacora --> BitacoraBLL
 
 note right of BitacoraService
-Servicio runtime transversal.
-No conoce DAL por referencia directa.
-Recibe persistencia y contexto
-desde la inicializacion tecnica.
+  Servicio runtime transversal.
+  No referencia DAL de forma directa;
+  queda configurado desde BLL con delegados.
 end note
 
-note right of Sesion
-Sesion no es fachada de bitacora.
-Solo expone identidad para snapshot.
-end note
 @enduml

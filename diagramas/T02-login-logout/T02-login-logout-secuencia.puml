@@ -1,0 +1,39 @@
+@startuml
+title T02 - Gestion de Log In / Log Out - Secuencia
+
+actor Usuario
+participant "FormLogin" as FormLogin
+participant "UsuarioBLL" as UsuarioBLL
+participant "UsuarioDAL" as UsuarioDAL
+participant "PasswordHasher" as PasswordHasher
+participant "PermisoBLL" as PermisoBLL
+participant "Sesion" as Sesion
+participant "AutorizacionService" as AutorizacionService
+participant "IdiomaBLL" as IdiomaBLL
+participant "BitacoraService" as BitacoraService
+participant "FormGestionUsuarios" as FormGestionUsuarios
+
+Usuario -> FormLogin : btnIngreso_Click()
+FormLogin -> UsuarioBLL : Login(txtbNickname.Text, txtbPassword.Text)
+UsuarioBLL -> UsuarioDAL : ObtenerPorUsername(username.Trim(), null)
+UsuarioDAL --> UsuarioBLL : usuario
+UsuarioBLL -> PasswordHasher : VerifyPassword(passwordRaw, usuario.PasswordHash)
+PasswordHasher --> UsuarioBLL : esValido
+UsuarioBLL -> PermisoBLL : CargarPermisosEnUsuario(usuario)
+UsuarioBLL -> Sesion : IniciarSesion(usuario.Id, usuario.Username)
+UsuarioBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(usuario.Id)
+PermisoBLL --> UsuarioBLL : permisosDirectos
+UsuarioBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
+UsuarioBLL -> IdiomaBLL : AplicarIdiomaSesionUsuario(usuario.Id)
+UsuarioBLL -> BitacoraService : RegistrarOperacion("Login exitoso", "Ingreso del usuario " + usuario.Username + ".", "UsuarioBLL", null)
+UsuarioBLL --> FormLogin : usuario
+FormLogin -> FormGestionUsuarios : Show()
+
+group Cierre de sesion
+  Usuario -> FormGestionUsuarios : cerrar formulario principal
+  FormGestionUsuarios -> UsuarioBLL : CerrarSesionActual()
+  UsuarioBLL -> AutorizacionService : Limpiar()
+  UsuarioBLL -> Sesion : CerrarSesion()
+end
+
+@enduml

@@ -1,48 +1,196 @@
 @startuml
-title T06b - Historial y recuperacion de Usuario - Clases
+title T06b - Gestion de Control de Cambios - Clases
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "ABSTRACCIONES" {
+  interface IUsuarioSnapshot {
+    +HistorialId : int
+    +UsuarioId : int
+    +FechaHora : DateTime
+    +ActorUsuarioId : int?
+    +ActorUsernameSnapshot : string
+    +Accion : string
+    +Observaciones : string
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+    +IdiomaId : int?
+    +PermisosIds : IList<int>
+  }
+
+  interface IServicioHistorialEstados {
+    +GuardarVersionUsuario(snapshot : IUsuarioSnapshot, contextoPersistencia : object = null) : int
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<IUsuarioSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : IUsuarioSnapshot
+  }
+
+  interface IResultadoComparacionEstado {
+    +Campo : string
+    +ValorAnterior : string
+    +ValorNuevo : string
+  }
+}
 
 package "BE" {
   class Usuario {
-    Id
-    Username
-    PasswordHash
-    Activo
+    +Id : int
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+  }
+}
+
+package "SERVICIOS" {
+  class Idioma
+
+  class UsuarioPreferencia {
+    +UsuarioId : int
+    +IdiomaId : int
+  }
+
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+    +GetUsuarioActualId() : int?
+    +ActualizarUsuarioActualNombre(username : string) : void
+  }
+
+  class AutorizacionService <<singleton>> {
+    +GetInstance() : AutorizacionService
+    +ActualizarPermisosUsuarioActual(permisos : object) : void
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+  }
+
+  class HistorialEstadosService <<singleton>> {
+    +GetInstance() : HistorialEstadosService
+    +Configurar(guardadorVersionUsuario, obtenedorVersionesUsuario, obtenedorVersionUsuario) : void
+    +GuardarVersionUsuario(snapshot : UsuarioHistorialSnapshot, contextoPersistencia : object = null) : int
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<UsuarioHistorialSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : UsuarioHistorialSnapshot
+  }
+
+  class UsuarioHistorialSnapshot {
+    +HistorialId : int
+    +UsuarioId : int
+    +FechaHora : DateTime
+    +ActorUsuarioId : int?
+    +ActorUsernameSnapshot : string
+    +Accion : string
+    +Observaciones : string
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+    +IdiomaId : int?
+    +PermisosIds : IList<int>
+  }
+
+  class ResultadoComparacionEstado {
+    +Campo : string
+    +ValorAnterior : string
+    +ValorNuevo : string
   }
 }
 
 package "BLL" {
-  class UsuarioBLL
-  class UsuarioEstadoBLL
-  class InfraestructuraBLL
-}
+  class UsuarioBLL {
+    +ObtenerHistorialEstados(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersionHistorial(historialId : int) : UsuarioHistorialSnapshot
+    +ObtenerDiferenciasConVersionAnterior(historialId : int) : List<ResultadoComparacionEstado>
+    +RestaurarVersion(historialId : int) : bool
+    -RefrescarSesionSiCorresponde(usuarioId : int) : void
+  }
 
-package "SERVICIOS" {
-  class HistorialEstadosService
-  class UsuarioHistorialSnapshot
-  class ResultadoComparacionEstado
+  class UsuarioEstadoBLL {
+    +ConstruirSnapshotActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : UsuarioHistorialSnapshot
+    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+    +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
+    +CompararVersiones(versionActual : UsuarioHistorialSnapshot, versionAnterior : UsuarioHistorialSnapshot) : List<ResultadoComparacionEstado>
+    +AplicarSnapshot(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatos) : void
+  }
+
+  class IdiomaBLL {
+    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
+  }
+
+  class PermisoBLL {
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : object
+  }
+
+  class BootstrapAplicacionBLL {
+    +Inicializar() : void
+  }
+
+  class InicializacionHistorialBLL {
+    +Inicializar() : void
+  }
 }
 
 package "DAL" {
-  class UsuarioDAL
-  class UsuarioPermisoDAL
-  class UsuarioPreferenciaDAL
-  class UsuarioHistorialDAL
-  class AccesoDatos
+  class UsuarioDAL {
+    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
+    +GuardarEstadoCompleto(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class UsuarioPermisoDAL {
+    +ObtenerPermisoIdsPorUsuario(usuarioId : int, accesoDatos : AccesoDatos = null) : List<int>
+    +ReemplazarPermisosUsuario(usuarioId : int, permisosId : List<int>, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class UsuarioPreferenciaDAL {
+    +ObtenerPorUsuarioId(usuarioId : int, accesoDatos : AccesoDatos = null) : UsuarioPreferencia
+    +Guardar(usuarioId : int, idiomaId : int?, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class UsuarioHistorialDAL {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatos = null) : int
+    +ObtenerVersiones(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
+  }
+
+  class AccesoDatos {
+    +BeginTransactionScope() : void
+    +CommitTransactionScope() : void
+    +RollbackTransactionScope() : void
+  }
 }
 
+package "UI" {
+  class FormHistorialUsuario {
+    +Actualizar(idioma : Idioma) : void
+  }
+}
+
+IUsuarioSnapshot <|.. UsuarioHistorialSnapshot
+IServicioHistorialEstados <|.. HistorialEstadosService
+IResultadoComparacionEstado <|.. ResultadoComparacionEstado
+
 UsuarioBLL --> UsuarioEstadoBLL
+UsuarioBLL --> PermisoBLL
+UsuarioBLL --> IdiomaBLL
+UsuarioBLL --> Sesion
+UsuarioBLL --> AutorizacionService
+UsuarioBLL --> BitacoraService
 UsuarioEstadoBLL --> UsuarioDAL
 UsuarioEstadoBLL --> UsuarioPermisoDAL
 UsuarioEstadoBLL --> UsuarioPreferenciaDAL
 UsuarioEstadoBLL --> HistorialEstadosService
-HistorialEstadosService --> UsuarioHistorialDAL : delegado configurado
+InicializacionHistorialBLL --> HistorialEstadosService
+InicializacionHistorialBLL --> UsuarioHistorialDAL
+HistorialEstadosService --> UsuarioHistorialSnapshot
 UsuarioHistorialDAL --> AccesoDatos
-UsuarioEstadoBLL --> UsuarioHistorialSnapshot
-UsuarioEstadoBLL --> ResultadoComparacionEstado
+FormHistorialUsuario --> UsuarioBLL
 
-note right of Usuario
-Entidad anemica.
-Solo estado.
-Sin metodos de memento.
+note right of UsuarioHistorialSnapshot
+  Snapshot persistente del estado del usuario.
+  El campo PasswordHash se conserva en historial,
+  pero la UI no lo expone en claro.
 end note
+
 @enduml

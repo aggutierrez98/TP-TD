@@ -1,25 +1,53 @@
 @startuml
-title T06b - Restauracion de estado de Usuario
+title T06b - Gestion de Control de Cambios - Restauracion de usuario
 
 actor Administrador
-participant "FormHistorialUsuario" as UI
+participant "FormHistorialUsuario" as FormHistorialUsuario
 participant "UsuarioBLL" as UsuarioBLL
-participant "UsuarioEstadoBLL" as EstadoBLL
-participant "HistorialEstadosService" as Historial
-participant "UsuarioHistorialDAL" as HistorialDAL
+participant "UsuarioEstadoBLL" as UsuarioEstadoBLL
+participant "HistorialEstadosService" as HistorialEstadosService
+participant "UsuarioHistorialDAL" as UsuarioHistorialDAL
+participant "Sesion" as Sesion
+participant "AccesoDatos" as AccesoDatos
 participant "UsuarioDAL" as UsuarioDAL
 participant "UsuarioPermisoDAL" as UsuarioPermisoDAL
 participant "UsuarioPreferenciaDAL" as UsuarioPreferenciaDAL
+participant "BitacoraService" as BitacoraService
+participant "PermisoBLL" as PermisoBLL
+participant "AutorizacionService" as AutorizacionService
+participant "IdiomaBLL" as IdiomaBLL
 
-Administrador -> UI : restaurar version
-UI -> UsuarioBLL : RestaurarVersion(historialId)
-UsuarioBLL -> EstadoBLL : ObtenerVersion(historialId)
-EstadoBLL -> Historial : ObtenerVersionUsuario(historialId)
-Historial -> HistorialDAL : SELECT snapshot
-UsuarioBLL -> EstadoBLL : AplicarSnapshot(snapshot, tx)
-EstadoBLL -> UsuarioDAL : UPDATE Usuarios
-EstadoBLL -> UsuarioPermisoDAL : REEMPLAZAR UsuarioPermiso
-EstadoBLL -> UsuarioPreferenciaDAL : UPSERT/DELETE UsuarioPreferencias
-UsuarioBLL -> EstadoBLL : GuardarVersionActual(..., "Restauracion")
-UI <-- UsuarioBLL : exito
+Administrador -> FormHistorialUsuario : btnRestaurarVersion_Click()
+FormHistorialUsuario -> UsuarioBLL : RestaurarVersion(historialId)
+UsuarioBLL -> UsuarioEstadoBLL : ObtenerVersion(historialId)
+UsuarioEstadoBLL -> HistorialEstadosService : ObtenerVersionUsuario(historialId)
+HistorialEstadosService -> UsuarioHistorialDAL : ObtenerVersion(historialId)
+UsuarioHistorialDAL --> HistorialEstadosService : snapshot
+HistorialEstadosService --> UsuarioEstadoBLL : snapshot
+UsuarioEstadoBLL --> UsuarioBLL : snapshot
+UsuarioBLL -> Sesion : GetUsuarioActualId()
+UsuarioBLL -> AccesoDatos : BeginTransactionScope()
+UsuarioBLL -> UsuarioDAL : ObtenerPorId(snapshot.UsuarioId, accesoDatos)
+UsuarioDAL --> UsuarioBLL : usuario
+UsuarioBLL -> UsuarioEstadoBLL : AplicarSnapshot(snapshot, accesoDatos)
+UsuarioEstadoBLL -> UsuarioDAL : GuardarEstadoCompleto(usuario, accesoDatos)
+UsuarioEstadoBLL -> UsuarioPermisoDAL : ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds, accesoDatos)
+UsuarioEstadoBLL -> UsuarioPreferenciaDAL : Guardar(snapshot.UsuarioId, snapshot.IdiomaId, accesoDatos)
+UsuarioBLL -> UsuarioEstadoBLL : GuardarVersionActual(snapshot.UsuarioId, "Restauracion", "Restauracion desde historial #" + historialId + ".", accesoDatos)
+UsuarioBLL -> BitacoraService : RegistrarOperacion("Restauracion de usuario", "Se restauro el usuario " + snapshot.Username + " desde el historial #" + historialId + ".", "UsuarioBLL", accesoDatos)
+UsuarioBLL -> AccesoDatos : CommitTransactionScope()
+UsuarioBLL -> UsuarioBLL : RefrescarSesionSiCorresponde(snapshot.UsuarioId)
+
+alt usuario restaurado es la sesion actual
+  UsuarioBLL -> UsuarioDAL : ObtenerPorId(snapshot.UsuarioId, null)
+  UsuarioDAL --> UsuarioBLL : usuarioActualizado
+  UsuarioBLL -> Sesion : ActualizarUsuarioActualNombre(usuarioActualizado.Username)
+  UsuarioBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(snapshot.UsuarioId)
+  PermisoBLL --> UsuarioBLL : permisosDirectos
+  UsuarioBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
+  UsuarioBLL -> IdiomaBLL : AplicarIdiomaSesionUsuario(snapshot.UsuarioId)
+end
+
+UsuarioBLL --> FormHistorialUsuario : true
+
 @enduml

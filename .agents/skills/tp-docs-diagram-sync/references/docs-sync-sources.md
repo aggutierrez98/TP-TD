@@ -34,3 +34,9 @@ Usar nombres ordenables por requerimiento tecnico dentro de la carpeta del requi
 ## Sync rule
 
 Primero actualizar `.puml` en repo, despues exportar/copiar imagen al Google Doc.
+
+## Balance rule
+
+- Los diagramas de clases, secuencia y DER deben ser consistentes entre si y con el codigo vigente.
+- Los nombres de clases, atributos, metodos y parametros deben coincidir exactamente con el codigo real.
+- Los DER deben reflejar la persistencia real definida en `script_bd.sql`.

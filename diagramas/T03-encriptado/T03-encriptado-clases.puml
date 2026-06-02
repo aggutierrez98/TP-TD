@@ -1,0 +1,73 @@
+@startuml
+title T03 - Gestion de Encriptado - Clases
+
+left to right direction
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package "ABSTRACCIONES" {
+  interface IPasswordHasher {
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+}
+
+package "SERVICIOS" {
+  class PasswordHasher {
+    -SaltSize : int
+    -HashSize : int
+    -Iterations : int
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+}
+
+package "BLL" {
+  class UsuarioBLL {
+    +Login(username : string, passwordRaw : string) : Usuario
+    +Registrar(username : string, passwordRaw : string) : bool
+  }
+}
+
+package "UI" {
+  class FormLogin
+  class FormRegistro
+}
+
+package "DAL" {
+  class UsuarioDAL {
+    +ObtenerPorUsername(username : string, accesoDatos : AccesoDatos = null) : Usuario
+    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatos = null) : int
+  }
+
+  class AccesoDatos
+}
+
+package "BE" {
+  class Usuario {
+    +Id : int
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+  }
+}
+
+PasswordHasher ..|> IPasswordHasher
+FormLogin --> UsuarioBLL
+FormRegistro --> UsuarioBLL
+UsuarioBLL --> PasswordHasher
+UsuarioBLL --> UsuarioDAL
+UsuarioDAL --> AccesoDatos
+UsuarioDAL --> Usuario
+
+note bottom of PasswordHasher
+  Implementa hashing PBKDF2 con salt aleatorio
+  y multiples iteraciones antes de persistir.
+  Tambien verifica hashes almacenados al loguear.
+end note
+
+@enduml

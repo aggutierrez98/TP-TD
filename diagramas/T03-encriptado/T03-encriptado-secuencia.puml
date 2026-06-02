@@ -1,0 +1,32 @@
+@startuml
+title T03 - Gestion de Encriptado - Secuencia
+
+actor Usuario
+participant "FormRegistro" as FormRegistro
+participant "FormLogin" as FormLogin
+participant "UsuarioBLL" as UsuarioBLL
+participant "PasswordHasher" as PasswordHasher
+participant "UsuarioDAL" as UsuarioDAL
+participant "AccesoDatos" as AccesoDatos
+
+== Registro ==
+Usuario -> FormRegistro : btnRegistro_Click()
+FormRegistro -> UsuarioBLL : Registrar(txtbNickname.Text, txtbPassword.Text)
+UsuarioBLL -> PasswordHasher : HashPassword(passwordNormalizada)
+PasswordHasher --> UsuarioBLL : passwordHash
+UsuarioBLL -> UsuarioDAL : InsertarYObtenerId(nuevoUsuario, accesoDatos)
+UsuarioDAL -> AccesoDatos : INSERT Usuarios(Username, PasswordHash, Activo)
+UsuarioDAL --> UsuarioBLL : usuarioId
+UsuarioBLL --> FormRegistro : true
+
+== Verificacion de credenciales ==
+Usuario -> FormLogin : btnIngreso_Click()
+FormLogin -> UsuarioBLL : Login(txtbNickname.Text, txtbPassword.Text)
+UsuarioBLL -> UsuarioDAL : ObtenerPorUsername(username.Trim(), null)
+UsuarioDAL -> AccesoDatos : SELECT Id, Username, PasswordHash, Activo
+UsuarioDAL --> UsuarioBLL : usuario
+UsuarioBLL -> PasswordHasher : VerifyPassword(passwordRaw, usuario.PasswordHash)
+PasswordHasher --> UsuarioBLL : esValido
+UsuarioBLL --> FormLogin : usuario / null
+
+@enduml

@@ -50,3 +50,8 @@ No actualizar el Google Doc sin antes actualizar el PlantUML fuente cuando el ca
 - Mantener una carpeta por requisito; el tipo de diagrama debe quedar expresado en el nombre del archivo.
 - Usar nombres ordenables y descriptivos.
 - No dejar diagramas solo como imagen embebida en documentos.
+- Los diagramas deben quedar balanceados entre si y contra el codigo real.
+- Si una clase, atributo, metodo o parametro aparece en un diagrama, debe existir con ese mismo nombre en el codigo vigente.
+- Si un flujo de secuencia invoca un metodo, ese metodo debe existir con ese mismo nombre y parametros en el diagrama de clases correspondiente y en el codigo.
+- Los DER deben reflejar exactamente la persistencia real definida en `script_bd.sql`, incluyendo nombres de tablas, columnas, PK, FK, nullabilidad y restricciones relevantes.
+- Antes de cerrar una tarea documental, revisar consistencia cruzada entre clases, secuencias, DER y codigo.

@@ -1,20 +1,28 @@
 @startuml
-title T06a - Registro de operacion en bitacora desacoplada
+title T06a - Gestion de Bitacora - Registro de operacion
 
 actor Usuario
-participant "FormGestionUsuarios" as UI
-participant "UsuarioBLL" as BLL
+participant "FormGestionUsuarios" as FormGestionUsuarios
+participant "UsuarioBLL" as UsuarioBLL
+participant "AccesoDatos" as AccesoDatos
+participant "UsuarioDAL" as UsuarioDAL
+participant "UsuarioEstadoBLL" as UsuarioEstadoBLL
 participant "BitacoraService" as BitacoraService
 participant "Sesion" as Sesion
 participant "BitacoraDAL" as BitacoraDAL
-participant "AccesoDatos" as AccesoDatos
 
-Usuario -> UI : editar usuario
-UI -> BLL : Actualizar(...)
-BLL -> BitacoraService : RegistrarOperacion(..., contextoTx)
-BitacoraService -> Sesion : GetUsuarioActualId()\nGetUsuarioActualNombre()
-BitacoraService -> BitacoraDAL : Guardar(evento, contextoTx)
-BitacoraDAL -> AccesoDatos : INSERT Bitacora
-BLL --> UI : exito
-UI --> Usuario : confirmacion
+Usuario -> FormGestionUsuarios : btnEditarUsuario_Click()
+FormGestionUsuarios -> UsuarioBLL : Actualizar(_idSeleccionado, nuevoUsername)
+UsuarioBLL -> AccesoDatos : BeginTransactionScope()
+UsuarioBLL -> UsuarioDAL : ObtenerPorId(id, accesoDatos)
+UsuarioDAL --> UsuarioBLL : usuario
+UsuarioBLL -> UsuarioDAL : Actualizar(usuario, accesoDatos)
+UsuarioBLL -> UsuarioEstadoBLL : GuardarVersionActual(id, "Edicion", "Actualizacion del nombre de usuario.", accesoDatos)
+UsuarioBLL -> BitacoraService : RegistrarOperacion("Edicion de usuario", "Se actualizo el usuario " + usernameNormalizado + ".", "UsuarioBLL", accesoDatos)
+BitacoraService -> Sesion : GetUsuarioActualId()
+BitacoraService -> Sesion : GetUsuarioActualNombre()
+BitacoraService -> BitacoraDAL : Guardar(evento, accesoDatos)
+UsuarioBLL -> AccesoDatos : CommitTransactionScope()
+UsuarioBLL --> FormGestionUsuarios : true
+
 @enduml

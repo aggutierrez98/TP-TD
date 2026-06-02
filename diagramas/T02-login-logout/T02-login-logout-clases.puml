@@ -1,0 +1,149 @@
+@startuml
+title T02 - Gestion de Log In / Log Out - Clases
+
+left to right direction
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package "UI" {
+  class FormLogin {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormRegistro {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormGestionUsuarios {
+    +Actualizar(idioma : Idioma) : void
+  }
+}
+
+package "BLL" {
+  class UsuarioBLL {
+    +Login(username : string, passwordRaw : string) : Usuario
+    +CerrarSesionActual() : void
+    +Registrar(username : string, passwordRaw : string) : bool
+  }
+
+  class PermisoBLL {
+    +CargarPermisosEnUsuario(usuario : Usuario) : void
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : object
+  }
+
+  class IdiomaBLL {
+    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
+  }
+}
+
+package "DAL" {
+  class UsuarioDAL {
+    +ObtenerPorUsername(username : string, accesoDatos : AccesoDatos = null) : Usuario
+    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatos = null) : int
+  }
+
+  class AccesoDatos
+}
+
+package "SERVICIOS" {
+  class PasswordHasher {
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+    +IniciarSesion(usuarioId : int, username : string) : void
+    +CerrarSesion() : void
+    +GetUsuarioActual() : IUsuarioAutenticado
+    +GetUsuarioActualId() : int?
+    +GetUsuarioActualNombre() : string
+    +ActualizarUsuarioActualNombre(username : string) : void
+    +HaySesionActiva() : bool
+  }
+
+  class AutorizacionService <<singleton>> {
+    +GetInstance() : AutorizacionService
+    +ActualizarPermisosUsuarioActual(permisos : object) : void
+    +Limpiar() : void
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+  }
+
+  class Idioma
+  class UsuarioAutenticadoSesion
+}
+
+package "ABSTRACCIONES" {
+  interface IPasswordHasher {
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+
+  interface ISesion {
+    +IniciarSesion(usuario : IUsuarioAutenticado) : void
+    +CerrarSesion() : void
+    +GetUsuarioActual() : IUsuarioAutenticado
+    +GetUsuarioActualId() : int?
+    +GetUsuarioActualNombre() : string
+    +ActualizarUsuarioActualNombre(username : string) : void
+    +HaySesionActiva() : bool
+  }
+
+  interface IUsuarioAutenticado {
+    +Id : int
+    +Username : string
+  }
+}
+
+package "BE" {
+  class Usuario {
+    +Id : int
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+  }
+}
+
+FormLogin ..> FormRegistro : <<creates>>
+FormLogin ..> FormGestionUsuarios : <<creates>>
+FormLogin --> UsuarioBLL : gestorUsuario
+FormRegistro --> UsuarioBLL : gestorJugador
+FormGestionUsuarios --> UsuarioBLL : usuarioBLL
+
+UsuarioBLL --> UsuarioDAL
+UsuarioBLL --> PasswordHasher
+UsuarioBLL --> PermisoBLL
+UsuarioBLL --> IdiomaBLL
+UsuarioBLL --> Sesion
+UsuarioBLL --> AutorizacionService
+UsuarioBLL --> BitacoraService
+UsuarioDAL --> AccesoDatos
+UsuarioDAL --> Usuario
+
+PasswordHasher ..|> IPasswordHasher
+Sesion ..|> ISesion
+UsuarioAutenticadoSesion ..|> IUsuarioAutenticado
+Usuario ..|> IUsuarioAutenticado
+Sesion --> IUsuarioAutenticado : _usuarioActual
+
+note right of Sesion
+  Sesion mantiene solo identidad
+  y estado de autenticacion runtime.
+end note
+
+note bottom of UsuarioBLL
+  Login inicializa sesion, permisos runtime,
+  idioma runtime y bitacora.
+  Logout limpia autorizacion y sesion.
+end note
+
+@enduml

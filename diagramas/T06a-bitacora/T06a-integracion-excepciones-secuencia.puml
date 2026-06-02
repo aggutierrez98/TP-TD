@@ -1,29 +1,27 @@
 @startuml
-title T06a - Flujo de falla de negocio vs excepcion tecnica
+title T06a - Gestion de Bitacora - Integracion con excepciones
 
 actor Usuario
 participant UI
-participant BLL
-participant "BitacoraService" as BitacoraService
 participant "ManejadorExcepcionesBLL" as ManejadorExcepcionesBLL
-participant DAL
+participant "BootstrapAplicacionBLL" as BootstrapAplicacionBLL
+participant "BitacoraService" as BitacoraService
+participant "Sesion" as Sesion
+participant "BitacoraDAL" as BitacoraDAL
 
-group Falla de negocio
-Usuario -> UI : accion invalida
-UI -> BLL : ejecutar caso de uso
-BLL -> BitacoraService : RegistrarFalloNegocio(...)
-BLL --> UI : ExcepcionNegocio
-UI --> Usuario : mensaje funcional
+Usuario -> UI : accion que produce error
+UI -> ManejadorExcepcionesBLL : ObtenerMensajeUsuario(exception, actividad)
+
+alt exception es ExcepcionNegocio
+  ManejadorExcepcionesBLL --> UI : exception.Message
+else exception tecnica
+  ManejadorExcepcionesBLL -> ManejadorExcepcionesBLL : RegistrarExcepcionTecnica(exception, actividad, "UI")
+  ManejadorExcepcionesBLL -> BootstrapAplicacionBLL : Inicializar()
+  ManejadorExcepcionesBLL -> BitacoraService : RegistrarExcepcionTecnica(actividad, exception, "UI", null)
+  BitacoraService -> Sesion : GetUsuarioActualId()
+  BitacoraService -> Sesion : GetUsuarioActualNombre()
+  BitacoraService -> BitacoraDAL : Guardar(evento, null)
+  ManejadorExcepcionesBLL --> UI : "Ocurrio un error tecnico inesperado."
 end
 
-group Excepcion tecnica
-Usuario -> UI : accion
-UI -> BLL : ejecutar caso de uso
-BLL -> DAL : operacion transaccional
-DAL --> BLL : ExcepcionTecnica
-BLL --> UI : ExcepcionTecnica
-UI -> ManejadorExcepcionesBLL : ObtenerMensajeUsuario(...)
-ManejadorExcepcionesBLL -> BitacoraService : RegistrarExcepcionTecnica(...)
-UI --> Usuario : mensaje seguro
-end
 @enduml

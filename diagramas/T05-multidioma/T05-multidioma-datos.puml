@@ -1,0 +1,53 @@
+@startuml
+title T05 - Gestion de Multiples Idiomas - DER
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL>>
+}
+
+entity "Idioma" as Idioma {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Nombre : varchar(100) <<UQ, NOT NULL>>
+  Default : bit <<NOT NULL>>
+}
+
+entity "Palabra" as Palabra {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Key : varchar(150) <<UQ, NOT NULL>>
+  EsBase : bit <<NOT NULL>>
+}
+
+entity "Traduccion" as Traduccion {
+  *PalabraId : int <<PK, FK, NOT NULL>>
+  *IdiomaId : int <<PK, FK, NOT NULL>>
+  --
+  Valor : varchar(300) <<NOT NULL>>
+}
+
+entity "UsuarioPreferencias" as UsuarioPreferencias {
+  *UsuarioId : int <<PK, FK, NOT NULL>>
+  --
+  IdiomaId : int <<FK, NOT NULL>>
+}
+
+Palabra ||--o{ Traduccion : FK_Traduccion_Palabra
+Idioma ||--o{ Traduccion : FK_Traduccion_Idioma
+Usuarios ||--o| UsuarioPreferencias : FK_UsuarioPreferencias_Usuario
+Idioma ||--o{ UsuarioPreferencias : FK_UsuarioPreferencias_Idioma
+
+note right of Idioma
+  El script garantiza que exista
+  un unico idioma default efectivo.
+end note
+
+@enduml

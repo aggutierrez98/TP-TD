@@ -1,0 +1,22 @@
+@startuml
+title T02 - Gestion de Log In / Log Out - DER
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL>>
+}
+
+note right of Usuarios
+  T02 valida identidad contra esta tabla.
+  La sesion activa vive solo en memoria
+  y no se persiste en la base.
+end note
+
+@enduml

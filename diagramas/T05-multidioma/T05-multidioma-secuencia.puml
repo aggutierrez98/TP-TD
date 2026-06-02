@@ -1,0 +1,39 @@
+@startuml
+title T05 - Gestion de Multiples Idiomas - Secuencia
+
+actor Usuario
+participant "FormConfiguracionUsuario" as FormConfiguracionUsuario
+participant "Sesion" as Sesion
+participant "IdiomaBLL" as IdiomaBLL
+participant "IdiomaDAL" as IdiomaDAL
+participant "IdiomaCatalogoService" as IdiomaCatalogoService
+participant "AccesoDatos" as AccesoDatos
+participant "UsuarioPreferenciaDAL" as UsuarioPreferenciaDAL
+participant "UsuarioEstadoBLL" as UsuarioEstadoBLL
+participant "BitacoraService" as BitacoraService
+participant "IdiomaService" as IdiomaService
+participant "FormGestionUsuarios" as FormGestionUsuarios
+participant "FormBitacora" as FormBitacora
+
+Usuario -> FormConfiguracionUsuario : btnGuardarConfiguracion_Click()
+FormConfiguracionUsuario -> Sesion : GetUsuarioActualId()
+FormConfiguracionUsuario -> IdiomaBLL : GuardarPreferencia(usuarioId.Value, idioma.Id)
+IdiomaBLL -> IdiomaDAL : ObtenerIdiomaCompleto(idiomaId)
+IdiomaDAL --> IdiomaBLL : idioma
+IdiomaBLL -> IdiomaCatalogoService : ValidarIdiomaSeleccionable(idioma)
+IdiomaBLL -> AccesoDatos : BeginTransactionScope()
+IdiomaBLL -> UsuarioPreferenciaDAL : Guardar(usuarioId, idiomaId, accesoDatos)
+IdiomaBLL -> UsuarioEstadoBLL : GuardarVersionActual(usuarioId, "ActualizacionIdiomaPreferido", "Actualizacion de la preferencia de idioma del usuario.", accesoDatos)
+IdiomaBLL -> BitacoraService : RegistrarOperacion("Actualizacion preferencia idioma", "Se actualizo el idioma preferido del usuario ID " + usuarioId + ".", "IdiomaBLL", accesoDatos)
+IdiomaBLL -> AccesoDatos : CommitTransactionScope()
+IdiomaBLL -> IdiomaBLL : AplicarIdiomaSesion(idiomaId)
+IdiomaBLL -> IdiomaDAL : ObtenerIdiomaCompleto(idiomaId)
+IdiomaDAL --> IdiomaBLL : idiomaRecargado
+IdiomaBLL -> IdiomaCatalogoService : ValidarIdiomaSeleccionable(idiomaRecargado)
+IdiomaBLL -> IdiomaService : CambiarIdioma(idiomaRecargado)
+IdiomaService -> FormConfiguracionUsuario : Actualizar(idiomaRecargado)
+IdiomaService -> FormGestionUsuarios : Actualizar(idiomaRecargado)
+IdiomaService -> FormBitacora : Actualizar(idiomaRecargado)
+IdiomaBLL --> FormConfiguracionUsuario : true
+
+@enduml

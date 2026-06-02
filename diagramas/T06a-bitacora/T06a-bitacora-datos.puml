@@ -1,26 +1,37 @@
 @startuml
-title T06a - Bitacora - DER
+title T06a - Gestion de Bitacora - DER
+
+hide methods
+hide stereotypes
+skinparam classAttributeIconSize 0
 
 entity "Usuarios" as Usuarios {
-  *Id : int <<PK>>
+  *Id : int <<PK, IDENTITY, NOT NULL>>
   --
-  Username : varchar(50)
-  PasswordHash : varchar(max)
-  Activo : bit
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL>>
 }
 
 entity "Bitacora" as Bitacora {
-  *Id : int <<PK>>
+  *Id : int <<PK, IDENTITY, NOT NULL>>
   --
-  FechaHora : datetime
-  UsuarioId : int <<FK>>
-  UsernameSnapshot : varchar(50)
-  Actividad : varchar(100)
-  Informacion : varchar(500)
-  Nivel : varchar(20)
-  Origen : varchar(100)
-  EsTecnica : bit
+  FechaHora : datetime <<NOT NULL>>
+  UsuarioId : int <<FK, NULL>>
+  UsernameSnapshot : varchar(50) <<NULL>>
+  Actividad : varchar(100) <<NOT NULL>>
+  Informacion : varchar(500) <<NULL>>
+  Nivel : varchar(20) <<NOT NULL>>
+  Origen : varchar(100) <<NOT NULL>>
+  EsTecnica : bit <<NOT NULL>>
 }
 
-Usuarios ||--o{ Bitacora
+Usuarios ||--o{ Bitacora : FK_Bitacora_Usuario
+
+note right of Bitacora
+  Indices reales:
+  - IX_Bitacora_FechaHora
+  - IX_Bitacora_UsuarioId_Actividad
+end note
+
 @enduml

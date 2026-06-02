@@ -1,7 +1,8 @@
 @startuml
-title T04 - Perfiles de usuario - Composite por capas
+title T04 - Gestion de Perfiles de Usuario - Composite - Clases
 
 skinparam classAttributeIconSize 0
+skinparam shadowing false
 hide empty members
 
 package "ABSTRACCIONES" {
@@ -10,25 +11,10 @@ package "ABSTRACCIONES" {
     +Nombre : string
     +EsGrupo : bool
     +Hijos : IList<IPermiso>
-    +Agregar(permiso)
-    +Quitar(permiso)
-    +Contiene(id)
-    +ObtenerPermisosHoja()
-  }
-
-  interface IUsuarioAutenticado {
-    +Id : int
-    +Username : string
-  }
-
-  interface ISesion {
-    +IniciarSesion(usuario)
-    +CerrarSesion()
-    +GetUsuarioActual()
-    +GetUsuarioActualId()
-    +GetUsuarioActualNombre()
-    +ActualizarUsuarioActualNombre(username)
-    +HaySesionActiva()
+    +Agregar(permiso : IPermiso) : void
+    +Quitar(permiso : IPermiso) : void
+    +Contiene(id : int) : bool
+    +ObtenerPermisosHoja() : IList<IPermiso>
   }
 }
 
@@ -37,6 +23,7 @@ package "BE" {
     +Id : int
     +Username : string
     +PasswordHash : string
+    +Activo : bool
     +Permisos : IList<IPermiso>
   }
 }
@@ -45,38 +32,102 @@ package "SERVICIOS" {
   abstract class PermisoNodo {
     +Id : int
     +Nombre : string
+    +EsGrupo : bool
     +Hijos : IList<IPermiso>
     +HijosNodos : IList<PermisoNodo>
+    +Agregar(permiso : IPermiso) : void
+    +Quitar(permiso : IPermiso) : void
+    +AgregarHijo(permiso : PermisoNodo) : void
+    +QuitarHijo(permiso : PermisoNodo) : void
+    +Contiene(id : int) : bool
+    +ObtenerPermisosHoja() : IList<IPermiso>
   }
 
   class PermisoSimple
   class GrupoPermiso
+
   class PermisoRelacion {
     +GrupoId : int
     +PermisoId : int
   }
 
-  class PermisoService
-  class AutorizacionService {
-    +ActualizarPermisosUsuarioActual(permisos)
-    +Limpiar()
-    +TienePermiso(nombrePermiso)
-    +ObtenerPermisosEfectivos()
+  class PermisoService {
+    +ConstruirArbol(nodos : IList<PermisoNodo>, relaciones : IList<PermisoRelacion>) : IList<PermisoNodo>
+    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
+    +ObtenerPermisosReconocidos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
+    +ValidarNombre(nombre : string) : void
+    +ValidarNombresUnicos(nodos : IEnumerable<PermisoNodo>) : void
+    +ValidarGruposNoVacios(nodos : IEnumerable<PermisoNodo>) : void
+    +ValidarSinCiclos(raices : IEnumerable<PermisoNodo>) : void
+    +Aplanar(raices : IEnumerable<PermisoNodo>) : IList<PermisoNodo>
+    +ObtenerRelaciones(raices : IEnumerable<PermisoNodo>) : IList<PermisoRelacion>
+    +ObtenerIdsSubarbol(raiz : IPermiso) : IList<int>
+    +CrearColeccionPermisos(permisos : IEnumerable<PermisoNodo>) : object
   }
 
-  class Sesion {
-    -_usuarioActual : IUsuarioAutenticado
+  class AutorizacionService <<singleton>> {
+    +GetInstance() : AutorizacionService
+    +ActualizarPermisosUsuarioActual(permisos : object) : void
+    +Limpiar() : void
+    +TienePermiso(nombrePermiso : string) : bool
+    +ObtenerPermisosEfectivos() : object
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+  }
+
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+    +GetUsuarioActualId() : int?
   }
 }
 
 package "DAL" {
-  class PermisoDAL
-  class UsuarioPermisoDAL
+  class PermisoDAL {
+    +ObtenerNodos() : List<PermisoNodo>
+    +ObtenerRelaciones() : List<PermisoRelacion>
+    +InsertarPermiso(nombre : string) : int
+    +ActualizarNombre(id : int, nombre : string) : bool
+    +ReemplazarRelaciones(relaciones : List<PermisoRelacion>) : bool
+    +EliminarPermisos(idsPermiso : List<int>) : bool
+  }
+
+  class UsuarioPermisoDAL {
+    +ObtenerPermisoIdsPorUsuario(usuarioId : int, accesoDatos : AccesoDatos = null) : List<int>
+    +ReemplazarPermisosUsuario(usuarioId : int, permisosId : List<int>, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class UsuarioDAL {
+    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
+  }
+
+  class AccesoDatos
+  {
+    +BeginTransactionScope() : void
+    +CommitTransactionScope() : void
+    +RollbackTransactionScope() : void
+  }
 }
 
 package "BLL" {
-  class PermisoBLL
-  class UsuarioBLL
+  class PermisoBLL {
+    +ObtenerCatalogo() : List<PermisoNodo>
+    +GuardarCatalogo(raices : List<PermisoNodo>) : void
+    +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
+    +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : object
+    +CargarPermisosEnUsuario(usuario : Usuario) : void
+  }
+
+  class UsuarioBLL {
+    +Login(username : string, passwordRaw : string) : Usuario
+  }
+
+  class UsuarioEstadoBLL {
+    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+  }
 }
 
 package "UI" {
@@ -87,37 +138,25 @@ package "UI" {
 IPermiso <|.. PermisoNodo
 PermisoNodo <|-- PermisoSimple
 PermisoNodo <|-- GrupoPermiso
-IUsuarioAutenticado <|.. Usuario
-ISesion <|.. Sesion
+Usuario --> IPermiso : Permisos
 
-Usuario --> IPermiso : permisos de negocio
-Sesion --> IUsuarioAutenticado
-AutorizacionService --> PermisoService
 PermisoBLL --> PermisoDAL
 PermisoBLL --> UsuarioPermisoDAL
+PermisoBLL --> UsuarioDAL
+PermisoBLL --> UsuarioEstadoBLL
 PermisoBLL --> PermisoService
-PermisoBLL --> AutorizacionService : refresca runtime
-UsuarioBLL --> Sesion : autenticacion
+PermisoBLL --> AutorizacionService
+PermisoBLL --> BitacoraService
+PermisoBLL --> Sesion
 UsuarioBLL --> PermisoBLL
-UsuarioBLL --> AutorizacionService : carga permisos activos
+AutorizacionService --> PermisoService
+
 FormGestionPermisos --> PermisoBLL
 FormGestionUsuarios --> PermisoBLL
 
-note right of Sesion
-Sesion solo mantiene identidad
-del usuario autenticado.
-No resuelve permisos.
-end note
-
 note right of AutorizacionService
-Servicio runtime desacoplado
-para autorizacion del usuario activo.
-end note
-
-note bottom of Usuario
-BE conoce ABSTRACCIONES.
-BLL y UI consumen SERVICIOS
-sin depender directamente de ABSTRACCIONES.
+  Runtime de autorizacion desacoplado.
+  Sesion no resuelve permisos.
 end note
 
 @enduml

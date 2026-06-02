@@ -15,7 +15,7 @@ $allowedDependencies = [ordered]@{
     "SERVICIOS" = @("ABSTRACCIONES")
     "DAL" = @("BE", "SERVICIOS")
     "BLL" = @("BE", "DAL", "SERVICIOS")
-    "TpIDS" = @("BE", "BLL", "SERVICIOS")
+    "UI" = @("BE", "BLL", "SERVICIOS")
 }
 
 function Get-ProjectFilePath {
@@ -23,7 +23,7 @@ function Get-ProjectFilePath {
         [string]$ProjectName
     )
 
-    $projectFileName = if ($ProjectName -eq "TpIDS") { "UI.csproj" } else { "$ProjectName.csproj" }
+    $projectFileName = "$ProjectName.csproj"
     return Join-Path $RepoRoot (Join-Path $ProjectName $projectFileName)
 }
 

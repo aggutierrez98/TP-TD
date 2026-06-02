@@ -1,56 +1,202 @@
 @startuml
-title T05 - Multidioma - Observer desacoplado
+title T05 - Gestion de Multiples Idiomas - Observer - Clases
 
-package "UI" {
-  class FormLogin
-  class FormRegistro
-  class FormGestionUsuarios
-  class FormGestionIdiomas
-  class FormBitacora
-}
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
 
-package "BLL" {
-  class IdiomaBLL
+package "ABSTRACCIONES" {
+  interface IIdioma {
+    +Id : int
+    +Nombre : string
+    +Default : bool
+    +Traducciones : IList<ITraduccion>
+    +ObtenerTexto(key : string) : string
+    +TieneTraduccion(key : string) : bool
+  }
+
+  interface ITraduccion {
+    +PalabraId : int
+    +IdiomaId : int
+    +Valor : string
+    +Palabra : IPalabra
+  }
+
+  interface IPalabra {
+    +Id : int
+    +Key : string
+    +EsBase : bool
+  }
+
+  interface IUsuarioPreferencia {
+    +UsuarioId : int
+    +IdiomaId : int
+  }
 }
 
 package "SERVICIOS" {
-  class IdiomaService {
+  class IdiomaService <<singleton>> {
+    +GetInstance() : IdiomaService
     +IdiomaActual : Idioma
-    +RegistrarObservador(observador)
-    +DesregistrarObservador(observador)
-    +CambiarIdioma(idioma)
+    +RegistrarObservador(observador : Action<Idioma>) : void
+    +DesregistrarObservador(observador : Action<Idioma>) : void
+    +CambiarIdioma(idioma : Idioma) : void
   }
 
-  class IdiomaCatalogoService
-  class Idioma
+  class IdiomaCatalogoService {
+    +NormalizarNombre(nombre : string) : string
+    +ValidarNombreDuplicado(idiomas : IEnumerable<Idioma>, nombre : string, idiomaId : int?) : void
+    +EstaCompleto(idioma : Idioma) : bool
+    +ValidarIdiomaSeleccionable(idioma : Idioma) : void
+  }
+
+  class Idioma {
+    +Id : int
+    +Nombre : string
+    +Default : bool
+    +Traducciones : List<Traduccion>
+    +ObtenerTexto(key : string) : string
+    +TieneTraduccion(key : string) : bool
+  }
+
+  class Traduccion {
+    +PalabraId : int
+    +IdiomaId : int
+    +Valor : string
+    +Palabra : Palabra
+  }
+
+  class Palabra {
+    +Id : int
+    +Key : string
+    +EsBase : bool
+  }
+
+  class UsuarioPreferencia {
+    +UsuarioId : int
+    +IdiomaId : int
+  }
+
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+    +GetUsuarioActualId() : int?
+    +GetUsuarioActualNombre() : string
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+  }
+}
+
+package "BLL" {
+  class IdiomaBLL {
+    +InicializarAplicacion() : void
+    +ObtenerIdiomas() : List<Idioma>
+    +ObtenerIdioma(idiomaId : int) : Idioma
+    +ObtenerIdiomaDefault() : Idioma
+    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
+    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
+    +CrearIdioma(nombre : string, idiomaDefault : bool) : int
+    +ActualizarIdioma(idiomaId : int, nombre : string, idiomaDefault : bool) : bool
+    +EliminarIdioma(idiomaId : int) : bool
+    +GuardarTraduccion(idiomaId : int, key : string, valor : string) : void
+    +EliminarTraduccion(idiomaId : int, palabraId : int) : bool
+    +ImportarJson(idiomaId : int, rutaArchivo : string) : void
+    +EstaCompleto(idiomaId : int) : bool
+    +AplicarIdiomaSesion(idiomaId : int) : void
+  }
+
+  class UsuarioEstadoBLL {
+    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+  }
 }
 
 package "DAL" {
-  class IdiomaDAL
-  class UsuarioPreferenciaDAL
+  class IdiomaDAL {
+    +ObtenerIdiomas() : List<Idioma>
+    +ObtenerPalabras() : List<Palabra>
+    +ObtenerIdiomaCompleto(idiomaId : int) : Idioma
+    +ObtenerIdiomaDefault() : Idioma
+    +InsertarIdioma(idioma : Idioma) : int
+    +ActualizarIdioma(idioma : Idioma) : bool
+    +EliminarIdioma(idiomaId : int) : bool
+    +ObtenerOCrearPalabra(key : string, esBase : bool) : int
+    +GuardarTraduccion(idiomaId : int, palabraId : int, valor : string) : bool
+    +EliminarTraduccion(idiomaId : int, palabraId : int) : bool
+    +EstablecerIdiomaDefault(idiomaId : int) : bool
+  }
+
+  class UsuarioPreferenciaDAL {
+    +ObtenerPorUsuarioId(usuarioId : int, accesoDatos : AccesoDatos = null) : UsuarioPreferencia
+    +Guardar(usuarioId : int, idiomaId : int?, accesoDatos : AccesoDatos = null) : bool
+  }
+
+  class AccesoDatos {
+    +BeginTransactionScope() : void
+    +CommitTransactionScope() : void
+    +RollbackTransactionScope() : void
+  }
 }
+
+package "UI" {
+  class FormLogin {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormRegistro {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormGestionUsuarios {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormGestionIdiomas {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormConfiguracionUsuario {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormBitacora {
+    +Actualizar(idioma : Idioma) : void
+  }
+
+  class FormHistorialUsuario {
+    +Actualizar(idioma : Idioma) : void
+  }
+}
+
+IIdioma <|.. Idioma
+ITraduccion <|.. Traduccion
+IPalabra <|.. Palabra
+IUsuarioPreferencia <|.. UsuarioPreferencia
+
+Idioma --> Traduccion
+Traduccion --> Palabra
 
 IdiomaBLL --> IdiomaDAL
 IdiomaBLL --> UsuarioPreferenciaDAL
 IdiomaBLL --> IdiomaCatalogoService
-IdiomaBLL --> IdiomaService : aplica idioma runtime
-IdiomaService --> Idioma
+IdiomaBLL --> UsuarioEstadoBLL
+IdiomaBLL --> IdiomaService
+IdiomaBLL --> BitacoraService
+FormConfiguracionUsuario --> Sesion
 
 FormLogin --> IdiomaService
 FormRegistro --> IdiomaService
 FormGestionUsuarios --> IdiomaService
 FormGestionIdiomas --> IdiomaService
+FormConfiguracionUsuario --> IdiomaService
 FormBitacora --> IdiomaService
+FormHistorialUsuario --> IdiomaService
 
 note right of IdiomaService
-Sujeto del Observer en runtime.
-Notifica formularios abiertos
-mediante callbacks concretos.
-No depende de Sesion.
+  Sujeto del Observer en runtime.
+  Mantiene IdiomaActual y notifica
+  formularios abiertos por callback.
 end note
 
-note right of IdiomaCatalogoService
-Servicio de catalogo y validacion.
-No mantiene estado runtime.
-end note
 @enduml
