@@ -32,6 +32,7 @@ namespace TpIDS
             this.btnIngreso.Location = new System.Drawing.Point(38, 270);
             this.btnIngreso.Name = "btnIngreso";
             this.btnIngreso.Size = new System.Drawing.Size(200, 43);
+            this.btnIngreso.Tag = "FormLogin.LoginButton";
             this.btnIngreso.TabIndex = 2;
             this.btnIngreso.Text = "Ingresar";
             this.btnIngreso.UseVisualStyleBackColor = true;
@@ -58,6 +59,7 @@ namespace TpIDS
             this.lblNickname.Location = new System.Drawing.Point(35, 165);
             this.lblNickname.Name = "lblNickname";
             this.lblNickname.Size = new System.Drawing.Size(108, 13);
+            this.lblNickname.Tag = "FormLogin.NicknameLabel";
             this.lblNickname.TabIndex = 5;
             this.lblNickname.Text = "Ingrese su nickname:";
             // 
@@ -67,6 +69,7 @@ namespace TpIDS
             this.lblPassword.Location = new System.Drawing.Point(37, 215);
             this.lblPassword.Name = "lblPassword";
             this.lblPassword.Size = new System.Drawing.Size(115, 13);
+            this.lblPassword.Tag = "FormLogin.PasswordLabel";
             this.lblPassword.TabIndex = 6;
             this.lblPassword.Text = "Ingrese su contrasena:";
             // 
@@ -75,6 +78,7 @@ namespace TpIDS
             this.btnRegistro.Location = new System.Drawing.Point(38, 354);
             this.btnRegistro.Name = "btnRegistro";
             this.btnRegistro.Size = new System.Drawing.Size(200, 28);
+            this.btnRegistro.Tag = "FormLogin.RegisterButton";
             this.btnRegistro.TabIndex = 3;
             this.btnRegistro.Text = "Registrarme";
             this.btnRegistro.UseVisualStyleBackColor = true;
@@ -86,6 +90,7 @@ namespace TpIDS
             this.lblRegistro.Location = new System.Drawing.Point(37, 338);
             this.lblRegistro.Name = "lblRegistro";
             this.lblRegistro.Size = new System.Drawing.Size(97, 13);
+            this.lblRegistro.Tag = "FormLogin.RegisterPrompt";
             this.lblRegistro.TabIndex = 9;
             this.lblRegistro.Text = "No tenes usuario?";
             // 
@@ -114,6 +119,7 @@ namespace TpIDS
             this.Controls.Add(this.btnIngreso);
             this.Name = "FormLogin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Tag = "FormLogin.Title";
             this.Text = "Menu de ingreso";
             ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).EndInit();
             this.ResumeLayout(false);

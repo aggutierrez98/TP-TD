@@ -1,5 +1,4 @@
 using System;
-using System.Windows.Forms;
 using BLL;
 using SERVICIOS;
 
@@ -7,14 +6,16 @@ namespace TpIDS
 {
     internal static class UiExceptionHandler
     {
-        public static void Mostrar(Exception exception, string actividad, string titulo = "Error")
+        public static void Mostrar(Exception exception, string actividad)
         {
-            string mensaje = ManejadorExcepcionesBLL.ObtenerMensajeUsuario(exception, actividad);
-            MessageBoxIcon icono = exception is ExcepcionNegocio
-                ? MessageBoxIcon.Warning
-                : MessageBoxIcon.Error;
+            string messageKey = ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey(exception, actividad);
+            if (exception is ExcepcionNegocio)
+            {
+                UiDialogHelper.MostrarWarning(messageKey);
+                return;
+            }
 
-            MessageBox.Show(mensaje, titulo, MessageBoxButtons.OK, icono);
+            UiDialogHelper.MostrarError(messageKey);
         }
     }
 }

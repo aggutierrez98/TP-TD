@@ -131,7 +131,7 @@ DELETE FROM Permiso WHERE Id IN ({whereClause});";
         private static PermisoNodo MapNodo(DataRow row)
         {
             bool esGrupo = Convert.ToInt32(row["EsGrupo"]) == 1;
-            PermisoNodo nodo = esGrupo ? (PermisoNodo)new GrupoPermiso() : new PermisoSimple();
+            PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
             nodo.Id = (int)row["Id"];
             nodo.Nombre = row["Nombre"].ToString();
             return nodo;

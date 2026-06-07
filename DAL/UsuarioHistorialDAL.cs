@@ -12,33 +12,33 @@ namespace DAL
         public int GuardarVersion(UsuarioHistorialSnapshot snapshot, AccesoDatos accesoDatos = null)
         {
             const string insertHistorial = @"
-INSERT INTO UsuarioHistorial
-(
-    UsuarioId,
-    FechaHora,
-    ActorUsuarioId,
-    ActorUsernameSnapshot,
-    Accion,
-    Observaciones,
-    Username,
-    PasswordHash,
-    Activo,
-    IdiomaId
-)
-OUTPUT INSERTED.HistorialId
-VALUES
-(
-    @UsuarioId,
-    @FechaHora,
-    @ActorUsuarioId,
-    @ActorUsernameSnapshot,
-    @Accion,
-    @Observaciones,
-    @Username,
-    @PasswordHash,
-    @Activo,
-    @IdiomaId
-)";
+                INSERT INTO UsuarioHistorial
+                (
+                    UsuarioId,
+                    FechaHora,
+                    ActorUsuarioId,
+                    ActorUsernameSnapshot,
+                    Accion,
+                    Observaciones,
+                    Username,
+                    PasswordHash,
+                    Activo,
+                    IdiomaId
+                )
+                OUTPUT INSERTED.HistorialId
+                VALUES
+                (
+                    @UsuarioId,
+                    @FechaHora,
+                    @ActorUsuarioId,
+                    @ActorUsernameSnapshot,
+                    @Accion,
+                    @Observaciones,
+                    @Username,
+                    @PasswordHash,
+                    @Activo,
+                    @IdiomaId
+                )";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -76,8 +76,8 @@ VALUES
                     for (int i = 0; i < permisos.Count; i++)
                     {
                         queryPermisos += string.Format(@"
-INSERT INTO UsuarioHistorialPermiso (HistorialId, PermisoId)
-VALUES (@HistorialId, @PermisoId{0});", i);
+                            INSERT INTO UsuarioHistorialPermiso (HistorialId, PermisoId)
+                            VALUES (@HistorialId, @PermisoId{0});", i);
                         parametrosPermisos.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, permisos[i]));
                     }
 

@@ -3,7 +3,11 @@ param()
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..\..")).Path
-$uiPath = Join-Path $repoRoot "TpIDS"
+$uiPath = @(
+    (Join-Path $repoRoot "UI"),
+    (Join-Path $repoRoot "TpIDS")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+$seedJsonPath = Join-Path $repoRoot "translation-seeds\base.es.json"
 $sqlPath = Join-Path $repoRoot "script_bd.sql"
 $markerStart = "-- BEGIN AUTO-GENERATED I18N BASE SEED"
 $markerEnd = "-- END AUTO-GENERATED I18N BASE SEED"
@@ -27,7 +31,7 @@ function Find-ControlText {
     }
 
     foreach ($content in $Contents) {
-        $pattern = '(?m)\b' + [regex]::Escape($ControlName) + '\.Text\s*=\s*"(?<text>[^"]*)";'
+        $pattern = '(?m)(?:this\.)?' + [regex]::Escape($ControlName) + '\.Text\s*=\s*"(?<text>[^"]*)";'
         $match = [regex]::Match($content, $pattern)
         if ($match.Success) {
             return $match.Groups["text"].Value
@@ -82,9 +86,50 @@ function Get-ExistingItemsFromSqlBlock {
 
 $sqlContent = Get-Content -Raw -Path $sqlPath
 $existingItems = Get-ExistingItemsFromSqlBlock -SqlContent $sqlContent -StartMarker $markerStart -EndMarker $markerEnd
+$committedItems = @{}
+
+try {
+    $committedSqlContent = git -C $repoRoot show HEAD:script_bd.sql 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        $committedItems = Get-ExistingItemsFromSqlBlock -SqlContent ($committedSqlContent -join [Environment]::NewLine) -StartMarker $markerStart -EndMarker $markerEnd
+    }
+}
+catch {
+}
+
+function Get-ExistingItemsFromJsonFile {
+    param([string]$Path)
+
+    $items = @{}
+    if (-not (Test-Path $Path)) {
+        return $items
+    }
+
+    $raw = Get-Content -Raw -Path $Path
+    if ([string]::IsNullOrWhiteSpace($raw)) {
+        return $items
+    }
+
+    $data = ConvertFrom-Json -InputObject $raw
+    foreach ($property in $data.PSObject.Properties) {
+        $items[$property.Name] = [string]$property.Value
+    }
+
+    return $items
+}
 
 $resolvedTexts = @{}
 $allKeys = New-Object 'System.Collections.Generic.HashSet[string]'
+$jsonItems = Get-ExistingItemsFromJsonFile -Path $seedJsonPath
+$codeSearchPaths = @(
+    $uiPath,
+    (Join-Path $repoRoot "BLL"),
+    (Join-Path $repoRoot "SERVICIOS")
+) | Where-Object { Test-Path $_ }
+
+if ([string]::IsNullOrWhiteSpace($uiPath)) {
+    throw "No se encontro la carpeta del proyecto UI para sincronizar las traducciones base."
+}
 
 $formFiles = Get-ChildItem -Path $uiPath -Filter "Form*.cs" | Where-Object { $_.Name -notlike "*.Designer.cs" }
 foreach ($formFile in $formFiles) {
@@ -97,7 +142,7 @@ foreach ($formFile in $formFiles) {
     $contents = $relatedFiles | ForEach-Object { Get-Content -Raw -Path $_ }
 
     foreach ($content in $contents) {
-        foreach ($match in [regex]::Matches($content, '(?m)^\s*(?:(?<control>\w+)\.)?Tag\s*=\s*"(?<key>Form[^"]+)";')) {
+        foreach ($match in [regex]::Matches($content, '(?m)^\s*(?:(?:this\.)?(?<control>\w+)\.)?Tag\s*=\s*"(?<key>Form[^"]+)";')) {
             $key = $match.Groups["key"].Value
             $control = if ($match.Groups["control"].Success) { $match.Groups["control"].Value } else { $null }
             $null = $allKeys.Add($key)
@@ -108,20 +153,66 @@ foreach ($formFile in $formFiles) {
             }
         }
 
-        foreach ($match in [regex]::Matches($content, 'ObtenerTexto(?:Actual)?\("(?<key>Form[^"]+)"\)')) {
+        foreach ($match in [regex]::Matches($content, '(?:ObtenerTexto(?:Actual)?|ObtenerTraduccion)\("(?<key>Form[^"]+)"\)')) {
             $null = $allKeys.Add($match.Groups["key"].Value)
         }
     }
 }
 
+$codeFiles = foreach ($path in $codeSearchPaths) {
+    Get-ChildItem -Path $path -Filter "*.cs" -Recurse
+}
+
+foreach ($codeFile in $codeFiles) {
+    $content = Get-Content -Raw -Path $codeFile.FullName
+
+        foreach ($match in [regex]::Matches($content, '"(?<key>(?:Form|Dialog|Error)\.[^"]+)"')) {
+            $null = $allKeys.Add($match.Groups["key"].Value)
+        }
+
+    foreach ($match in [regex]::Matches($content, '\{\s*"(?<key>(?:Form|Dialog|Error)\.[^"]+)"\s*,\s*"(?<text>[^"]*)"\s*\}')) {
+        $key = $match.Groups["key"].Value
+        $text = $match.Groups["text"].Value
+        $null = $allKeys.Add($key)
+
+        if (-not [string]::IsNullOrWhiteSpace($text)) {
+            $resolvedTexts[$key] = $text
+        }
+    }
+}
+
+$seedDir = Split-Path -Parent $seedJsonPath
+if (-not (Test-Path $seedDir)) {
+    New-Item -ItemType Directory -Path $seedDir | Out-Null
+}
+
+$keysToPersist = New-Object 'System.Collections.Generic.HashSet[string]'
+foreach ($key in $jsonItems.Keys) {
+    $null = $keysToPersist.Add($key)
+}
+
+foreach ($key in $allKeys) {
+    $null = $keysToPersist.Add($key)
+}
+
 $items = @()
-foreach ($key in (@($allKeys) | Sort-Object)) {
+foreach ($key in (@($keysToPersist) | Sort-Object)) {
     $value = $null
-    if ($resolvedTexts.ContainsKey($key)) {
+    if ($jsonItems.ContainsKey($key) -and -not [string]::IsNullOrWhiteSpace($jsonItems[$key]) -and $jsonItems[$key] -ne $key) {
+        $value = $jsonItems[$key]
+    }
+    elseif ($resolvedTexts.ContainsKey($key)) {
         $value = $resolvedTexts[$key]
     }
     elseif ($existingItems.ContainsKey($key)) {
         $value = $existingItems[$key]
+
+        if ($value -eq $key -and $committedItems.ContainsKey($key) -and $committedItems[$key] -ne $key) {
+            $value = $committedItems[$key]
+        }
+    }
+    elseif ($committedItems.ContainsKey($key)) {
+        $value = $committedItems[$key]
     }
     else {
         $value = $key
@@ -133,9 +224,34 @@ foreach ($key in (@($allKeys) | Sort-Object)) {
     }
 }
 
+$jsonOrdered = [ordered]@{}
+foreach ($item in $items) {
+    $jsonOrdered[$item.Key] = $item.Valor
+}
+
+$jsonOutput = $jsonOrdered | ConvertTo-Json -Depth 5
+Set-Content -Path $seedJsonPath -Value $jsonOutput -Encoding UTF8
+
+function Get-SqlJsonAssignments {
+    param([string]$JsonText)
+
+    $escaped = Escape-SqlLiteral $JsonText
+    $chunkSize = 3500
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add("DECLARE @TraduccionesBaseJson NVARCHAR(MAX) = N'';")
+
+    for ($index = 0; $index -lt $escaped.Length; $index += $chunkSize) {
+        $chunk = $escaped.Substring($index, [Math]::Min($chunkSize, $escaped.Length - $index))
+        $lines.Add("SET @TraduccionesBaseJson = @TraduccionesBaseJson + N'$chunk';")
+    }
+
+    return $lines
+}
+
 $sqlLines = New-Object System.Collections.Generic.List[string]
 $sqlLines.Add($markerStart)
 $sqlLines.Add("-- AUTO-GENERATED BY .agents/skills/translation-base-seed-sync/scripts/sync-i18n-base-seed.ps1")
+$sqlLines.Add("-- SOURCE OF TRUTH: translation-seeds/base.es.json")
 $sqlLines.Add("DECLARE @IdiomaBaseId INT;")
 $idiomaBaseNombreSql = Escape-SqlLiteral $idiomaBaseNombre
 $sqlLines.Add("SELECT TOP 1 @IdiomaBaseId = Id FROM dbo.Idioma WHERE Nombre = N'$idiomaBaseNombreSql';")
@@ -144,35 +260,49 @@ $sqlLines.Add("BEGIN")
 $sqlLines.Add("    INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'$idiomaBaseNombreSql', 0);")
 $sqlLines.Add("    SET @IdiomaBaseId = SCOPE_IDENTITY();")
 $sqlLines.Add("END")
-$sqlLines.Add("DECLARE @PalabraId INT;")
 $sqlLines.Add("")
-
-foreach ($item in $items) {
-    $keySql = Escape-SqlLiteral $item.Key
-    $valorSql = Escape-SqlLiteral $item.Valor
-    $sqlLines.Add("SET @PalabraId = NULL;")
-    $sqlLines.Add("SELECT @PalabraId = Id FROM dbo.Palabra WHERE [Key] = N'$keySql';")
-    $sqlLines.Add("IF @PalabraId IS NULL")
-    $sqlLines.Add("BEGIN")
-    $sqlLines.Add("    INSERT INTO dbo.Palabra ([Key], EsBase) VALUES (N'$keySql', 1);")
-    $sqlLines.Add("    SET @PalabraId = SCOPE_IDENTITY();")
-    $sqlLines.Add("END")
-    $sqlLines.Add("ELSE")
-    $sqlLines.Add("BEGIN")
-    $sqlLines.Add("    UPDATE dbo.Palabra SET EsBase = 1 WHERE Id = @PalabraId;")
-    $sqlLines.Add("END")
-    $sqlLines.Add("IF EXISTS (SELECT 1 FROM dbo.Traduccion WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId)")
-    $sqlLines.Add("BEGIN")
-    $sqlLines.Add("    UPDATE dbo.Traduccion")
-    $sqlLines.Add("    SET Valor = CASE WHEN NULLIF(LTRIM(RTRIM(Valor)), '') IS NULL THEN N'$valorSql' ELSE Valor END")
-    $sqlLines.Add("    WHERE PalabraId = @PalabraId AND IdiomaId = @IdiomaBaseId;")
-    $sqlLines.Add("END")
-    $sqlLines.Add("ELSE")
-    $sqlLines.Add("BEGIN")
-    $sqlLines.Add("    INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor) VALUES (@PalabraId, @IdiomaBaseId, N'$valorSql');")
-    $sqlLines.Add("END")
-    $sqlLines.Add("")
+$sqlJsonLines = Get-SqlJsonAssignments -JsonText $jsonOutput
+foreach ($line in $sqlJsonLines) {
+    $sqlLines.Add($line)
 }
+$sqlLines.Add("")
+$sqlLines.Add("IF EXISTS (SELECT 1 FROM sys.databases WHERE name = DB_NAME() AND compatibility_level < 130)")
+$sqlLines.Add("BEGIN")
+$sqlLines.Add("    ALTER DATABASE CURRENT SET COMPATIBILITY_LEVEL = 130;")
+$sqlLines.Add("END")
+$sqlLines.Add("")
+$sqlLines.Add("DECLARE @Seed TABLE")
+$sqlLines.Add("(")
+$sqlLines.Add("    [Key] VARCHAR(150) NOT NULL,")
+$sqlLines.Add("    Valor VARCHAR(300) NOT NULL")
+$sqlLines.Add(");")
+$sqlLines.Add("")
+$sqlLines.Add("INSERT INTO @Seed ([Key], Valor)")
+$sqlLines.Add("SELECT [key], TRY_CAST([value] AS VARCHAR(300))")
+$sqlLines.Add("FROM OPENJSON(@TraduccionesBaseJson)")
+$sqlLines.Add("WHERE [type] IN (1, 2);")
+$sqlLines.Add("")
+$sqlLines.Add("MERGE dbo.Palabra AS Target")
+$sqlLines.Add("USING (SELECT [Key] FROM @Seed) AS Source")
+$sqlLines.Add("    ON Target.[Key] = Source.[Key]")
+$sqlLines.Add("WHEN MATCHED THEN")
+$sqlLines.Add("    UPDATE SET EsBase = 1")
+$sqlLines.Add("WHEN NOT MATCHED THEN")
+$sqlLines.Add("    INSERT ([Key], EsBase) VALUES (Source.[Key], 1);")
+$sqlLines.Add("")
+$sqlLines.Add("MERGE dbo.Traduccion AS Target")
+$sqlLines.Add("USING")
+$sqlLines.Add("(")
+$sqlLines.Add("    SELECT p.Id AS PalabraId, @IdiomaBaseId AS IdiomaId, s.Valor")
+$sqlLines.Add("    FROM @Seed s")
+$sqlLines.Add("    INNER JOIN dbo.Palabra p ON p.[Key] = s.[Key]")
+$sqlLines.Add(") AS Source")
+$sqlLines.Add("    ON Target.PalabraId = Source.PalabraId AND Target.IdiomaId = Source.IdiomaId")
+$sqlLines.Add("WHEN MATCHED THEN")
+$sqlLines.Add("    UPDATE SET Valor = CASE WHEN NULLIF(LTRIM(RTRIM(Target.Valor)), '') IS NULL THEN Source.Valor ELSE Target.Valor END")
+$sqlLines.Add("WHEN NOT MATCHED THEN")
+$sqlLines.Add("    INSERT (PalabraId, IdiomaId, Valor) VALUES (Source.PalabraId, Source.IdiomaId, Source.Valor);")
+$sqlLines.Add("")
 
 $sqlLines.Add($markerEnd)
 $sqlBlock = ($sqlLines -join [Environment]::NewLine)

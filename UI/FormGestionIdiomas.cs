@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using BLL;
@@ -17,7 +18,6 @@ namespace TpIDS
         {
             InitializeComponent();
             observadorIdioma = Actualizar;
-            ConfigurarTags();
             Load += FormGestionIdiomas_Load;
             FormClosed += FormGestionIdiomas_FormClosed;
         }
@@ -36,7 +36,7 @@ namespace TpIDS
                 int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
                 CargarIdiomas(idiomaId);
                 RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
-                MessageBox.Show("Idioma creado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageCreated");
             }
             catch (Exception ex)
             {
@@ -48,7 +48,7 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
                 return;
             }
 
@@ -59,7 +59,7 @@ namespace TpIDS
                 {
                     CargarIdiomas(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    MessageBox.Show("Idioma actualizado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageUpdated");
                 }
             }
             catch (Exception ex)
@@ -72,15 +72,15 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
                 return;
             }
 
-            DialogResult confirmacion = MessageBox.Show(
-                string.Format("Estas seguro de que queres eliminar el idioma '{0}'?", idioma.Nombre),
-                "Confirmar eliminacion",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning);
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormGestionIdiomas.Confirm.DeleteLanguageMessage",
+                "FormGestionIdiomas.Confirm.DeleteLanguageTitle",
+                MessageBoxIcon.Warning,
+                idioma.Nombre);
 
             if (confirmacion != DialogResult.Yes)
             {
@@ -94,7 +94,7 @@ namespace TpIDS
                 {
                     CargarIdiomas(null);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    MessageBox.Show("Idioma eliminado correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageDeleted");
                 }
             }
             catch (Exception ex)
@@ -107,7 +107,7 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
                 return;
             }
 
@@ -126,7 +126,7 @@ namespace TpIDS
                     idiomaBLL.ImportarJson(idioma.Id, openFileDialog.FileName);
                     RecargarIdiomaSeleccionado(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    MessageBox.Show("Traducciones importadas correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.TranslationsImported");
                 }
                 catch (Exception ex)
                 {
@@ -135,11 +135,58 @@ namespace TpIDS
             }
         }
 
+        private void btnExportarJson_Click(object sender, EventArgs e)
+        {
+            if (!(cmbIdiomas.SelectedItem is Idioma idioma))
+            {
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                return;
+            }
+
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormGestionIdiomas.ExportConfirmMessage",
+                "FormGestionIdiomas.ExportConfirmTitle",
+                MessageBoxIcon.Warning,
+                idioma.Nombre);
+
+            if (confirmacion != DialogResult.Yes)
+            {
+                return;
+            }
+
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Archivos JSON (*.json)|*.json";
+                saveFileDialog.Title = UiDialogHelper.Traducir("FormGestionIdiomas.ExportDialogTitle");
+                saveFileDialog.FileName = GenerarNombreArchivoIdioma(idioma.Nombre);
+                saveFileDialog.DefaultExt = "json";
+                saveFileDialog.AddExtension = true;
+                saveFileDialog.OverwritePrompt = true;
+
+                if (saveFileDialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    return;
+                }
+
+                try
+                {
+                    idiomaBLL.ExportarJson(idioma.Id, saveFileDialog.FileName);
+                    UiDialogHelper.MostrarInfo(
+                        "FormGestionIdiomas.ExportSuccessMessage",
+                        new object[] { Path.GetFileName(saveFileDialog.FileName) });
+                }
+                catch (Exception ex)
+                {
+                    UiExceptionHandler.Mostrar(ex, "Exportacion de traducciones");
+                }
+            }
+        }
+
         private void btnGuardarTraduccion_Click(object sender, EventArgs e)
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
                 return;
             }
 
@@ -149,7 +196,7 @@ namespace TpIDS
                 idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
                 RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
                 RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                MessageBox.Show("Traduccion guardada correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.TranslationSaved");
             }
             catch (Exception ex)
             {
@@ -161,23 +208,21 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
                 return;
             }
 
             if (!(dgvTraducciones.CurrentRow?.DataBoundItem is TraduccionGridItem item))
             {
-                MessageBox.Show("Debe seleccionar una traduccion.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectTranslation");
                 return;
             }
 
             if (item.EsKeyBase)
             {
-                MessageBox.Show(
-                    "La traduccion seleccionada corresponde a una key base del sistema y no puede eliminarse.",
-                    "Operacion no permitida",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarningConTitulo(
+                    "FormGestionIdiomas.Warning.DeleteBaseTranslation",
+                    "FormGestionIdiomas.Warning.DeleteBaseTranslationTitle");
                 return;
             }
 
@@ -277,25 +322,6 @@ namespace TpIDS
         {
             IdiomaFormHelper.Aplicar(this, idioma);
             ActualizarEncabezadosGrilla(idioma);
-        }
-
-        private void ConfigurarTags()
-        {
-            Tag = "FormGestionIdiomas.Title";
-            lblTituloGestionIdiomas.Tag = "FormGestionIdiomas.TitleLabel";
-            groupBoxIdioma.Tag = "FormGestionIdiomas.LanguageGroup";
-            groupBoxTraducciones.Tag = "FormGestionIdiomas.TranslationsGroup";
-            lblNombreIdioma.Tag = "FormGestionIdiomas.NameLabel";
-            chkbIdiomaDefault.Tag = "FormGestionIdiomas.DefaultCheck";
-            btnAgregarIdioma.Tag = "FormGestionIdiomas.AddButton";
-            btnActualizarIdioma.Tag = "FormGestionIdiomas.UpdateButton";
-            btnEliminarIdioma.Tag = "FormGestionIdiomas.DeleteButton";
-            lblIdiomaSeleccionado.Tag = "FormGestionIdiomas.SelectLanguageLabel";
-            btnImportarJson.Tag = "FormGestionIdiomas.ImportButton";
-            lblKeyManual.Tag = "FormGestionIdiomas.ManualKeyLabel";
-            lblValorManual.Tag = "FormGestionIdiomas.ManualValueLabel";
-            btnGuardarTraduccion.Tag = "FormGestionIdiomas.SaveTranslationButton";
-            btnEliminarTraduccion.Tag = "FormGestionIdiomas.DeleteTranslationButton";
         }
 
         private void CargarIdiomas(int? idiomaSeleccionadoId)
@@ -407,8 +433,8 @@ namespace TpIDS
                 return;
             }
 
-            dgvTraducciones.Columns["Key"].HeaderText = idioma.ObtenerTexto("FormGestionIdiomas.Grid.Key");
-            dgvTraducciones.Columns["Valor"].HeaderText = idioma.ObtenerTexto("FormGestionIdiomas.Grid.Value");
+            dgvTraducciones.Columns["Key"].HeaderText = idioma.ObtenerTraduccion("FormGestionIdiomas.Grid.Key");
+            dgvTraducciones.Columns["Valor"].HeaderText = idioma.ObtenerTraduccion("FormGestionIdiomas.Grid.Value");
         }
 
         private void CargarTraduccionSeleccionada()
@@ -470,6 +496,24 @@ namespace TpIDS
         private void FormGestionIdiomas_FormClosed(object sender, FormClosedEventArgs e)
         {
             IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
+        }
+
+        private string ObtenerTextoActual(string key)
+        {
+            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            return idioma == null ? key : idioma.ObtenerTraduccion(key);
+        }
+
+        private static string GenerarNombreArchivoIdioma(string nombreIdioma)
+        {
+            string nombreBase = string.IsNullOrWhiteSpace(nombreIdioma) ? "idioma" : nombreIdioma.Trim();
+
+            foreach (char caracterInvalido in Path.GetInvalidFileNameChars())
+            {
+                nombreBase = nombreBase.Replace(caracterInvalido, '_');
+            }
+
+            return string.Format("traducciones-{0}.json", nombreBase);
         }
 
         private class TraduccionGridItem

@@ -24,11 +24,7 @@ namespace TpIDS
         private static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
             ManejadorExcepcionesBLL.RegistrarExcepcionTecnica(e.Exception, "Excepcion UI no controlada", "Program");
-            MessageBox.Show(
-                "Ocurrio un error tecnico inesperado. Revise la bitacora para mas informacion.",
-                "Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            UiDialogHelper.MostrarError("Error.Tecnico.Unexpected");
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

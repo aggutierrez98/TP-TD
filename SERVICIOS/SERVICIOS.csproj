@@ -52,7 +52,7 @@
     <Compile Include="Idioma.cs" />
     <Compile Include="IdiomaCatalogoService.cs" />
     <Compile Include="IdiomaService.cs" />
-    <Compile Include="GrupoPermiso.cs" />
+    <Compile Include="PermisoGrupo.cs" />
     <Compile Include="PermisoNodo.cs" />
     <Compile Include="PermisoRelacion.cs" />
     <Compile Include="PermisoService.cs" />

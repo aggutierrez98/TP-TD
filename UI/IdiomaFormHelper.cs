@@ -5,6 +5,8 @@ namespace TpIDS
 {
     internal static class IdiomaFormHelper
     {
+
+        // Aplicar traducciones sobre todos los forms y controles que tengan un Tag con la clave de traducción
         public static void Aplicar(Form form, Idioma idioma)
         {
             if (form == null || idioma == null)
@@ -14,7 +16,7 @@ namespace TpIDS
 
             if (form.Tag is string formKey)
             {
-                form.Text = idioma.ObtenerTexto(formKey);
+                form.Text = idioma.ObtenerTraduccion(formKey);
             }
 
             Aplicar(form.Controls, idioma);
@@ -26,7 +28,7 @@ namespace TpIDS
             {
                 if (control.Tag is string key)
                 {
-                    control.Text = idioma.ObtenerTexto(key);
+                    control.Text = idioma.ObtenerTraduccion(key);
                 }
 
                 if (control.HasChildren)
@@ -35,5 +37,7 @@ namespace TpIDS
                 }
             }
         }
+
+        // TODO: Aplicar traducciones sobre todos los mensajes de de error.
     }
 }

@@ -136,7 +136,9 @@ ORDER BY Activo DESC, Username";
         {
             const string query = @"
 UPDATE Usuarios
-SET Username = @Username
+SET Username = @Username,
+    PasswordHash = @PasswordHash,
+    Activo = @Activo
 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -147,6 +149,8 @@ WHERE Id = @Id";
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
+                    accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
+                    accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
@@ -164,11 +168,11 @@ WHERE Id = @Id";
         public bool GuardarEstadoCompleto(Usuario usuario, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-UPDATE Usuarios
-SET Username = @Username,
-    PasswordHash = @PasswordHash,
-    Activo = @Activo
-WHERE Id = @Id";
+                UPDATE Usuarios
+                SET Username = @Username,
+                    PasswordHash = @PasswordHash,
+                    Activo = @Activo
+                WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -201,6 +205,56 @@ UPDATE Usuarios
 SET Activo = 0
 WHERE Id = @Id
   AND Activo = 1";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public bool EliminarFisicamente(int id, AccesoDatos accesoDatos = null)
+        {
+            const string query = @"
+UPDATE UsuarioHistorial
+SET ActorUsuarioId = NULL
+WHERE ActorUsuarioId = @Id;
+
+DELETE FROM UsuarioHistorialPermiso
+WHERE HistorialId IN (
+    SELECT HistorialId
+    FROM UsuarioHistorial
+    WHERE UsuarioId = @Id
+);
+
+DELETE FROM UsuarioHistorial
+WHERE UsuarioId = @Id;
+
+DELETE FROM UsuarioPermiso
+WHERE UsuarioId = @Id;
+
+DELETE FROM UsuarioPreferencias
+WHERE UsuarioId = @Id;
+
+DELETE FROM Bitacora
+WHERE UsuarioId = @Id;
+
+DELETE FROM Usuarios
+WHERE Id = @Id;";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();

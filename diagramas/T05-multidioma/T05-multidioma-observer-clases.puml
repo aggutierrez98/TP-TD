@@ -11,7 +11,7 @@ package "ABSTRACCIONES" {
     +Nombre : string
     +Default : bool
     +Traducciones : IList<ITraduccion>
-    +ObtenerTexto(key : string) : string
+    +ObtenerTraduccion(key : string) : string
     +TieneTraduccion(key : string) : bool
   }
 
@@ -55,7 +55,7 @@ package "SERVICIOS" {
     +Nombre : string
     +Default : bool
     +Traducciones : List<Traduccion>
-    +ObtenerTexto(key : string) : string
+    +ObtenerTraduccion(key : string) : string
     +TieneTraduccion(key : string) : bool
   }
 
@@ -105,6 +105,11 @@ package "BLL" {
     +ImportarJson(idiomaId : int, rutaArchivo : string) : void
     +EstaCompleto(idiomaId : int) : bool
     +AplicarIdiomaSesion(idiomaId : int) : void
+  }
+
+  class ManejadorExcepcionesBLL {
+    +ObtenerMensajeUsuarioKey(exception : Exception, actividad : string) : string
+    +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
   }
 
   class UsuarioEstadoBLL {
@@ -167,6 +172,18 @@ package "UI" {
   class FormHistorialUsuario {
     +Actualizar(idioma : Idioma) : void
   }
+
+  class UiDialogHelper {
+    +MostrarInfo(messageKey : string, args : object[]) : void
+    +MostrarWarning(messageKey : string, args : object[]) : void
+    +MostrarError(messageKey : string, args : object[]) : void
+    +Confirmar(messageKey : string, titleKey : string, icon : MessageBoxIcon, args : object[]) : DialogResult
+    +Traducir(key : string, args : object[]) : string
+  }
+
+  class UiExceptionHandler {
+    +Mostrar(exception : Exception, actividad : string) : void
+  }
 }
 
 IIdioma <|.. Idioma
@@ -192,5 +209,8 @@ FormGestionIdiomas --> IdiomaService
 FormConfiguracionUsuario --> IdiomaService
 FormBitacora --> IdiomaService
 FormHistorialUsuario --> IdiomaService
+UiDialogHelper --> IdiomaService
+UiExceptionHandler --> UiDialogHelper
+UiExceptionHandler --> ManejadorExcepcionesBLL
 
 @enduml

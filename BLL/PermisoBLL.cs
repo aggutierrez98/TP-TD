@@ -38,7 +38,7 @@ namespace BLL
             if (raices == null || raices.Count == 0)
             {
                 BitacoraService.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
-                throw new ExcepcionNegocio("Debe existir al menos un permiso o grupo.");
+                throw new ExcepcionNegocio("Error.Permiso.CatalogEmpty");
             }
 
             _permisoService.ValidarSinCiclos(raices);
@@ -97,7 +97,7 @@ namespace BLL
                     Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
                     if (usuario == null)
                     {
-                        throw new ExcepcionNegocio("No se encontro el usuario seleccionado.");
+                        throw new ExcepcionNegocio("Error.Permiso.UserNotFound");
                     }
 
                     _usuarioPermisoDAL.ReemplazarPermisosUsuario(
@@ -117,7 +117,7 @@ namespace BLL
                 catch (Exception ex)
                 {
                     accesoDatos.RollbackTransactionScope();
-                    throw new ExcepcionTecnica("No se pudieron guardar los permisos del usuario.", ex);
+                    throw new ExcepcionTecnica("Error.Permiso.SaveUserPermissionsFailed", ex);
                 }
             }
 

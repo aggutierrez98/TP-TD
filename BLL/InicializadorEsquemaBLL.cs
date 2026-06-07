@@ -38,7 +38,7 @@ namespace BLL
                 }
                 catch (Exception ex)
                 {
-                    throw new ExcepcionTecnica("No se pudo inicializar el esquema de base de datos.", ex);
+                    throw new ExcepcionTecnica("Error.Tecnico.SchemaInitializationFailed", ex);
                 }
             }
         }
