@@ -9,7 +9,7 @@ namespace SERVICIOS
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                throw new ExcepcionNegocio("El nombre del idioma no puede estar vacio.");
+                throw new ExcepcionNegocio("Error.Idioma.NameRequired");
             }
 
             return nombre.Trim();
@@ -23,7 +23,7 @@ namespace SERVICIOS
 
             if (existe)
             {
-                throw new ExcepcionNegocio("Ya existe un idioma con ese nombre.");
+                throw new ExcepcionNegocio("Error.Idioma.NameAlreadyExists");
             }
         }
 
@@ -46,12 +46,12 @@ namespace SERVICIOS
         {
             if (idioma == null)
             {
-                throw new ExcepcionNegocio("No se encontro el idioma seleccionado.");
+                throw new ExcepcionNegocio("Error.Idioma.NotFound");
             }
 
             if (!EstaCompleto(idioma))
             {
-                throw new ExcepcionNegocio("El idioma seleccionado no esta completo y no puede usarse en la sesion.");
+                throw new ExcepcionNegocio("Error.Idioma.IncompleteSelection");
             }
         }
     }

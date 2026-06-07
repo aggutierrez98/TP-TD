@@ -52,14 +52,14 @@ ORDER BY PermisoId";
                 };
 
                 string query = @"
-DELETE FROM UsuarioPermiso
-WHERE UsuarioId = @UsuarioId;";
+                    DELETE FROM UsuarioPermiso
+                    WHERE UsuarioId = @UsuarioId;";
 
                 for (int i = 0; i < permisosId.Count; i++)
                 {
                     query += string.Format(@"
-INSERT INTO UsuarioPermiso (UsuarioId, PermisoId)
-VALUES (@UsuarioId, @PermisoId{0});", i);
+                        INSERT INTO UsuarioPermiso (UsuarioId, PermisoId)
+                        VALUES (@UsuarioId, @PermisoId{0});", i);
 
                     parametros.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, permisosId[i]));
                 }

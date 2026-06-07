@@ -4,8 +4,8 @@ namespace SERVICIOS
 {
     public class ExcepcionNegocio : Exception
     {
-        public ExcepcionNegocio(string message)
-            : base(message)
+        public ExcepcionNegocio(string messageKey)
+            : base(messageKey)
         {
         }
     }

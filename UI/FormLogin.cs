@@ -19,7 +19,6 @@ namespace TpIDS
             InitializeComponent();
             observadorIdioma = Actualizar;
             pbPassword.Image = Resources.image_show;
-            ConfigurarTags();
             Load += FormLogin_Load;
             FormClosed += FormLogin_FormClosed;
         }
@@ -28,7 +27,7 @@ namespace TpIDS
         {
             if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
             {
-                MessageBox.Show("Debe completar todos los campos", "Error");
+                UiDialogHelper.MostrarWarning("FormLogin.Warning.CompleteFields");
                 return;
             }
 
@@ -38,7 +37,7 @@ namespace TpIDS
 
                 if (usuario == null)
                 {
-                    MessageBox.Show("Credenciales incorrectas", "Error");
+                    UiDialogHelper.MostrarError("FormLogin.Error.InvalidCredentials");
                     return;
                 }
 
@@ -84,16 +83,6 @@ namespace TpIDS
         public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
-        }
-
-        private void ConfigurarTags()
-        {
-            Tag = "FormLogin.Title";
-            lblNickname.Tag = "FormLogin.NicknameLabel";
-            lblPassword.Tag = "FormLogin.PasswordLabel";
-            btnIngreso.Tag = "FormLogin.LoginButton";
-            lblRegistro.Tag = "FormLogin.RegisterPrompt";
-            btnRegistro.Tag = "FormLogin.RegisterButton";
         }
 
         private void FormLogin_Load(object sender, EventArgs e)

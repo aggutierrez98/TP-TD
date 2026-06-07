@@ -1,25 +1,49 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Windows.Forms;
 using BLL;
 using SERVICIOS;
 
 namespace TpIDS
 {
-    public class FormHistorialUsuario : Form
+    public partial class FormHistorialUsuario : Form
     {
         private readonly UsuarioBLL _usuarioBLL;
         private readonly Action<Idioma> _observadorIdioma;
         private readonly int _usuarioId;
         private readonly string _username;
 
-        private Label lblTituloHistorialUsuario;
-        private Label lblUsuarioHistorial;
-        private DataGridView dgvHistorialUsuario;
-        private DataGridView dgvCambiosEstado;
-        private Button btnRestaurarVersion;
-        private Button btnRefrescarHistorial;
+        private static readonly Dictionary<string, string> AccionKeys = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "Alta",                         "FormHistorialUsuario.Value.Action.Alta" },
+            { "Edicion",                      "FormHistorialUsuario.Value.Action.Edicion" },
+            { "BajaLogica",                   "FormHistorialUsuario.Value.Action.BajaLogica" },
+            { "Reactivacion",                 "FormHistorialUsuario.Value.Action.Reactivacion" },
+            { "Restauracion",                 "FormHistorialUsuario.Value.Action.Restauracion" },
+            { "ActualizacionIdiomaPreferido", "FormHistorialUsuario.Value.Action.ActualizacionIdiomaPreferido" }
+        };
+
+        private static readonly Dictionary<string, string> ObservacionesKeys = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "Alta inicial del usuario.",                              "FormHistorialUsuario.Value.Obs.AltaInicial" },
+            { "Desactivacion del usuario desde gestion.",              "FormHistorialUsuario.Value.Obs.Desactivacion" },
+            { "Reactivacion del usuario desde gestion.",               "FormHistorialUsuario.Value.Obs.Reactivacion" },
+            { "Actualizacion del password del usuario.",               "FormHistorialUsuario.Value.Obs.ActualizacionPassword" },
+            { "Actualizacion del nombre de usuario.",                  "FormHistorialUsuario.Value.Obs.ActualizacionUsername" },
+            { "Actualizacion del usuario.",                            "FormHistorialUsuario.Value.Obs.ActualizacionUsuario" },
+            { "Restauracion desde el historial.",                      "FormHistorialUsuario.Value.Obs.Restauracion" },
+            { "Actualizacion de la preferencia de idioma del usuario.", "FormHistorialUsuario.Value.Obs.ActualizacionIdioma" }
+        };
+
+        private static readonly Dictionary<string, string> CampoKeys = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "Username",    "FormHistorialUsuario.Value.Field.Username" },
+            { "PasswordHash","FormHistorialUsuario.Value.Field.PasswordHash" },
+            { "Activo",      "FormHistorialUsuario.Value.Field.Activo" },
+            { "IdiomaId",    "FormHistorialUsuario.Value.Field.IdiomaId" },
+            { "Permisos",    "FormHistorialUsuario.Value.Field.Permisos" },
+            { "Sin cambios", "FormHistorialUsuario.Value.Field.SinCambios" }
+        };
 
         public FormHistorialUsuario(int usuarioId, string username)
         {
@@ -28,87 +52,14 @@ namespace TpIDS
             _usuarioId = usuarioId;
             _username = username;
             InitializeComponent();
-            ConfigurarTags();
             Load += FormHistorialUsuario_Load;
             FormClosed += FormHistorialUsuario_FormClosed;
-        }
-
-        private void InitializeComponent()
-        {
-            lblTituloHistorialUsuario = new Label();
-            lblUsuarioHistorial = new Label();
-            dgvHistorialUsuario = new DataGridView();
-            dgvCambiosEstado = new DataGridView();
-            btnRestaurarVersion = new Button();
-            btnRefrescarHistorial = new Button();
-
-            SuspendLayout();
-
-            lblTituloHistorialUsuario.AutoSize = true;
-            lblTituloHistorialUsuario.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
-            lblTituloHistorialUsuario.Location = new Point(15, 15);
-            lblTituloHistorialUsuario.Name = "lblTituloHistorialUsuario";
-
-            lblUsuarioHistorial.AutoSize = true;
-            lblUsuarioHistorial.Location = new Point(17, 48);
-            lblUsuarioHistorial.Name = "lblUsuarioHistorial";
-            lblUsuarioHistorial.Size = new Size(0, 13);
-
-            dgvHistorialUsuario.AllowUserToAddRows = false;
-            dgvHistorialUsuario.AllowUserToDeleteRows = false;
-            dgvHistorialUsuario.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvHistorialUsuario.Location = new Point(20, 75);
-            dgvHistorialUsuario.MultiSelect = false;
-            dgvHistorialUsuario.Name = "dgvHistorialUsuario";
-            dgvHistorialUsuario.ReadOnly = true;
-            dgvHistorialUsuario.RowHeadersVisible = false;
-            dgvHistorialUsuario.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvHistorialUsuario.Size = new Size(760, 240);
-            dgvHistorialUsuario.SelectionChanged += dgvHistorialUsuario_SelectionChanged;
-
-            dgvCambiosEstado.AllowUserToAddRows = false;
-            dgvCambiosEstado.AllowUserToDeleteRows = false;
-            dgvCambiosEstado.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvCambiosEstado.Location = new Point(20, 330);
-            dgvCambiosEstado.MultiSelect = false;
-            dgvCambiosEstado.Name = "dgvCambiosEstado";
-            dgvCambiosEstado.ReadOnly = true;
-            dgvCambiosEstado.RowHeadersVisible = false;
-            dgvCambiosEstado.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvCambiosEstado.Size = new Size(760, 180);
-
-            btnRefrescarHistorial.Location = new Point(20, 525);
-            btnRefrescarHistorial.Name = "btnRefrescarHistorial";
-            btnRefrescarHistorial.Size = new Size(210, 30);
-            btnRefrescarHistorial.Click += btnRefrescarHistorial_Click;
-
-            btnRestaurarVersion.Location = new Point(570, 525);
-            btnRestaurarVersion.Name = "btnRestaurarVersion";
-            btnRestaurarVersion.Size = new Size(210, 30);
-            btnRestaurarVersion.Click += btnRestaurarVersion_Click;
-
-            AutoScaleDimensions = new SizeF(6F, 13F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 575);
-            Controls.Add(lblTituloHistorialUsuario);
-            Controls.Add(lblUsuarioHistorial);
-            Controls.Add(dgvHistorialUsuario);
-            Controls.Add(dgvCambiosEstado);
-            Controls.Add(btnRefrescarHistorial);
-            Controls.Add(btnRestaurarVersion);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
-            MaximizeBox = false;
-            Name = "FormHistorialUsuario";
-            StartPosition = FormStartPosition.CenterParent;
-            ResumeLayout(false);
-            PerformLayout();
         }
 
         private void FormHistorialUsuario_Load(object sender, EventArgs e)
         {
             IdiomaService.GetInstance().RegistrarObservador(_observadorIdioma);
             lblUsuarioHistorial.Text = "Usuario: " + _username;
-            CargarHistorial();
             Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
@@ -121,15 +72,14 @@ namespace TpIDS
         {
             if (dgvHistorialUsuario.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Debe seleccionar una version.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormHistorialUsuario.Warning.SelectVersion");
                 return;
             }
 
             int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
-            DialogResult confirmacion = MessageBox.Show(
-                "Se restaurara la version seleccionada del usuario. Desea continuar?",
-                "Confirmar restauracion",
-                MessageBoxButtons.YesNo,
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormHistorialUsuario.Confirm.RestoreVersionMessage",
+                "FormHistorialUsuario.Confirm.RestoreVersionTitle",
                 MessageBoxIcon.Question);
 
             if (confirmacion != DialogResult.Yes)
@@ -140,7 +90,7 @@ namespace TpIDS
             try
             {
                 _usuarioBLL.RestaurarVersion(historialId);
-                MessageBox.Show("La version se restauro correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UiDialogHelper.MostrarInfo("FormHistorialUsuario.Success.VersionRestored");
                 CargarHistorial();
             }
             catch (Exception ex)
@@ -160,9 +110,14 @@ namespace TpIDS
             int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
             try
             {
+                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
                 List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
-                dgvCambiosEstado.DataSource = null;
-                dgvCambiosEstado.DataSource = diferencias;
+                GrillaTraduccionHelper.Recargar(
+                    dgvCambiosEstado,
+                    diferencias,
+                    ProyectarCambioEstadoFila,
+                    idioma,
+                    g => ActualizarEncabezadosCambios(idioma, g));
             }
             catch (Exception ex)
             {
@@ -175,18 +130,13 @@ namespace TpIDS
             try
             {
                 List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
-                dgvHistorialUsuario.DataSource = null;
-                dgvHistorialUsuario.DataSource = historial;
-
-                if (dgvHistorialUsuario.Columns.Contains("PasswordHash"))
-                {
-                    dgvHistorialUsuario.Columns["PasswordHash"].Visible = false;
-                }
-
-                if (dgvHistorialUsuario.Columns.Contains("PermisosIds"))
-                {
-                    dgvHistorialUsuario.Columns["PermisosIds"].Visible = false;
-                }
+                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+                GrillaTraduccionHelper.Recargar(
+                    dgvHistorialUsuario,
+                    historial,
+                    ProyectarHistorialFila,
+                    idioma,
+                    g => ActualizarEncabezadosHistorial(idioma, g));
             }
             catch (Exception ex)
             {
@@ -194,17 +144,126 @@ namespace TpIDS
             }
         }
 
+        private HistorialUsuarioFila ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
+        {
+            return new HistorialUsuarioFila
+            {
+                HistorialId = snap.HistorialId,
+                UsuarioId = snap.UsuarioId,
+                FechaHora = snap.FechaHora,
+                ActorUsuarioId = snap.ActorUsuarioId,
+                ActorUsernameSnapshot = snap.ActorUsernameSnapshot,
+                Accion = TraducirAccion(snap.Accion, idioma),
+                Observaciones = TraducirObservaciones(snap.Observaciones, idioma),
+                Username = snap.Username,
+                Activo = snap.Activo,
+                IdiomaId = snap.IdiomaId
+            };
+        }
+
+        private CambioEstadoFila ProyectarCambioEstadoFila(ResultadoComparacionEstado diff, Idioma idioma)
+        {
+            return new CambioEstadoFila
+            {
+                Campo = TraducirCampo(diff.Campo, idioma),
+                ValorAnterior = TraducirValor(diff.Campo, diff.ValorAnterior, idioma),
+                ValorNuevo = TraducirValor(diff.Campo, diff.ValorNuevo, idioma)
+            };
+        }
+
         public void Actualizar(Idioma idioma)
         {
             IdiomaFormHelper.Aplicar(this, idioma);
+            CargarHistorial();
+            ActualizarEncabezadosCambios(idioma);
         }
 
-        private void ConfigurarTags()
+        private void ActualizarEncabezadosHistorial(Idioma idioma, DataGridView grilla = null)
         {
-            Tag = "FormHistorialUsuario.Title";
-            lblTituloHistorialUsuario.Tag = "FormHistorialUsuario.TitleLabel";
-            btnRefrescarHistorial.Tag = "FormHistorialUsuario.RefreshButton";
-            btnRestaurarVersion.Tag = "FormHistorialUsuario.RestoreButton";
+            DataGridView g = grilla ?? dgvHistorialUsuario;
+            if (idioma == null || g.Columns.Count == 0)
+            {
+                return;
+            }
+
+            GrillaTraduccionHelper.SetHeader(g, "HistorialId",           "FormHistorialUsuario.Grid.HistorialId", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "UsuarioId",             "FormHistorialUsuario.Grid.UsuarioId", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "FechaHora",             "FormHistorialUsuario.Grid.FechaHora", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "ActorUsuarioId",        "FormHistorialUsuario.Grid.ActorUsuarioId", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "ActorUsernameSnapshot", "FormHistorialUsuario.Grid.ActorUsernameSnapshot", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "Accion",                "FormHistorialUsuario.Grid.Accion", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "Observaciones",         "FormHistorialUsuario.Grid.Observaciones", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "Username",              "FormHistorialUsuario.Grid.Username", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "Activo",                "FormHistorialUsuario.Grid.Activo", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "IdiomaId",              "FormHistorialUsuario.Grid.IdiomaId", idioma);
+        }
+
+        private void ActualizarEncabezadosCambios(Idioma idioma, DataGridView grilla = null)
+        {
+            DataGridView g = grilla ?? dgvCambiosEstado;
+            if (idioma == null || g.Columns.Count == 0)
+            {
+                return;
+            }
+
+            GrillaTraduccionHelper.SetHeader(g, "Campo",        "FormHistorialUsuario.DiffGrid.Campo", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "ValorAnterior","FormHistorialUsuario.DiffGrid.ValorAnterior", idioma);
+            GrillaTraduccionHelper.SetHeader(g, "ValorNuevo",   "FormHistorialUsuario.DiffGrid.ValorNuevo", idioma);
+        }
+
+        private string TraducirAccion(string accion, Idioma idioma)
+        {
+            if (idioma == null || accion == null)
+            {
+                return accion ?? string.Empty;
+            }
+
+            string key;
+            return AccionKeys.TryGetValue(accion, out key) ? idioma.ObtenerTraduccion(key) : accion;
+        }
+
+        private string TraducirObservaciones(string obs, Idioma idioma)
+        {
+            if (idioma == null || obs == null)
+            {
+                return obs ?? string.Empty;
+            }
+
+            string key;
+            return ObservacionesKeys.TryGetValue(obs, out key) ? idioma.ObtenerTraduccion(key) : obs;
+        }
+
+        private string TraducirCampo(string campo, Idioma idioma)
+        {
+            if (idioma == null || campo == null)
+            {
+                return campo ?? string.Empty;
+            }
+
+            string key;
+            return CampoKeys.TryGetValue(campo, out key) ? idioma.ObtenerTraduccion(key) : campo;
+        }
+
+        private string TraducirValor(string campo, string valor, Idioma idioma)
+        {
+            if (idioma == null || valor == null || valor == "-")
+            {
+                return valor ?? string.Empty;
+            }
+
+            switch (campo)
+            {
+                case "PasswordHash":
+                    if (valor == "Configurada") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.Configurada");
+                    if (valor == "Actualizada") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.Actualizada");
+                    break;
+                case "Activo":
+                    if (valor == "True")  return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.True");
+                    if (valor == "False") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.False");
+                    break;
+            }
+
+            return valor;
         }
 
         private void FormHistorialUsuario_FormClosed(object sender, FormClosedEventArgs e)

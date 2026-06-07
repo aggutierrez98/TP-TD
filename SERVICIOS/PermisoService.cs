@@ -8,14 +8,20 @@ namespace SERVICIOS
 {
     public class PermisoService
     {
+
+        // Metodo para obtener arbol mostrable en el treeView
         public IList<PermisoNodo> ConstruirArbol(IList<PermisoNodo> nodos, IList<PermisoRelacion> relaciones)
         {
             Dictionary<int, PermisoNodo> indice = nodos.ToDictionary(item => item.Id);
 
+            // Saca los nodos -
             foreach (PermisoNodo nodo in nodos)
             {
                 while (nodo.Hijos.Count > 0)
                 {
+                    // Sacar el permiso hijo del nodo
+
+                    // ¿Porque saca solo el primero?
                     nodo.Quitar(nodo.Hijos[0]);
                 }
             }
@@ -52,7 +58,7 @@ namespace SERVICIOS
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                throw new Exception("El nombre del permiso no puede estar vacio.");
+                throw new ExcepcionNegocio("Error.Permiso.NameRequired");
             }
         }
 
@@ -66,7 +72,7 @@ namespace SERVICIOS
 
             if (nombresDuplicados.Count > 0)
             {
-                throw new Exception("No puede haber permisos o grupos con el mismo nombre.");
+                throw new ExcepcionNegocio("Error.Permiso.DuplicateNames");
             }
         }
 
@@ -74,7 +80,7 @@ namespace SERVICIOS
         {
             if (nodos.Any(item => item.EsGrupo && item.Hijos.Count == 0))
             {
-                throw new Exception("No se pueden guardar grupos vacios.");
+                throw new ExcepcionNegocio("Error.Permiso.EmptyGroupsNotAllowed");
             }
         }
 
@@ -142,7 +148,7 @@ namespace SERVICIOS
             string clave = ObtenerClaveNodo(permiso);
             if (visitados.Contains(clave))
             {
-                throw new Exception("No se pueden generar ciclos en el arbol de permisos.");
+                throw new ExcepcionNegocio("Error.Permiso.CycleDetected");
             }
 
             HashSet<string> ramaActual = new HashSet<string>(visitados) { clave };

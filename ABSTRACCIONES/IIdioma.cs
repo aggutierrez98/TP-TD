@@ -12,7 +12,7 @@ namespace ABSTRACCIONES
 
         IList<ITraduccion> Traducciones { get; set; }
 
-        string ObtenerTexto(string key);
+        string ObtenerTraduccion(string key);
 
         bool TieneTraduccion(string key);
     }

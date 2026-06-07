@@ -1,6 +1,6 @@
 namespace SERVICIOS
 {
-    public class GrupoPermiso : PermisoNodo
+    public class PermisoGrupo : PermisoNodo
     {
         public override bool EsGrupo
         {

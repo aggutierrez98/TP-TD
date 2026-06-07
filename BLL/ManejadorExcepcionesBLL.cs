@@ -5,15 +5,21 @@ namespace BLL
 {
     public static class ManejadorExcepcionesBLL
     {
-        public static string ObtenerMensajeUsuario(Exception exception, string actividad)
+        public static string ObtenerMensajeUsuarioKey(Exception exception, string actividad)
         {
             if (exception is ExcepcionNegocio)
             {
                 return exception.Message;
             }
 
+            if (exception is ExcepcionTecnica)
+            {
+                RegistrarExcepcionTecnica(exception, actividad, "UI");
+                return exception.Message;
+            }
+
             RegistrarExcepcionTecnica(exception, actividad, "UI");
-            return "Ocurrio un error tecnico inesperado.";
+            return "Error.Tecnico.Unexpected";
         }
 
         public static void RegistrarExcepcionTecnica(Exception exception, string actividad, string origen)

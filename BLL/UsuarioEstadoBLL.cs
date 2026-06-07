@@ -108,7 +108,9 @@ namespace BLL
             };
 
             _usuarioDAL.GuardarEstadoCompleto(usuario, accesoDatos);
+
             _usuarioPermisoDAL.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList(), accesoDatos);
+
             _usuarioPreferenciaDAL.Guardar(snapshot.UsuarioId, snapshot.IdiomaId, accesoDatos);
         }
 

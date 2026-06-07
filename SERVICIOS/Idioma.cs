@@ -20,7 +20,7 @@ namespace SERVICIOS
             Traducciones = new List<Traduccion>();
         }
 
-        public string ObtenerTexto(string key)
+        public string ObtenerTraduccion(string key)
         {
             if (string.IsNullOrWhiteSpace(key))
             {

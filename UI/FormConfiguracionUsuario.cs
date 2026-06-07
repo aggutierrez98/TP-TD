@@ -16,7 +16,6 @@ namespace TpIDS
         {
             InitializeComponent();
             observadorIdioma = Actualizar;
-            ConfigurarTags();
             Load += FormConfiguracionUsuario_Load;
             FormClosed += FormConfiguracionUsuario_FormClosed;
         }
@@ -34,14 +33,14 @@ namespace TpIDS
             int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
             if (!usuarioId.HasValue)
             {
-                MessageBox.Show("No hay una sesion activa.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                UiDialogHelper.MostrarError("FormConfiguracionUsuario.Error.NoActiveSession");
                 Close();
                 return;
             }
 
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                MessageBox.Show("Debe seleccionar un idioma.", "Atencion", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UiDialogHelper.MostrarWarning("FormConfiguracionUsuario.Warning.SelectLanguage");
                 return;
             }
 
@@ -50,7 +49,7 @@ namespace TpIDS
                 bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
                 if (guardado)
                 {
-                    MessageBox.Show("La configuracion se guardo correctamente.", "Exito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    UiDialogHelper.MostrarInfo("FormConfiguracionUsuario.Success.SettingsSaved");
                 }
             }
             catch (Exception ex)
@@ -63,14 +62,6 @@ namespace TpIDS
         {
             IdiomaFormHelper.Aplicar(this, idioma);
             CargarUsuarioActual();
-        }
-
-        private void ConfigurarTags()
-        {
-            Tag = "FormConfiguracionUsuario.Title";
-            lblTituloConfiguracion.Tag = "FormConfiguracionUsuario.TitleLabel";
-            lblIdiomaSesion.Tag = "FormConfiguracionUsuario.LanguageLabel";
-            btnGuardarConfiguracion.Tag = "FormConfiguracionUsuario.SaveButton";
         }
 
         private void CargarUsuarioActual()
@@ -102,7 +93,7 @@ namespace TpIDS
         private string ObtenerTextoActual(string key)
         {
             Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-            return idioma == null ? key : idioma.ObtenerTexto(key);
+            return idioma == null ? key : idioma.ObtenerTraduccion(key);
         }
 
         private void FormConfiguracionUsuario_FormClosed(object sender, FormClosedEventArgs e)

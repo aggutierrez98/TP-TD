@@ -54,25 +54,25 @@ WHERE UsuarioId = @UsuarioId";
         public bool Guardar(int usuarioId, int? idiomaId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-IF @IdiomaId IS NULL
-BEGIN
-    DELETE FROM UsuarioPreferencias
-    WHERE UsuarioId = @UsuarioId;
-END
-ELSE IF EXISTS (
-    SELECT 1
-    FROM UsuarioPreferencias
-    WHERE UsuarioId = @UsuarioId)
-BEGIN
-    UPDATE UsuarioPreferencias
-    SET IdiomaId = @IdiomaId
-    WHERE UsuarioId = @UsuarioId;
-END
-ELSE
-BEGIN
-    INSERT INTO UsuarioPreferencias (UsuarioId, IdiomaId)
-    VALUES (@UsuarioId, @IdiomaId);
-END";
+                IF @IdiomaId IS NULL
+                BEGIN
+                    DELETE FROM UsuarioPreferencias
+                    WHERE UsuarioId = @UsuarioId;
+                END
+                ELSE IF EXISTS (
+                    SELECT 1
+                    FROM UsuarioPreferencias
+                    WHERE UsuarioId = @UsuarioId)
+                    BEGIN
+                        UPDATE UsuarioPreferencias
+                        SET IdiomaId = @IdiomaId
+                        WHERE UsuarioId = @UsuarioId;
+                    END
+                ELSE
+                BEGIN
+                    INSERT INTO UsuarioPreferencias (UsuarioId, IdiomaId)
+                    VALUES (@UsuarioId, @IdiomaId);
+                END";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();

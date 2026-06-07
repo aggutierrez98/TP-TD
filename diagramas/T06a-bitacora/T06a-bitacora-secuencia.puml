@@ -12,7 +12,7 @@ participant "Sesion" as Sesion
 participant "BitacoraDAL" as BitacoraDAL
 
 Usuario -> FormGestionUsuarios : btnEditarUsuario_Click()
-FormGestionUsuarios -> UsuarioBLL : Actualizar(_idSeleccionado, nuevoUsername)
+FormGestionUsuarios -> UsuarioBLL : Actualizar(_idSeleccionado, nuevoUsername, nuevaPassword, usuarioActivo)
 UsuarioBLL -> AccesoDatos : BeginTransactionScope()
 UsuarioBLL -> UsuarioDAL : ObtenerPorId(id, accesoDatos)
 UsuarioDAL --> UsuarioBLL : usuario

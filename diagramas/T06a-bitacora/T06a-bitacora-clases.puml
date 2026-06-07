@@ -79,7 +79,8 @@ package "BE" {
 
 package "BLL" {
   class UsuarioBLL {
-    +Actualizar(id : int, nuevoUsername : string) : bool
+    +Actualizar(id : int, nuevoUsername : string, nuevaPasswordRaw : string, activo : bool) : bool
+    +Eliminar(id : int) : bool
   }
 
   class UsuarioEstadoBLL {
@@ -91,7 +92,7 @@ package "BLL" {
   }
 
   class ManejadorExcepcionesBLL {
-    +ObtenerMensajeUsuario(exception : Exception, actividad : string) : string
+    +ObtenerMensajeUsuarioKey(exception : Exception, actividad : string) : string
     +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
   }
 
@@ -108,6 +109,7 @@ package "DAL" {
   class UsuarioDAL {
     +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
     +Actualizar(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+    +EliminarFisicamente(id : int, accesoDatos : AccesoDatos = null) : bool
   }
 
   class BitacoraDAL {
@@ -127,6 +129,18 @@ package "UI" {
 
   class FormBitacora {
     +Actualizar(idioma : Idioma) : void
+  }
+
+  class UiDialogHelper {
+    +MostrarInfo(messageKey : string, args : object[]) : void
+    +MostrarWarning(messageKey : string, args : object[]) : void
+    +MostrarError(messageKey : string, args : object[]) : void
+    +Confirmar(messageKey : string, titleKey : string, icon : MessageBoxIcon, args : object[]) : DialogResult
+    +Traducir(key : string, args : object[]) : string
+  }
+
+  class UiExceptionHandler {
+    +Mostrar(exception : Exception, actividad : string) : void
   }
 }
 
@@ -148,6 +162,9 @@ UsuarioDAL --> AccesoDatos
 BitacoraDAL --> AccesoDatos
 FormGestionUsuarios --> UsuarioBLL
 FormBitacora --> BitacoraBLL
+UiDialogHelper --> Idioma
+UiExceptionHandler --> UiDialogHelper
+UiExceptionHandler --> ManejadorExcepcionesBLL
 
 note right of BitacoraService
   Servicio runtime transversal.

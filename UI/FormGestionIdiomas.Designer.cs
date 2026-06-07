@@ -27,6 +27,7 @@ namespace TpIDS
             this.lblIdiomaSeleccionado = new System.Windows.Forms.Label();
             this.cmbIdiomas = new System.Windows.Forms.ComboBox();
             this.btnImportarJson = new System.Windows.Forms.Button();
+            this.btnExportarJson = new System.Windows.Forms.Button();
             this.groupBoxTraducciones = new System.Windows.Forms.GroupBox();
             this.btnEliminarTraduccion = new System.Windows.Forms.Button();
             this.btnGuardarTraduccion = new System.Windows.Forms.Button();
@@ -47,6 +48,7 @@ namespace TpIDS
             this.lblTituloGestionIdiomas.Location = new System.Drawing.Point(18, 15);
             this.lblTituloGestionIdiomas.Name = "lblTituloGestionIdiomas";
             this.lblTituloGestionIdiomas.Size = new System.Drawing.Size(182, 25);
+            this.lblTituloGestionIdiomas.Tag = "FormGestionIdiomas.TitleLabel";
             this.lblTituloGestionIdiomas.TabIndex = 0;
             this.lblTituloGestionIdiomas.Text = "Gestion de idiomas";
             // 
@@ -61,6 +63,7 @@ namespace TpIDS
             this.groupBoxIdioma.Location = new System.Drawing.Point(23, 52);
             this.groupBoxIdioma.Name = "groupBoxIdioma";
             this.groupBoxIdioma.Size = new System.Drawing.Size(714, 116);
+            this.groupBoxIdioma.Tag = "FormGestionIdiomas.LanguageGroup";
             this.groupBoxIdioma.TabIndex = 1;
             this.groupBoxIdioma.TabStop = false;
             this.groupBoxIdioma.Text = "Datos del idioma";
@@ -70,6 +73,7 @@ namespace TpIDS
             this.btnEliminarIdioma.Location = new System.Drawing.Point(474, 69);
             this.btnEliminarIdioma.Name = "btnEliminarIdioma";
             this.btnEliminarIdioma.Size = new System.Drawing.Size(210, 30);
+            this.btnEliminarIdioma.Tag = "FormGestionIdiomas.DeleteButton";
             this.btnEliminarIdioma.TabIndex = 5;
             this.btnEliminarIdioma.Text = "Eliminar idioma";
             this.btnEliminarIdioma.UseVisualStyleBackColor = true;
@@ -80,6 +84,7 @@ namespace TpIDS
             this.btnActualizarIdioma.Location = new System.Drawing.Point(242, 69);
             this.btnActualizarIdioma.Name = "btnActualizarIdioma";
             this.btnActualizarIdioma.Size = new System.Drawing.Size(210, 30);
+            this.btnActualizarIdioma.Tag = "FormGestionIdiomas.UpdateButton";
             this.btnActualizarIdioma.TabIndex = 4;
             this.btnActualizarIdioma.Text = "Actualizar idioma";
             this.btnActualizarIdioma.UseVisualStyleBackColor = true;
@@ -90,6 +95,7 @@ namespace TpIDS
             this.btnAgregarIdioma.Location = new System.Drawing.Point(14, 69);
             this.btnAgregarIdioma.Name = "btnAgregarIdioma";
             this.btnAgregarIdioma.Size = new System.Drawing.Size(210, 30);
+            this.btnAgregarIdioma.Tag = "FormGestionIdiomas.AddButton";
             this.btnAgregarIdioma.TabIndex = 3;
             this.btnAgregarIdioma.Text = "Agregar idioma";
             this.btnAgregarIdioma.UseVisualStyleBackColor = true;
@@ -101,6 +107,7 @@ namespace TpIDS
             this.chkbIdiomaDefault.Location = new System.Drawing.Point(525, 33);
             this.chkbIdiomaDefault.Name = "chkbIdiomaDefault";
             this.chkbIdiomaDefault.Size = new System.Drawing.Size(95, 17);
+            this.chkbIdiomaDefault.Tag = "FormGestionIdiomas.DefaultCheck";
             this.chkbIdiomaDefault.TabIndex = 2;
             this.chkbIdiomaDefault.Text = "Idioma default";
             this.chkbIdiomaDefault.UseVisualStyleBackColor = true;
@@ -118,6 +125,7 @@ namespace TpIDS
             this.lblNombreIdioma.Location = new System.Drawing.Point(11, 15);
             this.lblNombreIdioma.Name = "lblNombreIdioma";
             this.lblNombreIdioma.Size = new System.Drawing.Size(99, 13);
+            this.lblNombreIdioma.Tag = "FormGestionIdiomas.NameLabel";
             this.lblNombreIdioma.TabIndex = 0;
             this.lblNombreIdioma.Text = "Nombre del idioma:";
             // 
@@ -127,6 +135,7 @@ namespace TpIDS
             this.lblIdiomaSeleccionado.Location = new System.Drawing.Point(20, 183);
             this.lblIdiomaSeleccionado.Name = "lblIdiomaSeleccionado";
             this.lblIdiomaSeleccionado.Size = new System.Drawing.Size(111, 13);
+            this.lblIdiomaSeleccionado.Tag = "FormGestionIdiomas.SelectLanguageLabel";
             this.lblIdiomaSeleccionado.TabIndex = 2;
             this.lblIdiomaSeleccionado.Text = "Idioma seleccionado:";
             // 
@@ -136,19 +145,31 @@ namespace TpIDS
             this.cmbIdiomas.FormattingEnabled = true;
             this.cmbIdiomas.Location = new System.Drawing.Point(23, 199);
             this.cmbIdiomas.Name = "cmbIdiomas";
-            this.cmbIdiomas.Size = new System.Drawing.Size(517, 21);
+            this.cmbIdiomas.Size = new System.Drawing.Size(329, 21);
             this.cmbIdiomas.TabIndex = 3;
             this.cmbIdiomas.SelectedIndexChanged += new System.EventHandler(this.cmbIdiomas_SelectedIndexChanged);
             // 
             // btnImportarJson
             // 
-            this.btnImportarJson.Location = new System.Drawing.Point(558, 197);
+            this.btnImportarJson.Location = new System.Drawing.Point(375, 197);
             this.btnImportarJson.Name = "btnImportarJson";
-            this.btnImportarJson.Size = new System.Drawing.Size(179, 25);
+            this.btnImportarJson.Size = new System.Drawing.Size(171, 25);
+            this.btnImportarJson.Tag = "FormGestionIdiomas.ImportButton";
             this.btnImportarJson.TabIndex = 4;
             this.btnImportarJson.Text = "Importar JSON";
             this.btnImportarJson.UseVisualStyleBackColor = true;
             this.btnImportarJson.Click += new System.EventHandler(this.btnImportarJson_Click);
+            // 
+            // btnExportarJson
+            // 
+            this.btnExportarJson.Location = new System.Drawing.Point(566, 197);
+            this.btnExportarJson.Name = "btnExportarJson";
+            this.btnExportarJson.Size = new System.Drawing.Size(171, 25);
+            this.btnExportarJson.Tag = "FormGestionIdiomas.ExportButton";
+            this.btnExportarJson.TabIndex = 5;
+            this.btnExportarJson.Text = "Exportar JSON";
+            this.btnExportarJson.UseVisualStyleBackColor = true;
+            this.btnExportarJson.Click += new System.EventHandler(this.btnExportarJson_Click);
             // 
             // groupBoxTraducciones
             // 
@@ -162,7 +183,8 @@ namespace TpIDS
             this.groupBoxTraducciones.Location = new System.Drawing.Point(23, 239);
             this.groupBoxTraducciones.Name = "groupBoxTraducciones";
             this.groupBoxTraducciones.Size = new System.Drawing.Size(714, 319);
-            this.groupBoxTraducciones.TabIndex = 5;
+            this.groupBoxTraducciones.Tag = "FormGestionIdiomas.TranslationsGroup";
+            this.groupBoxTraducciones.TabIndex = 6;
             this.groupBoxTraducciones.TabStop = false;
             this.groupBoxTraducciones.Text = "Traducciones";
             // 
@@ -171,6 +193,7 @@ namespace TpIDS
             this.btnEliminarTraduccion.Location = new System.Drawing.Point(489, 278);
             this.btnEliminarTraduccion.Name = "btnEliminarTraduccion";
             this.btnEliminarTraduccion.Size = new System.Drawing.Size(195, 28);
+            this.btnEliminarTraduccion.Tag = "FormGestionIdiomas.DeleteTranslationButton";
             this.btnEliminarTraduccion.TabIndex = 6;
             this.btnEliminarTraduccion.Text = "Eliminar traduccion";
             this.btnEliminarTraduccion.UseVisualStyleBackColor = true;
@@ -181,6 +204,7 @@ namespace TpIDS
             this.btnGuardarTraduccion.Location = new System.Drawing.Point(489, 239);
             this.btnGuardarTraduccion.Name = "btnGuardarTraduccion";
             this.btnGuardarTraduccion.Size = new System.Drawing.Size(195, 28);
+            this.btnGuardarTraduccion.Tag = "FormGestionIdiomas.SaveTranslationButton";
             this.btnGuardarTraduccion.TabIndex = 5;
             this.btnGuardarTraduccion.Text = "Guardar traduccion";
             this.btnGuardarTraduccion.UseVisualStyleBackColor = true;
@@ -199,6 +223,7 @@ namespace TpIDS
             this.lblValorManual.Location = new System.Drawing.Point(189, 267);
             this.lblValorManual.Name = "lblValorManual";
             this.lblValorManual.Size = new System.Drawing.Size(59, 13);
+            this.lblValorManual.Tag = "FormGestionIdiomas.ManualValueLabel";
             this.lblValorManual.TabIndex = 3;
             this.lblValorManual.Text = "Traduccion:";
             // 
@@ -215,6 +240,7 @@ namespace TpIDS
             this.lblKeyManual.Location = new System.Drawing.Point(11, 267);
             this.lblKeyManual.Name = "lblKeyManual";
             this.lblKeyManual.Size = new System.Drawing.Size(28, 13);
+            this.lblKeyManual.Tag = "FormGestionIdiomas.ManualKeyLabel";
             this.lblKeyManual.TabIndex = 1;
             this.lblKeyManual.Text = "Key:";
             // 
@@ -239,6 +265,7 @@ namespace TpIDS
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(760, 579);
             this.Controls.Add(this.groupBoxTraducciones);
+            this.Controls.Add(this.btnExportarJson);
             this.Controls.Add(this.btnImportarJson);
             this.Controls.Add(this.cmbIdiomas);
             this.Controls.Add(this.lblIdiomaSeleccionado);
@@ -248,6 +275,7 @@ namespace TpIDS
             this.MaximizeBox = false;
             this.Name = "FormGestionIdiomas";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Tag = "FormGestionIdiomas.Title";
             this.Text = "Gestion de idiomas";
             this.groupBoxIdioma.ResumeLayout(false);
             this.groupBoxIdioma.PerformLayout();
@@ -269,6 +297,7 @@ namespace TpIDS
         private System.Windows.Forms.Label lblIdiomaSeleccionado;
         private System.Windows.Forms.ComboBox cmbIdiomas;
         private System.Windows.Forms.Button btnImportarJson;
+        private System.Windows.Forms.Button btnExportarJson;
         private System.Windows.Forms.GroupBox groupBoxTraducciones;
         private System.Windows.Forms.Button btnEliminarTraduccion;
         private System.Windows.Forms.Button btnGuardarTraduccion;
