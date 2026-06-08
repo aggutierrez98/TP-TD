@@ -8,27 +8,21 @@ using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionUsuarios : Form
+    public partial class FormGestionUsuarios : FormTraducibleBase
     {
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
-        private readonly Action<Idioma> observadorIdioma;
         private int _idSeleccionado = -1;
 
         public FormGestionUsuarios()
         {
             InitializeComponent();
-            observadorIdioma = Actualizar;
-            FormClosed += FormGestionUsuarios_FormClosed;
         }
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             chkbUsuarioActivo.Checked = true;
             CargarGrilla();
-            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void CargarGrilla()
@@ -36,35 +30,8 @@ namespace TpIDS
             try
             {
                 List<Usuario> usuarios = usuarioBLL.ObtenerTodos();
-                dgvUsuarios.DataSource = null;
-                dgvUsuarios.DataSource = usuarios;
-
-                if (dgvUsuarios.Columns.Contains("PasswordHash"))
-                {
-                    dgvUsuarios.Columns["PasswordHash"].Visible = false;
-                }
-
-                if (dgvUsuarios.Columns.Contains("Permisos"))
-                {
-                    dgvUsuarios.Columns["Permisos"].Visible = false;
-                }
-
-                if (dgvUsuarios.Columns.Contains("Id"))
-                {
-                    dgvUsuarios.Columns["Id"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Id");
-                    dgvUsuarios.Columns["Id"].Width = 50;
-                }
-
-                if (dgvUsuarios.Columns.Contains("Username"))
-                {
-                    dgvUsuarios.Columns["Username"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Username");
-                }
-
-                if (dgvUsuarios.Columns.Contains("Activo"))
-                {
-                    dgvUsuarios.Columns["Activo"].HeaderText = ObtenerTextoActual("FormGestionUsuarios.Grid.Active");
-                    dgvUsuarios.Columns["Activo"].Width = 65;
-                }
+                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+                GrillaTraduccionHelper.Recargar(dgvUsuarios, usuarios, ProyectarUsuarioFila, idioma);
             }
             catch (Exception ex)
             {
@@ -314,11 +281,20 @@ namespace TpIDS
             return ids;
         }
 
-        public void Actualizar(Idioma idioma)
+        private UsuarioGridItem ProyectarUsuarioFila(Usuario usuario, Idioma idioma)
         {
-            IdiomaFormHelper.Aplicar(this, idioma);
+            return new UsuarioGridItem
+            {
+                Id = usuario.Id,
+                Username = usuario.Username,
+                Activo = usuario.Activo
+            };
+        }
+
+        protected override void OnIdiomaActualizado(Idioma idioma)
+        {
+            base.OnIdiomaActualizado(idioma);
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
-            ActualizarEncabezadosGrilla(idioma);
         }
 
         private void ActualizarSesionActualLabel(string username)
@@ -326,29 +302,6 @@ namespace TpIDS
             string prefijo = ObtenerTextoActual("FormGestionUsuarios.SessionLabelPrefix");
             string nombreUsuario = string.IsNullOrWhiteSpace(username) ? "-" : username;
             lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
-        }
-
-        private void ActualizarEncabezadosGrilla(Idioma idioma)
-        {
-            if (idioma == null || dgvUsuarios.Columns.Count == 0)
-            {
-                return;
-            }
-
-            if (dgvUsuarios.Columns.Contains("Id"))
-            {
-                dgvUsuarios.Columns["Id"].HeaderText = idioma.ObtenerTraduccion("FormGestionUsuarios.Grid.Id");
-            }
-
-            if (dgvUsuarios.Columns.Contains("Username"))
-            {
-                dgvUsuarios.Columns["Username"].HeaderText = idioma.ObtenerTraduccion("FormGestionUsuarios.Grid.Username");
-            }
-
-            if (dgvUsuarios.Columns.Contains("Activo"))
-            {
-                dgvUsuarios.Columns["Activo"].HeaderText = idioma.ObtenerTraduccion("FormGestionUsuarios.Grid.Active");
-            }
         }
 
         private string ObtenerTextoActual(string key)
@@ -402,10 +355,13 @@ namespace TpIDS
                 formBitacora.ShowDialog(this);
             }
         }
-
-        private void FormGestionUsuarios_FormClosed(object sender, FormClosedEventArgs e)
+        private sealed class UsuarioGridItem
         {
-            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
+            public int Id { get; set; }
+
+            public string Username { get; set; }
+
+            public bool Activo { get; set; }
         }
     }
 }

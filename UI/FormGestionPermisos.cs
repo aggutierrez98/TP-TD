@@ -7,28 +7,22 @@ using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionPermisos : Form
+    public partial class FormGestionPermisos : FormTraducibleBase
     {
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
-        private readonly Action<Idioma> observadorIdioma;
 
         private List<PermisoNodo> catalogoRaiz;
 
         public FormGestionPermisos()
         {
-            observadorIdioma = Actualizar;
             catalogoRaiz = new List<PermisoNodo>();
             InitializeComponent();
             Load += FormGestionPermisos_Load;
-            FormClosed += FormGestionPermisos_FormClosed;
         }
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
-            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
-            RecargarTiposPermiso(IdiomaService.GetInstance().IdiomaActual);
             CargarCatalogo();
-            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void CargarCatalogo()
@@ -88,8 +82,13 @@ namespace TpIDS
                 return;
             }
 
+            AsegurarTiposPermisoCargados();
             txtbNombrePermiso.Text = permiso.Nombre;
-            cmbTipoPermiso.SelectedIndex = permiso.EsGrupo ? 0 : 1;
+            int indice = permiso.EsGrupo ? 0 : 1;
+            if (cmbTipoPermiso.Items.Count > indice)
+            {
+                cmbTipoPermiso.SelectedIndex = indice;
+            }
         }
 
         private void btnAgregarRaizPermiso_Click(object sender, EventArgs e)
@@ -237,15 +236,16 @@ namespace TpIDS
                 throw new ExcepcionNegocio("FormGestionPermisos.Warning.NameContainsDot");
             }
 
+            AsegurarTiposPermisoCargados();
             bool esGrupo = cmbTipoPermiso.SelectedIndex == 0;
             PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
             nodo.Nombre = nombre;
             return nodo;
         }
 
-        public void Actualizar(Idioma idioma)
+        protected override void OnIdiomaActualizado(Idioma idioma)
         {
-            IdiomaFormHelper.Aplicar(this, idioma);
+            base.OnIdiomaActualizado(idioma);
             RecargarTiposPermiso(idioma);
         }
 
@@ -258,12 +258,20 @@ namespace TpIDS
             cmbTipoPermiso.Items.Clear();
             cmbTipoPermiso.Items.Add(textoGrupo);
             cmbTipoPermiso.Items.Add(textoPermiso);
-            cmbTipoPermiso.SelectedIndex = indiceActual <= 1 ? indiceActual : 0;
+            if (cmbTipoPermiso.Items.Count > 0)
+            {
+                cmbTipoPermiso.SelectedIndex = indiceActual <= 1 && indiceActual < cmbTipoPermiso.Items.Count
+                    ? indiceActual
+                    : 0;
+            }
         }
 
-        private void FormGestionPermisos_FormClosed(object sender, FormClosedEventArgs e)
+        private void AsegurarTiposPermisoCargados()
         {
-            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
+            if (cmbTipoPermiso.Items.Count == 0)
+            {
+                RecargarTiposPermiso(IdiomaService.GetInstance().IdiomaActual);
+            }
         }
     }
 }

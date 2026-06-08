@@ -31,6 +31,15 @@ namespace TpIDS
             this.chkbSoloTecnicaBitacora = new System.Windows.Forms.CheckBox();
             this.btnBuscarBitacora = new System.Windows.Forms.Button();
             this.dgvBitacora = new System.Windows.Forms.DataGridView();
+            this.colBitacoraId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraFechaHora = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraUsuarioId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraUsernameSnapshot = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraActividad = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraInformacion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraNivel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraOrigen = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraEsTecnica = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.groupBoxFiltrosBitacora.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBitacora)).BeginInit();
             this.SuspendLayout();
@@ -175,8 +184,19 @@ namespace TpIDS
             // 
             this.dgvBitacora.AllowUserToAddRows = false;
             this.dgvBitacora.AllowUserToDeleteRows = false;
+            this.dgvBitacora.AutoGenerateColumns = false;
             this.dgvBitacora.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBitacora.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvBitacora.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colBitacoraId,
+            this.colBitacoraFechaHora,
+            this.colBitacoraUsuarioId,
+            this.colBitacoraUsernameSnapshot,
+            this.colBitacoraActividad,
+            this.colBitacoraInformacion,
+            this.colBitacoraNivel,
+            this.colBitacoraOrigen,
+            this.colBitacoraEsTecnica});
             this.dgvBitacora.Location = new System.Drawing.Point(18, 175);
             this.dgvBitacora.MultiSelect = false;
             this.dgvBitacora.Name = "dgvBitacora";
@@ -184,7 +204,83 @@ namespace TpIDS
             this.dgvBitacora.RowHeadersVisible = false;
             this.dgvBitacora.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvBitacora.Size = new System.Drawing.Size(944, 360);
+            this.dgvBitacora.Tag = "FormBitacora.Grid";
             this.dgvBitacora.TabIndex = 2;
+            // 
+            // colBitacoraId
+            // 
+            this.colBitacoraId.DataPropertyName = "Id";
+            this.colBitacoraId.FillWeight = 60F;
+            this.colBitacoraId.HeaderText = "FormBitacora.Grid.Id";
+            this.colBitacoraId.Name = "Id";
+            this.colBitacoraId.ReadOnly = true;
+            this.colBitacoraId.Tag = "FormBitacora.Grid.Id";
+            this.colBitacoraId.Width = 60;
+            // 
+            // colBitacoraFechaHora
+            // 
+            this.colBitacoraFechaHora.DataPropertyName = "FechaHora";
+            this.colBitacoraFechaHora.HeaderText = "FormBitacora.Grid.FechaHora";
+            this.colBitacoraFechaHora.Name = "FechaHora";
+            this.colBitacoraFechaHora.ReadOnly = true;
+            this.colBitacoraFechaHora.Tag = "FormBitacora.Grid.FechaHora";
+            // 
+            // colBitacoraUsuarioId
+            // 
+            this.colBitacoraUsuarioId.DataPropertyName = "UsuarioId";
+            this.colBitacoraUsuarioId.HeaderText = "FormBitacora.Grid.UsuarioId";
+            this.colBitacoraUsuarioId.Name = "UsuarioId";
+            this.colBitacoraUsuarioId.ReadOnly = true;
+            this.colBitacoraUsuarioId.Tag = "FormBitacora.Grid.UsuarioId";
+            // 
+            // colBitacoraUsernameSnapshot
+            // 
+            this.colBitacoraUsernameSnapshot.DataPropertyName = "UsernameSnapshot";
+            this.colBitacoraUsernameSnapshot.HeaderText = "FormBitacora.Grid.UsernameSnapshot";
+            this.colBitacoraUsernameSnapshot.Name = "UsernameSnapshot";
+            this.colBitacoraUsernameSnapshot.ReadOnly = true;
+            this.colBitacoraUsernameSnapshot.Tag = "FormBitacora.Grid.UsernameSnapshot";
+            // 
+            // colBitacoraActividad
+            // 
+            this.colBitacoraActividad.DataPropertyName = "Actividad";
+            this.colBitacoraActividad.HeaderText = "FormBitacora.Grid.Actividad";
+            this.colBitacoraActividad.Name = "Actividad";
+            this.colBitacoraActividad.ReadOnly = true;
+            this.colBitacoraActividad.Tag = "FormBitacora.Grid.Actividad";
+            // 
+            // colBitacoraInformacion
+            // 
+            this.colBitacoraInformacion.DataPropertyName = "Informacion";
+            this.colBitacoraInformacion.FillWeight = 180F;
+            this.colBitacoraInformacion.HeaderText = "FormBitacora.Grid.Informacion";
+            this.colBitacoraInformacion.Name = "Informacion";
+            this.colBitacoraInformacion.ReadOnly = true;
+            this.colBitacoraInformacion.Tag = "FormBitacora.Grid.Informacion";
+            // 
+            // colBitacoraNivel
+            // 
+            this.colBitacoraNivel.DataPropertyName = "Nivel";
+            this.colBitacoraNivel.HeaderText = "FormBitacora.Grid.Nivel";
+            this.colBitacoraNivel.Name = "Nivel";
+            this.colBitacoraNivel.ReadOnly = true;
+            this.colBitacoraNivel.Tag = "FormBitacora.Grid.Nivel";
+            // 
+            // colBitacoraOrigen
+            // 
+            this.colBitacoraOrigen.DataPropertyName = "Origen";
+            this.colBitacoraOrigen.HeaderText = "FormBitacora.Grid.Origen";
+            this.colBitacoraOrigen.Name = "Origen";
+            this.colBitacoraOrigen.ReadOnly = true;
+            this.colBitacoraOrigen.Tag = "FormBitacora.Grid.Origen";
+            // 
+            // colBitacoraEsTecnica
+            // 
+            this.colBitacoraEsTecnica.DataPropertyName = "EsTecnica";
+            this.colBitacoraEsTecnica.HeaderText = "FormBitacora.Grid.EsTecnica";
+            this.colBitacoraEsTecnica.Name = "EsTecnica";
+            this.colBitacoraEsTecnica.ReadOnly = true;
+            this.colBitacoraEsTecnica.Tag = "FormBitacora.Grid.EsTecnica";
             //
             // FormBitacora
             // 
@@ -221,5 +317,14 @@ namespace TpIDS
         private System.Windows.Forms.CheckBox chkbSoloTecnicaBitacora;
         private System.Windows.Forms.Button btnBuscarBitacora;
         private System.Windows.Forms.DataGridView dgvBitacora;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraFechaHora;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraUsuarioId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraUsernameSnapshot;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraActividad;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraInformacion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraNivel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraOrigen;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colBitacoraEsTecnica;
     }
 }

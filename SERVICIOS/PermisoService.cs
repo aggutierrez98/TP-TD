@@ -107,14 +107,6 @@ namespace SERVICIOS
             return relaciones;
         }
 
-        // Convierte nodos a la interfaz base para asignacion cross-layer via reflexion
-        public object NodosComoPermisos(IList<PermisoNodo> nodos)
-        {
-            return nodos == null
-                ? new List<IPermiso>()
-                : (object)nodos.Cast<IPermiso>().ToList();
-        }
-
         private void AsignarRutas(IEnumerable<PermisoNodo> nodos, string prefijo)
         {
             foreach (PermisoNodo nodo in nodos)

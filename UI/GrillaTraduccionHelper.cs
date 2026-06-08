@@ -27,14 +27,8 @@ namespace TpIDS
             {
                 posDataSource(grilla);
             }
-        }
 
-        public static void SetHeader(DataGridView grilla, string columnName, string key, Idioma idioma)
-        {
-            if (grilla.Columns.Contains(columnName))
-            {
-                grilla.Columns[columnName].HeaderText = idioma.ObtenerTraduccion(key);
-            }
+            IdiomaFormHelper.AplicarDataGridView(grilla, idioma);
         }
     }
 }

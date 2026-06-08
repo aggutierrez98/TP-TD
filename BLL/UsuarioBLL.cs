@@ -29,27 +29,27 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(passwordRaw))
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de login con campos vacios.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.LoginFallido", "FormBitacora.Value.Info.LoginCamposVacios", "UsuarioBLL");
                 throw new ExcepcionNegocio("Error.Usuario.EmptyCredentials");
             }
 
             Usuario usuario = _usuarioDAL.ObtenerPorUsername(username.Trim());
             if (usuario == null)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de login con usuario inexistente.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.LoginFallido", "FormBitacora.Value.Info.LoginUsuarioInexistente", "UsuarioBLL");
                 return null;
             }
 
             if (!usuario.Activo)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Intento de acceso sobre usuario inactivo.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.LoginFallido", "FormBitacora.Value.Info.LoginUsuarioInactivo", "UsuarioBLL");
                 return null;
             }
 
             bool esValido = _passwordHasher.VerifyPassword(passwordRaw, usuario.PasswordHash);
             if (!esValido)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Login fallido", "Credenciales invalidas.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.LoginFallido", "FormBitacora.Value.Info.LoginCredencialesInvalidas", "UsuarioBLL");
                 return null;
             }
 
@@ -57,7 +57,7 @@ namespace BLL
             Sesion.GetInstance().IniciarSesion(usuario.Id, usuario.Username);
             AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuario.Id));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuario.Id);
-            BitacoraService.GetInstance().RegistrarOperacion("Login exitoso", "Ingreso de usuario.", "UsuarioBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.LoginExitoso", "FormBitacora.Value.Info.LoginExitoso", "UsuarioBLL");
             return usuario;
         }
 
@@ -74,7 +74,7 @@ namespace BLL
 
             if (string.IsNullOrWhiteSpace(usernameNormalizado) || string.IsNullOrWhiteSpace(passwordNormalizada))
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "Se intento registrar un usuario con datos incompletos.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.AltaUsuarioRechazada", "FormBitacora.Value.Info.AltaUsuarioDatosIncompletos", "UsuarioBLL");
                 throw new ExcepcionNegocio("Error.Usuario.EmptyCredentials");
             }
 
@@ -87,7 +87,7 @@ namespace BLL
                     Usuario existente = _usuarioDAL.ObtenerPorUsername(usernameNormalizado, accesoDatos);
                     if (existente != null)
                     {
-                        BitacoraService.GetInstance().RegistrarFalloNegocio("Alta de usuario rechazada", "El nombre de usuario ya existe.", "UsuarioBLL", accesoDatos);
+                        BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.AltaUsuarioRechazada", "FormBitacora.Value.Info.NombreUsuarioYaExiste", "UsuarioBLL", accesoDatos);
                         throw new ExcepcionNegocio("Error.Usuario.UsernameExists");
                     }
 
@@ -98,8 +98,8 @@ namespace BLL
                     };
 
                     nuevoUsuario.Id = _usuarioDAL.InsertarYObtenerId(nuevoUsuario, accesoDatos);
-                    _usuarioEstadoBLL.GuardarVersionActual(nuevoUsuario.Id, "Alta", "Alta inicial del usuario.", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("Alta de usuario", "Se creo el usuario.", "UsuarioBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(nuevoUsuario.Id, "FormHistorialUsuario.Value.Action.Alta", "FormHistorialUsuario.Value.Obs.AltaInicial", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.AltaUsuario", "FormBitacora.Value.Info.AltaUsuario", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -127,7 +127,7 @@ namespace BLL
             string passwordNormalizada = (nuevaPasswordRaw ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(usernameNormalizado))
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "Se intento guardar un nombre vacio.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.EdicionUsuarioRechazada", "FormBitacora.Value.Info.EdicionUsuarioNombreVacio", "UsuarioBLL");
                 throw new ExcepcionNegocio("Error.Usuario.UsernameRequired");
             }
 
@@ -146,14 +146,14 @@ namespace BLL
                     int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
                     if (usuarioActualId.HasValue && usuarioActualId.Value == id && !activo)
                     {
-                        BitacoraService.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "Se intento desactivar al usuario en sesion.", "UsuarioBLL", accesoDatos);
+                        BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.EdicionUsuarioRechazada", "FormBitacora.Value.Info.EdicionDesactivarSesion", "UsuarioBLL", accesoDatos);
                         throw new ExcepcionNegocio("Error.Usuario.CannotDeactivateActiveSession");
                     }
 
                     Usuario existente = _usuarioDAL.ObtenerPorUsername(usernameNormalizado, accesoDatos);
                     if (existente != null && existente.Id != id)
                     {
-                        BitacoraService.GetInstance().RegistrarFalloNegocio("Edicion de usuario rechazada", "El nombre de usuario ya existe.", "UsuarioBLL", accesoDatos);
+                        BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.EdicionUsuarioRechazada", "FormBitacora.Value.Info.NombreUsuarioYaExiste", "UsuarioBLL", accesoDatos);
                         throw new ExcepcionNegocio("Error.Usuario.UsernameExists");
                     }
 
@@ -172,32 +172,32 @@ namespace BLL
                         throw new ExcepcionTecnica("Error.Usuario.UpdateFailed");
                     }
 
-                    string accionHistorial = "Edicion";
-                    string observacionesHistorial = "Actualizacion del usuario.";
-                    string actividadBitacora = "Edicion de usuario";
-                    string informacionBitacora = "Se actualizo el usuario.";
+                    string accionHistorial = "FormHistorialUsuario.Value.Action.Edicion";
+                    string observacionesHistorial = "FormHistorialUsuario.Value.Obs.ActualizacionUsuario";
+                    string actividadBitacora = "FormBitacora.Value.Activity.EdicionUsuario";
+                    string informacionBitacora = "FormBitacora.Value.Info.EdicionUsuario";
 
                     if (usuarioEstabaActivo && !activo)
                     {
-                        accionHistorial = "BajaLogica";
-                        observacionesHistorial = "Desactivacion del usuario desde gestion.";
-                        actividadBitacora = "Baja logica de usuario";
-                        informacionBitacora = "Se desactivo el usuario.";
+                        accionHistorial = "FormHistorialUsuario.Value.Action.BajaLogica";
+                        observacionesHistorial = "FormHistorialUsuario.Value.Obs.Desactivacion";
+                        actividadBitacora = "FormBitacora.Value.Activity.BajaLogicaUsuario";
+                        informacionBitacora = "FormBitacora.Value.Info.BajaLogicaUsuario";
                     }
                     else if (!usuarioEstabaActivo && activo)
                     {
-                        accionHistorial = "Reactivacion";
-                        observacionesHistorial = "Reactivacion del usuario desde gestion.";
-                        actividadBitacora = "Reactivacion de usuario";
-                        informacionBitacora = "Se reactivo el usuario.";
+                        accionHistorial = "FormHistorialUsuario.Value.Action.Reactivacion";
+                        observacionesHistorial = "FormHistorialUsuario.Value.Obs.Reactivacion";
+                        actividadBitacora = "FormBitacora.Value.Activity.ReactivacionUsuario";
+                        informacionBitacora = "FormBitacora.Value.Info.ReactivacionUsuario";
                     }
                     else if (actualizaPassword)
                     {
-                        observacionesHistorial = "Actualizacion del password del usuario.";
+                        observacionesHistorial = "FormHistorialUsuario.Value.Obs.ActualizacionPassword";
                     }
                     else if (!string.Equals(usernameAnterior, usernameNormalizado, StringComparison.Ordinal))
                     {
-                        observacionesHistorial = "Actualizacion del nombre de usuario.";
+                        observacionesHistorial = "FormHistorialUsuario.Value.Obs.ActualizacionUsername";
                     }
 
                     _usuarioEstadoBLL.GuardarVersionActual(id, accionHistorial, observacionesHistorial, accesoDatos);
@@ -229,7 +229,7 @@ namespace BLL
             int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == id)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Borrado fisico de usuario rechazado", "Se intento eliminar al usuario en sesion.", "UsuarioBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.BorradoFisicoUsuarioRechazado", "FormBitacora.Value.Info.BorradoFisicoSesion", "UsuarioBLL");
                 throw new ExcepcionNegocio("Error.Usuario.CannotDeleteActiveSession");
             }
 
@@ -251,7 +251,7 @@ namespace BLL
                         throw new ExcepcionTecnica("Error.Usuario.DeleteFailed");
                     }
 
-                    BitacoraService.GetInstance().RegistrarOperacion("Borrado fisico de usuario", "Se elimino definitivamente el usuario y su historial asociado.", "UsuarioBLL", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.BorradoFisicoUsuario", "FormBitacora.Value.Info.BorradoFisicoUsuario", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -322,8 +322,8 @@ namespace BLL
                     }
 
                     _usuarioEstadoBLL.AplicarSnapshot(snapshot, accesoDatos);
-                    _usuarioEstadoBLL.GuardarVersionActual(snapshot.UsuarioId, "Restauracion", "Restauracion desde el historial.", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("Restauracion de usuario", "Se restauro el usuario desde el historial.", "UsuarioBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(snapshot.UsuarioId, "FormHistorialUsuario.Value.Action.Restauracion", "FormHistorialUsuario.Value.Obs.Restauracion", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.RestauracionUsuario", "FormBitacora.Value.Info.RestauracionUsuario", "UsuarioBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)

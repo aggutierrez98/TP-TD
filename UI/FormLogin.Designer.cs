@@ -18,13 +18,11 @@ namespace TpIDS
         {
             this.btnIngreso = new System.Windows.Forms.Button();
             this.txtbNickname = new System.Windows.Forms.TextBox();
-            this.txtbPassword = new System.Windows.Forms.TextBox();
+            this.txtbPassword = new TpIDS.PasswordTextBox();
             this.lblNickname = new System.Windows.Forms.Label();
             this.lblPassword = new System.Windows.Forms.Label();
             this.btnRegistro = new System.Windows.Forms.Button();
             this.lblRegistro = new System.Windows.Forms.Label();
-            this.pbPassword = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             this.SuspendLayout();
             // 
             // btnIngreso
@@ -49,8 +47,7 @@ namespace TpIDS
             // 
             this.txtbPassword.Location = new System.Drawing.Point(38, 231);
             this.txtbPassword.Name = "txtbPassword";
-            this.txtbPassword.PasswordChar = '●';
-            this.txtbPassword.Size = new System.Drawing.Size(174, 20);
+            this.txtbPassword.Size = new System.Drawing.Size(200, 20);
             this.txtbPassword.TabIndex = 1;
             // 
             // lblNickname
@@ -94,22 +91,11 @@ namespace TpIDS
             this.lblRegistro.TabIndex = 9;
             this.lblRegistro.Text = "No tenes usuario?";
             // 
-            // pbPassword
-            // 
-            this.pbPassword.Location = new System.Drawing.Point(219, 231);
-            this.pbPassword.Name = "pbPassword";
-            this.pbPassword.Size = new System.Drawing.Size(19, 20);
-            this.pbPassword.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pbPassword.TabIndex = 10;
-            this.pbPassword.TabStop = false;
-            this.pbPassword.Click += new System.EventHandler(this.pbPassword_Click);
-            // 
             // FormLogin
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(277, 410);
-            this.Controls.Add(this.pbPassword);
             this.Controls.Add(this.lblRegistro);
             this.Controls.Add(this.btnRegistro);
             this.Controls.Add(this.lblPassword);
@@ -121,7 +107,6 @@ namespace TpIDS
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Tag = "FormLogin.Title";
             this.Text = "Menu de ingreso";
-            ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -129,11 +114,10 @@ namespace TpIDS
 
         private System.Windows.Forms.Button btnIngreso;
         private System.Windows.Forms.TextBox txtbNickname;
-        private System.Windows.Forms.TextBox txtbPassword;
+        private PasswordTextBox txtbPassword;
         private System.Windows.Forms.Label lblNickname;
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.Button btnRegistro;
         private System.Windows.Forms.Label lblRegistro;
-        private System.Windows.Forms.PictureBox pbPassword;
     }
 }

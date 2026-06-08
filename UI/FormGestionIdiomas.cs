@@ -8,25 +8,20 @@ using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormGestionIdiomas : Form
+    public partial class FormGestionIdiomas : FormTraducibleBase
     {
         private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
-        private readonly Action<Idioma> observadorIdioma;
         private bool cargandoIdiomas;
 
         public FormGestionIdiomas()
         {
             InitializeComponent();
-            observadorIdioma = Actualizar;
             Load += FormGestionIdiomas_Load;
-            FormClosed += FormGestionIdiomas_FormClosed;
         }
 
         private void FormGestionIdiomas_Load(object sender, EventArgs e)
         {
-            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
             CargarIdiomas(null);
-            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnAgregarIdioma_Click(object sender, EventArgs e)
@@ -253,61 +248,6 @@ namespace TpIDS
             CargarDetalleIdioma(idioma.Id, null);
         }
 
-        private void dgvTraducciones_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0 || e.ColumnIndex < 0)
-            {
-                return;
-            }
-
-            if (!(cmbIdiomas.SelectedItem is Idioma idioma))
-            {
-                return;
-            }
-
-            if (!(dgvTraducciones.Rows[e.RowIndex].DataBoundItem is TraduccionGridItem item))
-            {
-                return;
-            }
-
-            if (e.ColumnIndex != dgvTraducciones.Columns["Valor"].Index)
-            {
-                return;
-            }
-
-            string valorEditado = dgvTraducciones.Rows[e.RowIndex].Cells["Valor"].Value == null
-                ? string.Empty
-                : dgvTraducciones.Rows[e.RowIndex].Cells["Valor"].Value.ToString();
-
-            try
-            {
-                idiomaBLL.GuardarTraduccion(idioma.Id, item.Key, valorEditado);
-                txtbKeyManual.Text = item.Key;
-                txtbValorManual.Text = valorEditado;
-                RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-
-                BeginInvoke(new Action(() =>
-                {
-                    if (!IsDisposed)
-                    {
-                        RecargarIdiomaSeleccionado(idioma.Id, item.Key);
-                    }
-                }));
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Edicion inline de traduccion");
-
-                BeginInvoke(new Action(() =>
-                {
-                    if (!IsDisposed)
-                    {
-                        RecargarIdiomaSeleccionado(idioma.Id, item.Key);
-                    }
-                }));
-            }
-        }
-
         private void dgvTraducciones_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0)
@@ -316,12 +256,6 @@ namespace TpIDS
             }
 
             CargarTraduccionSeleccionada();
-        }
-
-        public void Actualizar(Idioma idioma)
-        {
-            IdiomaFormHelper.Aplicar(this, idioma);
-            ActualizarEncabezadosGrilla(idioma);
         }
 
         private void CargarIdiomas(int? idiomaSeleccionadoId)
@@ -362,25 +296,6 @@ namespace TpIDS
             txtbNombreIdioma.Text = idioma.Nombre;
             chkbIdiomaDefault.Checked = idioma.Default;
 
-            dgvTraducciones.AutoGenerateColumns = false;
-            if (dgvTraducciones.Columns.Count == 0)
-            {
-                dgvTraducciones.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    Name = "Key",
-                    DataPropertyName = "Key",
-                    ReadOnly = true,
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-                });
-                dgvTraducciones.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    Name = "Valor",
-                    DataPropertyName = "Valor",
-                    ReadOnly = false,
-                    AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-                });
-            }
-
             dgvTraducciones.DataSource = idioma.Traducciones
                 .OfType<Traduccion>()
                 .OrderBy(item => item.Palabra.Key)
@@ -393,7 +308,7 @@ namespace TpIDS
                 })
                 .ToList();
 
-            ActualizarEncabezadosGrilla(IdiomaService.GetInstance().IdiomaActual);
+            IdiomaFormHelper.AplicarDataGridView(dgvTraducciones, IdiomaService.GetInstance().IdiomaActual);
             SeleccionarTraduccion(keySeleccionada);
         }
 
@@ -424,17 +339,6 @@ namespace TpIDS
             {
                 IdiomaService.GetInstance().CambiarIdioma(idiomaDefault);
             }
-        }
-
-        private void ActualizarEncabezadosGrilla(Idioma idioma)
-        {
-            if (idioma == null || dgvTraducciones.Columns.Count == 0)
-            {
-                return;
-            }
-
-            dgvTraducciones.Columns["Key"].HeaderText = idioma.ObtenerTraduccion("FormGestionIdiomas.Grid.Key");
-            dgvTraducciones.Columns["Valor"].HeaderText = idioma.ObtenerTraduccion("FormGestionIdiomas.Grid.Value");
         }
 
         private void CargarTraduccionSeleccionada()
@@ -492,12 +396,6 @@ namespace TpIDS
             txtbKeyManual.Clear();
             txtbValorManual.Clear();
         }
-
-        private void FormGestionIdiomas_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
-        }
-
         private string ObtenerTextoActual(string key)
         {
             Idioma idioma = IdiomaService.GetInstance().IdiomaActual;

@@ -87,8 +87,8 @@ namespace BLL
                         throw new ExcepcionTecnica("Error.Idioma.PreferenceSaveFailed");
                     }
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionIdiomaPreferido", "Actualizacion de la preferencia de idioma del usuario.", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion preferencia idioma", "Se actualizo el idioma preferido del usuario.", "IdiomaBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormHistorialUsuario.Value.Action.ActualizacionIdiomaPreferido", "FormHistorialUsuario.Value.Obs.ActualizacionIdioma", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionPreferenciaIdioma", "FormBitacora.Value.Info.ActualizacionPreferenciaIdioma", "IdiomaBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -124,7 +124,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("Alta de idioma", "Se creo el idioma.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.AltaIdioma", "FormBitacora.Value.Info.AltaIdioma", "IdiomaBLL");
             return idiomaId;
         }
 
@@ -158,7 +158,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("Edicion de idioma", "Se actualizo el idioma.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.EdicionIdioma", "FormBitacora.Value.Info.EdicionIdioma", "IdiomaBLL");
             return true;
         }
 
@@ -196,7 +196,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("Baja de idioma", "Se elimino el idioma.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.BajaIdioma", "FormBitacora.Value.Info.BajaIdioma", "IdiomaBLL");
             return true;
         }
 
@@ -214,7 +214,7 @@ namespace BLL
 
             int palabraId = _idiomaDAL.ObtenerOCrearPalabra(key.Trim(), false);
             _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
-            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion traduccion", "Se guardo la traduccion.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionTraduccion", "FormBitacora.Value.Info.ActualizacionTraduccion", "IdiomaBLL");
         }
 
         public bool EliminarTraduccion(int idiomaId, int palabraId)
@@ -242,7 +242,7 @@ namespace BLL
             bool eliminado = _idiomaDAL.EliminarTraduccion(idiomaId, palabraId);
             if (eliminado)
             {
-                BitacoraService.GetInstance().RegistrarOperacion("Baja de traduccion", "Se elimino la traduccion.", "IdiomaBLL");
+                BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.BajaTraduccion", "FormBitacora.Value.Info.BajaTraduccion", "IdiomaBLL");
             }
 
             return eliminado;
@@ -278,7 +278,7 @@ namespace BLL
                 GuardarTraduccion(idiomaId, item.Key, item.Value);
             }
 
-            BitacoraService.GetInstance().RegistrarOperacion("Importacion de traducciones", "Se importaron traducciones JSON.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ImportacionTraducciones", "FormBitacora.Value.Info.ImportacionTraducciones", "IdiomaBLL");
         }
 
         public void ExportarJson(int idiomaId, string rutaArchivo)
@@ -306,7 +306,7 @@ namespace BLL
             string contenido = serializer.Serialize(traducciones);
             File.WriteAllText(rutaArchivo, contenido, new UTF8Encoding(false));
 
-            BitacoraService.GetInstance().RegistrarOperacion("Exportacion de traducciones", "Se exportaron traducciones JSON.", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ExportacionTraducciones", "FormBitacora.Value.Info.ExportacionTraducciones", "IdiomaBLL");
         }
 
         public bool EstaCompleto(int idiomaId)

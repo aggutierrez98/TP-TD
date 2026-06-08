@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -37,7 +38,7 @@ namespace BLL
         {
             if (raices == null || raices.Count == 0)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.ActualizacionCatalogoPermisosRechazada", "FormBitacora.Value.Info.CatalogoPermisosVacio", "PermisoBLL");
                 throw new ExcepcionNegocio("Error.Permiso.CatalogEmpty");
             }
 
@@ -78,7 +79,7 @@ namespace BLL
                 .ToList();
 
             _permisoDAL.EliminarPermisos(idsEliminados);
-            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion catalogo de permisos", "Se guardo el catalogo general de permisos.", "PermisoBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionCatalogoPermisos", "FormBitacora.Value.Info.ActualizacionCatalogoPermisos", "PermisoBLL");
         }
 
         public List<int> ObtenerPermisoIdsDeUsuario(int usuarioId)
@@ -105,8 +106,8 @@ namespace BLL
                         permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
                         accesoDatos);
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionPermisos", "Actualizacion de permisos del usuario.", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormHistorialUsuario.Value.Action.ActualizacionPermisos", "FormHistorialUsuario.Value.Obs.ActualizacionPermisos", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionPermisosUsuario", "FormBitacora.Value.Info.ActualizacionPermisosUsuario", "PermisoBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -149,10 +150,29 @@ namespace BLL
 
             List<PermisoNodo> permisos = ObtenerPermisosDirectosUsuario(usuario.Id);
             PropertyInfo propiedad = typeof(Usuario).GetProperty("Permisos");
-            if (propiedad != null)
+            if (propiedad == null)
             {
-                propiedad.SetValue(usuario, _permisoService.NodosComoPermisos(permisos));
+                return;
             }
+
+            Type tipoPermiso = propiedad.PropertyType.GetGenericArguments().FirstOrDefault();
+            if (tipoPermiso == null)
+            {
+                return;
+            }
+
+            IList listaTipada = Activator.CreateInstance(typeof(List<>).MakeGenericType(tipoPermiso)) as IList;
+            if (listaTipada == null)
+            {
+                return;
+            }
+
+            foreach (PermisoNodo permiso in permisos)
+            {
+                listaTipada.Add(permiso);
+            }
+
+            propiedad.SetValue(usuario, listaTipada);
         }
     }
 }
