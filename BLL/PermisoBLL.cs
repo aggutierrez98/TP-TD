@@ -50,7 +50,7 @@ namespace BLL
                 nodo.Nombre = nodo.Nombre.Trim();
             }
 
-            _permisoService.ValidarNombresUnicos(nodos);
+            _permisoService.ValidarNombresUnicos(raices);
             _permisoService.ValidarGruposNoVacios(nodos);
 
             List<PermisoNodo> existentes = _permisoDAL.ObtenerNodos();
@@ -128,18 +128,16 @@ namespace BLL
             }
         }
 
-        public object ObtenerPermisosDirectosUsuario(int usuarioId)
+        public List<PermisoNodo> ObtenerPermisosDirectosUsuario(int usuarioId)
         {
             List<int> permisosId = ObtenerPermisoIdsDeUsuario(usuarioId);
             List<PermisoNodo> catalogo = ObtenerCatalogo();
             Dictionary<int, PermisoNodo> indice = _permisoService.Aplanar(catalogo).ToDictionary(item => item.Id);
 
-            List<PermisoNodo> permisos = permisosId
+            return permisosId
                 .Where(indice.ContainsKey)
                 .Select(id => indice[id])
                 .ToList();
-
-            return _permisoService.CrearColeccionPermisos(permisos);
         }
 
         public void CargarPermisosEnUsuario(Usuario usuario)
@@ -149,11 +147,11 @@ namespace BLL
                 return;
             }
 
-            object permisos = ObtenerPermisosDirectosUsuario(usuario.Id);
+            List<PermisoNodo> permisos = ObtenerPermisosDirectosUsuario(usuario.Id);
             PropertyInfo propiedad = typeof(Usuario).GetProperty("Permisos");
             if (propiedad != null)
             {
-                propiedad.SetValue(usuario, permisos);
+                propiedad.SetValue(usuario, _permisoService.NodosComoPermisos(permisos));
             }
         }
     }

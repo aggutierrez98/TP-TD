@@ -27,10 +27,11 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        public void ActualizarPermisosUsuarioActual(object permisos)
+        public void ActualizarPermisosUsuarioActual(IList<PermisoNodo> permisos)
         {
-            IList<IPermiso> permisosConvertidos = permisos as IList<IPermiso>;
-            _permisosUsuarioActual = permisosConvertidos ?? new List<IPermiso>();
+            _permisosUsuarioActual = permisos == null
+                ? new List<IPermiso>()
+                : permisos.Cast<IPermiso>().ToList();
         }
 
         public void Limpiar()
@@ -38,18 +39,19 @@ namespace SERVICIOS
             _permisosUsuarioActual = new List<IPermiso>();
         }
 
-        public bool TienePermiso(string nombrePermiso)
+        public bool TienePermiso(string rutaPermiso)
         {
-            if (string.IsNullOrWhiteSpace(nombrePermiso) || _permisosUsuarioActual == null || _permisosUsuarioActual.Count == 0)
+            if (string.IsNullOrWhiteSpace(rutaPermiso) || _permisosUsuarioActual == null || _permisosUsuarioActual.Count == 0)
             {
                 return false;
             }
 
             return _permisoService.ObtenerPermisosReconocidos(_permisosUsuarioActual)
-                .Any(item => string.Equals(item.Nombre, nombrePermiso, System.StringComparison.OrdinalIgnoreCase));
+                .OfType<PermisoNodo>()
+                .Any(item => string.Equals(item.Ruta, rutaPermiso, System.StringComparison.OrdinalIgnoreCase));
         }
 
-        public object ObtenerPermisosEfectivos()
+        public IList<IPermiso> ObtenerPermisosEfectivos()
         {
             if (_permisosUsuarioActual == null || _permisosUsuarioActual.Count == 0)
             {

@@ -47,6 +47,8 @@ namespace TpIDS
 
         public FormHistorialUsuario(int usuarioId, string username)
         {
+
+
             _usuarioBLL = new UsuarioBLL();
             _observadorIdioma = Actualizar;
             _usuarioId = usuarioId;

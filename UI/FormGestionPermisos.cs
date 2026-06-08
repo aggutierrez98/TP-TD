@@ -148,6 +148,12 @@ namespace TpIDS
                 return;
             }
 
+            if (nuevoNombre.Contains("."))
+            {
+                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.NameContainsDot");
+                return;
+            }
+
             permiso.Nombre = nuevoNombre;
             RefrescarArbol();
         }
@@ -224,6 +230,11 @@ namespace TpIDS
             if (string.IsNullOrWhiteSpace(nombre))
             {
                 throw new ExcepcionNegocio("FormGestionPermisos.Warning.NodeNameRequired");
+            }
+
+            if (nombre.Contains("."))
+            {
+                throw new ExcepcionNegocio("FormGestionPermisos.Warning.NameContainsDot");
             }
 
             bool esGrupo = cmbTipoPermiso.SelectedIndex == 0;

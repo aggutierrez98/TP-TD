@@ -16,7 +16,6 @@ namespace TpIDS
                 { "Dialog.Title.Confirmation", "Confirmacion" },
 
                 { "Error.Tecnico.Unexpected", "Ocurrio un error tecnico inesperado." },
-                { "Error.Tecnico.SchemaInitializationFailed", "No se pudo inicializar el esquema de base de datos." },
 
                 { "Error.Usuario.EmptyCredentials", "El usuario y la contrasena no pueden estar vacios." },
                 { "Error.Usuario.UsernameExists", "El nombre de usuario ya existe. Por favor elegi otro." },
@@ -53,7 +52,8 @@ namespace TpIDS
                 { "Error.Permiso.UserNotFound", "No se encontro el usuario seleccionado." },
                 { "Error.Permiso.SaveUserPermissionsFailed", "No se pudieron guardar los permisos del usuario." },
                 { "Error.Permiso.NameRequired", "El nombre del permiso no puede estar vacio." },
-                { "Error.Permiso.DuplicateNames", "No puede haber permisos o grupos con el mismo nombre." },
+                { "Error.Permiso.NameContainsDot", "El nombre del permiso no puede contener puntos ('.')." },
+                { "Error.Permiso.DuplicateNames", "No puede haber permisos o grupos con el mismo nombre dentro del mismo grupo." },
                 { "Error.Permiso.EmptyGroupsNotAllowed", "No se pueden guardar grupos vacios." },
                 { "Error.Permiso.CycleDetected", "No se pueden generar ciclos en el arbol de permisos." },
 
@@ -84,6 +84,7 @@ namespace TpIDS
                 { "FormGestionPermisos.Warning.OnlyGroupsCanContainChildren", "Solo se pueden agregar hijos dentro de un grupo." },
                 { "FormGestionPermisos.Warning.SelectPermission", "Debe seleccionar un permiso o grupo." },
                 { "FormGestionPermisos.Warning.NameRequired", "Debe indicar un nombre." },
+                { "FormGestionPermisos.Warning.NameContainsDot", "El nombre no puede contener puntos ('.')." },
                 { "FormGestionPermisos.Warning.NodeNameRequired", "Debe indicar un nombre para el permiso o grupo." },
                 { "FormGestionPermisos.Confirm.DeleteNodeMessage", "Se eliminara el nodo seleccionado y todos sus hijos. Tambien se eliminaran sus asignaciones a usuarios al guardar. Desea continuar?" },
                 { "FormGestionPermisos.Confirm.DeleteNodeTitle", "Confirmar eliminacion" },

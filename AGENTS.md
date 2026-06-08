@@ -28,5 +28,5 @@ Todo el conocimiento de contexto se ubica dentro del subdirectorio `.agents/`. L
 - Toda modificacion de referencias entre proyectos o movimiento de clases entre capas debe respetar estrictamente la matriz `UI -> BLL, BE, SERVICIOS`, `BLL -> DAL, BE, SERVICIOS`, `DAL -> BE, SERVICIOS`, `BE -> ABSTRACCIONES`, `SERVICIOS -> ABSTRACCIONES`, `ABSTRACCIONES -> sin dependencias`.
 - Todo cambio sobre la solucion debe cerrar con compilacion exitosa de `TpIDS.sln`, incluyendo la validacion automatica de arquitectura.
 - Todo agregado o renombre de controles visuales WinForms debe respetar la nomenclatura documentada en las skills del repositorio.
-- Todo cambio sobre textos traducibles, tags `Form...`, encabezados de grillas o nuevas keys de idioma en la UI debe ejecutar la skill `translation-base-seed-sync` y dejar actualizado `script_bd.sql` en el mismo cambio.
+- Todo cambio sobre textos traducibles, tags `Form...`, encabezados de grillas o nuevas keys de idioma en la UI debe ejecutar la skill `translation-base-seed-sync` y dejar actualizado `translation-seeds/base.es.json` en el mismo cambio. `script_bd.sql` solo debe cambiar cuando cambie el bloque generador o la ruta resuelta al archivo externo.
 - Todo diagrama UML nuevo o modificado debe realizarse en PlantUML y guardarse como codigo fuente dentro del repo antes de reflejarse en la documentacion final.
