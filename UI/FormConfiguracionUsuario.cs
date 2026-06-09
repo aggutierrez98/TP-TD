@@ -27,14 +27,14 @@ namespace TpIDS
             int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
             if (!usuarioId.HasValue)
             {
-                UiDialogHelper.MostrarError("FormConfiguracionUsuario.Error.NoActiveSession");
+                UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
                 Close();
                 return;
             }
 
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormConfiguracionUsuario.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormUserSettings.Warning.SelectLanguage");
                 return;
             }
 
@@ -43,7 +43,7 @@ namespace TpIDS
                 bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
                 if (guardado)
                 {
-                    UiDialogHelper.MostrarInfo("FormConfiguracionUsuario.Success.SettingsSaved");
+                    UiDialogHelper.MostrarInfo("FormUserSettings.Success.SettingsSaved");
                 }
             }
             catch (Exception ex)
@@ -60,7 +60,7 @@ namespace TpIDS
 
         private void CargarUsuarioActual()
         {
-            string prefijo = ObtenerTextoActual("FormConfiguracionUsuario.CurrentUserPrefix");
+            string prefijo = ObtenerTextoActual("FormUserSettings.CurrentUserPrefix");
             string username = Sesion.GetInstance().GetUsuarioActualNombre();
             lblUsuarioActual.Text = string.Format("{0} {1}", prefijo, string.IsNullOrWhiteSpace(username) ? "-" : username);
         }

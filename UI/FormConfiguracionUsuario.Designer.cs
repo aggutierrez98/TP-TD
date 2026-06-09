@@ -30,7 +30,7 @@ namespace TpIDS
             this.lblTituloConfiguracion.Location = new System.Drawing.Point(20, 18);
             this.lblTituloConfiguracion.Name = "lblTituloConfiguracion";
             this.lblTituloConfiguracion.Size = new System.Drawing.Size(232, 25);
-            this.lblTituloConfiguracion.Tag = "FormConfiguracionUsuario.TitleLabel";
+            this.lblTituloConfiguracion.Tag = "FormUserSettings.TitleLabel";
             this.lblTituloConfiguracion.TabIndex = 0;
             this.lblTituloConfiguracion.Text = "Configuracion del usuario";
             // 
@@ -49,7 +49,7 @@ namespace TpIDS
             this.lblIdiomaSesion.Location = new System.Drawing.Point(22, 105);
             this.lblIdiomaSesion.Name = "lblIdiomaSesion";
             this.lblIdiomaSesion.Size = new System.Drawing.Size(112, 13);
-            this.lblIdiomaSesion.Tag = "FormConfiguracionUsuario.LanguageLabel";
+            this.lblIdiomaSesion.Tag = "FormUserSettings.LanguageLabel";
             this.lblIdiomaSesion.TabIndex = 2;
             this.lblIdiomaSesion.Text = "Idioma para la sesion:";
             // 
@@ -67,7 +67,7 @@ namespace TpIDS
             this.btnGuardarConfiguracion.Location = new System.Drawing.Point(25, 165);
             this.btnGuardarConfiguracion.Name = "btnGuardarConfiguracion";
             this.btnGuardarConfiguracion.Size = new System.Drawing.Size(290, 35);
-            this.btnGuardarConfiguracion.Tag = "FormConfiguracionUsuario.SaveButton";
+            this.btnGuardarConfiguracion.Tag = "FormUserSettings.SaveButton";
             this.btnGuardarConfiguracion.TabIndex = 4;
             this.btnGuardarConfiguracion.Text = "Guardar";
             this.btnGuardarConfiguracion.UseVisualStyleBackColor = true;
@@ -87,7 +87,7 @@ namespace TpIDS
             this.MaximizeBox = false;
             this.Name = "FormConfiguracionUsuario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Tag = "FormConfiguracionUsuario.Title";
+            this.Tag = "FormUserSettings.Title";
             this.Text = "Configuracion del usuario";
             this.ResumeLayout(false);
             this.PerformLayout();

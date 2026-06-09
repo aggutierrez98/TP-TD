@@ -110,13 +110,13 @@ namespace TpIDS
         {
             if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo padre))
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.SelectParentGroup");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectParentGroup");
                 return;
             }
 
             if (!padre.EsGrupo)
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.OnlyGroupsCanContainChildren");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.OnlyGroupsCanContainChildren");
                 return;
             }
 
@@ -136,20 +136,20 @@ namespace TpIDS
         {
             if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo permiso))
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.SelectPermission");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPermission");
                 return;
             }
 
             string nuevoNombre = txtbNombrePermiso.Text.Trim();
             if (string.IsNullOrWhiteSpace(nuevoNombre))
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.NameRequired");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.NameRequired");
                 return;
             }
 
             if (nuevoNombre.Contains("."))
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.NameContainsDot");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.NameContainsDot");
                 return;
             }
 
@@ -161,13 +161,13 @@ namespace TpIDS
         {
             if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo permiso))
             {
-                UiDialogHelper.MostrarWarning("FormGestionPermisos.Warning.SelectPermission");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPermission");
                 return;
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormGestionPermisos.Confirm.DeleteNodeMessage",
-                "FormGestionPermisos.Confirm.DeleteNodeTitle",
+                "FormPermissionManagement.Confirm.DeleteNodeMessage",
+                "FormPermissionManagement.Confirm.DeleteNodeTitle",
                 MessageBoxIcon.Warning);
 
             if (confirmacion != DialogResult.Yes)
@@ -215,7 +215,7 @@ namespace TpIDS
             {
                 permisoBLL.GuardarCatalogo(catalogoRaiz);
                 CargarCatalogo();
-                UiDialogHelper.MostrarInfo("FormGestionPermisos.Success.CatalogSaved");
+                UiDialogHelper.MostrarInfo("FormPermissionManagement.Success.CatalogSaved");
             }
             catch (Exception ex)
             {
@@ -228,12 +228,12 @@ namespace TpIDS
             string nombre = txtbNombrePermiso.Text.Trim();
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                throw new ExcepcionNegocio("FormGestionPermisos.Warning.NodeNameRequired");
+                throw new ExcepcionNegocio("FormPermissionManagement.Warning.NodeNameRequired");
             }
 
             if (nombre.Contains("."))
             {
-                throw new ExcepcionNegocio("FormGestionPermisos.Warning.NameContainsDot");
+                throw new ExcepcionNegocio("FormPermissionManagement.Warning.NameContainsDot");
             }
 
             AsegurarTiposPermisoCargados();
@@ -251,8 +251,8 @@ namespace TpIDS
 
         private void RecargarTiposPermiso(Idioma idioma)
         {
-            string textoGrupo = idioma == null ? "Grupo" : idioma.ObtenerTraduccion("FormGestionPermisos.TypeGroup");
-            string textoPermiso = idioma == null ? "Permiso" : idioma.ObtenerTraduccion("FormGestionPermisos.TypeLeaf");
+            string textoGrupo = idioma == null ? "Grupo" : idioma.ObtenerTraduccion("FormPermissionManagement.TypeGroup");
+            string textoPermiso = idioma == null ? "Permiso" : idioma.ObtenerTraduccion("FormPermissionManagement.TypeLeaf");
             int indiceActual = cmbTipoPermiso.SelectedIndex < 0 ? 0 : cmbTipoPermiso.SelectedIndex;
 
             cmbTipoPermiso.Items.Clear();

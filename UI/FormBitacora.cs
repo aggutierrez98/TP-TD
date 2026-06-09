@@ -77,7 +77,7 @@ namespace TpIDS
                     : registros.Where(r => UiDialogHelper.TraducirSiExiste(r.Actividad)
                         .IndexOf(filtroActividad, StringComparison.OrdinalIgnoreCase) >= 0);
 
-                GrillaTraduccionHelper.Recargar(dgvBitacora, filtrados, ProyectarBitacoraFila, idioma);
+                GrillaFormHelper.Recargar(dgvBitacora, filtrados, ProyectarBitacoraFila, idioma);
             }
             catch (Exception ex)
             {
@@ -85,9 +85,9 @@ namespace TpIDS
             }
         }
 
-        private BitacoraFila ProyectarBitacoraFila(EventoBitacora evento, Idioma idioma)
+        private BitacoraGridItem ProyectarBitacoraFila(EventoBitacora evento, Idioma idioma)
         {
-            return new BitacoraFila
+            return new BitacoraGridItem
             {
                 Id = evento.Id,
                 FechaHora = evento.FechaHora,
@@ -122,11 +122,11 @@ namespace TpIDS
             switch (codigoNivel)
             {
                 case NivelInformacion:
-                    return idioma == null ? NivelInformacion : idioma.ObtenerTraduccion("FormBitacora.Level.Information");
+                    return idioma == null ? NivelInformacion : idioma.ObtenerTraduccion("FormAuditLog.Level.Information");
                 case NivelAdvertencia:
-                    return idioma == null ? NivelAdvertencia : idioma.ObtenerTraduccion("FormBitacora.Level.Warning");
+                    return idioma == null ? NivelAdvertencia : idioma.ObtenerTraduccion("FormAuditLog.Level.Warning");
                 case NivelError:
-                    return idioma == null ? NivelError : idioma.ObtenerTraduccion("FormBitacora.Level.Error");
+                    return idioma == null ? NivelError : idioma.ObtenerTraduccion("FormAuditLog.Level.Error");
                 default:
                     return codigoNivel;
             }

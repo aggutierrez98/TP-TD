@@ -13,6 +13,7 @@ namespace TpIDS
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
         private int _idSeleccionado = -1;
+        private bool _cargandoGrillaUsuarios;
 
         public FormGestionUsuarios()
         {
@@ -27,15 +28,28 @@ namespace TpIDS
 
         private void CargarGrilla()
         {
+            int idAnterior = _idSeleccionado;
+            _cargandoGrillaUsuarios = true;
+
             try
             {
                 List<Usuario> usuarios = usuarioBLL.ObtenerTodos();
                 Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-                GrillaTraduccionHelper.Recargar(dgvUsuarios, usuarios, ProyectarUsuarioFila, idioma);
+                GrillaFormHelper.Recargar(
+                    dgvUsuarios,
+                    usuarios,
+                    ProyectarUsuarioFila,
+                    idioma,
+                    grilla => ReseleccionarUsuario(grilla, idAnterior));
             }
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Carga de usuarios");
+            }
+            finally
+            {
+                _cargandoGrillaUsuarios = false;
+                AplicarSeleccionActualDesdeGrilla();
             }
         }
 
@@ -51,21 +65,13 @@ namespace TpIDS
 
         private void dgvUsuarios_SelectionChanged(object sender, EventArgs e)
         {
-            if (dgvUsuarios.SelectedRows.Count == 0)
+            // Durante el rebinding la grilla dispara eventos intermedios antes de terminar de reconstruir columnas y filas.
+            if (_cargandoGrillaUsuarios)
             {
-                _idSeleccionado = -1;
-                chkbUsuarioActivo.Checked = true;
-                tvwPermisosUsuario.Nodes.Clear();
                 return;
             }
 
-            DataGridViewRow fila = dgvUsuarios.SelectedRows[0];
-            _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
-            txtbNombreUsuario.Text = fila.Cells["Username"].Value == null ? string.Empty : fila.Cells["Username"].Value.ToString();
-            txtbPasswordUsuario.Clear();
-            object valorActivo = fila.Cells["Activo"].Value;
-            chkbUsuarioActivo.Checked = valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
-            CargarPermisosUsuario();
+            AplicarSeleccionActualDesdeGrilla();
         }
 
         private void btnAgregarUsuario_Click(object sender, EventArgs e)
@@ -76,8 +82,8 @@ namespace TpIDS
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
                 UiDialogHelper.MostrarWarningConTitulo(
-                    "FormGestionUsuarios.Warning.CreateIncompleteData",
-                    "FormGestionUsuarios.Warning.CreateIncompleteDataTitle");
+                    "FormUserManagement.Warning.CreateIncompleteData",
+                    "FormUserManagement.Warning.CreateIncompleteDataTitle");
                 return;
             }
 
@@ -85,7 +91,7 @@ namespace TpIDS
             {
                 if (usuarioBLL.Registrar(username, password))
                 {
-                    UiDialogHelper.MostrarInfo("FormGestionUsuarios.Success.UserCreated");
+                    UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserCreated");
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
@@ -101,8 +107,8 @@ namespace TpIDS
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
-                    "FormGestionUsuarios.Warning.NoUserSelectedEdit",
-                    "FormGestionUsuarios.Warning.NoUserSelectedTitle");
+                    "FormUserManagement.Warning.NoUserSelectedEdit",
+                    "FormUserManagement.Warning.NoUserSelectedTitle");
                 return;
             }
 
@@ -111,8 +117,8 @@ namespace TpIDS
             if (string.IsNullOrWhiteSpace(nuevoUsername))
             {
                 UiDialogHelper.MostrarWarningConTitulo(
-                    "FormGestionUsuarios.Warning.UsernameRequired",
-                    "FormGestionUsuarios.Warning.UsernameRequiredTitle");
+                    "FormUserManagement.Warning.UsernameRequired",
+                    "FormUserManagement.Warning.UsernameRequiredTitle");
                 return;
             }
 
@@ -124,8 +130,8 @@ namespace TpIDS
                 if (usuarioEstabaActivo && !usuarioActivo)
                 {
                     DialogResult confirmacionDesactivacion = UiDialogHelper.Confirmar(
-                        "FormGestionUsuarios.Confirm.DeactivateUserMessage",
-                        "FormGestionUsuarios.Confirm.DeactivateUserTitle",
+                        "FormUserManagement.Confirm.DeactivateUserMessage",
+                        "FormUserManagement.Confirm.DeactivateUserTitle",
                         MessageBoxIcon.Warning);
 
                     if (confirmacionDesactivacion != DialogResult.Yes)
@@ -138,10 +144,10 @@ namespace TpIDS
                 {
                     ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
                     string successKey = !usuarioEstabaActivo && usuarioActivo
-                        ? "FormGestionUsuarios.Success.UserActivated"
+                        ? "FormUserManagement.Success.UserActivated"
                         : usuarioEstabaActivo && !usuarioActivo
-                            ? "FormGestionUsuarios.Success.UserDeactivated"
-                            : "FormGestionUsuarios.Success.UserUpdated";
+                            ? "FormUserManagement.Success.UserDeactivated"
+                            : "FormUserManagement.Success.UserUpdated";
                     UiDialogHelper.MostrarInfo(successKey);
                     LimpiarSeleccion();
                     CargarGrilla();
@@ -158,14 +164,14 @@ namespace TpIDS
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
-                    "FormGestionUsuarios.Warning.NoUserSelectedDelete",
-                    "FormGestionUsuarios.Warning.NoUserSelectedTitle");
+                    "FormUserManagement.Warning.NoUserSelectedDelete",
+                    "FormUserManagement.Warning.NoUserSelectedTitle");
                 return;
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormGestionUsuarios.Confirm.PhysicalDeleteMessage",
-                "FormGestionUsuarios.Confirm.PhysicalDeleteTitle",
+                "FormUserManagement.Confirm.PhysicalDeleteMessage",
+                "FormUserManagement.Confirm.PhysicalDeleteTitle",
                 MessageBoxIcon.Warning);
 
             if (confirmacion != DialogResult.Yes)
@@ -177,7 +183,7 @@ namespace TpIDS
             {
                 if (usuarioBLL.Eliminar(_idSeleccionado))
                 {
-                    UiDialogHelper.MostrarInfo("FormGestionUsuarios.Success.UserDeleted");
+                    UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserDeleted");
                     LimpiarSeleccion();
                     CargarGrilla();
                 }
@@ -245,7 +251,7 @@ namespace TpIDS
         {
             if (_idSeleccionado == -1)
             {
-                UiDialogHelper.MostrarWarning("FormGestionUsuarios.Warning.SelectUserPermissions");
+                UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserPermissions");
                 return;
             }
 
@@ -256,7 +262,7 @@ namespace TpIDS
                     .ToList();
 
                 permisoBLL.GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados);
-                UiDialogHelper.MostrarInfo("FormGestionUsuarios.Success.UserPermissionsSaved");
+                UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserPermissionsSaved");
             }
             catch (Exception ex)
             {
@@ -291,6 +297,59 @@ namespace TpIDS
             };
         }
 
+        private void AplicarSeleccionActualDesdeGrilla()
+        {
+            if (dgvUsuarios.SelectedRows.Count == 0 ||
+                !dgvUsuarios.Columns.Contains("Id") ||
+                !dgvUsuarios.Columns.Contains("Username") ||
+                !dgvUsuarios.Columns.Contains("Activo"))
+            {
+                _idSeleccionado = -1;
+                txtbNombreUsuario.Clear();
+                txtbPasswordUsuario.Clear();
+                chkbUsuarioActivo.Checked = true;
+                tvwPermisosUsuario.Nodes.Clear();
+                return;
+            }
+
+            DataGridViewRow fila = dgvUsuarios.SelectedRows[0];
+            _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
+            txtbNombreUsuario.Text = fila.Cells["Username"].Value == null ? string.Empty : fila.Cells["Username"].Value.ToString();
+            txtbPasswordUsuario.Clear();
+            object valorActivo = fila.Cells["Activo"].Value;
+            chkbUsuarioActivo.Checked = valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
+            CargarPermisosUsuario();
+        }
+
+        private void ReseleccionarUsuario(DataGridView grilla, int usuarioId)
+        {
+            if (grilla == null || usuarioId <= 0)
+            {
+                return;
+            }
+
+            DataGridViewRow fila = grilla.Rows
+                .Cast<DataGridViewRow>()
+                .FirstOrDefault(item =>
+                {
+                    UsuarioGridItem usuario = item.DataBoundItem as UsuarioGridItem;
+                    return usuario != null && usuario.Id == usuarioId;
+                });
+
+            if (fila == null)
+            {
+                return;
+            }
+
+            grilla.ClearSelection();
+            fila.Selected = true;
+
+            if (fila.Cells.Count > 0)
+            {
+                grilla.CurrentCell = fila.Cells[0];
+            }
+        }
+
         protected override void OnIdiomaActualizado(Idioma idioma)
         {
             base.OnIdiomaActualizado(idioma);
@@ -299,7 +358,7 @@ namespace TpIDS
 
         private void ActualizarSesionActualLabel(string username)
         {
-            string prefijo = ObtenerTextoActual("FormGestionUsuarios.SessionLabelPrefix");
+            string prefijo = ObtenerTextoActual("FormUserManagement.SessionLabelPrefix");
             string nombreUsuario = string.IsNullOrWhiteSpace(username) ? "-" : username;
             lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
         }
@@ -334,7 +393,7 @@ namespace TpIDS
         {
             if (_idSeleccionado == -1)
             {
-                UiDialogHelper.MostrarWarning("FormGestionUsuarios.Warning.SelectUserHistory");
+                UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserHistory");
                 return;
             }
 
@@ -354,14 +413,6 @@ namespace TpIDS
             {
                 formBitacora.ShowDialog(this);
             }
-        }
-        private sealed class UsuarioGridItem
-        {
-            public int Id { get; set; }
-
-            public string Username { get; set; }
-
-            public bool Activo { get; set; }
         }
     }
 }

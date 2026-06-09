@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using BE;
 using DAL;
 using SERVICIOS;
@@ -38,8 +37,8 @@ namespace BLL
         {
             if (raices == null || raices.Count == 0)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("FormBitacora.Value.Activity.ActualizacionCatalogoPermisosRechazada", "FormBitacora.Value.Info.CatalogoPermisosVacio", "PermisoBLL");
-                throw new ExcepcionNegocio("Error.Permiso.CatalogEmpty");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.RejectedPermissionCatalogUpdate", "FormAuditLog.Value.Info.EmptyPermissionCatalog", "PermisoBLL");
+                throw new ExcepcionNegocio("Error.Permission.CatalogEmpty");
             }
 
             _permisoService.ValidarSinCiclos(raices);
@@ -79,7 +78,7 @@ namespace BLL
                 .ToList();
 
             _permisoDAL.EliminarPermisos(idsEliminados);
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionCatalogoPermisos", "FormBitacora.Value.Info.ActualizacionCatalogoPermisos", "PermisoBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.PermissionCatalogUpdate", "FormAuditLog.Value.Info.PermissionCatalogUpdate", "PermisoBLL");
         }
 
         public List<int> ObtenerPermisoIdsDeUsuario(int usuarioId)
@@ -98,7 +97,7 @@ namespace BLL
                     Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
                     if (usuario == null)
                     {
-                        throw new ExcepcionNegocio("Error.Permiso.UserNotFound");
+                        throw new ExcepcionNegocio("Error.Permission.UserNotFound");
                     }
 
                     _usuarioPermisoDAL.ReemplazarPermisosUsuario(
@@ -106,8 +105,8 @@ namespace BLL
                         permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
                         accesoDatos);
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormHistorialUsuario.Value.Action.ActualizacionPermisos", "FormHistorialUsuario.Value.Obs.ActualizacionPermisos", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionPermisosUsuario", "FormBitacora.Value.Info.ActualizacionPermisosUsuario", "PermisoBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserPermissionsUpdate", "FormAuditLog.Value.Info.UserPermissionsUpdate", "PermisoBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -118,7 +117,7 @@ namespace BLL
                 catch (Exception ex)
                 {
                     accesoDatos.RollbackTransactionScope();
-                    throw new ExcepcionTecnica("Error.Permiso.SaveUserPermissionsFailed", ex);
+                    throw new ExcepcionTecnica("Error.Permission.SaveUserPermissionsFailed", ex);
                 }
             }
 
@@ -148,31 +147,18 @@ namespace BLL
                 return;
             }
 
-            List<PermisoNodo> permisos = ObtenerPermisosDirectosUsuario(usuario.Id);
-            PropertyInfo propiedad = typeof(Usuario).GetProperty("Permisos");
-            if (propiedad == null)
+            IList permisos = usuario.PermisosNoTipados;
+            if (permisos == null)
             {
                 return;
             }
 
-            Type tipoPermiso = propiedad.PropertyType.GetGenericArguments().FirstOrDefault();
-            if (tipoPermiso == null)
-            {
-                return;
-            }
+            permisos.Clear();
 
-            IList listaTipada = Activator.CreateInstance(typeof(List<>).MakeGenericType(tipoPermiso)) as IList;
-            if (listaTipada == null)
+            foreach (PermisoNodo permiso in ObtenerPermisosDirectosUsuario(usuario.Id))
             {
-                return;
+                permisos.Add(permiso);
             }
-
-            foreach (PermisoNodo permiso in permisos)
-            {
-                listaTipada.Add(permiso);
-            }
-
-            propiedad.SetValue(usuario, listaTipada);
         }
     }
 }

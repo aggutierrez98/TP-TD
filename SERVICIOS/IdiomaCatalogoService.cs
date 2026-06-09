@@ -9,7 +9,7 @@ namespace SERVICIOS
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                throw new ExcepcionNegocio("Error.Idioma.NameRequired");
+                throw new ExcepcionNegocio("Error.Language.NameRequired");
             }
 
             return nombre.Trim();
@@ -23,7 +23,7 @@ namespace SERVICIOS
 
             if (existe)
             {
-                throw new ExcepcionNegocio("Error.Idioma.NameAlreadyExists");
+                throw new ExcepcionNegocio("Error.Language.NameAlreadyExists");
             }
         }
 
@@ -46,12 +46,12 @@ namespace SERVICIOS
         {
             if (idioma == null)
             {
-                throw new ExcepcionNegocio("Error.Idioma.NotFound");
+                throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
             if (!EstaCompleto(idioma))
             {
-                throw new ExcepcionNegocio("Error.Idioma.IncompleteSelection");
+                throw new ExcepcionNegocio("Error.Language.IncompleteSelection");
             }
         }
     }

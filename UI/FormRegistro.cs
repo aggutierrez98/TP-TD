@@ -18,7 +18,7 @@ namespace TpIDS
         {
             if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
             {
-                UiDialogHelper.MostrarWarning("FormRegistro.Warning.CompleteFields");
+                UiDialogHelper.MostrarWarning("FormRegistration.Warning.CompleteFields");
                 return;
             }
 
@@ -29,8 +29,8 @@ namespace TpIDS
                 if (success)
                 {
                     UiDialogHelper.MostrarInfoConTitulo(
-                        "FormRegistro.Success.UserRegisteredMessage",
-                        "FormRegistro.Success.UserRegisteredTitle");
+                        "FormRegistration.Success.UserRegisteredMessage",
+                        "FormRegistration.Success.UserRegisteredTitle");
                     Close();
                 }
             }

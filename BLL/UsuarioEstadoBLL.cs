@@ -78,17 +78,17 @@ namespace BLL
                 return diferencias;
             }
 
-            AgregarDiferencia(diferencias, "FormHistorialUsuario.Value.Field.Username", versionAnterior == null ? null : versionAnterior.Username, versionActual.Username);
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Username", versionAnterior == null ? null : versionAnterior.Username, versionActual.Username);
             AgregarCambioProtegidoPassword(diferencias, versionActual, versionAnterior);
-            AgregarDiferencia(diferencias, "FormHistorialUsuario.Value.Field.Activo", versionAnterior == null ? null : FormatearBool(versionAnterior.Activo), FormatearBool(versionActual.Activo));
-            AgregarDiferencia(diferencias, "FormHistorialUsuario.Value.Field.IdiomaId", versionAnterior == null ? null : FormatearNullable(versionAnterior.IdiomaId), FormatearNullable(versionActual.IdiomaId));
-            AgregarDiferencia(diferencias, "FormHistorialUsuario.Value.Field.Permisos", versionAnterior == null ? null : FormatearPermisos(versionAnterior.PermisosIds), FormatearPermisos(versionActual.PermisosIds));
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Active", versionAnterior == null ? null : FormatearBool(versionAnterior.Activo), FormatearBool(versionActual.Activo));
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.LanguageId", versionAnterior == null ? null : FormatearNullable(versionAnterior.IdiomaId), FormatearNullable(versionActual.IdiomaId));
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Permissions", versionAnterior == null ? null : FormatearPermisos(versionAnterior.PermisosIds), FormatearPermisos(versionActual.PermisosIds));
 
             if (diferencias.Count == 0)
             {
                 diferencias.Add(new ResultadoComparacionEstado
                 {
-                    Campo = "FormHistorialUsuario.Value.Field.SinCambios",
+                    Campo = "FormUserHistory.Value.Field.NoChanges",
                     ValorAnterior = versionAnterior == null ? "-" : versionAnterior.Accion,
                     ValorNuevo = versionActual.Accion
                 });
@@ -141,9 +141,9 @@ namespace BLL
 
             diferencias.Add(new ResultadoComparacionEstado
             {
-                Campo = "FormHistorialUsuario.Value.Field.PasswordHash",
-                ValorAnterior = string.IsNullOrWhiteSpace(hashAnterior) ? "-" : "FormHistorialUsuario.Value.Marker.Configurada",
-                ValorNuevo = string.IsNullOrWhiteSpace(hashActual) ? "-" : "FormHistorialUsuario.Value.Marker.Actualizada"
+                Campo = "FormUserHistory.Value.Field.PasswordHash",
+                ValorAnterior = string.IsNullOrWhiteSpace(hashAnterior) ? "-" : "FormUserHistory.Value.Marker.Configured",
+                ValorNuevo = string.IsNullOrWhiteSpace(hashActual) ? "-" : "FormUserHistory.Value.Marker.Updated"
             });
         }
 
@@ -155,8 +155,8 @@ namespace BLL
         private string FormatearBool(bool valor)
         {
             return valor
-                ? "FormHistorialUsuario.Value.Marker.True"
-                : "FormHistorialUsuario.Value.Marker.False";
+                ? "FormUserHistory.Value.Marker.True"
+                : "FormUserHistory.Value.Marker.False";
         }
 
         private string FormatearPermisos(IList<int> permisosIds)

@@ -29,14 +29,14 @@ namespace TpIDS
         {
             if (dgvHistorialUsuario.SelectedRows.Count == 0)
             {
-                UiDialogHelper.MostrarWarning("FormHistorialUsuario.Warning.SelectVersion");
+                UiDialogHelper.MostrarWarning("FormUserHistory.Warning.SelectVersion");
                 return;
             }
 
             int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormHistorialUsuario.Confirm.RestoreVersionMessage",
-                "FormHistorialUsuario.Confirm.RestoreVersionTitle",
+                "FormUserHistory.Confirm.RestoreVersionMessage",
+                "FormUserHistory.Confirm.RestoreVersionTitle",
                 MessageBoxIcon.Question);
 
             if (confirmacion != DialogResult.Yes)
@@ -47,7 +47,7 @@ namespace TpIDS
             try
             {
                 _usuarioBLL.RestaurarVersion(historialId);
-                UiDialogHelper.MostrarInfo("FormHistorialUsuario.Success.VersionRestored");
+                UiDialogHelper.MostrarInfo("FormUserHistory.Success.VersionRestored");
                 CargarHistorial();
             }
             catch (Exception ex)
@@ -69,10 +69,10 @@ namespace TpIDS
             {
                 Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
                 List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
-                GrillaTraduccionHelper.Recargar(
+                GrillaFormHelper.Recargar(
                     dgvCambiosEstado,
                     diferencias,
-                    ProyectarCambioEstadoFila,
+                    ProyectarCambioEstadoGridItem,
                     idioma);
             }
             catch (Exception ex)
@@ -87,7 +87,7 @@ namespace TpIDS
             {
                 List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
                 Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-                GrillaTraduccionHelper.Recargar(
+                GrillaFormHelper.Recargar(
                     dgvHistorialUsuario,
                     historial,
                     ProyectarHistorialFila,
@@ -99,9 +99,9 @@ namespace TpIDS
             }
         }
 
-        private HistorialUsuarioFila ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
+        private HistorialUsuarioGridItem ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
         {
-            return new HistorialUsuarioFila
+            return new HistorialUsuarioGridItem
             {
                 HistorialId = snap.HistorialId,
                 UsuarioId = snap.UsuarioId,
@@ -116,9 +116,9 @@ namespace TpIDS
             };
         }
 
-        private CambioEstadoFila ProyectarCambioEstadoFila(ResultadoComparacionEstado diff, Idioma idioma)
+        private CambioEstadoGridItem ProyectarCambioEstadoGridItem(ResultadoComparacionEstado diff, Idioma idioma)
         {
-            return new CambioEstadoFila
+            return new CambioEstadoGridItem
             {
                 Campo = UiDialogHelper.TraducirSiExiste(diff.Campo),
                 ValorAnterior = TraducirValor(diff.ValorAnterior),
@@ -145,7 +145,7 @@ namespace TpIDS
 
         private void ActualizarUsuarioLabel()
         {
-            const string key = "FormHistorialUsuario.UserPrefix";
+            const string key = "FormUserHistory.UserPrefix";
             string prefijo = UiDialogHelper.TraducirSiExiste(key);
             if (string.Equals(prefijo, key, StringComparison.Ordinal))
             {

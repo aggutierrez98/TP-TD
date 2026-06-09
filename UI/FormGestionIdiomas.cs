@@ -31,7 +31,7 @@ namespace TpIDS
                 int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
                 CargarIdiomas(idiomaId);
                 RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
-                UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageCreated");
+                UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageCreated");
             }
             catch (Exception ex)
             {
@@ -43,7 +43,7 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
@@ -54,7 +54,7 @@ namespace TpIDS
                 {
                     CargarIdiomas(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageUpdated");
+                    UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageUpdated");
                 }
             }
             catch (Exception ex)
@@ -67,13 +67,13 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormGestionIdiomas.Confirm.DeleteLanguageMessage",
-                "FormGestionIdiomas.Confirm.DeleteLanguageTitle",
+                "FormLanguageManagement.Confirm.DeleteLanguageMessage",
+                "FormLanguageManagement.Confirm.DeleteLanguageTitle",
                 MessageBoxIcon.Warning,
                 idioma.Nombre);
 
@@ -89,7 +89,7 @@ namespace TpIDS
                 {
                     CargarIdiomas(null);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.LanguageDeleted");
+                    UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageDeleted");
                 }
             }
             catch (Exception ex)
@@ -102,7 +102,7 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
@@ -121,7 +121,7 @@ namespace TpIDS
                     idiomaBLL.ImportarJson(idioma.Id, openFileDialog.FileName);
                     RecargarIdiomaSeleccionado(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                    UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.TranslationsImported");
+                    UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationsImported");
                 }
                 catch (Exception ex)
                 {
@@ -134,13 +134,13 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormGestionIdiomas.ExportConfirmMessage",
-                "FormGestionIdiomas.ExportConfirmTitle",
+                "FormLanguageManagement.ExportConfirmMessage",
+                "FormLanguageManagement.ExportConfirmTitle",
                 MessageBoxIcon.Warning,
                 idioma.Nombre);
 
@@ -152,7 +152,7 @@ namespace TpIDS
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
                 saveFileDialog.Filter = "Archivos JSON (*.json)|*.json";
-                saveFileDialog.Title = UiDialogHelper.Traducir("FormGestionIdiomas.ExportDialogTitle");
+                saveFileDialog.Title = UiDialogHelper.Traducir("FormLanguageManagement.ExportDialogTitle");
                 saveFileDialog.FileName = GenerarNombreArchivoIdioma(idioma.Nombre);
                 saveFileDialog.DefaultExt = "json";
                 saveFileDialog.AddExtension = true;
@@ -167,7 +167,7 @@ namespace TpIDS
                 {
                     idiomaBLL.ExportarJson(idioma.Id, saveFileDialog.FileName);
                     UiDialogHelper.MostrarInfo(
-                        "FormGestionIdiomas.ExportSuccessMessage",
+                        "FormLanguageManagement.ExportSuccessMessage",
                         new object[] { Path.GetFileName(saveFileDialog.FileName) });
                 }
                 catch (Exception ex)
@@ -181,7 +181,7 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
@@ -191,7 +191,7 @@ namespace TpIDS
                 idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
                 RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
                 RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
-                UiDialogHelper.MostrarInfo("FormGestionIdiomas.Success.TranslationSaved");
+                UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationSaved");
             }
             catch (Exception ex)
             {
@@ -203,21 +203,21 @@ namespace TpIDS
         {
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
                 return;
             }
 
             if (!(dgvTraducciones.CurrentRow?.DataBoundItem is TraduccionGridItem item))
             {
-                UiDialogHelper.MostrarWarning("FormGestionIdiomas.Warning.SelectTranslation");
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectTranslation");
                 return;
             }
 
             if (item.EsKeyBase)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
-                    "FormGestionIdiomas.Warning.DeleteBaseTranslation",
-                    "FormGestionIdiomas.Warning.DeleteBaseTranslationTitle");
+                    "FormLanguageManagement.Warning.DeleteBaseTranslation",
+                    "FormLanguageManagement.Warning.DeleteBaseTranslationTitle");
                 return;
             }
 
@@ -296,19 +296,11 @@ namespace TpIDS
             txtbNombreIdioma.Text = idioma.Nombre;
             chkbIdiomaDefault.Checked = idioma.Default;
 
-            dgvTraducciones.DataSource = idioma.Traducciones
-                .OfType<Traduccion>()
-                .OrderBy(item => item.Palabra.Key)
-                .Select(item => new TraduccionGridItem
-                {
-                    PalabraId = item.PalabraId,
-                    Key = item.Palabra.Key,
-                    Valor = item.Valor,
-                    EsKeyBase = item.Palabra.EsBase
-                })
-                .ToList();
-
-            IdiomaFormHelper.AplicarDataGridView(dgvTraducciones, IdiomaService.GetInstance().IdiomaActual);
+            GrillaFormHelper.Recargar(
+                dgvTraducciones,
+                idioma.Traducciones.OfType<Traduccion>().OrderBy(item => item.Palabra.Key),
+                ProyectarTraduccionFila,
+                IdiomaService.GetInstance().IdiomaActual);
             SeleccionarTraduccion(keySeleccionada);
         }
 
@@ -414,15 +406,15 @@ namespace TpIDS
             return string.Format("traducciones-{0}.json", nombreBase);
         }
 
-        private class TraduccionGridItem
+        private TraduccionGridItem ProyectarTraduccionFila(Traduccion traduccion, Idioma idioma)
         {
-            public int PalabraId { get; set; }
-
-            public string Key { get; set; }
-
-            public string Valor { get; set; }
-
-            public bool EsKeyBase { get; set; }
+            return new TraduccionGridItem
+            {
+                PalabraId = traduccion.PalabraId,
+                Key = traduccion.Palabra.Key,
+                Valor = traduccion.Valor,
+                EsKeyBase = traduccion.Palabra.EsBase
+            };
         }
     }
 }

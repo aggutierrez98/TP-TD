@@ -64,7 +64,7 @@ namespace BLL
             Idioma idioma = ObtenerIdiomaParaUsuario(usuarioId);
             if (idioma == null)
             {
-                throw new ExcepcionNegocio("Error.Idioma.DefaultNotFound");
+                throw new ExcepcionNegocio("Error.Language.DefaultNotFound");
             }
 
             IdiomaService.GetInstance().CambiarIdioma(idioma);
@@ -84,11 +84,11 @@ namespace BLL
                     bool guardado = _usuarioPreferenciaDAL.Guardar(usuarioId, idiomaId, accesoDatos);
                     if (!guardado)
                     {
-                        throw new ExcepcionTecnica("Error.Idioma.PreferenceSaveFailed");
+                        throw new ExcepcionTecnica("Error.Language.PreferenceSaveFailed");
                     }
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormHistorialUsuario.Value.Action.ActualizacionIdiomaPreferido", "FormHistorialUsuario.Value.Obs.ActualizacionIdioma", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionPreferenciaIdioma", "FormBitacora.Value.Info.ActualizacionPreferenciaIdioma", "IdiomaBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PreferredLanguageUpdate", "FormUserHistory.Value.Obs.LanguagePreferenceUpdate", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguagePreferenceUpdate", "FormAuditLog.Value.Info.LanguagePreferenceUpdate", "IdiomaBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -99,7 +99,7 @@ namespace BLL
                 catch (Exception ex)
                 {
                     accesoDatos.RollbackTransactionScope();
-                    throw new ExcepcionTecnica("Error.Idioma.UserPreferenceSaveFailed", ex);
+                    throw new ExcepcionTecnica("Error.Language.UserPreferenceSaveFailed", ex);
                 }
             }
 
@@ -124,7 +124,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.AltaIdioma", "FormBitacora.Value.Info.AltaIdioma", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguageCreation", "FormAuditLog.Value.Info.LanguageCreation", "IdiomaBLL");
             return idiomaId;
         }
 
@@ -153,12 +153,12 @@ namespace BLL
                 Idioma idiomaActual = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
                 if (idiomaActual != null && idiomaActual.Default)
                 {
-                    throw new ExcepcionNegocio("Error.Idioma.ExactlyOneDefaultRequired");
+                    throw new ExcepcionNegocio("Error.Language.ExactlyOneDefaultRequired");
                 }
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.EdicionIdioma", "FormBitacora.Value.Info.EdicionIdioma", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguageUpdate", "FormAuditLog.Value.Info.LanguageUpdate", "IdiomaBLL");
             return true;
         }
 
@@ -173,7 +173,7 @@ namespace BLL
 
             if (idiomas.Count <= 1)
             {
-                throw new ExcepcionNegocio("Error.Idioma.CannotDeleteLastLanguage");
+                throw new ExcepcionNegocio("Error.Language.CannotDeleteLastLanguage");
             }
 
             bool eliminado = _idiomaDAL.EliminarIdioma(idiomaId);
@@ -196,7 +196,7 @@ namespace BLL
             }
 
             AsegurarUnicoIdiomaDefault();
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.BajaIdioma", "FormBitacora.Value.Info.BajaIdioma", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguageDeletion", "FormAuditLog.Value.Info.LanguageDeletion", "IdiomaBLL");
             return true;
         }
 
@@ -204,17 +204,17 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new ExcepcionNegocio("Error.Idioma.KeyRequired");
+                throw new ExcepcionNegocio("Error.Language.KeyRequired");
             }
 
             if (string.IsNullOrWhiteSpace(valor))
             {
-                throw new ExcepcionNegocio("Error.Idioma.TranslationRequired");
+                throw new ExcepcionNegocio("Error.Language.TranslationRequired");
             }
 
             int palabraId = _idiomaDAL.ObtenerOCrearPalabra(key.Trim(), false);
             _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ActualizacionTraduccion", "FormBitacora.Value.Info.ActualizacionTraduccion", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationUpdate", "FormAuditLog.Value.Info.TranslationUpdate", "IdiomaBLL");
         }
 
         public bool EliminarTraduccion(int idiomaId, int palabraId)
@@ -222,7 +222,7 @@ namespace BLL
             Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
             if (idioma == null)
             {
-                throw new ExcepcionNegocio("Error.Idioma.NotFound");
+                throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
             Traduccion traduccion = idioma.Traducciones
@@ -236,13 +236,13 @@ namespace BLL
 
             if (traduccion.Palabra.EsBase)
             {
-                throw new ExcepcionNegocio("Error.Idioma.CannotDeleteBaseTranslation");
+                throw new ExcepcionNegocio("Error.Language.CannotDeleteBaseTranslation");
             }
 
             bool eliminado = _idiomaDAL.EliminarTraduccion(idiomaId, palabraId);
             if (eliminado)
             {
-                BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.BajaTraduccion", "FormBitacora.Value.Info.BajaTraduccion", "IdiomaBLL");
+                BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationDeletion", "FormAuditLog.Value.Info.TranslationDeletion", "IdiomaBLL");
             }
 
             return eliminado;
@@ -252,7 +252,7 @@ namespace BLL
         {
             if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
             {
-                throw new ExcepcionNegocio("Error.Idioma.JsonFileNotFound");
+                throw new ExcepcionNegocio("Error.Language.JsonFileNotFound");
             }
 
             string contenido = File.ReadAllText(rutaArchivo);
@@ -265,12 +265,12 @@ namespace BLL
             }
             catch (InvalidOperationException ex)
             {
-                throw new ExcepcionTecnica("Error.Idioma.JsonInvalidFormat", ex);
+                throw new ExcepcionTecnica("Error.Language.JsonInvalidFormat", ex);
             }
 
             if (traducciones == null || traducciones.Count == 0)
             {
-                throw new ExcepcionNegocio("Error.Idioma.JsonEmpty");
+                throw new ExcepcionNegocio("Error.Language.JsonEmpty");
             }
 
             foreach (KeyValuePair<string, string> item in traducciones)
@@ -278,20 +278,20 @@ namespace BLL
                 GuardarTraduccion(idiomaId, item.Key, item.Value);
             }
 
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ImportacionTraducciones", "FormBitacora.Value.Info.ImportacionTraducciones", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsImport", "FormAuditLog.Value.Info.TranslationsImport", "IdiomaBLL");
         }
 
         public void ExportarJson(int idiomaId, string rutaArchivo)
         {
             if (string.IsNullOrWhiteSpace(rutaArchivo))
             {
-                throw new ExcepcionNegocio("Error.Idioma.ExportPathRequired");
+                throw new ExcepcionNegocio("Error.Language.ExportPathRequired");
             }
 
             Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
             if (idioma == null)
             {
-                throw new ExcepcionNegocio("Error.Idioma.NotFound");
+                throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
             Dictionary<string, string> traducciones = idioma.Traducciones
@@ -306,7 +306,7 @@ namespace BLL
             string contenido = serializer.Serialize(traducciones);
             File.WriteAllText(rutaArchivo, contenido, new UTF8Encoding(false));
 
-            BitacoraService.GetInstance().RegistrarOperacion("FormBitacora.Value.Activity.ExportacionTraducciones", "FormBitacora.Value.Info.ExportacionTraducciones", "IdiomaBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsExport", "FormAuditLog.Value.Info.TranslationsExport", "IdiomaBLL");
         }
 
         public bool EstaCompleto(int idiomaId)

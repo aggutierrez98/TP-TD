@@ -19,9 +19,6 @@ namespace TpIDS
             this.lblTituloGestionUsuarios = new System.Windows.Forms.Label();
             this.lblSesionActual = new System.Windows.Forms.Label();
             this.dgvUsuarios = new System.Windows.Forms.DataGridView();
-            this.colUsuarioId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colUsuarioUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colUsuarioActivo = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.groupBoxGestion = new System.Windows.Forms.GroupBox();
             this.lblPasswordUsuario = new System.Windows.Forms.Label();
             this.txtbPasswordUsuario = new System.Windows.Forms.TextBox();
@@ -52,7 +49,7 @@ namespace TpIDS
             this.lblTituloGestionUsuarios.Name = "lblTituloGestionUsuarios";
             this.lblTituloGestionUsuarios.Size = new System.Drawing.Size(189, 25);
             this.lblTituloGestionUsuarios.TabIndex = 0;
-            this.lblTituloGestionUsuarios.Tag = "FormGestionUsuarios.TitleLabel";
+            this.lblTituloGestionUsuarios.Tag = "FormUserManagement.TitleLabel";
             this.lblTituloGestionUsuarios.Text = "Gestion de Usuarios";
             // 
             // lblSesionActual
@@ -75,10 +72,6 @@ namespace TpIDS
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvUsuarios.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvUsuarios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvUsuarios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colUsuarioId,
-            this.colUsuarioUsername,
-            this.colUsuarioActivo});
             this.dgvUsuarios.Location = new System.Drawing.Point(15, 70);
             this.dgvUsuarios.MultiSelect = false;
             this.dgvUsuarios.Name = "dgvUsuarios";
@@ -87,36 +80,8 @@ namespace TpIDS
             this.dgvUsuarios.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvUsuarios.Size = new System.Drawing.Size(530, 230);
             this.dgvUsuarios.TabIndex = 2;
-            this.dgvUsuarios.Tag = "FormGestionUsuarios.Grid";
+            this.dgvUsuarios.Tag = "FormUserManagement.Grid";
             this.dgvUsuarios.SelectionChanged += new System.EventHandler(this.dgvUsuarios_SelectionChanged);
-            // 
-            // colUsuarioId
-            // 
-            this.colUsuarioId.DataPropertyName = "Id";
-            this.colUsuarioId.FillWeight = 50F;
-            this.colUsuarioId.HeaderText = "FormGestionUsuarios.Grid.Id";
-            this.colUsuarioId.Name = "Id";
-            this.colUsuarioId.ReadOnly = true;
-            this.colUsuarioId.Tag = "FormGestionUsuarios.Grid.Id";
-            this.colUsuarioId.Width = 50;
-            // 
-            // colUsuarioUsername
-            // 
-            this.colUsuarioUsername.DataPropertyName = "Username";
-            this.colUsuarioUsername.HeaderText = "FormGestionUsuarios.Grid.Username";
-            this.colUsuarioUsername.Name = "Username";
-            this.colUsuarioUsername.ReadOnly = true;
-            this.colUsuarioUsername.Tag = "FormGestionUsuarios.Grid.Username";
-            // 
-            // colUsuarioActivo
-            // 
-            this.colUsuarioActivo.DataPropertyName = "Activo";
-            this.colUsuarioActivo.FillWeight = 65F;
-            this.colUsuarioActivo.HeaderText = "FormGestionUsuarios.Grid.Active";
-            this.colUsuarioActivo.Name = "Activo";
-            this.colUsuarioActivo.ReadOnly = true;
-            this.colUsuarioActivo.Tag = "FormGestionUsuarios.Grid.Active";
-            this.colUsuarioActivo.Width = 65;
             // 
             // groupBoxGestion
             // 
@@ -135,7 +100,7 @@ namespace TpIDS
             this.groupBoxGestion.Size = new System.Drawing.Size(530, 190);
             this.groupBoxGestion.TabIndex = 3;
             this.groupBoxGestion.TabStop = false;
-            this.groupBoxGestion.Tag = "FormGestionUsuarios.UserDataGroup";
+            this.groupBoxGestion.Tag = "FormUserManagement.UserDataGroup";
             this.groupBoxGestion.Text = "Datos del usuario";
             // 
             // lblPasswordUsuario
@@ -145,14 +110,14 @@ namespace TpIDS
             this.lblPasswordUsuario.Name = "lblPasswordUsuario";
             this.lblPasswordUsuario.Size = new System.Drawing.Size(257, 13);
             this.lblPasswordUsuario.TabIndex = 2;
-            this.lblPasswordUsuario.Tag = "FormGestionUsuarios.PasswordLabel";
+            this.lblPasswordUsuario.Tag = "FormUserManagement.PasswordLabel";
             this.lblPasswordUsuario.Text = "Contrasena (obligatoria al agregar, opcional al editar):";
             // 
             // txtbPasswordUsuario
             // 
             this.txtbPasswordUsuario.Location = new System.Drawing.Point(10, 92);
             this.txtbPasswordUsuario.Name = "txtbPasswordUsuario";
-            this.txtbPasswordUsuario.PasswordChar = '●';
+            this.txtbPasswordUsuario.PasswordChar = '*';
             this.txtbPasswordUsuario.Size = new System.Drawing.Size(514, 20);
             this.txtbPasswordUsuario.TabIndex = 3;
             // 
@@ -163,7 +128,7 @@ namespace TpIDS
             this.chkbUsuarioActivo.Name = "chkbUsuarioActivo";
             this.chkbUsuarioActivo.Size = new System.Drawing.Size(94, 17);
             this.chkbUsuarioActivo.TabIndex = 4;
-            this.chkbUsuarioActivo.Tag = "FormGestionUsuarios.ActiveCheckbox";
+            this.chkbUsuarioActivo.Tag = "FormUserManagement.ActiveCheckbox";
             this.chkbUsuarioActivo.Text = "Usuario activo";
             this.chkbUsuarioActivo.UseVisualStyleBackColor = true;
             // 
@@ -174,7 +139,7 @@ namespace TpIDS
             this.lblNombreUsuario.Name = "lblNombreUsuario";
             this.lblNombreUsuario.Size = new System.Drawing.Size(99, 13);
             this.lblNombreUsuario.TabIndex = 0;
-            this.lblNombreUsuario.Tag = "FormGestionUsuarios.UsernameLabel";
+            this.lblNombreUsuario.Tag = "FormUserManagement.UsernameLabel";
             this.lblNombreUsuario.Text = "Nombre de usuario:";
             // 
             // txtbNombreUsuario
@@ -190,7 +155,7 @@ namespace TpIDS
             this.btnAgregarUsuario.Name = "btnAgregarUsuario";
             this.btnAgregarUsuario.Size = new System.Drawing.Size(135, 30);
             this.btnAgregarUsuario.TabIndex = 5;
-            this.btnAgregarUsuario.Tag = "FormGestionUsuarios.AddButton";
+            this.btnAgregarUsuario.Tag = "FormUserManagement.AddButton";
             this.btnAgregarUsuario.Text = "Agregar usuario";
             this.btnAgregarUsuario.UseVisualStyleBackColor = true;
             this.btnAgregarUsuario.Click += new System.EventHandler(this.btnAgregarUsuario_Click);
@@ -201,7 +166,7 @@ namespace TpIDS
             this.btnEditarUsuario.Name = "btnEditarUsuario";
             this.btnEditarUsuario.Size = new System.Drawing.Size(135, 30);
             this.btnEditarUsuario.TabIndex = 6;
-            this.btnEditarUsuario.Tag = "FormGestionUsuarios.EditButton";
+            this.btnEditarUsuario.Tag = "FormUserManagement.EditButton";
             this.btnEditarUsuario.Text = "Editar usuario";
             this.btnEditarUsuario.UseVisualStyleBackColor = true;
             this.btnEditarUsuario.Click += new System.EventHandler(this.btnEditarUsuario_Click);
@@ -212,7 +177,7 @@ namespace TpIDS
             this.btnEliminarUsuario.Name = "btnEliminarUsuario";
             this.btnEliminarUsuario.Size = new System.Drawing.Size(135, 30);
             this.btnEliminarUsuario.TabIndex = 7;
-            this.btnEliminarUsuario.Tag = "FormGestionUsuarios.DeleteButton";
+            this.btnEliminarUsuario.Tag = "FormUserManagement.DeleteButton";
             this.btnEliminarUsuario.Text = "Eliminar usuario";
             this.btnEliminarUsuario.UseVisualStyleBackColor = true;
             this.btnEliminarUsuario.Click += new System.EventHandler(this.btnEliminarUsuario_Click);
@@ -223,7 +188,7 @@ namespace TpIDS
             this.btnConfiguracion.Name = "btnConfiguracion";
             this.btnConfiguracion.Size = new System.Drawing.Size(170, 30);
             this.btnConfiguracion.TabIndex = 4;
-            this.btnConfiguracion.Tag = "FormGestionUsuarios.ConfigurationButton";
+            this.btnConfiguracion.Tag = "FormUserManagement.ConfigurationButton";
             this.btnConfiguracion.Text = "Configuracion";
             this.btnConfiguracion.UseVisualStyleBackColor = true;
             this.btnConfiguracion.Click += new System.EventHandler(this.btnConfiguracion_Click);
@@ -234,7 +199,7 @@ namespace TpIDS
             this.btnGestionIdiomas.Name = "btnGestionIdiomas";
             this.btnGestionIdiomas.Size = new System.Drawing.Size(170, 30);
             this.btnGestionIdiomas.TabIndex = 5;
-            this.btnGestionIdiomas.Tag = "FormGestionUsuarios.LanguageManagementButton";
+            this.btnGestionIdiomas.Tag = "FormUserManagement.LanguageManagementButton";
             this.btnGestionIdiomas.Text = "Gestion de idiomas";
             this.btnGestionIdiomas.UseVisualStyleBackColor = true;
             this.btnGestionIdiomas.Click += new System.EventHandler(this.btnGestionIdiomas_Click);
@@ -248,7 +213,7 @@ namespace TpIDS
             this.groupBoxPermisosUsuario.Size = new System.Drawing.Size(465, 460);
             this.groupBoxPermisosUsuario.TabIndex = 6;
             this.groupBoxPermisosUsuario.TabStop = false;
-            this.groupBoxPermisosUsuario.Tag = "FormGestionUsuarios.PermissionTreeGroup";
+            this.groupBoxPermisosUsuario.Tag = "FormUserManagement.PermissionTreeGroup";
             this.groupBoxPermisosUsuario.Text = "Permisos y grupos asignados";
             // 
             // tvwPermisosUsuario
@@ -266,7 +231,7 @@ namespace TpIDS
             this.btnGuardarPermisosUsuario.Name = "btnGuardarPermisosUsuario";
             this.btnGuardarPermisosUsuario.Size = new System.Drawing.Size(445, 30);
             this.btnGuardarPermisosUsuario.TabIndex = 1;
-            this.btnGuardarPermisosUsuario.Tag = "FormGestionUsuarios.SavePermissionsButton";
+            this.btnGuardarPermisosUsuario.Tag = "FormUserManagement.SavePermissionsButton";
             this.btnGuardarPermisosUsuario.Text = "Guardar permisos del usuario";
             this.btnGuardarPermisosUsuario.UseVisualStyleBackColor = true;
             this.btnGuardarPermisosUsuario.Click += new System.EventHandler(this.btnGuardarPermisosUsuario_Click);
@@ -277,7 +242,7 @@ namespace TpIDS
             this.btnGestionPermisos.Name = "btnGestionPermisos";
             this.btnGestionPermisos.Size = new System.Drawing.Size(170, 30);
             this.btnGestionPermisos.TabIndex = 7;
-            this.btnGestionPermisos.Tag = "FormGestionUsuarios.PermissionManagementButton";
+            this.btnGestionPermisos.Tag = "FormUserManagement.PermissionManagementButton";
             this.btnGestionPermisos.Text = "Gestion de permisos";
             this.btnGestionPermisos.UseVisualStyleBackColor = true;
             this.btnGestionPermisos.Click += new System.EventHandler(this.btnGestionPermisos_Click);
@@ -288,7 +253,7 @@ namespace TpIDS
             this.btnHistorialUsuario.Name = "btnHistorialUsuario";
             this.btnHistorialUsuario.Size = new System.Drawing.Size(170, 30);
             this.btnHistorialUsuario.TabIndex = 8;
-            this.btnHistorialUsuario.Tag = "FormGestionUsuarios.HistoryButton";
+            this.btnHistorialUsuario.Tag = "FormUserManagement.HistoryButton";
             this.btnHistorialUsuario.Text = "Historial de usuario";
             this.btnHistorialUsuario.UseVisualStyleBackColor = true;
             this.btnHistorialUsuario.Click += new System.EventHandler(this.btnHistorialUsuario_Click);
@@ -299,7 +264,7 @@ namespace TpIDS
             this.btnBitacora.Name = "btnBitacora";
             this.btnBitacora.Size = new System.Drawing.Size(170, 30);
             this.btnBitacora.TabIndex = 9;
-            this.btnBitacora.Tag = "FormGestionUsuarios.BitacoraButton";
+            this.btnBitacora.Tag = "FormUserManagement.AuditLogButton";
             this.btnBitacora.Text = "Bitacora";
             this.btnBitacora.UseVisualStyleBackColor = true;
             this.btnBitacora.Click += new System.EventHandler(this.btnBitacora_Click);
@@ -323,7 +288,7 @@ namespace TpIDS
             this.MaximizeBox = false;
             this.Name = "FormGestionUsuarios";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Tag = "FormGestionUsuarios.Title";
+            this.Tag = "FormUserManagement.Title";
             this.Text = "Gestion de Usuarios";
             this.Load += new System.EventHandler(this.FormGestionUsuarios_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).EndInit();
@@ -338,9 +303,6 @@ namespace TpIDS
         private System.Windows.Forms.Label lblTituloGestionUsuarios;
         private System.Windows.Forms.Label lblSesionActual;
         private System.Windows.Forms.DataGridView dgvUsuarios;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colUsuarioId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colUsuarioUsername;
-        private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuarioActivo;
         private System.Windows.Forms.GroupBox groupBoxGestion;
         private System.Windows.Forms.Label lblPasswordUsuario;
         private System.Windows.Forms.TextBox txtbPasswordUsuario;

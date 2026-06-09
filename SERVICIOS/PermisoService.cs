@@ -55,12 +55,12 @@ namespace SERVICIOS
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                throw new ExcepcionNegocio("Error.Permiso.NameRequired");
+                throw new ExcepcionNegocio("Error.Permission.NameRequired");
             }
 
             if (nombre.Contains("."))
             {
-                throw new ExcepcionNegocio("Error.Permiso.NameContainsDot");
+                throw new ExcepcionNegocio("Error.Permission.NameContainsDot");
             }
         }
 
@@ -73,7 +73,7 @@ namespace SERVICIOS
         {
             if (nodos.Any(item => item.EsGrupo && item.Hijos.Count == 0))
             {
-                throw new ExcepcionNegocio("Error.Permiso.EmptyGroupsNotAllowed");
+                throw new ExcepcionNegocio("Error.Permission.EmptyGroupsNotAllowed");
             }
         }
 
@@ -128,7 +128,7 @@ namespace SERVICIOS
 
             if (duplicados.Count > 0)
             {
-                throw new ExcepcionNegocio("Error.Permiso.DuplicateNames");
+                throw new ExcepcionNegocio("Error.Permission.DuplicateNames");
             }
 
             foreach (PermisoNodo nodo in lista.Where(item => item.EsGrupo))
@@ -142,7 +142,7 @@ namespace SERVICIOS
             string clave = nodo.ObtenerClave();
             if (visitados.Contains(clave))
             {
-                throw new ExcepcionNegocio("Error.Permiso.CycleDetected");
+                throw new ExcepcionNegocio("Error.Permission.CycleDetected");
             }
 
             HashSet<string> ramaActual = new HashSet<string>(visitados) { clave };
