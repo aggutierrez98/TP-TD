@@ -18,8 +18,8 @@ PermisoBLL -> AccesoDatos : BeginTransactionScope()
 PermisoBLL -> UsuarioDAL : ObtenerPorId(usuarioId, accesoDatos)
 UsuarioDAL --> PermisoBLL : usuario
 PermisoBLL -> UsuarioPermisoDAL : ReemplazarPermisosUsuario(usuarioId, permisosId, accesoDatos)
-PermisoBLL -> UsuarioEstadoBLL : GuardarVersionActual(usuarioId, "ActualizacionPermisos", "Actualizacion de permisos del usuario.", accesoDatos)
-PermisoBLL -> BitacoraService : RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos)
+PermisoBLL -> UsuarioEstadoBLL : GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", accesoDatos)
+PermisoBLL -> BitacoraService : RegistrarOperacion("FormAuditLog.Value.Activity.UserPermissionsUpdate", "FormAuditLog.Value.Info.UserPermissionsUpdate", "PermisoBLL", accesoDatos)
 PermisoBLL -> AccesoDatos : CommitTransactionScope()
 PermisoBLL -> Sesion : GetUsuarioActualId()
 

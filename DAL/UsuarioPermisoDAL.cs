@@ -10,10 +10,10 @@ namespace DAL
         public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-SELECT PermisoId
-FROM UsuarioPermiso
-WHERE UsuarioId = @UsuarioId
-ORDER BY PermisoId";
+                SELECT PermisoId
+                FROM UsuarioPermiso
+                WHERE UsuarioId = @UsuarioId
+                ORDER BY PermisoId";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();

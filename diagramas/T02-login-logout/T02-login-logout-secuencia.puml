@@ -25,7 +25,7 @@ UsuarioBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(usuario.Id)
 PermisoBLL --> UsuarioBLL : permisosDirectos
 UsuarioBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
 UsuarioBLL -> IdiomaBLL : AplicarIdiomaSesionUsuario(usuario.Id)
-UsuarioBLL -> BitacoraService : RegistrarOperacion("Login exitoso", "Ingreso del usuario " + usuario.Username + ".", "UsuarioBLL", null)
+UsuarioBLL -> BitacoraService : RegistrarOperacion("FormAuditLog.Value.Activity.SuccessfulLogin", "FormAuditLog.Value.Info.SuccessfulLogin", "UsuarioBLL", null)
 UsuarioBLL --> FormLogin : usuario
 FormLogin -> FormGestionUsuarios : Show()
 

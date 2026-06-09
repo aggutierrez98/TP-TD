@@ -46,7 +46,7 @@ package "SERVICIOS" {
   }
 
   class PermisoSimple
-  class GrupoPermiso
+  class PermisoGrupo
 
   class PermisoRelacion {
     +GrupoId : int
@@ -63,7 +63,6 @@ package "SERVICIOS" {
     +ValidarSinCiclos(raices : IEnumerable<PermisoNodo>) : void
     +Aplanar(raices : IEnumerable<PermisoNodo>) : IList<PermisoNodo>
     +ObtenerRelaciones(raices : IEnumerable<PermisoNodo>) : IList<PermisoRelacion>
-    +NodosComoPermisos(nodos : IList<PermisoNodo>) : object
   }
 
   class AutorizacionService <<singleton>> {
@@ -138,7 +137,7 @@ package "UI" {
 
 IPermiso <|.. PermisoNodo
 PermisoNodo <|-- PermisoSimple
-PermisoNodo <|-- GrupoPermiso
+PermisoNodo <|-- PermisoGrupo
 Usuario --> IPermiso : Permisos
 
 PermisoBLL --> PermisoDAL

@@ -38,21 +38,21 @@ namespace DAL
         public Idioma ObtenerIdiomaCompleto(int idiomaId)
         {
             const string query = @"
-SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
-FROM Idioma i
-INNER JOIN Palabra p ON p.EsBase = 1
-LEFT JOIN Traduccion t ON t.IdiomaId = i.Id AND t.PalabraId = p.Id
-WHERE i.Id = @IdiomaId
+                SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
+                FROM Idioma i
+                INNER JOIN Palabra p ON p.EsBase = 1
+                LEFT JOIN Traduccion t ON t.IdiomaId = i.Id AND t.PalabraId = p.Id
+                WHERE i.Id = @IdiomaId
 
-UNION ALL
+                UNION ALL
 
-SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
-FROM Idioma i
-INNER JOIN Traduccion t ON t.IdiomaId = i.Id
-INNER JOIN Palabra p ON p.Id = t.PalabraId
-WHERE i.Id = @IdiomaId
-  AND p.EsBase = 0
-ORDER BY [Key]";
+                SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
+                FROM Idioma i
+                INNER JOIN Traduccion t ON t.IdiomaId = i.Id
+                INNER JOIN Palabra p ON p.Id = t.PalabraId
+                WHERE i.Id = @IdiomaId
+                  AND p.EsBase = 0
+                ORDER BY [Key]";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -133,9 +133,9 @@ ORDER BY [Key]";
         public int InsertarIdioma(Idioma idioma)
         {
             const string query = @"
-INSERT INTO Idioma (Nombre, [Default])
-OUTPUT INSERTED.Id
-VALUES (@Nombre, @Default)";
+                INSERT INTO Idioma (Nombre, [Default])
+                OUTPUT INSERTED.Id
+                VALUES (@Nombre, @Default)";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -168,9 +168,9 @@ VALUES (@Nombre, @Default)";
         public bool EliminarIdioma(int idiomaId)
         {
             const string query = @"
-DELETE FROM UsuarioPreferencias WHERE IdiomaId = @IdiomaId;
-DELETE FROM Traduccion WHERE IdiomaId = @IdiomaId;
-DELETE FROM Idioma WHERE Id = @IdiomaId;";
+                DELETE FROM UsuarioPreferencias WHERE IdiomaId = @IdiomaId;
+                DELETE FROM Traduccion WHERE IdiomaId = @IdiomaId;
+                DELETE FROM Idioma WHERE Id = @IdiomaId;";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -186,25 +186,25 @@ DELETE FROM Idioma WHERE Id = @IdiomaId;";
         public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
         {
             const string query = @"
-UPDATE UsuarioPreferencias
-SET IdiomaId = @IdiomaDestinoId
-WHERE IdiomaId = @IdiomaOrigenId;
+                UPDATE UsuarioPreferencias
+                SET IdiomaId = @IdiomaDestinoId
+                WHERE IdiomaId = @IdiomaOrigenId;
 
-INSERT INTO Traduccion (IdiomaId, PalabraId, Valor)
-SELECT @IdiomaDestinoId, t.PalabraId, t.Valor
-FROM Traduccion t
-WHERE t.IdiomaId = @IdiomaOrigenId
-  AND NOT EXISTS (
-      SELECT 1
-      FROM Traduccion td
-      WHERE td.IdiomaId = @IdiomaDestinoId
-        AND td.PalabraId = t.PalabraId);
+                INSERT INTO Traduccion (IdiomaId, PalabraId, Valor)
+                SELECT @IdiomaDestinoId, t.PalabraId, t.Valor
+                FROM Traduccion t
+                WHERE t.IdiomaId = @IdiomaOrigenId
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM Traduccion td
+                      WHERE td.IdiomaId = @IdiomaDestinoId
+                        AND td.PalabraId = t.PalabraId);
 
-DELETE FROM Traduccion
-WHERE IdiomaId = @IdiomaOrigenId;
+                DELETE FROM Traduccion
+                WHERE IdiomaId = @IdiomaOrigenId;
 
-DELETE FROM Idioma
-WHERE Id = @IdiomaOrigenId;";
+                DELETE FROM Idioma
+                WHERE Id = @IdiomaOrigenId;";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -221,28 +221,28 @@ WHERE Id = @IdiomaOrigenId;";
         public int ObtenerOCrearPalabra(string key, bool esBase)
         {
             const string query = @"
-DECLARE @PalabraId INT;
+                DECLARE @PalabraId INT;
 
-SELECT @PalabraId = Id
-FROM Palabra
-WHERE [Key] = @Key;
+                SELECT @PalabraId = Id
+                FROM Palabra
+                WHERE [Key] = @Key;
 
-IF @PalabraId IS NULL
-BEGIN
-    INSERT INTO Palabra ([Key], EsBase)
-    VALUES (@Key, @EsBase);
+                IF @PalabraId IS NULL
+                BEGIN
+                    INSERT INTO Palabra ([Key], EsBase)
+                    VALUES (@Key, @EsBase);
 
-    SET @PalabraId = SCOPE_IDENTITY();
-END
-ELSE IF @EsBase = 1
-BEGIN
-    UPDATE Palabra
-    SET EsBase = 1
-    WHERE Id = @PalabraId
-      AND EsBase = 0;
-END
+                    SET @PalabraId = SCOPE_IDENTITY();
+                END
+                ELSE IF @EsBase = 1
+                BEGIN
+                    UPDATE Palabra
+                    SET EsBase = 1
+                    WHERE Id = @PalabraId
+                      AND EsBase = 0;
+                END
 
-SELECT @PalabraId;";
+                SELECT @PalabraId;";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -259,22 +259,22 @@ SELECT @PalabraId;";
         public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
         {
             const string query = @"
-IF EXISTS (
-    SELECT 1
-    FROM Traduccion
-    WHERE IdiomaId = @IdiomaId
-      AND PalabraId = @PalabraId)
-BEGIN
-    UPDATE Traduccion
-    SET Valor = @Valor
-    WHERE IdiomaId = @IdiomaId
-      AND PalabraId = @PalabraId;
-END
-ELSE
-BEGIN
-    INSERT INTO Traduccion (IdiomaId, PalabraId, Valor)
-    VALUES (@IdiomaId, @PalabraId, @Valor);
-END";
+                IF EXISTS (
+                    SELECT 1
+                    FROM Traduccion
+                    WHERE IdiomaId = @IdiomaId
+                      AND PalabraId = @PalabraId)
+                BEGIN
+                    UPDATE Traduccion
+                    SET Valor = @Valor
+                    WHERE IdiomaId = @IdiomaId
+                      AND PalabraId = @PalabraId;
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO Traduccion (IdiomaId, PalabraId, Valor)
+                    VALUES (@IdiomaId, @PalabraId, @Valor);
+                END";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -292,9 +292,9 @@ END";
         public bool EliminarTraduccion(int idiomaId, int palabraId)
         {
             const string query = @"
-DELETE FROM Traduccion
-WHERE IdiomaId = @IdiomaId
-  AND PalabraId = @PalabraId";
+                DELETE FROM Traduccion
+                WHERE IdiomaId = @IdiomaId
+                  AND PalabraId = @PalabraId";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -311,8 +311,8 @@ WHERE IdiomaId = @IdiomaId
         public bool EstablecerIdiomaDefault(int idiomaId)
         {
             const string query = @"
-UPDATE Idioma
-SET [Default] = CASE WHEN Id = @IdiomaId THEN 1 ELSE 0 END;";
+                UPDATE Idioma
+                SET [Default] = CASE WHEN Id = @IdiomaId THEN 1 ELSE 0 END;";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {

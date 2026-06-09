@@ -98,11 +98,11 @@ namespace DAL
         public List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId)
         {
             const string query = @"
-SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
-       Username, PasswordHash, Activo, IdiomaId
-FROM UsuarioHistorial
-WHERE UsuarioId = @UsuarioId
-ORDER BY FechaHora DESC, HistorialId DESC";
+                SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
+                       Username, PasswordHash, Activo, IdiomaId
+                FROM UsuarioHistorial
+                WHERE UsuarioId = @UsuarioId
+                ORDER BY FechaHora DESC, HistorialId DESC";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -121,10 +121,10 @@ ORDER BY FechaHora DESC, HistorialId DESC";
         public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
         {
             const string query = @"
-SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
-       Username, PasswordHash, Activo, IdiomaId
-FROM UsuarioHistorial
-WHERE HistorialId = @HistorialId";
+                SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
+                       Username, PasswordHash, Activo, IdiomaId
+                FROM UsuarioHistorial
+                WHERE HistorialId = @HistorialId";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -166,10 +166,10 @@ WHERE HistorialId = @HistorialId";
         private List<int> ObtenerPermisos(int historialId, AccesoDatos accesoDatos)
         {
             const string query = @"
-SELECT PermisoId
-FROM UsuarioHistorialPermiso
-WHERE HistorialId = @HistorialId
-ORDER BY PermisoId";
+                SELECT PermisoId
+                FROM UsuarioHistorialPermiso
+                WHERE HistorialId = @HistorialId
+                ORDER BY PermisoId";
 
             List<SqlParameter> parametros = new List<SqlParameter>
             {
