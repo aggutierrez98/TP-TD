@@ -33,7 +33,7 @@ namespace TpIDS
             this.lblTituloHistorialUsuario.Location = new System.Drawing.Point(15, 15);
             this.lblTituloHistorialUsuario.Name = "lblTituloHistorialUsuario";
             this.lblTituloHistorialUsuario.Size = new System.Drawing.Size(0, 25);
-            this.lblTituloHistorialUsuario.Tag = "FormHistorialUsuario.TitleLabel";
+            this.lblTituloHistorialUsuario.Tag = "FormUserHistory.TitleLabel";
             this.lblTituloHistorialUsuario.TabIndex = 0;
             // 
             // lblUsuarioHistorial
@@ -48,6 +48,7 @@ namespace TpIDS
             // 
             this.dgvHistorialUsuario.AllowUserToAddRows = false;
             this.dgvHistorialUsuario.AllowUserToDeleteRows = false;
+            this.dgvHistorialUsuario.AutoGenerateColumns = false;
             this.dgvHistorialUsuario.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvHistorialUsuario.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvHistorialUsuario.Location = new System.Drawing.Point(20, 75);
@@ -57,6 +58,7 @@ namespace TpIDS
             this.dgvHistorialUsuario.RowHeadersVisible = false;
             this.dgvHistorialUsuario.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvHistorialUsuario.Size = new System.Drawing.Size(760, 240);
+            this.dgvHistorialUsuario.Tag = "FormUserHistory.Grid";
             this.dgvHistorialUsuario.TabIndex = 2;
             this.dgvHistorialUsuario.SelectionChanged += new System.EventHandler(this.dgvHistorialUsuario_SelectionChanged);
             // 
@@ -64,6 +66,7 @@ namespace TpIDS
             // 
             this.dgvCambiosEstado.AllowUserToAddRows = false;
             this.dgvCambiosEstado.AllowUserToDeleteRows = false;
+            this.dgvCambiosEstado.AutoGenerateColumns = false;
             this.dgvCambiosEstado.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvCambiosEstado.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvCambiosEstado.Location = new System.Drawing.Point(20, 330);
@@ -73,6 +76,7 @@ namespace TpIDS
             this.dgvCambiosEstado.RowHeadersVisible = false;
             this.dgvCambiosEstado.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvCambiosEstado.Size = new System.Drawing.Size(760, 180);
+            this.dgvCambiosEstado.Tag = "FormUserHistory.DiffGrid";
             this.dgvCambiosEstado.TabIndex = 3;
             // 
             // btnRestaurarVersion
@@ -80,7 +84,7 @@ namespace TpIDS
             this.btnRestaurarVersion.Location = new System.Drawing.Point(570, 525);
             this.btnRestaurarVersion.Name = "btnRestaurarVersion";
             this.btnRestaurarVersion.Size = new System.Drawing.Size(210, 30);
-            this.btnRestaurarVersion.Tag = "FormHistorialUsuario.RestoreButton";
+            this.btnRestaurarVersion.Tag = "FormUserHistory.RestoreButton";
             this.btnRestaurarVersion.TabIndex = 5;
             this.btnRestaurarVersion.UseVisualStyleBackColor = true;
             this.btnRestaurarVersion.Click += new System.EventHandler(this.btnRestaurarVersion_Click);
@@ -90,7 +94,7 @@ namespace TpIDS
             this.btnRefrescarHistorial.Location = new System.Drawing.Point(20, 525);
             this.btnRefrescarHistorial.Name = "btnRefrescarHistorial";
             this.btnRefrescarHistorial.Size = new System.Drawing.Size(210, 30);
-            this.btnRefrescarHistorial.Tag = "FormHistorialUsuario.RefreshButton";
+            this.btnRefrescarHistorial.Tag = "FormUserHistory.RefreshButton";
             this.btnRefrescarHistorial.TabIndex = 4;
             this.btnRefrescarHistorial.UseVisualStyleBackColor = true;
             this.btnRefrescarHistorial.Click += new System.EventHandler(this.btnRefrescarHistorial_Click);
@@ -110,7 +114,7 @@ namespace TpIDS
             this.MaximizeBox = false;
             this.Name = "FormHistorialUsuario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Tag = "FormHistorialUsuario.Title";
+            this.Tag = "FormUserHistory.Title";
             ((System.ComponentModel.ISupportInitialize)(this.dgvHistorialUsuario)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCambiosEstado)).EndInit();
             this.ResumeLayout(false);

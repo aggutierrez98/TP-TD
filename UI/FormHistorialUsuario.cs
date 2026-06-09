@@ -6,61 +6,18 @@ using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormHistorialUsuario : Form
+    public partial class FormHistorialUsuario : FormTraducibleBase
     {
         private readonly UsuarioBLL _usuarioBLL;
-        private readonly Action<Idioma> _observadorIdioma;
         private readonly int _usuarioId;
         private readonly string _username;
-
-        private static readonly Dictionary<string, string> AccionKeys = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            { "Alta",                         "FormHistorialUsuario.Value.Action.Alta" },
-            { "Edicion",                      "FormHistorialUsuario.Value.Action.Edicion" },
-            { "BajaLogica",                   "FormHistorialUsuario.Value.Action.BajaLogica" },
-            { "Reactivacion",                 "FormHistorialUsuario.Value.Action.Reactivacion" },
-            { "Restauracion",                 "FormHistorialUsuario.Value.Action.Restauracion" },
-            { "ActualizacionIdiomaPreferido", "FormHistorialUsuario.Value.Action.ActualizacionIdiomaPreferido" }
-        };
-
-        private static readonly Dictionary<string, string> ObservacionesKeys = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            { "Alta inicial del usuario.",                              "FormHistorialUsuario.Value.Obs.AltaInicial" },
-            { "Desactivacion del usuario desde gestion.",              "FormHistorialUsuario.Value.Obs.Desactivacion" },
-            { "Reactivacion del usuario desde gestion.",               "FormHistorialUsuario.Value.Obs.Reactivacion" },
-            { "Actualizacion del password del usuario.",               "FormHistorialUsuario.Value.Obs.ActualizacionPassword" },
-            { "Actualizacion del nombre de usuario.",                  "FormHistorialUsuario.Value.Obs.ActualizacionUsername" },
-            { "Actualizacion del usuario.",                            "FormHistorialUsuario.Value.Obs.ActualizacionUsuario" },
-            { "Restauracion desde el historial.",                      "FormHistorialUsuario.Value.Obs.Restauracion" },
-            { "Actualizacion de la preferencia de idioma del usuario.", "FormHistorialUsuario.Value.Obs.ActualizacionIdioma" }
-        };
-
-        private static readonly Dictionary<string, string> CampoKeys = new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            { "Username",    "FormHistorialUsuario.Value.Field.Username" },
-            { "PasswordHash","FormHistorialUsuario.Value.Field.PasswordHash" },
-            { "Activo",      "FormHistorialUsuario.Value.Field.Activo" },
-            { "IdiomaId",    "FormHistorialUsuario.Value.Field.IdiomaId" },
-            { "Permisos",    "FormHistorialUsuario.Value.Field.Permisos" },
-            { "Sin cambios", "FormHistorialUsuario.Value.Field.SinCambios" }
-        };
 
         public FormHistorialUsuario(int usuarioId, string username)
         {
             _usuarioBLL = new UsuarioBLL();
-            _observadorIdioma = Actualizar;
             _usuarioId = usuarioId;
             _username = username;
             InitializeComponent();
-            Load += FormHistorialUsuario_Load;
-            FormClosed += FormHistorialUsuario_FormClosed;
-        }
-
-        private void FormHistorialUsuario_Load(object sender, EventArgs e)
-        {
-            IdiomaService.GetInstance().RegistrarObservador(_observadorIdioma);
-            lblUsuarioHistorial.Text = "Usuario: " + _username;
-            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnRefrescarHistorial_Click(object sender, EventArgs e)
@@ -72,14 +29,14 @@ namespace TpIDS
         {
             if (dgvHistorialUsuario.SelectedRows.Count == 0)
             {
-                UiDialogHelper.MostrarWarning("FormHistorialUsuario.Warning.SelectVersion");
+                UiDialogHelper.MostrarWarning("FormUserHistory.Warning.SelectVersion");
                 return;
             }
 
             int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormHistorialUsuario.Confirm.RestoreVersionMessage",
-                "FormHistorialUsuario.Confirm.RestoreVersionTitle",
+                "FormUserHistory.Confirm.RestoreVersionMessage",
+                "FormUserHistory.Confirm.RestoreVersionTitle",
                 MessageBoxIcon.Question);
 
             if (confirmacion != DialogResult.Yes)
@@ -90,7 +47,7 @@ namespace TpIDS
             try
             {
                 _usuarioBLL.RestaurarVersion(historialId);
-                UiDialogHelper.MostrarInfo("FormHistorialUsuario.Success.VersionRestored");
+                UiDialogHelper.MostrarInfo("FormUserHistory.Success.VersionRestored");
                 CargarHistorial();
             }
             catch (Exception ex)
@@ -112,12 +69,11 @@ namespace TpIDS
             {
                 Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
                 List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
-                GrillaTraduccionHelper.Recargar(
+                GrillaFormHelper.Recargar(
                     dgvCambiosEstado,
                     diferencias,
-                    ProyectarCambioEstadoFila,
-                    idioma,
-                    g => ActualizarEncabezadosCambios(idioma, g));
+                    ProyectarCambioEstadoGridItem,
+                    idioma);
             }
             catch (Exception ex)
             {
@@ -131,12 +87,11 @@ namespace TpIDS
             {
                 List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
                 Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-                GrillaTraduccionHelper.Recargar(
+                GrillaFormHelper.Recargar(
                     dgvHistorialUsuario,
                     historial,
                     ProyectarHistorialFila,
-                    idioma,
-                    g => ActualizarEncabezadosHistorial(idioma, g));
+                    idioma);
             }
             catch (Exception ex)
             {
@@ -144,131 +99,63 @@ namespace TpIDS
             }
         }
 
-        private HistorialUsuarioFila ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
+        private HistorialUsuarioGridItem ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
         {
-            return new HistorialUsuarioFila
+            return new HistorialUsuarioGridItem
             {
                 HistorialId = snap.HistorialId,
                 UsuarioId = snap.UsuarioId,
                 FechaHora = snap.FechaHora,
                 ActorUsuarioId = snap.ActorUsuarioId,
                 ActorUsernameSnapshot = snap.ActorUsernameSnapshot,
-                Accion = TraducirAccion(snap.Accion, idioma),
-                Observaciones = TraducirObservaciones(snap.Observaciones, idioma),
+                Accion = UiDialogHelper.TraducirSiExiste(snap.Accion),
+                Observaciones = UiDialogHelper.TraducirSiExiste(snap.Observaciones),
                 Username = snap.Username,
                 Activo = snap.Activo,
                 IdiomaId = snap.IdiomaId
             };
         }
 
-        private CambioEstadoFila ProyectarCambioEstadoFila(ResultadoComparacionEstado diff, Idioma idioma)
+        private CambioEstadoGridItem ProyectarCambioEstadoGridItem(ResultadoComparacionEstado diff, Idioma idioma)
         {
-            return new CambioEstadoFila
+            return new CambioEstadoGridItem
             {
-                Campo = TraducirCampo(diff.Campo, idioma),
-                ValorAnterior = TraducirValor(diff.Campo, diff.ValorAnterior, idioma),
-                ValorNuevo = TraducirValor(diff.Campo, diff.ValorNuevo, idioma)
+                Campo = UiDialogHelper.TraducirSiExiste(diff.Campo),
+                ValorAnterior = TraducirValor(diff.ValorAnterior),
+                ValorNuevo = TraducirValor(diff.ValorNuevo)
             };
         }
 
-        public void Actualizar(Idioma idioma)
+        protected override void OnIdiomaActualizado(Idioma idioma)
         {
-            IdiomaFormHelper.Aplicar(this, idioma);
+            base.OnIdiomaActualizado(idioma);
+            ActualizarUsuarioLabel();
             CargarHistorial();
-            ActualizarEncabezadosCambios(idioma);
         }
 
-        private void ActualizarEncabezadosHistorial(Idioma idioma, DataGridView grilla = null)
+        private string TraducirValor(string valor)
         {
-            DataGridView g = grilla ?? dgvHistorialUsuario;
-            if (idioma == null || g.Columns.Count == 0)
-            {
-                return;
-            }
-
-            GrillaTraduccionHelper.SetHeader(g, "HistorialId",           "FormHistorialUsuario.Grid.HistorialId", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "UsuarioId",             "FormHistorialUsuario.Grid.UsuarioId", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "FechaHora",             "FormHistorialUsuario.Grid.FechaHora", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "ActorUsuarioId",        "FormHistorialUsuario.Grid.ActorUsuarioId", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "ActorUsernameSnapshot", "FormHistorialUsuario.Grid.ActorUsernameSnapshot", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "Accion",                "FormHistorialUsuario.Grid.Accion", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "Observaciones",         "FormHistorialUsuario.Grid.Observaciones", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "Username",              "FormHistorialUsuario.Grid.Username", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "Activo",                "FormHistorialUsuario.Grid.Activo", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "IdiomaId",              "FormHistorialUsuario.Grid.IdiomaId", idioma);
-        }
-
-        private void ActualizarEncabezadosCambios(Idioma idioma, DataGridView grilla = null)
-        {
-            DataGridView g = grilla ?? dgvCambiosEstado;
-            if (idioma == null || g.Columns.Count == 0)
-            {
-                return;
-            }
-
-            GrillaTraduccionHelper.SetHeader(g, "Campo",        "FormHistorialUsuario.DiffGrid.Campo", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "ValorAnterior","FormHistorialUsuario.DiffGrid.ValorAnterior", idioma);
-            GrillaTraduccionHelper.SetHeader(g, "ValorNuevo",   "FormHistorialUsuario.DiffGrid.ValorNuevo", idioma);
-        }
-
-        private string TraducirAccion(string accion, Idioma idioma)
-        {
-            if (idioma == null || accion == null)
-            {
-                return accion ?? string.Empty;
-            }
-
-            string key;
-            return AccionKeys.TryGetValue(accion, out key) ? idioma.ObtenerTraduccion(key) : accion;
-        }
-
-        private string TraducirObservaciones(string obs, Idioma idioma)
-        {
-            if (idioma == null || obs == null)
-            {
-                return obs ?? string.Empty;
-            }
-
-            string key;
-            return ObservacionesKeys.TryGetValue(obs, out key) ? idioma.ObtenerTraduccion(key) : obs;
-        }
-
-        private string TraducirCampo(string campo, Idioma idioma)
-        {
-            if (idioma == null || campo == null)
-            {
-                return campo ?? string.Empty;
-            }
-
-            string key;
-            return CampoKeys.TryGetValue(campo, out key) ? idioma.ObtenerTraduccion(key) : campo;
-        }
-
-        private string TraducirValor(string campo, string valor, Idioma idioma)
-        {
-            if (idioma == null || valor == null || valor == "-")
+            if (valor == null || valor == "-")
             {
                 return valor ?? string.Empty;
             }
 
-            switch (campo)
-            {
-                case "PasswordHash":
-                    if (valor == "Configurada") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.Configurada");
-                    if (valor == "Actualizada") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.Actualizada");
-                    break;
-                case "Activo":
-                    if (valor == "True")  return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.True");
-                    if (valor == "False") return idioma.ObtenerTraduccion("FormHistorialUsuario.Value.Marker.False");
-                    break;
-            }
-
-            return valor;
+            return UiDialogHelper.TraducirSiExiste(valor);
         }
 
-        private void FormHistorialUsuario_FormClosed(object sender, FormClosedEventArgs e)
+        private void ActualizarUsuarioLabel()
         {
-            IdiomaService.GetInstance().DesregistrarObservador(_observadorIdioma);
+            const string key = "FormUserHistory.UserPrefix";
+            string prefijo = UiDialogHelper.TraducirSiExiste(key);
+            if (string.Equals(prefijo, key, StringComparison.Ordinal))
+            {
+                prefijo = "Usuario:";
+            }
+
+            lblUsuarioHistorial.Text = string.Format(
+                "{0} {1}",
+                prefijo,
+                _username);
         }
     }
 }

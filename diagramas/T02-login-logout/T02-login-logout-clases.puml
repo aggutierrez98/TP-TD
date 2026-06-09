@@ -10,16 +10,15 @@ skinparam classAttributeIconSize 0
 skinparam shadowing false
 
 package "UI" {
-  class FormLogin {
-    +Actualizar(idioma : Idioma) : void
+  class FormTraducibleBase {
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
-  class FormRegistro {
-    +Actualizar(idioma : Idioma) : void
-  }
+  class FormLogin
+  class FormRegistro
 
   class FormGestionUsuarios {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 }
 
@@ -32,7 +31,7 @@ package "BLL" {
 
   class PermisoBLL {
     +CargarPermisosEnUsuario(usuario : Usuario) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : object
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
   }
 
   class IdiomaBLL {
@@ -68,7 +67,7 @@ package "SERVICIOS" {
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : object) : void
+    +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
     +Limpiar() : void
   }
 
@@ -79,6 +78,7 @@ package "SERVICIOS" {
   }
 
   class Idioma
+  class PermisoNodo
   class UsuarioAutenticadoSesion
 }
 
@@ -113,6 +113,9 @@ package "BE" {
   }
 }
 
+FormTraducibleBase <|-- FormLogin
+FormTraducibleBase <|-- FormRegistro
+FormTraducibleBase <|-- FormGestionUsuarios
 FormLogin ..> FormRegistro : <<creates>>
 FormLogin ..> FormGestionUsuarios : <<creates>>
 FormLogin --> UsuarioBLL : gestorUsuario

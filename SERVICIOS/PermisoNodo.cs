@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ABSTRACCIONES;
 
 namespace SERVICIOS
@@ -15,6 +16,8 @@ namespace SERVICIOS
         public int Id { get; set; }
 
         public string Nombre { get; set; }
+
+        public string Ruta { get; set; }
 
         public abstract bool EsGrupo { get; }
 
@@ -64,6 +67,11 @@ namespace SERVICIOS
             Quitar(permiso);
         }
 
+        public void VaciarHijos()
+        {
+            Hijos.Clear();
+        }
+
         public bool Contiene(int id)
         {
             if (Id == id)
@@ -96,6 +104,13 @@ namespace SERVICIOS
             }
 
             return resultado;
+        }
+
+        public string ObtenerClave()
+        {
+            return Id > 0
+                ? "ID:" + Id
+                : "REF:" + RuntimeHelpers.GetHashCode(this);
         }
 
         public override string ToString()

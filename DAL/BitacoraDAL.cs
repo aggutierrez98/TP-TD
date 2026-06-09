@@ -12,29 +12,29 @@ namespace DAL
         public int Guardar(EventoBitacora evento, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-INSERT INTO Bitacora
-(
-    FechaHora,
-    UsuarioId,
-    UsernameSnapshot,
-    Actividad,
-    Informacion,
-    Nivel,
-    Origen,
-    EsTecnica
-)
-OUTPUT INSERTED.Id
-VALUES
-(
-    @FechaHora,
-    @UsuarioId,
-    @UsernameSnapshot,
-    @Actividad,
-    @Informacion,
-    @Nivel,
-    @Origen,
-    @EsTecnica
-)";
+                INSERT INTO Bitacora
+                (
+                    FechaHora,
+                    UsuarioId,
+                    UsernameSnapshot,
+                    Actividad,
+                    Informacion,
+                    Nivel,
+                    Origen,
+                    EsTecnica
+                )
+                OUTPUT INSERTED.Id
+                VALUES
+                (
+                    @FechaHora,
+                    @UsuarioId,
+                    @UsernameSnapshot,
+                    @Actividad,
+                    @Informacion,
+                    @Nivel,
+                    @Origen,
+                    @EsTecnica
+                )";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -71,9 +71,9 @@ VALUES
             {
                 List<SqlParameter> parametros = new List<SqlParameter>();
                 string query = @"
-SELECT Id, FechaHora, UsuarioId, UsernameSnapshot, Actividad, Informacion, Nivel, Origen, EsTecnica
-FROM Bitacora
-WHERE 1 = 1";
+                    SELECT Id, FechaHora, UsuarioId, UsernameSnapshot, Actividad, Informacion, Nivel, Origen, EsTecnica
+                    FROM Bitacora
+                    WHERE 1 = 1";
 
                 if (filtro.FechaDesde.HasValue)
                 {

@@ -17,14 +17,17 @@ Mantener alineados estos artefactos:
 
 ## Workflow
 
-1. Ejecutar `scripts/sync-i18n-base-seed.ps1` desde la raiz del repo.
+1. Ejecutar `.agents/skills/translation-base-seed-sync/scripts/sync-i18n-base-seed.ps1` desde la raiz del repo.
 2. Revisar si el script agrego nuevas keys con valor placeholder igual a la key en `translation-seeds/base.es.json`.
 3. Completar o corregir esos valores en `translation-seeds/base.es.json`.
 4. Compilar `TpIDS.sln`.
 
 ## Reglas
 
-- `translation-seeds/base.es.json` es la fuente de verdad del idioma base; `script_bd.sql` se regenera desde ese archivo.
+- `translation-seeds/base.es.json` es la fuente de verdad del idioma base; el bloque auto-generado de `script_bd.sql` solo debe apuntar a ese archivo via `OPENROWSET`, sin hardcodear el JSON completo.
 - `script_bd.sql` no debe editarse a mano dentro del bloque auto-generado.
-- Si una key nueva aparece en UI/BLL/SERVICIOS, debe terminar en `translation-seeds/base.es.json` y en el bloque auto-generado de `script_bd.sql` en el mismo cambio.
+- Si una key nueva aparece en UI/BLL/SERVICIOS, debe terminar en `translation-seeds/base.es.json` en el mismo cambio. El SQL generado solo debe cambiar si cambia la estructura del bloque o la ruta resuelta al archivo.
+- Para que el script sea portable entre clones, `script_bd.sql` debe ejecutarse con `sqlcmd` desde la raiz del repo; el bloque generado puede resolver ahi la ruta absoluta del JSON antes de invocar `OPENROWSET`.
+- El script SQL de base debe asumir recreacion completa de la BD. No debe intentar completar esquemas existentes ni agregar constraints faltantes en caliente.
 - Las keys base deben seguir persistidas en BD con `Palabra.EsBase = 1`.
+- **Todos los tipos de key pertenecen a `base.es.json`**, sin excepcion: `Dialog.*`, `Error.*`, `Form*.Warning.*`, `Form*.Confirm.*`, `Form*.Success.*`, `Form*.Grid.*`, labels, botones, etc. No hay subtipo de key que quede solo en `UiDialogHelper.TextosBase`; ese diccionario es unicamente el fallback en caso de que el idioma no este cargado desde BD.

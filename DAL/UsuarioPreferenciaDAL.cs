@@ -10,9 +10,9 @@ namespace DAL
         public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-SELECT UsuarioId, IdiomaId
-FROM UsuarioPreferencias
-WHERE UsuarioId = @UsuarioId";
+                SELECT UsuarioId, IdiomaId
+                FROM UsuarioPreferencias
+                WHERE UsuarioId = @UsuarioId";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();

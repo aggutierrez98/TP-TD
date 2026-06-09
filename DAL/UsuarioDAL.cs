@@ -21,9 +21,9 @@ namespace DAL
         public Usuario ObtenerPorId(int id, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-SELECT Id, Username, PasswordHash, Activo
-FROM Usuarios
-WHERE Id = @Id";
+                SELECT Id, Username, PasswordHash, Activo
+                FROM Usuarios
+                WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -50,9 +50,9 @@ WHERE Id = @Id";
         public Usuario ObtenerPorUsername(string username, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-SELECT Id, Username, PasswordHash, Activo
-FROM Usuarios
-WHERE Username = @Username";
+                SELECT Id, Username, PasswordHash, Activo
+                FROM Usuarios
+                WHERE Username = @Username";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -79,9 +79,9 @@ WHERE Username = @Username";
         public int InsertarYObtenerId(Usuario usuario, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-INSERT INTO Usuarios (Username, PasswordHash, Activo)
-OUTPUT INSERTED.Id
-VALUES (@Username, @PasswordHash, @Activo)";
+                INSERT INTO Usuarios (Username, PasswordHash, Activo)
+                OUTPUT INSERTED.Id
+                VALUES (@Username, @PasswordHash, @Activo)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -114,9 +114,9 @@ VALUES (@Username, @PasswordHash, @Activo)";
         public List<Usuario> ObtenerTodos()
         {
             const string query = @"
-SELECT Id, Username, PasswordHash, Activo
-FROM Usuarios
-ORDER BY Activo DESC, Username";
+                SELECT Id, Username, PasswordHash, Activo
+                FROM Usuarios
+                ORDER BY Activo DESC, Username";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -135,11 +135,11 @@ ORDER BY Activo DESC, Username";
         public bool Actualizar(Usuario usuario, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-UPDATE Usuarios
-SET Username = @Username,
-    PasswordHash = @PasswordHash,
-    Activo = @Activo
-WHERE Id = @Id";
+                UPDATE Usuarios
+                SET Username = @Username,
+                    PasswordHash = @PasswordHash,
+                    Activo = @Activo
+                WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -201,10 +201,10 @@ WHERE Id = @Id";
         public bool Desactivar(int id, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-UPDATE Usuarios
-SET Activo = 0
-WHERE Id = @Id
-  AND Activo = 1";
+                UPDATE Usuarios
+                SET Activo = 0
+                WHERE Id = @Id
+                  AND Activo = 1";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -230,31 +230,31 @@ WHERE Id = @Id
         public bool EliminarFisicamente(int id, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-UPDATE UsuarioHistorial
-SET ActorUsuarioId = NULL
-WHERE ActorUsuarioId = @Id;
+                UPDATE UsuarioHistorial
+                SET ActorUsuarioId = NULL
+                WHERE ActorUsuarioId = @Id;
 
-DELETE FROM UsuarioHistorialPermiso
-WHERE HistorialId IN (
-    SELECT HistorialId
-    FROM UsuarioHistorial
-    WHERE UsuarioId = @Id
-);
+                DELETE FROM UsuarioHistorialPermiso
+                WHERE HistorialId IN (
+                    SELECT HistorialId
+                    FROM UsuarioHistorial
+                    WHERE UsuarioId = @Id
+                );
 
-DELETE FROM UsuarioHistorial
-WHERE UsuarioId = @Id;
+                DELETE FROM UsuarioHistorial
+                WHERE UsuarioId = @Id;
 
-DELETE FROM UsuarioPermiso
-WHERE UsuarioId = @Id;
+                DELETE FROM UsuarioPermiso
+                WHERE UsuarioId = @Id;
 
-DELETE FROM UsuarioPreferencias
-WHERE UsuarioId = @Id;
+                DELETE FROM UsuarioPreferencias
+                WHERE UsuarioId = @Id;
 
-DELETE FROM Bitacora
-WHERE UsuarioId = @Id;
+                DELETE FROM Bitacora
+                WHERE UsuarioId = @Id;
 
-DELETE FROM Usuarios
-WHERE Id = @Id;";
+                DELETE FROM Usuarios
+                WHERE Id = @Id;";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();

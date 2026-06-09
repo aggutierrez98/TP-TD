@@ -23,17 +23,17 @@ IdiomaDAL --> IdiomaBLL : idioma
 IdiomaBLL -> IdiomaCatalogoService : ValidarIdiomaSeleccionable(idioma)
 IdiomaBLL -> AccesoDatos : BeginTransactionScope()
 IdiomaBLL -> UsuarioPreferenciaDAL : Guardar(usuarioId, idiomaId, accesoDatos)
-IdiomaBLL -> UsuarioEstadoBLL : GuardarVersionActual(usuarioId, "ActualizacionIdiomaPreferido", "Actualizacion de la preferencia de idioma del usuario.", accesoDatos)
-IdiomaBLL -> BitacoraService : RegistrarOperacion("Actualizacion preferencia idioma", "Se actualizo el idioma preferido del usuario ID " + usuarioId + ".", "IdiomaBLL", accesoDatos)
+IdiomaBLL -> UsuarioEstadoBLL : GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PreferredLanguageUpdate", "FormUserHistory.Value.Obs.LanguagePreferenceUpdate", accesoDatos)
+IdiomaBLL -> BitacoraService : RegistrarOperacion("FormAuditLog.Value.Activity.LanguagePreferenceUpdate", "FormAuditLog.Value.Info.LanguagePreferenceUpdate", "IdiomaBLL", accesoDatos)
 IdiomaBLL -> AccesoDatos : CommitTransactionScope()
 IdiomaBLL -> IdiomaBLL : AplicarIdiomaSesion(idiomaId)
 IdiomaBLL -> IdiomaDAL : ObtenerIdiomaCompleto(idiomaId)
 IdiomaDAL --> IdiomaBLL : idiomaRecargado
 IdiomaBLL -> IdiomaCatalogoService : ValidarIdiomaSeleccionable(idiomaRecargado)
 IdiomaBLL -> IdiomaService : CambiarIdioma(idiomaRecargado)
-IdiomaService -> FormConfiguracionUsuario : Actualizar(idiomaRecargado)
-IdiomaService -> FormGestionUsuarios : Actualizar(idiomaRecargado)
-IdiomaService -> FormBitacora : Actualizar(idiomaRecargado)
+IdiomaService -> FormConfiguracionUsuario : OnIdiomaActualizado(idiomaRecargado)
+IdiomaService -> FormGestionUsuarios : OnIdiomaActualizado(idiomaRecargado)
+IdiomaService -> FormBitacora : OnIdiomaActualizado(idiomaRecargado)
 IdiomaBLL --> FormConfiguracionUsuario : true
 
 @enduml

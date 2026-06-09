@@ -42,7 +42,7 @@ namespace TpIDS
             this.lblTituloBitacora.Location = new System.Drawing.Point(15, 15);
             this.lblTituloBitacora.Name = "lblTituloBitacora";
             this.lblTituloBitacora.Size = new System.Drawing.Size(0, 25);
-            this.lblTituloBitacora.Tag = "FormBitacora.TitleLabel";
+            this.lblTituloBitacora.Tag = "FormAuditLog.TitleLabel";
             this.lblTituloBitacora.TabIndex = 0;
             // 
             // groupBoxFiltrosBitacora
@@ -62,7 +62,7 @@ namespace TpIDS
             this.groupBoxFiltrosBitacora.Location = new System.Drawing.Point(18, 50);
             this.groupBoxFiltrosBitacora.Name = "groupBoxFiltrosBitacora";
             this.groupBoxFiltrosBitacora.Size = new System.Drawing.Size(944, 110);
-            this.groupBoxFiltrosBitacora.Tag = "FormBitacora.FiltersGroup";
+            this.groupBoxFiltrosBitacora.Tag = "FormAuditLog.FiltersGroup";
             this.groupBoxFiltrosBitacora.TabIndex = 1;
             this.groupBoxFiltrosBitacora.TabStop = false;
             // 
@@ -71,7 +71,7 @@ namespace TpIDS
             this.chkbFechaDesdeBitacora.Location = new System.Drawing.Point(15, 28);
             this.chkbFechaDesdeBitacora.Name = "chkbFechaDesdeBitacora";
             this.chkbFechaDesdeBitacora.Size = new System.Drawing.Size(110, 20);
-            this.chkbFechaDesdeBitacora.Tag = "FormBitacora.FromCheck";
+            this.chkbFechaDesdeBitacora.Tag = "FormAuditLog.FromCheck";
             this.chkbFechaDesdeBitacora.TabIndex = 0;
             this.chkbFechaDesdeBitacora.UseVisualStyleBackColor = true;
             // 
@@ -89,7 +89,7 @@ namespace TpIDS
             this.chkbFechaHastaBitacora.Location = new System.Drawing.Point(340, 28);
             this.chkbFechaHastaBitacora.Name = "chkbFechaHastaBitacora";
             this.chkbFechaHastaBitacora.Size = new System.Drawing.Size(110, 20);
-            this.chkbFechaHastaBitacora.Tag = "FormBitacora.ToCheck";
+            this.chkbFechaHastaBitacora.Tag = "FormAuditLog.ToCheck";
             this.chkbFechaHastaBitacora.TabIndex = 2;
             this.chkbFechaHastaBitacora.UseVisualStyleBackColor = true;
             // 
@@ -108,7 +108,7 @@ namespace TpIDS
             this.lblUsuarioBitacora.Location = new System.Drawing.Point(15, 63);
             this.lblUsuarioBitacora.Name = "lblUsuarioBitacora";
             this.lblUsuarioBitacora.Size = new System.Drawing.Size(0, 13);
-            this.lblUsuarioBitacora.Tag = "FormBitacora.UserLabel";
+            this.lblUsuarioBitacora.Tag = "FormAuditLog.UserLabel";
             this.lblUsuarioBitacora.TabIndex = 4;
             // 
             // txtbUsuarioBitacora
@@ -124,7 +124,7 @@ namespace TpIDS
             this.lblActividadBitacora.Location = new System.Drawing.Point(220, 63);
             this.lblActividadBitacora.Name = "lblActividadBitacora";
             this.lblActividadBitacora.Size = new System.Drawing.Size(0, 13);
-            this.lblActividadBitacora.Tag = "FormBitacora.ActivityLabel";
+            this.lblActividadBitacora.Tag = "FormAuditLog.ActivityLabel";
             this.lblActividadBitacora.TabIndex = 6;
             // 
             // txtbActividadBitacora
@@ -140,7 +140,7 @@ namespace TpIDS
             this.lblNivelBitacora.Location = new System.Drawing.Point(465, 63);
             this.lblNivelBitacora.Name = "lblNivelBitacora";
             this.lblNivelBitacora.Size = new System.Drawing.Size(0, 13);
-            this.lblNivelBitacora.Tag = "FormBitacora.LevelLabel";
+            this.lblNivelBitacora.Tag = "FormAuditLog.LevelLabel";
             this.lblNivelBitacora.TabIndex = 8;
             // 
             // cmbNivelBitacora
@@ -157,7 +157,7 @@ namespace TpIDS
             this.chkbSoloTecnicaBitacora.Location = new System.Drawing.Point(650, 79);
             this.chkbSoloTecnicaBitacora.Name = "chkbSoloTecnicaBitacora";
             this.chkbSoloTecnicaBitacora.Size = new System.Drawing.Size(140, 20);
-            this.chkbSoloTecnicaBitacora.Tag = "FormBitacora.OnlyTechnicalCheck";
+            this.chkbSoloTecnicaBitacora.Tag = "FormAuditLog.OnlyTechnicalCheck";
             this.chkbSoloTecnicaBitacora.TabIndex = 10;
             this.chkbSoloTecnicaBitacora.UseVisualStyleBackColor = true;
             // 
@@ -166,7 +166,7 @@ namespace TpIDS
             this.btnBuscarBitacora.Location = new System.Drawing.Point(800, 72);
             this.btnBuscarBitacora.Name = "btnBuscarBitacora";
             this.btnBuscarBitacora.Size = new System.Drawing.Size(125, 30);
-            this.btnBuscarBitacora.Tag = "FormBitacora.SearchButton";
+            this.btnBuscarBitacora.Tag = "FormAuditLog.SearchButton";
             this.btnBuscarBitacora.TabIndex = 11;
             this.btnBuscarBitacora.UseVisualStyleBackColor = true;
             this.btnBuscarBitacora.Click += new System.EventHandler(this.btnBuscarBitacora_Click);
@@ -175,6 +175,7 @@ namespace TpIDS
             // 
             this.dgvBitacora.AllowUserToAddRows = false;
             this.dgvBitacora.AllowUserToDeleteRows = false;
+            this.dgvBitacora.AutoGenerateColumns = false;
             this.dgvBitacora.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvBitacora.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvBitacora.Location = new System.Drawing.Point(18, 175);
@@ -184,6 +185,7 @@ namespace TpIDS
             this.dgvBitacora.RowHeadersVisible = false;
             this.dgvBitacora.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvBitacora.Size = new System.Drawing.Size(944, 360);
+            this.dgvBitacora.Tag = "FormAuditLog.Grid";
             this.dgvBitacora.TabIndex = 2;
             //
             // FormBitacora
@@ -198,7 +200,7 @@ namespace TpIDS
             this.MaximizeBox = false;
             this.Name = "FormBitacora";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Tag = "FormBitacora.Title";
+            this.Tag = "FormAuditLog.Title";
             this.groupBoxFiltrosBitacora.ResumeLayout(false);
             this.groupBoxFiltrosBitacora.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBitacora)).EndInit();

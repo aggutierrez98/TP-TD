@@ -33,7 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
+    <Reference Include="System">
+      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -67,6 +69,15 @@
     <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FormTraducibleBase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PasswordTextBox.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="PasswordTextBox.Designer.cs">
+      <DependentUpon>PasswordTextBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
@@ -94,20 +105,23 @@
     <Compile Include="FormGestionUsuarios.Designer.cs">
       <DependentUpon>FormGestionUsuarios.cs</DependentUpon>
     </Compile>
-    <Compile Include="BitacoraFila.cs" />
-    <Compile Include="CambioEstadoFila.cs" />
-    <Compile Include="GrillaTraduccionHelper.cs" />
-    <Compile Include="HistorialUsuarioFila.cs" />
+    <Compile Include="BitacoraGridItem.cs" />
+    <Compile Include="CambioEstadoGridItem.cs" />
+    <Compile Include="GridColumnAttribute.cs" />
+    <Compile Include="GrillaFormHelper.cs" />
+    <Compile Include="HistorialUsuarioGridItem.cs" />
     <Compile Include="IdiomaFormHelper.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TraduccionGridItem.cs" />
     <Compile Include="UiDialogHelper.cs" />
     <Compile Include="UiExceptionHandler.cs" />
-    <EmbeddedResource Include="FormGestionPermisos.resx">
-      <DependentUpon>FormGestionPermisos.cs</DependentUpon>
+    <Compile Include="UsuarioGridItem.cs" />
+    <EmbeddedResource Include="FormGestionIdiomas.resx">
+      <DependentUpon>FormGestionIdiomas.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="FormLogin.resx">
-      <DependentUpon>FormLogin.cs</DependentUpon>
+    <EmbeddedResource Include="FormGestionUsuarios.resx">
+      <DependentUpon>FormGestionUsuarios.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

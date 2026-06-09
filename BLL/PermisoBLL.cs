@@ -1,7 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using BE;
 using DAL;
 using SERVICIOS;
@@ -37,8 +37,8 @@ namespace BLL
         {
             if (raices == null || raices.Count == 0)
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("Actualizacion catalogo de permisos rechazada", "Se intento guardar un catalogo vacio.", "PermisoBLL");
-                throw new ExcepcionNegocio("Error.Permiso.CatalogEmpty");
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.RejectedPermissionCatalogUpdate", "FormAuditLog.Value.Info.EmptyPermissionCatalog", "PermisoBLL");
+                throw new ExcepcionNegocio("Error.Permission.CatalogEmpty");
             }
 
             _permisoService.ValidarSinCiclos(raices);
@@ -50,7 +50,7 @@ namespace BLL
                 nodo.Nombre = nodo.Nombre.Trim();
             }
 
-            _permisoService.ValidarNombresUnicos(nodos);
+            _permisoService.ValidarNombresUnicos(raices);
             _permisoService.ValidarGruposNoVacios(nodos);
 
             List<PermisoNodo> existentes = _permisoDAL.ObtenerNodos();
@@ -78,7 +78,7 @@ namespace BLL
                 .ToList();
 
             _permisoDAL.EliminarPermisos(idsEliminados);
-            BitacoraService.GetInstance().RegistrarOperacion("Actualizacion catalogo de permisos", "Se guardo el catalogo general de permisos.", "PermisoBLL");
+            BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.PermissionCatalogUpdate", "FormAuditLog.Value.Info.PermissionCatalogUpdate", "PermisoBLL");
         }
 
         public List<int> ObtenerPermisoIdsDeUsuario(int usuarioId)
@@ -97,7 +97,7 @@ namespace BLL
                     Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
                     if (usuario == null)
                     {
-                        throw new ExcepcionNegocio("Error.Permiso.UserNotFound");
+                        throw new ExcepcionNegocio("Error.Permission.UserNotFound");
                     }
 
                     _usuarioPermisoDAL.ReemplazarPermisosUsuario(
@@ -105,8 +105,8 @@ namespace BLL
                         permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
                         accesoDatos);
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "ActualizacionPermisos", "Actualizacion de permisos del usuario.", accesoDatos);
-                    BitacoraService.GetInstance().RegistrarOperacion("Actualizacion permisos usuario", "Se actualizaron los permisos del usuario " + usuario.Username + ".", "PermisoBLL", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", accesoDatos);
+                    BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserPermissionsUpdate", "FormAuditLog.Value.Info.UserPermissionsUpdate", "PermisoBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -117,7 +117,7 @@ namespace BLL
                 catch (Exception ex)
                 {
                     accesoDatos.RollbackTransactionScope();
-                    throw new ExcepcionTecnica("Error.Permiso.SaveUserPermissionsFailed", ex);
+                    throw new ExcepcionTecnica("Error.Permission.SaveUserPermissionsFailed", ex);
                 }
             }
 
@@ -128,18 +128,16 @@ namespace BLL
             }
         }
 
-        public object ObtenerPermisosDirectosUsuario(int usuarioId)
+        public List<PermisoNodo> ObtenerPermisosDirectosUsuario(int usuarioId)
         {
             List<int> permisosId = ObtenerPermisoIdsDeUsuario(usuarioId);
             List<PermisoNodo> catalogo = ObtenerCatalogo();
             Dictionary<int, PermisoNodo> indice = _permisoService.Aplanar(catalogo).ToDictionary(item => item.Id);
 
-            List<PermisoNodo> permisos = permisosId
+            return permisosId
                 .Where(indice.ContainsKey)
                 .Select(id => indice[id])
                 .ToList();
-
-            return _permisoService.CrearColeccionPermisos(permisos);
         }
 
         public void CargarPermisosEnUsuario(Usuario usuario)
@@ -149,11 +147,17 @@ namespace BLL
                 return;
             }
 
-            object permisos = ObtenerPermisosDirectosUsuario(usuario.Id);
-            PropertyInfo propiedad = typeof(Usuario).GetProperty("Permisos");
-            if (propiedad != null)
+            IList permisos = usuario.PermisosNoTipados;
+            if (permisos == null)
             {
-                propiedad.SetValue(usuario, permisos);
+                return;
+            }
+
+            permisos.Clear();
+
+            foreach (PermisoNodo permiso in ObtenerPermisosDirectosUsuario(usuario.Id))
+            {
+                permisos.Add(permiso);
             }
         }
     }

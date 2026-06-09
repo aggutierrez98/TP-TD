@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using ABSTRACCIONES;
 
@@ -10,6 +11,10 @@ namespace BE
         public string PasswordHash { get; set; }
         public bool Activo { get; set; }
         public IList<IPermiso> Permisos { get; set; }
+        public IList PermisosNoTipados
+        {
+            get { return Permisos as IList; }
+        }
 
         public Usuario()
         {

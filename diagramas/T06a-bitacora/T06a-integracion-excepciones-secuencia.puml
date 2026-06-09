@@ -3,6 +3,7 @@ title T06a - Gestion de Bitacora - Integracion con excepciones
 
 actor Usuario
 participant UI
+participant "UiExceptionHandler" as UiExceptionHandler
 participant "UiDialogHelper" as UiDialogHelper
 participant "ManejadorExcepcionesBLL" as ManejadorExcepcionesBLL
 participant "BootstrapAplicacionBLL" as BootstrapAplicacionBLL
@@ -11,11 +12,12 @@ participant "Sesion" as Sesion
 participant "BitacoraDAL" as BitacoraDAL
 
 Usuario -> UI : accion que produce error
-UI -> ManejadorExcepcionesBLL : ObtenerMensajeUsuarioKey(exception, actividad)
+UI -> UiExceptionHandler : Mostrar(exception, actividad)
+UiExceptionHandler -> ManejadorExcepcionesBLL : ObtenerMensajeUsuarioKey(exception, actividad)
 
 alt exception es ExcepcionNegocio
-  ManejadorExcepcionesBLL --> UI : exception.Message
-  UI -> UiDialogHelper : MostrarWarning(messageKey)
+  ManejadorExcepcionesBLL --> UiExceptionHandler : exception.Message
+  UiExceptionHandler -> UiDialogHelper : MostrarWarning(messageKey)
 else exception es ExcepcionTecnica
   ManejadorExcepcionesBLL -> ManejadorExcepcionesBLL : RegistrarExcepcionTecnica(exception, actividad, "UI")
   ManejadorExcepcionesBLL -> BootstrapAplicacionBLL : Inicializar()
@@ -23,8 +25,8 @@ else exception es ExcepcionTecnica
   BitacoraService -> Sesion : GetUsuarioActualId()
   BitacoraService -> Sesion : GetUsuarioActualNombre()
   BitacoraService -> BitacoraDAL : Guardar(evento, null)
-  ManejadorExcepcionesBLL --> UI : exception.Message
-  UI -> UiDialogHelper : MostrarError(messageKey)
+  ManejadorExcepcionesBLL --> UiExceptionHandler : exception.Message
+  UiExceptionHandler -> UiDialogHelper : MostrarError(messageKey)
 else exception desconocida
   ManejadorExcepcionesBLL -> ManejadorExcepcionesBLL : RegistrarExcepcionTecnica(exception, actividad, "UI")
   ManejadorExcepcionesBLL -> BootstrapAplicacionBLL : Inicializar()
@@ -32,8 +34,8 @@ else exception desconocida
   BitacoraService -> Sesion : GetUsuarioActualId()
   BitacoraService -> Sesion : GetUsuarioActualNombre()
   BitacoraService -> BitacoraDAL : Guardar(evento, null)
-  ManejadorExcepcionesBLL --> UI : "Error.Tecnico.Unexpected"
-  UI -> UiDialogHelper : MostrarError(messageKey)
+  ManejadorExcepcionesBLL --> UiExceptionHandler : "Error.Technical.Unexpected"
+  UiExceptionHandler -> UiDialogHelper : MostrarError(messageKey)
 end
 
 @enduml

@@ -19,7 +19,7 @@ namespace BLL
             }
 
             RegistrarExcepcionTecnica(exception, actividad, "UI");
-            return "Error.Tecnico.Unexpected";
+            return "Error.Technical.Unexpected";
         }
 
         public static void RegistrarExcepcionTecnica(Exception exception, string actividad, string origen)

@@ -31,6 +31,11 @@ package "ABSTRACCIONES" {
 package "SERVICIOS" {
   class Idioma
 
+  class IdiomaService <<singleton>> {
+    +GetInstance() : IdiomaService
+    +IdiomaActual : Idioma
+  }
+
   class EventoBitacora {
     +Id : int
     +FechaHora : DateTime
@@ -125,10 +130,16 @@ package "DAL" {
 }
 
 package "UI" {
-  class FormGestionUsuarios
+  class FormTraducibleBase {
+    #OnIdiomaActualizado(idioma : Idioma) : void
+  }
+
+  class FormGestionUsuarios {
+    #OnIdiomaActualizado(idioma : Idioma) : void
+  }
 
   class FormBitacora {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
   class UiDialogHelper {
@@ -147,6 +158,8 @@ package "UI" {
 IEventoBitacora <|.. EventoBitacora
 IFiltroBitacora <|.. FiltroBitacora
 
+FormTraducibleBase <|-- FormGestionUsuarios
+FormTraducibleBase <|-- FormBitacora
 BitacoraBLL --> BitacoraService
 UsuarioBLL --> UsuarioDAL
 UsuarioBLL --> UsuarioEstadoBLL
@@ -162,7 +175,7 @@ UsuarioDAL --> AccesoDatos
 BitacoraDAL --> AccesoDatos
 FormGestionUsuarios --> UsuarioBLL
 FormBitacora --> BitacoraBLL
-UiDialogHelper --> Idioma
+UiDialogHelper --> IdiomaService
 UiExceptionHandler --> UiDialogHelper
 UiExceptionHandler --> ManejadorExcepcionesBLL
 

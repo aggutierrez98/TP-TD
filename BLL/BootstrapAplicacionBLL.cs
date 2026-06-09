@@ -19,7 +19,6 @@ namespace BLL
                     return;
                 }
 
-                InicializacionEsquemaBLL.Inicializar();
                 InicializacionBitacoraBLL.Inicializar();
                 InicializacionHistorialBLL.Inicializar();
                 _inicializado = true;

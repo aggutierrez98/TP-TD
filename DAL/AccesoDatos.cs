@@ -111,7 +111,7 @@ namespace DAL
                 catch (SqlException ex)
                 {
                     RollbackTransaction();
-                    throw new ExcepcionTecnica("Error de SQL.", ex);
+                    throw new ExcepcionTecnica("Error.Technical.SqlFailure", ex);
                 }
                 catch
                 {
@@ -158,11 +158,11 @@ namespace DAL
 
             if (lastException != null)
             {
-                throw new ExcepcionTecnica("No se pudo conectar a ninguna de las conexiones configuradas.", lastException);
+                throw new ExcepcionTecnica("Error.Technical.ConnectionUnavailable", lastException);
             }
 
             throw new InvalidOperationException(
-                "No se encontro ninguna connection string valida en la configuracion para TpIDS.");
+                "No se encontro ninguna connection string valida en la configuracion.");
         }
 
         private void StartTransaction()

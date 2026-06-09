@@ -7,25 +7,19 @@ using SERVICIOS;
 
 namespace TpIDS
 {
-    public partial class FormConfiguracionUsuario : Form
+    public partial class FormConfiguracionUsuario : FormTraducibleBase
     {
         private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
-        private readonly Action<Idioma> observadorIdioma;
 
         public FormConfiguracionUsuario()
         {
             InitializeComponent();
-            observadorIdioma = Actualizar;
             Load += FormConfiguracionUsuario_Load;
-            FormClosed += FormConfiguracionUsuario_FormClosed;
         }
 
         private void FormConfiguracionUsuario_Load(object sender, EventArgs e)
         {
-            IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
-            CargarUsuarioActual();
             CargarIdiomas();
-            Actualizar(IdiomaService.GetInstance().IdiomaActual);
         }
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
@@ -33,14 +27,14 @@ namespace TpIDS
             int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
             if (!usuarioId.HasValue)
             {
-                UiDialogHelper.MostrarError("FormConfiguracionUsuario.Error.NoActiveSession");
+                UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
                 Close();
                 return;
             }
 
             if (!(cmbIdiomas.SelectedItem is Idioma idioma))
             {
-                UiDialogHelper.MostrarWarning("FormConfiguracionUsuario.Warning.SelectLanguage");
+                UiDialogHelper.MostrarWarning("FormUserSettings.Warning.SelectLanguage");
                 return;
             }
 
@@ -49,7 +43,7 @@ namespace TpIDS
                 bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
                 if (guardado)
                 {
-                    UiDialogHelper.MostrarInfo("FormConfiguracionUsuario.Success.SettingsSaved");
+                    UiDialogHelper.MostrarInfo("FormUserSettings.Success.SettingsSaved");
                 }
             }
             catch (Exception ex)
@@ -58,15 +52,15 @@ namespace TpIDS
             }
         }
 
-        public void Actualizar(Idioma idioma)
+        protected override void OnIdiomaActualizado(Idioma idioma)
         {
-            IdiomaFormHelper.Aplicar(this, idioma);
+            base.OnIdiomaActualizado(idioma);
             CargarUsuarioActual();
         }
 
         private void CargarUsuarioActual()
         {
-            string prefijo = ObtenerTextoActual("FormConfiguracionUsuario.CurrentUserPrefix");
+            string prefijo = ObtenerTextoActual("FormUserSettings.CurrentUserPrefix");
             string username = Sesion.GetInstance().GetUsuarioActualNombre();
             lblUsuarioActual.Text = string.Format("{0} {1}", prefijo, string.IsNullOrWhiteSpace(username) ? "-" : username);
         }
@@ -94,11 +88,6 @@ namespace TpIDS
         {
             Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTraduccion(key);
-        }
-
-        private void FormConfiguracionUsuario_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

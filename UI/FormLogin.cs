@@ -3,24 +3,18 @@ using System.Windows.Forms;
 using BE;
 using BLL;
 using SERVICIOS;
-using TpIDS.Properties;
 
 namespace TpIDS
 {
-    public partial class FormLogin : Form
+    public partial class FormLogin : FormTraducibleBase
     {
-        private bool showPassword = false;
         private readonly IdiomaBLL gestorIdioma = new IdiomaBLL();
         private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
-        private readonly Action<Idioma> observadorIdioma;
 
         public FormLogin()
         {
             InitializeComponent();
-            observadorIdioma = Actualizar;
-            pbPassword.Image = Resources.image_show;
             Load += FormLogin_Load;
-            FormClosed += FormLogin_FormClosed;
         }
 
         private void btnIngreso_Click(object sender, EventArgs e)
@@ -65,44 +59,17 @@ namespace TpIDS
             new FormRegistro().ShowDialog();
         }
 
-        private void pbPassword_Click(object sender, EventArgs e)
-        {
-            showPassword = !showPassword;
-            if (showPassword)
-            {
-                txtbPassword.PasswordChar = '\0';
-                pbPassword.Image = Resources.image_hide;
-            }
-            else
-            {
-                txtbPassword.PasswordChar = '*';
-                pbPassword.Image = Resources.image_show;
-            }
-        }
-
-        public void Actualizar(Idioma idioma)
-        {
-            IdiomaFormHelper.Aplicar(this, idioma);
-        }
-
         private void FormLogin_Load(object sender, EventArgs e)
         {
             try
             {
                 gestorIdioma.InicializarAplicacion();
-                IdiomaService.GetInstance().RegistrarObservador(observadorIdioma);
-                Actualizar(IdiomaService.GetInstance().IdiomaActual);
             }
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Inicializacion de idiomas");
                 Close();
             }
-        }
-
-        private void FormLogin_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            IdiomaService.GetInstance().DesregistrarObservador(observadorIdioma);
         }
     }
 }

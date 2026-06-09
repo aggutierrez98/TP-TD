@@ -51,6 +51,8 @@ package "SERVICIOS" {
     +IdiomaId : int
   }
 
+  class PermisoNodo
+
   class Sesion <<singleton>> {
     +GetInstance() : Sesion
     +GetUsuarioActualId() : int?
@@ -59,7 +61,7 @@ package "SERVICIOS" {
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : object) : void
+    +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
   }
 
   class BitacoraService <<singleton>> {
@@ -120,7 +122,7 @@ package "BLL" {
   }
 
   class PermisoBLL {
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : object
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
   }
 
   class BootstrapAplicacionBLL {
@@ -162,8 +164,12 @@ package "DAL" {
 }
 
 package "UI" {
+  class FormTraducibleBase {
+    #OnIdiomaActualizado(idioma : Idioma) : void
+  }
+
   class FormHistorialUsuario {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 }
 
@@ -171,6 +177,7 @@ IUsuarioSnapshot <|.. UsuarioHistorialSnapshot
 IServicioHistorialEstados <|.. HistorialEstadosService
 IResultadoComparacionEstado <|.. ResultadoComparacionEstado
 
+FormTraducibleBase <|-- FormHistorialUsuario
 UsuarioBLL --> UsuarioEstadoBLL
 UsuarioBLL --> PermisoBLL
 UsuarioBLL --> IdiomaBLL
@@ -181,6 +188,7 @@ UsuarioEstadoBLL --> UsuarioDAL
 UsuarioEstadoBLL --> UsuarioPermisoDAL
 UsuarioEstadoBLL --> UsuarioPreferenciaDAL
 UsuarioEstadoBLL --> HistorialEstadosService
+UsuarioEstadoBLL --> Sesion
 InicializacionHistorialBLL --> HistorialEstadosService
 InicializacionHistorialBLL --> UsuarioHistorialDAL
 HistorialEstadosService --> UsuarioHistorialSnapshot

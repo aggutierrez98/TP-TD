@@ -46,7 +46,8 @@ Usuarios ||--o| UsuarioPreferencias : FK_UsuarioPreferencias_Usuario
 Idioma ||--o{ UsuarioPreferencias : FK_UsuarioPreferencias_Idioma
 
 note right of Idioma
-  El script garantiza que exista
+  La DDL define el campo [Default].
+  La BLL asegura que quede
   un unico idioma default efectivo.
 end note
 

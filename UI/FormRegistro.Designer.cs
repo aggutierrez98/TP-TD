@@ -18,11 +18,9 @@ namespace TpIDS
         {
             this.lblPassword = new System.Windows.Forms.Label();
             this.lblNickname = new System.Windows.Forms.Label();
-            this.txtbPassword = new System.Windows.Forms.TextBox();
+            this.txtbPassword = new TpIDS.PasswordTextBox();
             this.txtbNickname = new System.Windows.Forms.TextBox();
             this.btnRegistro = new System.Windows.Forms.Button();
-            this.pbPassword = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).BeginInit();
             this.SuspendLayout();
             // 
             // lblPassword
@@ -31,7 +29,7 @@ namespace TpIDS
             this.lblPassword.Location = new System.Drawing.Point(36, 114);
             this.lblPassword.Name = "lblPassword";
             this.lblPassword.Size = new System.Drawing.Size(115, 13);
-            this.lblPassword.Tag = "FormRegistro.PasswordLabel";
+            this.lblPassword.Tag = "FormRegistration.PasswordLabel";
             this.lblPassword.TabIndex = 11;
             this.lblPassword.Text = "Ingrese su contrasena:";
             // 
@@ -41,7 +39,7 @@ namespace TpIDS
             this.lblNickname.Location = new System.Drawing.Point(36, 44);
             this.lblNickname.Name = "lblNickname";
             this.lblNickname.Size = new System.Drawing.Size(108, 13);
-            this.lblNickname.Tag = "FormRegistro.NicknameLabel";
+            this.lblNickname.Tag = "FormRegistration.NicknameLabel";
             this.lblNickname.TabIndex = 10;
             this.lblNickname.Text = "Ingrese su nickname:";
             // 
@@ -49,8 +47,7 @@ namespace TpIDS
             // 
             this.txtbPassword.Location = new System.Drawing.Point(39, 130);
             this.txtbPassword.Name = "txtbPassword";
-            this.txtbPassword.PasswordChar = '●';
-            this.txtbPassword.Size = new System.Drawing.Size(176, 20);
+            this.txtbPassword.Size = new System.Drawing.Size(200, 20);
             this.txtbPassword.TabIndex = 9;
             // 
             // txtbNickname
@@ -65,28 +62,17 @@ namespace TpIDS
             this.btnRegistro.Location = new System.Drawing.Point(39, 194);
             this.btnRegistro.Name = "btnRegistro";
             this.btnRegistro.Size = new System.Drawing.Size(200, 43);
-            this.btnRegistro.Tag = "FormRegistro.RegisterButton";
+            this.btnRegistro.Tag = "FormRegistration.RegisterButton";
             this.btnRegistro.TabIndex = 12;
             this.btnRegistro.Text = "Registrarse";
             this.btnRegistro.UseVisualStyleBackColor = true;
             this.btnRegistro.Click += new System.EventHandler(this.btnRegistro_Click);
-            // 
-            // pbPassword
-            // 
-            this.pbPassword.Location = new System.Drawing.Point(220, 130);
-            this.pbPassword.Name = "pbPassword";
-            this.pbPassword.Size = new System.Drawing.Size(19, 20);
-            this.pbPassword.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pbPassword.TabIndex = 13;
-            this.pbPassword.TabStop = false;
-            this.pbPassword.Click += new System.EventHandler(this.pbPassword_Click);
             // 
             // FormRegistro
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(277, 285);
-            this.Controls.Add(this.pbPassword);
             this.Controls.Add(this.btnRegistro);
             this.Controls.Add(this.lblPassword);
             this.Controls.Add(this.lblNickname);
@@ -94,18 +80,16 @@ namespace TpIDS
             this.Controls.Add(this.txtbNickname);
             this.Name = "FormRegistro";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Tag = "FormRegistro.Title";
+            this.Tag = "FormRegistration.Title";
             this.Text = "Registro";
-            ((System.ComponentModel.ISupportInitialize)(this.pbPassword)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.Label lblNickname;
-        private System.Windows.Forms.TextBox txtbPassword;
+        private PasswordTextBox txtbPassword;
         private System.Windows.Forms.TextBox txtbNickname;
         private System.Windows.Forms.Button btnRegistro;
-        private System.Windows.Forms.PictureBox pbPassword;
     }
 }

@@ -16,7 +16,7 @@ entity "Usuarios" as Usuarios {
 entity "Permiso" as Permiso {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
-  Nombre : varchar(100) <<UQ, NOT NULL>>
+  Nombre : varchar(100) <<NOT NULL>>
 }
 
 entity "Grupo" as Grupo {

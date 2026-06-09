@@ -145,32 +145,29 @@ package "DAL" {
 }
 
 package "UI" {
-  class FormLogin {
-    +Actualizar(idioma : Idioma) : void
+  class FormTraducibleBase {
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
-  class FormRegistro {
-    +Actualizar(idioma : Idioma) : void
-  }
+  class FormLogin
+  class FormRegistro
 
   class FormGestionUsuarios {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
-  class FormGestionIdiomas {
-    +Actualizar(idioma : Idioma) : void
-  }
+  class FormGestionIdiomas
 
   class FormConfiguracionUsuario {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
   class FormBitacora {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
   class FormHistorialUsuario {
-    +Actualizar(idioma : Idioma) : void
+    #OnIdiomaActualizado(idioma : Idioma) : void
   }
 
   class UiDialogHelper {
@@ -191,6 +188,14 @@ ITraduccion <|.. Traduccion
 IPalabra <|.. Palabra
 IUsuarioPreferencia <|.. UsuarioPreferencia
 
+FormTraducibleBase <|-- FormLogin
+FormTraducibleBase <|-- FormRegistro
+FormTraducibleBase <|-- FormGestionUsuarios
+FormTraducibleBase <|-- FormGestionIdiomas
+FormTraducibleBase <|-- FormConfiguracionUsuario
+FormTraducibleBase <|-- FormBitacora
+FormTraducibleBase <|-- FormHistorialUsuario
+
 Idioma --> Traduccion
 Traduccion --> Palabra
 
@@ -201,14 +206,9 @@ IdiomaBLL --> UsuarioEstadoBLL
 IdiomaBLL --> IdiomaService
 IdiomaBLL --> BitacoraService
 FormConfiguracionUsuario --> Sesion
+FormTraducibleBase --> IdiomaService
 
-FormLogin --> IdiomaService
-FormRegistro --> IdiomaService
-FormGestionUsuarios --> IdiomaService
 FormGestionIdiomas --> IdiomaService
-FormConfiguracionUsuario --> IdiomaService
-FormBitacora --> IdiomaService
-FormHistorialUsuario --> IdiomaService
 UiDialogHelper --> IdiomaService
 UiExceptionHandler --> UiDialogHelper
 UiExceptionHandler --> ManejadorExcepcionesBLL

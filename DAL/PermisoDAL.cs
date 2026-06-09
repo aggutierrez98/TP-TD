@@ -12,14 +12,14 @@ namespace DAL
         public List<PermisoNodo> ObtenerNodos()
         {
             const string query = @"
-SELECT p.Id,
-       p.Nombre,
-       CASE WHEN EXISTS (
-           SELECT 1
-           FROM Grupo g
-           WHERE g.GrupoId = p.Id) THEN 1 ELSE 0 END AS EsGrupo
-FROM Permiso p
-ORDER BY p.Nombre";
+                SELECT p.Id,
+                       p.Nombre,
+                       CASE WHEN EXISTS (
+                           SELECT 1
+                           FROM Grupo g
+                           WHERE g.GrupoId = p.Id) THEN 1 ELSE 0 END AS EsGrupo
+                FROM Permiso p
+                ORDER BY p.Nombre";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -33,9 +33,9 @@ ORDER BY p.Nombre";
         public List<PermisoRelacion> ObtenerRelaciones()
         {
             const string query = @"
-SELECT GrupoId, PermisoId
-FROM Grupo
-ORDER BY GrupoId, PermisoId";
+                SELECT GrupoId, PermisoId
+                FROM Grupo
+                ORDER BY GrupoId, PermisoId";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -53,9 +53,9 @@ ORDER BY GrupoId, PermisoId";
         public int InsertarPermiso(string nombre)
         {
             const string query = @"
-INSERT INTO Permiso (Nombre)
-OUTPUT INSERTED.Id
-VALUES (@Nombre)";
+                INSERT INTO Permiso (Nombre)
+                OUTPUT INSERTED.Id
+                VALUES (@Nombre)";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -71,9 +71,9 @@ VALUES (@Nombre)";
         public bool ActualizarNombre(int id, string nombre)
         {
             const string query = @"
-UPDATE Permiso
-SET Nombre = @Nombre
-WHERE Id = @Id";
+                UPDATE Permiso
+                SET Nombre = @Nombre
+                WHERE Id = @Id";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -97,8 +97,8 @@ WHERE Id = @Id";
                 for (int i = 0; i < relaciones.Count; i++)
                 {
                     query += $@"
-INSERT INTO Grupo (GrupoId, PermisoId)
-VALUES (@GrupoId{i}, @PermisoId{i});";
+                        INSERT INTO Grupo (GrupoId, PermisoId)
+                        VALUES (@GrupoId{i}, @PermisoId{i});";
 
                     parametros.Add(accesoDatos.CreateParameter("@GrupoId" + i, SqlDbType.Int, relaciones[i].GrupoId));
                     parametros.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, relaciones[i].PermisoId));
@@ -120,9 +120,9 @@ VALUES (@GrupoId{i}, @PermisoId{i});";
                 List<SqlParameter> parametros = new List<SqlParameter>();
                 string whereClause = CrearWhereIn(accesoDatos, "@Id", idsPermiso, parametros);
                 string query = $@"
-DELETE FROM UsuarioPermiso WHERE PermisoId IN ({whereClause});
-DELETE FROM Grupo WHERE GrupoId IN ({whereClause}) OR PermisoId IN ({whereClause});
-DELETE FROM Permiso WHERE Id IN ({whereClause});";
+                    DELETE FROM UsuarioPermiso WHERE PermisoId IN ({whereClause});
+                    DELETE FROM Grupo WHERE GrupoId IN ({whereClause}) OR PermisoId IN ({whereClause});
+                    DELETE FROM Permiso WHERE Id IN ({whereClause});";
 
                 return accesoDatos.Write(query, parametros) >= 0;
             }

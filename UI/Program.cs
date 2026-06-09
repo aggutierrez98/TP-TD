@@ -7,7 +7,7 @@ namespace TpIDS
     static class Program
     {
         /// <summary>
-        /// Punto de entrada principal para la aplicación.
+        /// Punto de entrada principal para la aplicaciÃ³n.
         /// </summary>
         [STAThread]
         static void Main()
@@ -24,7 +24,7 @@ namespace TpIDS
         private static void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
         {
             ManejadorExcepcionesBLL.RegistrarExcepcionTecnica(e.Exception, "Excepcion UI no controlada", "Program");
-            UiDialogHelper.MostrarError("Error.Tecnico.Unexpected");
+            UiDialogHelper.MostrarError("Error.Technical.Unexpected");
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
