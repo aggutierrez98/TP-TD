@@ -94,8 +94,7 @@ namespace TpIDS
             if (idioma != null && idioma.TieneTraduccion(key))
             {
                 string traduccion = idioma.ObtenerTraduccion(key);
-                if (!string.IsNullOrWhiteSpace(traduccion) &&
-                    !string.Equals(traduccion, key, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(traduccion))
                 {
                     return traduccion;
                 }
