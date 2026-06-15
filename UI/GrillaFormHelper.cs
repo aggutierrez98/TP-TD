@@ -20,6 +20,8 @@ namespace TpIDS
             Action<DataGridView> posDataSource = null)
             where TFila : class
         {
+
+            // Filas de proyecciones a columnas
             List<TFila> filas = datos == null
                 ? new List<TFila>()
                 : datos.Select(item => proyector(item, idioma)).ToList();
@@ -48,6 +50,7 @@ namespace TpIDS
             grilla.AutoGenerateColumns = false;
             grilla.Columns.Clear();
 
+            // Solo agrega gridItem definidos
             foreach (GridColumnDefinition definicion in definiciones)
             {
                 grilla.Columns.Add(CrearColumna(definicion));
@@ -63,6 +66,7 @@ namespace TpIDS
                     return definiciones;
                 }
 
+                // Reflection: APLICAR DEFINICIONES GridItem
                 definiciones = tipoFila
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .Select(propiedad => new
