@@ -17,10 +17,13 @@ namespace TpIDS
         private void InitializeComponent()
         {
             this.lblTituloConfiguracion = new System.Windows.Forms.Label();
+            this.pnlUsuarioActual = new System.Windows.Forms.FlowLayoutPanel();
             this.lblUsuarioActual = new System.Windows.Forms.Label();
+            this.lblUsuarioActualNombre = new System.Windows.Forms.Label();
             this.lblIdiomaSesion = new System.Windows.Forms.Label();
             this.cmbIdiomas = new System.Windows.Forms.ComboBox();
             this.btnGuardarConfiguracion = new System.Windows.Forms.Button();
+            this.pnlUsuarioActual.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTituloConfiguracion
@@ -33,16 +36,37 @@ namespace TpIDS
             this.lblTituloConfiguracion.Tag = "FormUserSettings.TitleLabel";
             this.lblTituloConfiguracion.TabIndex = 0;
             this.lblTituloConfiguracion.Text = "Configuracion del usuario";
-            // 
+            //
+            // pnlUsuarioActual
+            //
+            this.pnlUsuarioActual.AutoSize = true;
+            this.pnlUsuarioActual.Controls.Add(this.lblUsuarioActual);
+            this.pnlUsuarioActual.Controls.Add(this.lblUsuarioActualNombre);
+            this.pnlUsuarioActual.Location = new System.Drawing.Point(22, 62);
+            this.pnlUsuarioActual.Name = "pnlUsuarioActual";
+            this.pnlUsuarioActual.Size = new System.Drawing.Size(95, 13);
+            this.pnlUsuarioActual.TabIndex = 1;
+            this.pnlUsuarioActual.WrapContents = false;
+            //
             // lblUsuarioActual
-            // 
+            //
             this.lblUsuarioActual.AutoSize = true;
-            this.lblUsuarioActual.Location = new System.Drawing.Point(22, 65);
+            this.lblUsuarioActual.Margin = new System.Windows.Forms.Padding(0);
             this.lblUsuarioActual.Name = "lblUsuarioActual";
-            this.lblUsuarioActual.Size = new System.Drawing.Size(87, 13);
-            this.lblUsuarioActual.TabIndex = 1;
-            this.lblUsuarioActual.Text = "Usuario actual: -";
-            // 
+            this.lblUsuarioActual.Size = new System.Drawing.Size(76, 13);
+            this.lblUsuarioActual.TabIndex = 0;
+            this.lblUsuarioActual.Tag = "FormUserSettings.CurrentUserPrefix";
+            this.lblUsuarioActual.Text = "Usuario actual:";
+            //
+            // lblUsuarioActualNombre
+            //
+            this.lblUsuarioActualNombre.AutoSize = true;
+            this.lblUsuarioActualNombre.Margin = new System.Windows.Forms.Padding(4, 0, 0, 0);
+            this.lblUsuarioActualNombre.Name = "lblUsuarioActualNombre";
+            this.lblUsuarioActualNombre.Size = new System.Drawing.Size(10, 13);
+            this.lblUsuarioActualNombre.TabIndex = 1;
+            this.lblUsuarioActualNombre.Text = "-";
+            //
             // lblIdiomaSesion
             // 
             this.lblIdiomaSesion.AutoSize = true;
@@ -81,7 +105,7 @@ namespace TpIDS
             this.Controls.Add(this.btnGuardarConfiguracion);
             this.Controls.Add(this.cmbIdiomas);
             this.Controls.Add(this.lblIdiomaSesion);
-            this.Controls.Add(this.lblUsuarioActual);
+            this.Controls.Add(this.pnlUsuarioActual);
             this.Controls.Add(this.lblTituloConfiguracion);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -89,12 +113,16 @@ namespace TpIDS
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Tag = "FormUserSettings.Title";
             this.Text = "Configuracion del usuario";
+            this.pnlUsuarioActual.ResumeLayout(false);
+            this.pnlUsuarioActual.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
         private System.Windows.Forms.Label lblTituloConfiguracion;
+        private System.Windows.Forms.FlowLayoutPanel pnlUsuarioActual;
         private System.Windows.Forms.Label lblUsuarioActual;
+        private System.Windows.Forms.Label lblUsuarioActualNombre;
         private System.Windows.Forms.Label lblIdiomaSesion;
         private System.Windows.Forms.ComboBox cmbIdiomas;
         private System.Windows.Forms.Button btnGuardarConfiguracion;

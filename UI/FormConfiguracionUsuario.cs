@@ -19,6 +19,7 @@ namespace TpIDS
 
         private void FormConfiguracionUsuario_Load(object sender, EventArgs e)
         {
+            CargarUsuarioActual();
             CargarIdiomas();
         }
 
@@ -52,17 +53,12 @@ namespace TpIDS
             }
         }
 
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            CargarUsuarioActual();
-        }
-
+        // El username es estado de sesion, no de idioma: el prefijo lo traduce el helper via Tag
+        // y aca solo seteamos el dato.
         private void CargarUsuarioActual()
         {
-            string prefijo = ObtenerTextoActual("FormUserSettings.CurrentUserPrefix");
             string username = Sesion.GetInstance().GetUsuarioActualNombre();
-            lblUsuarioActual.Text = string.Format("{0} {1}", prefijo, string.IsNullOrWhiteSpace(username) ? "-" : username);
+            lblUsuarioActualNombre.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
         private void CargarIdiomas()
@@ -82,12 +78,6 @@ namespace TpIDS
                     cmbIdiomas.SelectedItem = idiomaSeleccionado;
                 }
             }
-        }
-
-        private string ObtenerTextoActual(string key)
-        {
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-            return idioma == null ? key : idioma.ObtenerTraduccion(key);
         }
     }
 }

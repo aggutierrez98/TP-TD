@@ -44,8 +44,6 @@
     <Compile Include="IEventoBitacora.cs" />
     <Compile Include="IFiltroBitacora.cs" />
     <Compile Include="IIdioma.cs" />
-    <Compile Include="IObservado.cs" />
-    <Compile Include="IObservador.cs" />
     <Compile Include="IPasswordHasher.cs" />
     <Compile Include="IPalabra.cs" />
     <Compile Include="IPermiso.cs" />

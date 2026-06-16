@@ -23,6 +23,7 @@ namespace TpIDS
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
             chkbUsuarioActivo.Checked = true;
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             CargarGrilla();
         }
 
@@ -350,23 +351,11 @@ namespace TpIDS
             }
         }
 
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
-        }
-
+        // El username es estado de sesion, no de idioma: el prefijo lo traduce el helper via Tag
+        // y aca solo refrescamos el dato cuando la sesion cambia.
         private void ActualizarSesionActualLabel(string username)
         {
-            string prefijo = ObtenerTextoActual("FormUserManagement.SessionLabelPrefix");
-            string nombreUsuario = string.IsNullOrWhiteSpace(username) ? "-" : username;
-            lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
-        }
-
-        private string ObtenerTextoActual(string key)
-        {
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-            return idioma == null ? key : idioma.ObtenerTraduccion(key);
+            lblSesionActualUsuario.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
         private void btnConfiguracion_Click(object sender, EventArgs e)

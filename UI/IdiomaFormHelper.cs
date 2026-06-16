@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows.Forms;
 using SERVICIOS;
 
@@ -44,6 +45,7 @@ namespace TpIDS
             }
         }
 
+        // Aplicar traducciones sobre una lista de controles
         private static void Aplicar(Control.ControlCollection controls, Idioma idioma)
         {
             foreach (Control control in controls)
@@ -57,11 +59,25 @@ namespace TpIDS
             }
         }
 
+
+        // Aplicar traducciones sobre un control puntual
         private static void AplicarControl(Control control, Idioma idioma)
         {
             if (control is DataGridView grilla)
             {
-                AplicarDataGridView(grilla, idioma);
+                // Si la grilla sabe re-proyectar sus datos (celdas traducibles) lo hace; si no,
+                // solo se traducen los encabezados.
+                if (!GrillaFormHelper.Retraducir(grilla, idioma))
+                {
+                    AplicarDataGridView(grilla, idioma);
+                }
+
+                return;
+            }
+
+            if (control is ComboBox combo && TieneOpcionesTraducibles(combo))
+            {
+                AplicarComboBox(combo, idioma);
                 return;
             }
 
@@ -69,6 +85,33 @@ namespace TpIDS
             {
                 control.Text = idioma.ObtenerTraduccion(key);
             }
+        }
+
+        private static bool TieneOpcionesTraducibles(ComboBox combo)
+        {
+            return combo.Items.Count > 0 && combo.Items[0] is OpcionTraducible;
+        }
+
+        private static void AplicarComboBox(ComboBox combo, Idioma idioma)
+        {
+            int seleccion = combo.SelectedIndex;
+            object[] items = combo.Items.Cast<object>().ToArray();
+
+            foreach (OpcionTraducible opcion in items.OfType<OpcionTraducible>())
+            {
+                opcion.Texto = idioma.ObtenerTraduccion(opcion.Clave);
+            }
+
+            // Re-agregar los items fuerza a que el combo recalcule el texto mostrado.
+            combo.BeginUpdate();
+            combo.Items.Clear();
+            combo.Items.AddRange(items);
+            if (seleccion >= 0 && seleccion < combo.Items.Count)
+            {
+                combo.SelectedIndex = seleccion;
+            }
+
+            combo.EndUpdate();
         }
 
         private static string ObtenerPrefijoDataGrid(DataGridView grilla)

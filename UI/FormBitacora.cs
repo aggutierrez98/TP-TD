@@ -19,35 +19,26 @@ namespace TpIDS
         {
             _bitacoraBLL = new BitacoraBLL();
             InitializeComponent();
+            Load += FormBitacora_Load;
         }
 
-        private void CargarNiveles(Idioma idioma)
+        private void FormBitacora_Load(object sender, EventArgs e)
         {
-            string nivelSeleccionado = cmbNivelBitacora.SelectedValue == null
-                ? string.Empty
-                : cmbNivelBitacora.SelectedValue.ToString();
+            CargarNiveles();
+            Buscar();
+        }
 
-            List<NivelBitacoraItem> niveles = new List<NivelBitacoraItem>
-            {
-                new NivelBitacoraItem { Codigo = string.Empty, Texto = string.Empty },
-                new NivelBitacoraItem { Codigo = NivelInformacion, Texto = ObtenerTextoNivel(idioma, NivelInformacion) },
-                new NivelBitacoraItem { Codigo = NivelAdvertencia, Texto = ObtenerTextoNivel(idioma, NivelAdvertencia) },
-                new NivelBitacoraItem { Codigo = NivelError, Texto = ObtenerTextoNivel(idioma, NivelError) }
-            };
-
-            cmbNivelBitacora.DataSource = null;
+        // El combo se puebla una sola vez con los codigos de nivel (dominio); su texto lo traduce
+        // IdiomaFormHelper al cambiar el idioma (ver OpcionTraducible), sin hooks por-form.
+        private void CargarNiveles()
+        {
             cmbNivelBitacora.DisplayMember = "Texto";
-            cmbNivelBitacora.ValueMember = "Codigo";
-            cmbNivelBitacora.DataSource = niveles;
-
-            if (niveles.Any(item => string.Equals(item.Codigo, nivelSeleccionado, StringComparison.Ordinal)))
-            {
-                cmbNivelBitacora.SelectedValue = nivelSeleccionado;
-            }
-            else
-            {
-                cmbNivelBitacora.SelectedIndex = 0;
-            }
+            cmbNivelBitacora.Items.Clear();
+            cmbNivelBitacora.Items.Add(new OpcionTraducible(string.Empty, string.Empty));
+            cmbNivelBitacora.Items.Add(new OpcionTraducible("FormAuditLog.Level.Information", NivelInformacion));
+            cmbNivelBitacora.Items.Add(new OpcionTraducible("FormAuditLog.Level.Warning", NivelAdvertencia));
+            cmbNivelBitacora.Items.Add(new OpcionTraducible("FormAuditLog.Level.Error", NivelError));
+            cmbNivelBitacora.SelectedIndex = 0;
         }
 
         private void btnBuscarBitacora_Click(object sender, EventArgs e)
@@ -101,19 +92,10 @@ namespace TpIDS
             };
         }
 
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            CargarNiveles(idioma);
-            Buscar();
-        }
-
         private string ObtenerNivelSeleccionado()
         {
-            string nivel = cmbNivelBitacora.SelectedValue == null
-                ? null
-                : cmbNivelBitacora.SelectedValue.ToString();
-
+            OpcionTraducible opcion = cmbNivelBitacora.SelectedItem as OpcionTraducible;
+            string nivel = opcion?.Valor as string;
             return string.IsNullOrWhiteSpace(nivel) ? null : nivel;
         }
 
@@ -130,13 +112,6 @@ namespace TpIDS
                 default:
                     return codigoNivel;
             }
-        }
-
-        private sealed class NivelBitacoraItem
-        {
-            public string Codigo { get; set; }
-
-            public string Texto { get; set; }
         }
     }
 }

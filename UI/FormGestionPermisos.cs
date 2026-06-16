@@ -22,7 +22,19 @@ namespace TpIDS
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
+            CargarTiposPermiso();
             CargarCatalogo();
+        }
+
+        // El combo se puebla una sola vez con los valores de dominio; su texto lo traduce
+        // IdiomaFormHelper al cambiar el idioma (ver OpcionTraducible), sin hooks por-form.
+        private void CargarTiposPermiso()
+        {
+            cmbTipoPermiso.DisplayMember = "Texto";
+            cmbTipoPermiso.Items.Clear();
+            cmbTipoPermiso.Items.Add(new OpcionTraducible("FormPermissionManagement.TypeGroup", true));
+            cmbTipoPermiso.Items.Add(new OpcionTraducible("FormPermissionManagement.TypeLeaf", false));
+            cmbTipoPermiso.SelectedIndex = 0;
         }
 
         private void CargarCatalogo()
@@ -82,12 +94,19 @@ namespace TpIDS
                 return;
             }
 
-            AsegurarTiposPermisoCargados();
             txtbNombrePermiso.Text = permiso.Nombre;
-            int indice = permiso.EsGrupo ? 0 : 1;
-            if (cmbTipoPermiso.Items.Count > indice)
+            SeleccionarTipoPermiso(permiso.EsGrupo);
+        }
+
+        private void SeleccionarTipoPermiso(bool esGrupo)
+        {
+            foreach (object item in cmbTipoPermiso.Items)
             {
-                cmbTipoPermiso.SelectedIndex = indice;
+                if (item is OpcionTraducible opcion && opcion.Valor is bool valor && valor == esGrupo)
+                {
+                    cmbTipoPermiso.SelectedItem = item;
+                    return;
+                }
             }
         }
 
@@ -236,42 +255,11 @@ namespace TpIDS
                 throw new ExcepcionNegocio("FormPermissionManagement.Warning.NameContainsDot");
             }
 
-            AsegurarTiposPermisoCargados();
-            bool esGrupo = cmbTipoPermiso.SelectedIndex == 0;
+            OpcionTraducible opcion = cmbTipoPermiso.SelectedItem as OpcionTraducible;
+            bool esGrupo = opcion != null && opcion.Valor is bool valorGrupo && valorGrupo;
             PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
             nodo.Nombre = nombre;
             return nodo;
-        }
-
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            RecargarTiposPermiso(idioma);
-        }
-
-        private void RecargarTiposPermiso(Idioma idioma)
-        {
-            string textoGrupo = idioma == null ? "Grupo" : idioma.ObtenerTraduccion("FormPermissionManagement.TypeGroup");
-            string textoPermiso = idioma == null ? "Permiso" : idioma.ObtenerTraduccion("FormPermissionManagement.TypeLeaf");
-            int indiceActual = cmbTipoPermiso.SelectedIndex < 0 ? 0 : cmbTipoPermiso.SelectedIndex;
-
-            cmbTipoPermiso.Items.Clear();
-            cmbTipoPermiso.Items.Add(textoGrupo);
-            cmbTipoPermiso.Items.Add(textoPermiso);
-            if (cmbTipoPermiso.Items.Count > 0)
-            {
-                cmbTipoPermiso.SelectedIndex = indiceActual <= 1 && indiceActual < cmbTipoPermiso.Items.Count
-                    ? indiceActual
-                    : 0;
-            }
-        }
-
-        private void AsegurarTiposPermisoCargados()
-        {
-            if (cmbTipoPermiso.Items.Count == 0)
-            {
-                RecargarTiposPermiso(IdiomaService.GetInstance().IdiomaActual);
-            }
         }
     }
 }

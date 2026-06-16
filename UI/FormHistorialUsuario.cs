@@ -18,6 +18,17 @@ namespace TpIDS
             _usuarioId = usuarioId;
             _username = username;
             InitializeComponent();
+
+            // El username es dato fijo del constructor, no depende del idioma:
+            // el prefijo lo traduce el helper via Tag y aca solo seteamos el dato.
+            lblUsuarioHistorialNombre.Text = string.IsNullOrWhiteSpace(_username) ? "-" : _username;
+
+            Load += FormHistorialUsuario_Load;
+        }
+
+        private void FormHistorialUsuario_Load(object sender, EventArgs e)
+        {
+            CargarHistorial();
         }
 
         private void btnRefrescarHistorial_Click(object sender, EventArgs e)
@@ -126,13 +137,6 @@ namespace TpIDS
             };
         }
 
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            ActualizarUsuarioLabel();
-            CargarHistorial();
-        }
-
         private string TraducirValor(string valor)
         {
             if (valor == null || valor == "-")
@@ -141,21 +145,6 @@ namespace TpIDS
             }
 
             return UiDialogHelper.TraducirSiExiste(valor);
-        }
-
-        private void ActualizarUsuarioLabel()
-        {
-            const string key = "FormUserHistory.UserPrefix";
-            string prefijo = UiDialogHelper.TraducirSiExiste(key);
-            if (string.Equals(prefijo, key, StringComparison.Ordinal))
-            {
-                prefijo = "Usuario:";
-            }
-
-            lblUsuarioHistorial.Text = string.Format(
-                "{0} {1}",
-                prefijo,
-                _username);
         }
     }
 }

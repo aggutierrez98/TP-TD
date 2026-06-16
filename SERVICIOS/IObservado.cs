@@ -1,15 +1,15 @@
-namespace ABSTRACCIONES
+namespace SERVICIOS
 {
     public interface IObservado
     {
-        IIdioma IdiomaActual { get; }
+        Idioma IdiomaActual { get; }
 
         void RegistrarObservador(IObservador observador);
 
         void DesregistrarObservador(IObservador observador);
 
-        void ActualizarObservadores();
+        void Notificar();
 
-        void CambiarIdioma(IIdioma idioma);
+        void CambiarIdioma(Idioma idioma);
     }
 }
