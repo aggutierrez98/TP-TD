@@ -411,6 +411,11 @@ namespace TpIDS
         {
             using (FormBitacora formBitacora = new FormBitacora())
             {
+                if (!AutorizacionService.GetInstance().TienePermiso("verbitacora")) {
+                    UiDialogHelper.MostrarWarning("FormUserManagement.Warning.NotPermitted");
+                    return;
+                }
+
                 formBitacora.ShowDialog(this);
             }
         }

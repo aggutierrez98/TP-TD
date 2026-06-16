@@ -23,6 +23,7 @@ namespace SERVICIOS
 
         public IList<IPermiso> Hijos { get; private set; }
 
+
         public IList<PermisoNodo> HijosNodos
         {
             get { return Hijos.OfType<PermisoNodo>().ToList(); }
