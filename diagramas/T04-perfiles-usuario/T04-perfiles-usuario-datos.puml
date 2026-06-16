@@ -16,12 +16,13 @@ entity "Usuarios" as Usuarios {
 entity "Permiso" as Permiso {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
-  Nombre : varchar(100) <<NOT NULL>>
+  Nombre : varchar(100) <<UQ, NOT NULL>>
+  EsGrupo : bit <<NOT NULL>>
 }
 
-entity "Grupo" as Grupo {
-  *GrupoId : int <<PK, FK, NOT NULL>>
-  *PermisoId : int <<PK, FK, UQ, NOT NULL>>
+entity "PermisoCompuesto" as PermisoCompuesto {
+  *PermisoPadreId : int <<PK, FK, NOT NULL>>
+  *PermisoHijoId : int <<PK, FK, NOT NULL>>
 }
 
 entity "UsuarioPermiso" as UsuarioPermiso {
@@ -29,8 +30,8 @@ entity "UsuarioPermiso" as UsuarioPermiso {
   *PermisoId : int <<PK, FK, NOT NULL>>
 }
 
-Permiso ||--o{ Grupo : FK_Grupo_Grupo
-Permiso ||--o| Grupo : FK_Grupo_Permiso
+Permiso ||--o{ PermisoCompuesto : FK_PermisoCompuesto_Padre
+Permiso ||--o| PermisoCompuesto : FK_PermisoCompuesto_Hijo
 Usuarios ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Usuario
 Permiso ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Permiso
 

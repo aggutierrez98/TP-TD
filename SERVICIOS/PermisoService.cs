@@ -7,9 +7,7 @@ namespace SERVICIOS
 {
     public class PermisoService
     {
-
-        // Metodo para obtener arbol mostrable en el treeView
-        public IList<PermisoNodo> ConstruirArbol(IList<PermisoNodo> nodos, IList<PermisoRelacion> relaciones)
+        public List<PermisoNodo> ConstruirArbol(IList<PermisoNodo> nodos, IList<PermisoRelacion> relaciones)
         {
             Dictionary<int, PermisoNodo> indice = nodos.ToDictionary(item => item.Id);
 
@@ -25,30 +23,28 @@ namespace SERVICIOS
                     continue;
                 }
 
-                // Reconstruye relaciones padre-hijo entre los nodos
                 indice[relacion.GrupoId].Agregar(indice[relacion.PermisoId]);
             }
 
-            // Determinar cuales son nodos raiz (que no son hijos de nadie)
             HashSet<int> hijos = new HashSet<int>(relaciones.Select(item => item.PermisoId));
-            IList<PermisoNodo> raices = nodos.Where(item => !hijos.Contains(item.Id)).ToList();
-
-            AsignarRutas(raices, string.Empty);
-            return raices;
+            return nodos
+                .Where(item => !hijos.Contains(item.Id))
+                .OrderBy(item => item.Nombre, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
-        public IList<IPermiso> ObtenerPermisosEfectivos(IEnumerable<IPermiso> permisosAsignados)
+        public List<IPermiso> ObtenerPermisosEfectivos(IEnumerable<IPermiso> permisosAsignados)
         {
             List<IPermiso> permisos = new List<IPermiso>();
             AgregarPermisosHoja(permisosAsignados, permisos);
             return permisos;
         }
 
-        public IList<IPermiso> ObtenerPermisosReconocidos(IEnumerable<IPermiso> permisosAsignados)
+        public string NormalizarNombre(string nombre)
         {
-            List<IPermiso> permisos = new List<IPermiso>();
-            AgregarPermisosReconocidos(permisosAsignados, permisos);
-            return permisos;
+            return string.IsNullOrWhiteSpace(nombre)
+                ? string.Empty
+                : nombre.Trim().ToLowerInvariant();
         }
 
         public void ValidarNombre(string nombre)
@@ -81,11 +77,11 @@ namespace SERVICIOS
         {
             foreach (PermisoNodo raiz in raices)
             {
-                ValidarSinCiclos(raiz, new HashSet<string>());
+                ValidarSinCiclos(raiz, new HashSet<int>());
             }
         }
 
-        public IList<PermisoNodo> Aplanar(IEnumerable<PermisoNodo> raices)
+        public List<PermisoNodo> Aplanar(IEnumerable<PermisoNodo> raices)
         {
             List<PermisoNodo> resultado = new List<PermisoNodo>();
             foreach (PermisoNodo raiz in raices)
@@ -96,7 +92,7 @@ namespace SERVICIOS
             return resultado;
         }
 
-        public IList<PermisoRelacion> ObtenerRelaciones(IEnumerable<PermisoNodo> raices)
+        public List<PermisoRelacion> ObtenerRelaciones(IEnumerable<PermisoNodo> raices)
         {
             List<PermisoRelacion> relaciones = new List<PermisoRelacion>();
             foreach (PermisoNodo raiz in raices)
@@ -107,23 +103,81 @@ namespace SERVICIOS
             return relaciones;
         }
 
-        private void AsignarRutas(IEnumerable<PermisoNodo> nodos, string prefijo)
+        private void ValidarSinCiclos(PermisoNodo nodo, ISet<int> visitados)
         {
-            foreach (PermisoNodo nodo in nodos)
+            if (nodo == null)
             {
-                nodo.Ruta = string.IsNullOrEmpty(prefijo) ? nodo.Nombre : prefijo + "." + nodo.Nombre;
-                AsignarRutas(nodo.HijosNodos, nodo.Ruta);
+                return;
+            }
+
+            if (nodo.Id > 0 && visitados.Contains(nodo.Id))
+            {
+                throw new ExcepcionNegocio("Error.Permission.CycleDetected");
+            }
+
+            HashSet<int> ramaActual = new HashSet<int>(visitados);
+            if (nodo.Id > 0)
+            {
+                ramaActual.Add(nodo.Id);
+            }
+
+            foreach (PermisoNodo hijo in nodo.HijosNodos)
+            {
+                ValidarSinCiclos(hijo, ramaActual);
+            }
+        }
+
+        private void Aplanar(PermisoNodo nodo, ICollection<PermisoNodo> resultado)
+        {
+            if (nodo == null)
+            {
+                return;
+            }
+
+            bool existe = nodo.Id > 0
+                ? resultado.Any(item => item.Id == nodo.Id)
+                : resultado.Any(item => object.ReferenceEquals(item, nodo));
+
+            if (!existe)
+            {
+                resultado.Add(nodo);
+            }
+
+            foreach (PermisoNodo hijo in nodo.HijosNodos)
+            {
+                Aplanar(hijo, resultado);
+            }
+        }
+
+        private void ObtenerRelaciones(PermisoNodo nodo, ICollection<PermisoRelacion> relaciones)
+        {
+            foreach (PermisoNodo hijo in nodo.HijosNodos)
+            {
+                bool existeRelacion = relaciones.Any(item => item.GrupoId == nodo.Id && item.PermisoId == hijo.Id);
+                if (!existeRelacion)
+                {
+                    relaciones.Add(new PermisoRelacion
+                    {
+                        GrupoId = nodo.Id,
+                        PermisoId = hijo.Id
+                    });
+                }
+
+                ObtenerRelaciones(hijo, relaciones);
             }
         }
 
         private void ValidarNombresUnicosPorNivel(IEnumerable<PermisoNodo> hermanos)
         {
-            List<PermisoNodo> lista = hermanos.ToList();
+            List<PermisoNodo> lista = hermanos == null
+                ? new List<PermisoNodo>()
+                : hermanos.ToList();
 
             List<string> duplicados = lista
-                .GroupBy(item => item.Nombre, StringComparer.OrdinalIgnoreCase)
+                .GroupBy(item => NormalizarNombre(item.Nombre), StringComparer.OrdinalIgnoreCase)
                 .Where(group => group.Count() > 1)
                 .Select(group => group.Key)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
                 .ToList();
 
             if (duplicados.Count > 0)
@@ -137,49 +191,6 @@ namespace SERVICIOS
             }
         }
 
-        private void ValidarSinCiclos(PermisoNodo nodo, HashSet<string> visitados)
-        {
-            string clave = nodo.ObtenerClave();
-            if (visitados.Contains(clave))
-            {
-                throw new ExcepcionNegocio("Error.Permission.CycleDetected");
-            }
-
-            HashSet<string> ramaActual = new HashSet<string>(visitados) { clave };
-            foreach (PermisoNodo hijo in nodo.Hijos.OfType<PermisoNodo>())
-            {
-                ValidarSinCiclos(hijo, ramaActual);
-            }
-        }
-
-        private void Aplanar(PermisoNodo nodo, ICollection<PermisoNodo> resultado)
-        {
-            if (resultado.All(item => item.ObtenerClave() != nodo.ObtenerClave()))
-            {
-                resultado.Add(nodo);
-            }
-
-            foreach (PermisoNodo hijo in nodo.Hijos.OfType<PermisoNodo>())
-            {
-                Aplanar(hijo, resultado);
-            }
-        }
-
-        private void ObtenerRelaciones(PermisoNodo nodo, ICollection<PermisoRelacion> relaciones)
-        {
-            foreach (PermisoNodo hijo in nodo.Hijos.OfType<PermisoNodo>())
-            {
-                relaciones.Add(new PermisoRelacion
-                {
-                    GrupoId = nodo.Id,
-                    PermisoId = hijo.Id
-                });
-
-                ObtenerRelaciones(hijo, relaciones);
-            }
-        }
-
-        // Devolver solo las hojas, es decir, los permisos que no son grupos
         private void AgregarPermisosHoja(IEnumerable<IPermiso> origen, ICollection<IPermiso> destino)
         {
             if (origen == null)
@@ -196,7 +207,12 @@ namespace SERVICIOS
 
                 foreach (IPermiso permisoHoja in permiso.ObtenerPermisosHoja())
                 {
-                    if (destino.All(item => item.Id != permisoHoja.Id))
+                    bool existePorId = permisoHoja.Id > 0 && destino.Any(item => item.Id == permisoHoja.Id);
+                    bool existePorNombre = destino
+                        .OfType<PermisoNodo>()
+                        .Any(item => string.Equals(NormalizarNombre(item.Nombre), NormalizarNombre(((PermisoNodo)permisoHoja).Nombre), StringComparison.Ordinal));
+
+                    if (!existePorId && !existePorNombre)
                     {
                         destino.Add(permisoHoja);
                     }
@@ -204,28 +220,5 @@ namespace SERVICIOS
             }
         }
 
-        // Devolver todos los permisos reconocidos, incluyendo grupos y hojas
-        private void AgregarPermisosReconocidos(IEnumerable<IPermiso> origen, ICollection<IPermiso> destino)
-        {
-            if (origen == null)
-            {
-                return;
-            }
-
-            foreach (IPermiso permiso in origen)
-            {
-                if (permiso == null)
-                {
-                    continue;
-                }
-
-                if (destino.All(item => item.Id != permiso.Id))
-                {
-                    destino.Add(permiso);
-                }
-
-                AgregarPermisosReconocidos(permiso.Hijos, destino);
-            }
-        }
     }
 }

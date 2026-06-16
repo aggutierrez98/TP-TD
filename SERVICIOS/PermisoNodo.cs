@@ -1,47 +1,72 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using ABSTRACCIONES;
 
 namespace SERVICIOS
 {
     public abstract class PermisoNodo : IPermiso
     {
+        private readonly List<IPermiso> _hijos;
+
         protected PermisoNodo()
         {
-            Hijos = new List<IPermiso>();
+            _hijos = new List<IPermiso>();
         }
 
         public int Id { get; set; }
 
         public string Nombre { get; set; }
 
-        public string Ruta { get; set; }
-
         public abstract bool EsGrupo { get; }
 
-        public IList<IPermiso> Hijos { get; private set; }
-
+        public IList<IPermiso> Hijos
+        {
+            get { return _hijos; }
+        }
 
         public IList<PermisoNodo> HijosNodos
         {
-            get { return Hijos.OfType<PermisoNodo>().ToList(); }
+            get { return _hijos.OfType<PermisoNodo>().ToList(); }
         }
 
         public virtual void Agregar(IPermiso permiso)
         {
             if (!EsGrupo)
             {
-                throw new InvalidOperationException("Un permiso hoja no puede contener hijos.");
+                return;
             }
 
-            if (permiso == null || Hijos.Any(item => item.Id == permiso.Id && permiso.Id > 0))
+            if (permiso == null)
             {
                 return;
             }
 
-            Hijos.Add(permiso);
+            PermisoNodo permisoNodo = permiso as PermisoNodo;
+            if (permisoNodo == null)
+            {
+                return;
+            }
+
+            if (_hijos.Any(item => ReferenceEquals(item, permiso)))
+            {
+                return;
+            }
+
+            string nombreNuevo = string.IsNullOrWhiteSpace(permisoNodo.Nombre)
+                ? string.Empty
+                : permisoNodo.Nombre.Trim().ToLowerInvariant();
+
+            if (_hijos.OfType<PermisoNodo>().Any(item =>
+                (item.Id > 0 && item.Id == permisoNodo.Id) ||
+                string.Equals(
+                    string.IsNullOrWhiteSpace(item.Nombre) ? string.Empty : item.Nombre.Trim().ToLowerInvariant(),
+                    nombreNuevo,
+                    System.StringComparison.Ordinal)))
+            {
+                return;
+            }
+
+            _hijos.Add(permiso);
         }
 
         public virtual void Quitar(IPermiso permiso)
@@ -51,10 +76,10 @@ namespace SERVICIOS
                 return;
             }
 
-            IPermiso existente = Hijos.FirstOrDefault(item => ReferenceEquals(item, permiso) || item.Id == permiso.Id);
+            IPermiso existente = _hijos.FirstOrDefault(item => ReferenceEquals(item, permiso) || item.Id == permiso.Id);
             if (existente != null)
             {
-                Hijos.Remove(existente);
+                _hijos.Remove(existente);
             }
         }
 
@@ -70,7 +95,7 @@ namespace SERVICIOS
 
         public void VaciarHijos()
         {
-            Hijos.Clear();
+            _hijos.Clear();
         }
 
         public bool Contiene(int id)
@@ -80,7 +105,7 @@ namespace SERVICIOS
                 return true;
             }
 
-            return Hijos.Any(item => item.Contiene(id));
+            return _hijos.Any(item => item.Contiene(id));
         }
 
         public IList<IPermiso> ObtenerPermisosHoja()
@@ -93,7 +118,7 @@ namespace SERVICIOS
                 return resultado;
             }
 
-            foreach (IPermiso hijo in Hijos)
+            foreach (IPermiso hijo in _hijos)
             {
                 foreach (IPermiso permiso in hijo.ObtenerPermisosHoja())
                 {
@@ -105,13 +130,6 @@ namespace SERVICIOS
             }
 
             return resultado;
-        }
-
-        public string ObtenerClave()
-        {
-            return Id > 0
-                ? "ID:" + Id
-                : "REF:" + RuntimeHelpers.GetHashCode(this);
         }
 
         public override string ToString()

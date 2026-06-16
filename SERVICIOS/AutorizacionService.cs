@@ -46,19 +46,11 @@ namespace SERVICIOS
                 return false;
             }
 
-            return _permisoService.ObtenerPermisosReconocidos(_permisosUsuarioActual)
+            string permisoBuscado = _permisoService.NormalizarNombre(rutaPermiso);
+
+            return _permisoService.ObtenerPermisosEfectivos(_permisosUsuarioActual)
                 .OfType<PermisoNodo>()
-                .Any(item => string.Equals(item.Ruta, rutaPermiso, System.StringComparison.OrdinalIgnoreCase));
-        }
-
-        public IList<IPermiso> ObtenerPermisosEfectivos()
-        {
-            if (_permisosUsuarioActual == null || _permisosUsuarioActual.Count == 0)
-            {
-                return new List<IPermiso>();
-            }
-
-            return _permisoService.ObtenerPermisosEfectivos(_permisosUsuarioActual);
+                .Any(item => _permisoService.NormalizarNombre(item.Nombre) == permisoBuscado);
         }
     }
 }

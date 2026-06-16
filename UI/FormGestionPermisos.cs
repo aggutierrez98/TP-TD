@@ -9,6 +9,8 @@ namespace TpIDS
 {
     public partial class FormGestionPermisos : FormTraducibleBase
     {
+        private const string PermisoGestionPermisos = "gestionpermisos";
+
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
 
         private List<PermisoNodo> catalogoRaiz;
@@ -22,27 +24,45 @@ namespace TpIDS
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
+            if (!AutorizacionService.GetInstance().TienePermiso(PermisoGestionPermisos))
+            {
+                UiDialogHelper.MostrarWarning("FormUserManagement.Warning.NotPermitted");
+                Close();
+                return;
+            }
+
             CargarCatalogo();
         }
 
         private void CargarCatalogo()
         {
+            Dictionary<int, PermisoNodo> cache = new Dictionary<int, PermisoNodo>();
             catalogoRaiz = permisoBLL.ObtenerCatalogo()
-                .Select(ClonarNodo)
+                .Select(item => ClonarNodo(item, cache))
                 .ToList();
 
             RefrescarArbol();
         }
 
-        private PermisoNodo ClonarNodo(PermisoNodo origen)
+        private PermisoNodo ClonarNodo(PermisoNodo origen, IDictionary<int, PermisoNodo> cache)
         {
+            if (origen.Id > 0 && cache.ContainsKey(origen.Id))
+            {
+                return cache[origen.Id];
+            }
+
             PermisoNodo copia = origen.EsGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
             copia.Id = origen.Id;
             copia.Nombre = origen.Nombre;
 
+            if (origen.Id > 0)
+            {
+                cache[origen.Id] = copia;
+            }
+
             foreach (PermisoNodo hijo in origen.HijosNodos)
             {
-                copia.AgregarHijo(ClonarNodo(hijo));
+                copia.AgregarHijo(ClonarNodo(hijo, cache));
             }
 
             return copia;
@@ -238,9 +258,51 @@ namespace TpIDS
 
             AsegurarTiposPermisoCargados();
             bool esGrupo = cmbTipoPermiso.SelectedIndex == 0;
+            string nombreNormalizado = nombre.ToLowerInvariant();
+
+            PermisoNodo existente = BuscarNodoExistente(nombreNormalizado);
+            if (existente != null)
+            {
+                if (existente.EsGrupo != esGrupo)
+                {
+                    throw new ExcepcionNegocio("Error.Permission.DuplicateNames");
+                }
+
+                return existente;
+            }
+
             PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
-            nodo.Nombre = nombre;
+            nodo.Nombre = nombreNormalizado;
             return nodo;
+        }
+
+        private PermisoNodo BuscarNodoExistente(string nombreNormalizado)
+        {
+            return BuscarNodoExistente(catalogoRaiz, nombreNormalizado);
+        }
+
+        private PermisoNodo BuscarNodoExistente(IEnumerable<PermisoNodo> nodos, string nombreNormalizado)
+        {
+            if (nodos == null)
+            {
+                return null;
+            }
+
+            foreach (PermisoNodo nodo in nodos)
+            {
+                if (string.Equals(nodo.Nombre, nombreNormalizado, StringComparison.OrdinalIgnoreCase))
+                {
+                    return nodo;
+                }
+
+                PermisoNodo encontrado = BuscarNodoExistente(nodo.HijosNodos, nombreNormalizado);
+                if (encontrado != null)
+                {
+                    return encontrado;
+                }
+            }
+
+            return null;
         }
 
         protected override void OnIdiomaActualizado(Idioma idioma)

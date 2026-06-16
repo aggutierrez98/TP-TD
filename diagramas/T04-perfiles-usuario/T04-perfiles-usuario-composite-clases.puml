@@ -32,7 +32,6 @@ package "SERVICIOS" {
   abstract class PermisoNodo {
     +Id : int
     +Nombre : string
-    +Ruta : string
     +EsGrupo : bool
     +Hijos : IList<IPermiso>
     +HijosNodos : IList<PermisoNodo>
@@ -42,7 +41,6 @@ package "SERVICIOS" {
     +QuitarHijo(permiso : PermisoNodo) : void
     +Contiene(id : int) : bool
     +ObtenerPermisosHoja() : IList<IPermiso>
-    +ObtenerClave() : string
   }
 
   class PermisoSimple
@@ -56,7 +54,7 @@ package "SERVICIOS" {
   class PermisoService {
     +ConstruirArbol(nodos : IList<PermisoNodo>, relaciones : IList<PermisoRelacion>) : IList<PermisoNodo>
     +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
-    +ObtenerPermisosReconocidos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
+    +NormalizarNombre(nombre : string) : string
     +ValidarNombre(nombre : string) : void
     +ValidarNombresUnicos(raices : IEnumerable<PermisoNodo>) : void
     +ValidarGruposNoVacios(nodos : IEnumerable<PermisoNodo>) : void
@@ -70,7 +68,6 @@ package "SERVICIOS" {
     +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
     +Limpiar() : void
     +TienePermiso(rutaPermiso : string) : bool
-    +ObtenerPermisosEfectivos() : IList<IPermiso>
   }
 
   class BitacoraService <<singleton>> {
@@ -86,12 +83,12 @@ package "SERVICIOS" {
 
 package "DAL" {
   class PermisoDAL {
-    +ObtenerNodos() : List<PermisoNodo>
-    +ObtenerRelaciones() : List<PermisoRelacion>
-    +InsertarPermiso(nombre : string) : int
-    +ActualizarNombre(id : int, nombre : string) : bool
-    +ReemplazarRelaciones(relaciones : List<PermisoRelacion>) : bool
-    +EliminarPermisos(idsPermiso : List<int>) : bool
+    +ObtenerNodos(accesoDatos : AccesoDatos = null) : List<PermisoNodo>
+    +ObtenerRelaciones(accesoDatos : AccesoDatos = null) : List<PermisoRelacion>
+    +Guardar(permiso : PermisoNodo, accesoDatos : AccesoDatos = null) : int
+    +ReemplazarRelaciones(relaciones : List<PermisoRelacion>, accesoDatos : AccesoDatos = null) : bool
+    +EliminarPermisos(idsPermiso : List<int>, accesoDatos : AccesoDatos = null) : bool
+    +ObtenerIdPorNombre(nombre : string, accesoDatos : AccesoDatos = null) : int
   }
 
   class UsuarioPermisoDAL {
@@ -119,6 +116,7 @@ package "BLL" {
     +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
     +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
     +CargarPermisosEnUsuario(usuario : Usuario) : void
+    +AsignarPerfilBasico(usuarioId : int, accesoDatos : AccesoDatos) : void
   }
 
   class UsuarioBLL {
