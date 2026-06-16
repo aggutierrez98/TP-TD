@@ -150,11 +150,11 @@ VALUES
 
 INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
 VALUES
-    ('admin', 'CmYlAroe+tgUfZ/7Rogq6WYTdpwiiLrP42Yzme2H4uWumfSzQL9nYPP7nPm4robx', 1),
-    ('usuariobasico', 'lmP7s4ZXWlbtL/6E1NmpwzwwFl84fYVkJ1HwLNEK1lAc3ONRpExs2cuWvfFBpglx', 1);
+    ('admin', 'jdLqOYiW5l0Rzxvs2F6C9s+XPP1lpDouX9r4gg8K72K00snMfMzAo84u8OAQP4Hc', 1),
+    ('user', 'DDQdLlDvTDqmjKrOv8/nV7l2SmyoVkxqURLPHM1EG8fYYF61cjoTPjh45V3iiql9', 1);
 
 SELECT @AdminUserId = Id FROM dbo.Usuarios WHERE Username = 'admin';
-SELECT @UsuarioBasicoId = Id FROM dbo.Usuarios WHERE Username = 'usuariobasico';
+SELECT @UsuarioBasicoId = Id FROM dbo.Usuarios WHERE Username = 'user';
 SELECT @GrupoAdminId = Id FROM dbo.Permiso WHERE Nombre = 'admin';
 SELECT @GrupoBasicoId = Id FROM dbo.Permiso WHERE Nombre = 'basico';
 

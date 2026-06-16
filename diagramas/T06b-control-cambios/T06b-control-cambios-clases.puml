@@ -51,8 +51,6 @@ package "SERVICIOS" {
     +IdiomaId : int
   }
 
-  class PermisoNodo
-
   class Sesion <<singleton>> {
     +GetInstance() : Sesion
     +GetUsuarioActualId() : int?
@@ -61,7 +59,7 @@ package "SERVICIOS" {
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
   }
 
   class BitacoraService <<singleton>> {
@@ -122,7 +120,7 @@ package "BLL" {
   }
 
   class PermisoBLL {
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
   }
 
   class BootstrapAplicacionBLL {

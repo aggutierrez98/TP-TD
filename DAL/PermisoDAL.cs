@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -9,7 +10,7 @@ namespace DAL
 {
     public class PermisoDAL
     {
-        public List<PermisoNodo> ObtenerNodos(AccesoDatos accesoDatos = null)
+        public List<object> ObtenerNodos(AccesoDatos accesoDatos = null)
         {
             const string query = @"
                 SELECT p.Id,
@@ -37,7 +38,7 @@ namespace DAL
             }
         }
 
-        public List<PermisoRelacion> ObtenerRelaciones(AccesoDatos accesoDatos = null)
+        public List<Tuple<int, int>> ObtenerRelaciones(AccesoDatos accesoDatos = null)
         {
             const string query = @"
                 SELECT PermisoPadreId,
@@ -52,11 +53,7 @@ namespace DAL
             {
                 DataTable dataTable = accesoDatos.Read(query);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => new PermisoRelacion
-                    {
-                        GrupoId = (int)row["PermisoPadreId"],
-                        PermisoId = (int)row["PermisoHijoId"]
-                    })
+                    .Select(row => Tuple.Create((int)row["PermisoPadreId"], (int)row["PermisoHijoId"]))
                     .ToList();
             }
             finally
@@ -68,14 +65,18 @@ namespace DAL
             }
         }
 
-        public int Guardar(PermisoNodo permiso, AccesoDatos accesoDatos = null)
+        public int Guardar(object permiso, AccesoDatos accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
 
             try
             {
-                if (permiso.Id <= 0)
+                int permisoId = ObtenerId(permiso);
+                string permisoNombre = ObtenerNombre(permiso);
+                bool esGrupo = EsGrupo(permiso);
+
+                if (permisoId <= 0)
                 {
                     const string insertQuery = @"
                         INSERT INTO Permiso (Nombre, EsGrupo)
@@ -84,8 +85,8 @@ namespace DAL
 
                     List<SqlParameter> insertParametros = new List<SqlParameter>
                     {
-                        accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, permiso.Nombre),
-                        accesoDatos.CreateParameter("@EsGrupo", SqlDbType.Bit, permiso.EsGrupo)
+                        accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, permisoNombre),
+                        accesoDatos.CreateParameter("@EsGrupo", SqlDbType.Bit, esGrupo)
                     };
 
                     return accesoDatos.WriteWithResult(insertQuery, insertParametros);
@@ -99,13 +100,13 @@ namespace DAL
 
                 List<SqlParameter> updateParametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, permiso.Id),
-                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, permiso.Nombre),
-                    accesoDatos.CreateParameter("@EsGrupo", SqlDbType.Bit, permiso.EsGrupo)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, permisoId),
+                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, permisoNombre),
+                    accesoDatos.CreateParameter("@EsGrupo", SqlDbType.Bit, esGrupo)
                 };
 
                 accesoDatos.Write(updateQuery, updateParametros);
-                return permiso.Id;
+                return permisoId;
             }
             finally
             {
@@ -116,7 +117,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarRelaciones(List<PermisoRelacion> relaciones, AccesoDatos accesoDatos = null)
+        public bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones, AccesoDatos accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -132,8 +133,8 @@ namespace DAL
                         INSERT INTO PermisoCompuesto (PermisoPadreId, PermisoHijoId)
                         VALUES (@GrupoId{i}, @PermisoId{i});";
 
-                    parametros.Add(accesoDatos.CreateParameter("@GrupoId" + i, SqlDbType.Int, relaciones[i].GrupoId));
-                    parametros.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, relaciones[i].PermisoId));
+                    parametros.Add(accesoDatos.CreateParameter("@GrupoId" + i, SqlDbType.Int, relaciones[i].Item1));
+                    parametros.Add(accesoDatos.CreateParameter("@PermisoId" + i, SqlDbType.Int, relaciones[i].Item2));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
@@ -208,13 +209,68 @@ namespace DAL
             }
         }
 
-        private static PermisoNodo MapNodo(DataRow row)
+        private static object MapNodo(DataRow row)
         {
             bool esGrupo = row["EsGrupo"] != DBNull.Value && Convert.ToBoolean(row["EsGrupo"]);
-            PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
-            nodo.Id = (int)row["Id"];
-            nodo.Nombre = row["Nombre"].ToString();
+            object nodo = esGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+
+            if (nodo is PermisoGrupo grupo)
+            {
+                grupo.Id = (int)row["Id"];
+                grupo.Nombre = row["Nombre"].ToString();
+            }
+            else if (nodo is PermisoSimple simple)
+            {
+                simple.Id = (int)row["Id"];
+                simple.Nombre = row["Nombre"].ToString();
+            }
+
             return nodo;
+        }
+
+        private static int ObtenerId(object permiso)
+        {
+            if (permiso is PermisoGrupo grupo)
+            {
+                return grupo.Id;
+            }
+
+            if (permiso is PermisoSimple simple)
+            {
+                return simple.Id;
+            }
+
+            throw new InvalidOperationException("Tipo de permiso no soportado.");
+        }
+
+        private static string ObtenerNombre(object permiso)
+        {
+            if (permiso is PermisoGrupo grupo)
+            {
+                return grupo.Nombre;
+            }
+
+            if (permiso is PermisoSimple simple)
+            {
+                return simple.Nombre;
+            }
+
+            throw new InvalidOperationException("Tipo de permiso no soportado.");
+        }
+
+        private static bool EsGrupo(object permiso)
+        {
+            if (permiso is PermisoGrupo)
+            {
+                return true;
+            }
+
+            if (permiso is PermisoSimple)
+            {
+                return false;
+            }
+
+            throw new InvalidOperationException("Tipo de permiso no soportado.");
         }
 
         private static string CrearWhereIn(AccesoDatos accesoDatos, string prefijo, IList<int> ids, ICollection<SqlParameter> parametros)

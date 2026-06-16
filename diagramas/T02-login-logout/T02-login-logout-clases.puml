@@ -31,7 +31,7 @@ package "BLL" {
 
   class PermisoBLL {
     +CargarPermisosEnUsuario(usuario : Usuario) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
   }
 
   class IdiomaBLL {
@@ -67,7 +67,7 @@ package "SERVICIOS" {
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
     +Limpiar() : void
   }
 
@@ -78,7 +78,6 @@ package "SERVICIOS" {
   }
 
   class Idioma
-  class PermisoNodo
   class UsuarioAutenticadoSesion
 }
 

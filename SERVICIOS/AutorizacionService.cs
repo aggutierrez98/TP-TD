@@ -1,4 +1,5 @@
 using ABSTRACCIONES;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,11 +28,18 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        public void ActualizarPermisosUsuarioActual(IList<PermisoNodo> permisos)
+        private void ActualizarPermisosUsuarioActual(IList<IPermiso> permisos)
         {
             _permisosUsuarioActual = permisos == null
                 ? new List<IPermiso>()
-                : permisos.Cast<IPermiso>().ToList();
+                : permisos.ToList();
+        }
+
+        public void ActualizarPermisosUsuarioActual(IEnumerable permisos)
+        {
+            _permisosUsuarioActual = permisos == null
+                ? new List<IPermiso>()
+                : permisos.Cast<object>().OfType<IPermiso>().ToList();
         }
 
         public void Limpiar()
@@ -49,7 +57,6 @@ namespace SERVICIOS
             string permisoBuscado = _permisoService.NormalizarNombre(rutaPermiso);
 
             return _permisoService.ObtenerPermisosEfectivos(_permisosUsuarioActual)
-                .OfType<PermisoNodo>()
                 .Any(item => _permisoService.NormalizarNombre(item.Nombre) == permisoBuscado);
         }
     }

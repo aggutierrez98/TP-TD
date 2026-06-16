@@ -271,10 +271,10 @@ namespace TpIDS
 
             try
             {
-                List<PermisoNodo> catalogo = permisoBLL.ObtenerCatalogo();
+                List<object> catalogo = permisoBLL.ObtenerCatalogo();
                 HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
 
-                foreach (PermisoNodo raiz in catalogo)
+                foreach (object raiz in catalogo)
                 {
                     tvwPermisosUsuario.Nodes.Add(CrearNodoPermiso(raiz, permisosAsignados));
                 }
@@ -287,15 +287,17 @@ namespace TpIDS
             }
         }
 
-        private TreeNode CrearNodoPermiso(PermisoNodo permiso, ISet<int> permisosAsignados)
+        private TreeNode CrearNodoPermiso(object permiso, ISet<int> permisosAsignados)
         {
-            TreeNode nodo = new TreeNode(permiso.Nombre)
+            dynamic permisoActual = permiso;
+
+            TreeNode nodo = new TreeNode((string)permisoActual.Nombre)
             {
                 Tag = permiso,
-                Checked = permisosAsignados.Contains(permiso.Id)
+                Checked = permisosAsignados.Contains((int)permisoActual.Id)
             };
 
-            foreach (PermisoNodo hijo in permiso.HijosNodos)
+            foreach (object hijo in permisoActual.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoPermiso(hijo, permisosAsignados));
             }
@@ -336,10 +338,10 @@ namespace TpIDS
             List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
-                PermisoNodo permiso = nodo.Tag as PermisoNodo;
+                object permiso = nodo.Tag;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add(permiso.Id);
+                    ids.Add((int)((dynamic)permiso).Id);
                 }
 
                 ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
