@@ -167,8 +167,8 @@ namespace BLL
             }
 
             Dictionary<int, string> indice = _permisoDAL.ObtenerNodos()
-                .GroupBy(item => item.Id)
-                .ToDictionary(group => group.Key, group => group.First().Nombre);
+                .GroupBy(item => (int)((dynamic)item).Id)
+                .ToDictionary(group => group.Key, group => (string)((dynamic)group.First()).Nombre);
 
             List<string> nombres = permisosIds
                 .Distinct()

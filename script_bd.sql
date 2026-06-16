@@ -73,23 +73,24 @@ CREATE TABLE dbo.Permiso
 (
     Id INT IDENTITY(1,1) NOT NULL,
     Nombre VARCHAR(100) NOT NULL,
+    EsGrupo BIT NOT NULL,
     CONSTRAINT PK_Permiso PRIMARY KEY CLUSTERED (Id)
 );
 GO
 
-CREATE TABLE dbo.Grupo
-(
-    GrupoId INT NOT NULL,
-    PermisoId INT NOT NULL,
-    CONSTRAINT PK_Grupo PRIMARY KEY CLUSTERED (GrupoId, PermisoId),
-    CONSTRAINT FK_Grupo_Grupo FOREIGN KEY (GrupoId) REFERENCES dbo.Permiso(Id),
-    CONSTRAINT FK_Grupo_Permiso FOREIGN KEY (PermisoId) REFERENCES dbo.Permiso(Id),
-    CONSTRAINT CK_Grupo_Distinto CHECK (GrupoId <> PermisoId)
-);
+ALTER TABLE dbo.Permiso
+ADD CONSTRAINT UQ_Permiso_Nombre UNIQUE (Nombre);
 GO
 
-CREATE UNIQUE INDEX UQ_Grupo_PermisoId
-    ON dbo.Grupo (PermisoId);
+CREATE TABLE dbo.PermisoCompuesto
+(
+    PermisoPadreId INT NOT NULL,
+    PermisoHijoId INT NOT NULL,
+    CONSTRAINT PK_PermisoCompuesto PRIMARY KEY CLUSTERED (PermisoPadreId, PermisoHijoId),
+    CONSTRAINT FK_PermisoCompuesto_Padre FOREIGN KEY (PermisoPadreId) REFERENCES dbo.Permiso(Id),
+    CONSTRAINT FK_PermisoCompuesto_Hijo FOREIGN KEY (PermisoHijoId) REFERENCES dbo.Permiso(Id),
+    CONSTRAINT CK_PermisoCompuesto_Distinto CHECK (PermisoPadreId <> PermisoHijoId)
+);
 GO
 
 CREATE TABLE dbo.UsuarioPermiso
@@ -100,6 +101,67 @@ CREATE TABLE dbo.UsuarioPermiso
     CONSTRAINT FK_UsuarioPermiso_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
     CONSTRAINT FK_UsuarioPermiso_Permiso FOREIGN KEY (PermisoId) REFERENCES dbo.Permiso(Id)
 );
+GO
+
+DECLARE @PermisoGestionUsuariosId INT;
+DECLARE @PermisoGestionPermisosId INT;
+DECLARE @PermisoVerBitacoraId INT;
+DECLARE @PermisoHistorialUsuariosId INT;
+DECLARE @PermisoConfiguracionUsuarioId INT;
+DECLARE @PermisoGestionIdiomasId INT;
+DECLARE @GrupoAdminId INT;
+DECLARE @GrupoBasicoId INT;
+DECLARE @AdminUserId INT;
+DECLARE @UsuarioBasicoId INT;
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionusuarios', 0);
+SET @PermisoGestionUsuariosId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionpermisos', 0);
+SET @PermisoGestionPermisosId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('verbitacora', 0);
+SET @PermisoVerBitacoraId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('historialusuarios', 0);
+SET @PermisoHistorialUsuariosId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('configuracionusuario', 0);
+SET @PermisoConfiguracionUsuarioId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionidiomas', 0);
+SET @PermisoGestionIdiomasId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
+SET @GrupoAdminId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('basico', 1);
+SET @GrupoBasicoId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.PermisoCompuesto (PermisoPadreId, PermisoHijoId)
+VALUES
+    (@GrupoAdminId, @PermisoGestionUsuariosId),
+    (@GrupoAdminId, @PermisoGestionPermisosId),
+    (@GrupoAdminId, @PermisoVerBitacoraId),
+    (@GrupoAdminId, @PermisoHistorialUsuariosId),
+    (@GrupoAdminId, @PermisoConfiguracionUsuarioId),
+    (@GrupoAdminId, @PermisoGestionIdiomasId),
+    (@GrupoBasicoId, @PermisoConfiguracionUsuarioId);
+
+INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
+VALUES
+    ('admin', 'jdLqOYiW5l0Rzxvs2F6C9s+XPP1lpDouX9r4gg8K72K00snMfMzAo84u8OAQP4Hc', 1),
+    ('user', 'DDQdLlDvTDqmjKrOv8/nV7l2SmyoVkxqURLPHM1EG8fYYF61cjoTPjh45V3iiql9', 1);
+
+SELECT @AdminUserId = Id FROM dbo.Usuarios WHERE Username = 'admin';
+SELECT @UsuarioBasicoId = Id FROM dbo.Usuarios WHERE Username = 'user';
+SELECT @GrupoAdminId = Id FROM dbo.Permiso WHERE Nombre = 'admin';
+SELECT @GrupoBasicoId = Id FROM dbo.Permiso WHERE Nombre = 'basico';
+
+INSERT INTO dbo.UsuarioPermiso (UsuarioId, PermisoId)
+VALUES
+    (@AdminUserId, @GrupoAdminId),
+    (@UsuarioBasicoId, @GrupoBasicoId);
 GO
 
 CREATE TABLE dbo.Bitacora

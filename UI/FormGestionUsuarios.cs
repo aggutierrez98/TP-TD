@@ -10,6 +10,13 @@ namespace TpIDS
 {
     public partial class FormGestionUsuarios : FormTraducibleBase
     {
+        private const string PermisoBitacora = "verbitacora";
+        private const string PermisoConfiguracion = "configuracionusuario";
+        private const string PermisoGestionIdiomas = "gestionidiomas";
+        private const string PermisoGestionPermisos = "gestionpermisos";
+        private const string PermisoGestionUsuarios = "gestionusuarios";
+        private const string PermisoHistorialUsuarios = "historialusuarios";
+
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
         private int _idSeleccionado = -1;
@@ -23,6 +30,8 @@ namespace TpIDS
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
             chkbUsuarioActivo.Checked = true;
+            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+            AplicarPermisosPantalla();
             CargarGrilla();
         }
 
@@ -63,6 +72,38 @@ namespace TpIDS
             tvwPermisosUsuario.Nodes.Clear();
         }
 
+        private void AplicarPermisosPantalla()
+        {
+            bool puedeGestionarUsuarios = AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios);
+            bool puedeGestionarPermisos = AutorizacionService.GetInstance().TienePermiso(PermisoGestionPermisos);
+            bool puedeVerHistorial = AutorizacionService.GetInstance().TienePermiso(PermisoHistorialUsuarios);
+            bool puedeVerBitacora = AutorizacionService.GetInstance().TienePermiso(PermisoBitacora);
+            bool puedeConfigurarUsuario = AutorizacionService.GetInstance().TienePermiso(PermisoConfiguracion);
+            bool puedeGestionarIdiomas = AutorizacionService.GetInstance().TienePermiso(PermisoGestionIdiomas);
+
+            btnAgregarUsuario.Enabled = puedeGestionarUsuarios;
+            btnEditarUsuario.Enabled = puedeGestionarUsuarios;
+            btnEliminarUsuario.Enabled = puedeGestionarUsuarios;
+            groupBoxPermisosUsuario.Enabled = puedeGestionarUsuarios;
+            btnGuardarPermisosUsuario.Enabled = puedeGestionarUsuarios;
+            btnGestionPermisos.Enabled = puedeGestionarPermisos;
+            btnHistorialUsuario.Enabled = puedeVerHistorial;
+            btnBitacora.Enabled = puedeVerBitacora;
+            btnConfiguracion.Enabled = puedeConfigurarUsuario;
+            btnGestionIdiomas.Enabled = puedeGestionarIdiomas;
+        }
+
+        private bool ValidarPermiso(string permiso)
+        {
+            if (AutorizacionService.GetInstance().TienePermiso(permiso))
+            {
+                return true;
+            }
+
+            UiDialogHelper.MostrarWarning("FormUserManagement.Warning.NotPermitted");
+            return false;
+        }
+
         private void dgvUsuarios_SelectionChanged(object sender, EventArgs e)
         {
             // Durante el rebinding la grilla dispara eventos intermedios antes de terminar de reconstruir columnas y filas.
@@ -76,6 +117,11 @@ namespace TpIDS
 
         private void btnAgregarUsuario_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionUsuarios))
+            {
+                return;
+            }
+
             string username = txtbNombreUsuario.Text.Trim();
             string password = txtbPasswordUsuario.Text.Trim();
 
@@ -104,6 +150,11 @@ namespace TpIDS
 
         private void btnEditarUsuario_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionUsuarios))
+            {
+                return;
+            }
+
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
@@ -161,6 +212,11 @@ namespace TpIDS
 
         private void btnEliminarUsuario_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionUsuarios))
+            {
+                return;
+            }
+
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
@@ -208,17 +264,17 @@ namespace TpIDS
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
-            if (_idSeleccionado == -1)
+            if (_idSeleccionado == -1 || !AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios))
             {
                 return;
             }
 
             try
             {
-                List<PermisoNodo> catalogo = permisoBLL.ObtenerCatalogo();
+                List<object> catalogo = permisoBLL.ObtenerCatalogo();
                 HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
 
-                foreach (PermisoNodo raiz in catalogo)
+                foreach (object raiz in catalogo)
                 {
                     tvwPermisosUsuario.Nodes.Add(CrearNodoPermiso(raiz, permisosAsignados));
                 }
@@ -231,15 +287,17 @@ namespace TpIDS
             }
         }
 
-        private TreeNode CrearNodoPermiso(PermisoNodo permiso, ISet<int> permisosAsignados)
+        private TreeNode CrearNodoPermiso(object permiso, ISet<int> permisosAsignados)
         {
-            TreeNode nodo = new TreeNode(permiso.Nombre)
+            dynamic permisoActual = permiso;
+
+            TreeNode nodo = new TreeNode((string)permisoActual.Nombre)
             {
                 Tag = permiso,
-                Checked = permisosAsignados.Contains(permiso.Id)
+                Checked = permisosAsignados.Contains((int)permisoActual.Id)
             };
 
-            foreach (PermisoNodo hijo in permiso.HijosNodos)
+            foreach (object hijo in permisoActual.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoPermiso(hijo, permisosAsignados));
             }
@@ -249,6 +307,11 @@ namespace TpIDS
 
         private void btnGuardarPermisosUsuario_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionUsuarios))
+            {
+                return;
+            }
+
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserPermissions");
@@ -275,10 +338,10 @@ namespace TpIDS
             List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
-                PermisoNodo permiso = nodo.Tag as PermisoNodo;
+                object permiso = nodo.Tag;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add(permiso.Id);
+                    ids.Add((int)((dynamic)permiso).Id);
                 }
 
                 ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
@@ -371,16 +434,31 @@ namespace TpIDS
 
         private void btnConfiguracion_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoConfiguracion))
+            {
+                return;
+            }
+
             new FormConfiguracionUsuario().ShowDialog(this);
         }
 
         private void btnGestionIdiomas_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionIdiomas))
+            {
+                return;
+            }
+
             new FormGestionIdiomas().Show(this);
         }
 
         private void btnGestionPermisos_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoGestionPermisos))
+            {
+                return;
+            }
+
             using (FormGestionPermisos formGestionPermisos = new FormGestionPermisos())
             {
                 formGestionPermisos.ShowDialog(this);
@@ -391,6 +469,11 @@ namespace TpIDS
 
         private void btnHistorialUsuario_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoHistorialUsuarios))
+            {
+                return;
+            }
+
             if (_idSeleccionado == -1)
             {
                 UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserHistory");
@@ -409,13 +492,13 @@ namespace TpIDS
 
         private void btnBitacora_Click(object sender, EventArgs e)
         {
+            if (!ValidarPermiso(PermisoBitacora))
+            {
+                return;
+            }
+
             using (FormBitacora formBitacora = new FormBitacora())
             {
-                if (!AutorizacionService.GetInstance().TienePermiso("verbitacora")) {
-                    UiDialogHelper.MostrarWarning("FormUserManagement.Warning.NotPermitted");
-                    return;
-                }
-
                 formBitacora.ShowDialog(this);
             }
         }

@@ -1,4 +1,5 @@
 using ABSTRACCIONES;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -27,11 +28,18 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        public void ActualizarPermisosUsuarioActual(IList<PermisoNodo> permisos)
+        private void ActualizarPermisosUsuarioActual(IList<IPermiso> permisos)
         {
             _permisosUsuarioActual = permisos == null
                 ? new List<IPermiso>()
-                : permisos.Cast<IPermiso>().ToList();
+                : permisos.ToList();
+        }
+
+        public void ActualizarPermisosUsuarioActual(IEnumerable permisos)
+        {
+            _permisosUsuarioActual = permisos == null
+                ? new List<IPermiso>()
+                : permisos.Cast<object>().OfType<IPermiso>().ToList();
         }
 
         public void Limpiar()
@@ -46,19 +54,10 @@ namespace SERVICIOS
                 return false;
             }
 
-            return _permisoService.ObtenerPermisosReconocidos(_permisosUsuarioActual)
-                .OfType<PermisoNodo>()
-                .Any(item => string.Equals(item.Ruta, rutaPermiso, System.StringComparison.OrdinalIgnoreCase));
-        }
+            string permisoBuscado = _permisoService.NormalizarNombre(rutaPermiso);
 
-        public IList<IPermiso> ObtenerPermisosEfectivos()
-        {
-            if (_permisosUsuarioActual == null || _permisosUsuarioActual.Count == 0)
-            {
-                return new List<IPermiso>();
-            }
-
-            return _permisoService.ObtenerPermisosEfectivos(_permisosUsuarioActual);
+            return _permisoService.ObtenerPermisosEfectivos(_permisosUsuarioActual)
+                .Any(item => _permisoService.NormalizarNombre(item.Nombre) == permisoBuscado);
         }
     }
 }
