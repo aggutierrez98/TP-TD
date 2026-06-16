@@ -7,6 +7,8 @@ namespace TpIDS
 {
     internal static class IdiomaFormHelper
     {
+
+        // Aplica traducciones sobre formulario y sus controles
         public static void Aplicar(Form form, Idioma idioma)
         {
             if (form == null || idioma == null)
@@ -14,8 +16,52 @@ namespace TpIDS
                 return;
             }
 
-            AplicarControl(form, idioma);
-            Aplicar(form.Controls, idioma);
+
+            foreach (Control item in form.Controls)
+            {
+                    
+                Aplicar(item, idioma);
+            }
+        }
+
+        // Aplica traducciones sobre un control y sus hijos
+        public static void Aplicar(Control control, Idioma idioma)
+        {
+            if (control == null || idioma == null)
+            {
+                return;
+            }
+
+            if (control is DataGridView grilla)
+            {
+                // Si la grilla sabe re-proyectar sus datos (celdas traducibles) lo hace
+                if (!GrillaFormHelper.Retraducir(grilla, idioma))
+                {
+                    AplicarDataGridView(grilla, idioma);
+                }
+
+                return;
+            }
+
+            if (control is ComboBox combo && TieneOpcionesTraducibles(combo))
+            {
+                AplicarComboBox(combo, idioma);
+                return;
+            }
+
+            if (control.Tag is string key)
+            {
+                control.Text = idioma.ObtenerTraduccion(key);
+            }
+
+            if (control.HasChildren)
+            {
+
+                foreach (Control item in control.Controls)
+                {
+                    Aplicar(item, idioma);
+                }
+            }
         }
 
         public static void AplicarDataGridView(DataGridView grilla, Idioma idioma)
@@ -42,48 +88,6 @@ namespace TpIDS
                         columna.HeaderText = traduccion;
                     }
                 }
-            }
-        }
-
-        // Aplicar traducciones sobre una lista de controles
-        private static void Aplicar(Control.ControlCollection controls, Idioma idioma)
-        {
-            foreach (Control control in controls)
-            {
-                AplicarControl(control, idioma);
-
-                if (control.HasChildren)
-                {
-                    Aplicar(control.Controls, idioma);
-                }
-            }
-        }
-
-
-        // Aplicar traducciones sobre un control puntual
-        private static void AplicarControl(Control control, Idioma idioma)
-        {
-            if (control is DataGridView grilla)
-            {
-                // Si la grilla sabe re-proyectar sus datos (celdas traducibles) lo hace; si no,
-                // solo se traducen los encabezados.
-                if (!GrillaFormHelper.Retraducir(grilla, idioma))
-                {
-                    AplicarDataGridView(grilla, idioma);
-                }
-
-                return;
-            }
-
-            if (control is ComboBox combo && TieneOpcionesTraducibles(combo))
-            {
-                AplicarComboBox(combo, idioma);
-                return;
-            }
-
-            if (control.Tag is string key)
-            {
-                control.Text = idioma.ObtenerTraduccion(key);
             }
         }
 
