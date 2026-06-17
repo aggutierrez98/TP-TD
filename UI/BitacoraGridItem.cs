@@ -16,13 +16,13 @@ namespace TpIDS
         [GridColumn("FormAuditLog.Grid.UsernameSnapshot", Order = 3)]
         public string UsernameSnapshot { get; set; }
 
-        [GridColumn("FormAuditLog.Grid.Activity", Order = 4)]
+        [GridColumn("FormAuditLog.Grid.Activity", Order = 4, TraducirValor = true)]
         public string Actividad { get; set; }
 
-        [GridColumn("FormAuditLog.Grid.Information", Order = 5, FillWeight = 180F)]
+        [GridColumn("FormAuditLog.Grid.Information", Order = 5, FillWeight = 180F, TraducirValor = true)]
         public string Informacion { get; set; }
 
-        [GridColumn("FormAuditLog.Grid.Level", Order = 6)]
+        [GridColumn("FormAuditLog.Grid.Level", Order = 6, TraducirValor = true)]
         public string Nivel { get; set; }
 
         [GridColumn("FormAuditLog.Grid.Source", Order = 7)]

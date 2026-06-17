@@ -17,13 +17,16 @@ namespace TpIDS
         private void InitializeComponent()
         {
             this.lblTituloHistorialUsuario = new System.Windows.Forms.Label();
+            this.pnlUsuarioHistorial = new System.Windows.Forms.FlowLayoutPanel();
             this.lblUsuarioHistorial = new System.Windows.Forms.Label();
+            this.lblUsuarioHistorialNombre = new System.Windows.Forms.Label();
             this.dgvHistorialUsuario = new System.Windows.Forms.DataGridView();
             this.dgvCambiosEstado = new System.Windows.Forms.DataGridView();
             this.btnRestaurarVersion = new System.Windows.Forms.Button();
             this.btnRefrescarHistorial = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHistorialUsuario)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCambiosEstado)).BeginInit();
+            this.pnlUsuarioHistorial.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTituloHistorialUsuario
@@ -35,15 +38,37 @@ namespace TpIDS
             this.lblTituloHistorialUsuario.Size = new System.Drawing.Size(0, 25);
             this.lblTituloHistorialUsuario.Tag = "FormUserHistory.TitleLabel";
             this.lblTituloHistorialUsuario.TabIndex = 0;
-            // 
+            //
+            // pnlUsuarioHistorial
+            //
+            this.pnlUsuarioHistorial.AutoSize = true;
+            this.pnlUsuarioHistorial.Controls.Add(this.lblUsuarioHistorial);
+            this.pnlUsuarioHistorial.Controls.Add(this.lblUsuarioHistorialNombre);
+            this.pnlUsuarioHistorial.Location = new System.Drawing.Point(17, 45);
+            this.pnlUsuarioHistorial.Name = "pnlUsuarioHistorial";
+            this.pnlUsuarioHistorial.Size = new System.Drawing.Size(60, 13);
+            this.pnlUsuarioHistorial.TabIndex = 1;
+            this.pnlUsuarioHistorial.WrapContents = false;
+            //
             // lblUsuarioHistorial
-            // 
+            //
             this.lblUsuarioHistorial.AutoSize = true;
-            this.lblUsuarioHistorial.Location = new System.Drawing.Point(17, 48);
+            this.lblUsuarioHistorial.Margin = new System.Windows.Forms.Padding(0);
             this.lblUsuarioHistorial.Name = "lblUsuarioHistorial";
-            this.lblUsuarioHistorial.Size = new System.Drawing.Size(0, 13);
-            this.lblUsuarioHistorial.TabIndex = 1;
-            // 
+            this.lblUsuarioHistorial.Size = new System.Drawing.Size(49, 13);
+            this.lblUsuarioHistorial.TabIndex = 0;
+            this.lblUsuarioHistorial.Tag = "FormUserHistory.UserPrefix";
+            this.lblUsuarioHistorial.Text = "Usuario:";
+            //
+            // lblUsuarioHistorialNombre
+            //
+            this.lblUsuarioHistorialNombre.AutoSize = true;
+            this.lblUsuarioHistorialNombre.Margin = new System.Windows.Forms.Padding(4, 0, 0, 0);
+            this.lblUsuarioHistorialNombre.Name = "lblUsuarioHistorialNombre";
+            this.lblUsuarioHistorialNombre.Size = new System.Drawing.Size(10, 13);
+            this.lblUsuarioHistorialNombre.TabIndex = 1;
+            this.lblUsuarioHistorialNombre.Text = "-";
+            //
             // dgvHistorialUsuario
             // 
             this.dgvHistorialUsuario.AllowUserToAddRows = false;
@@ -108,7 +133,7 @@ namespace TpIDS
             this.Controls.Add(this.btnRestaurarVersion);
             this.Controls.Add(this.dgvCambiosEstado);
             this.Controls.Add(this.dgvHistorialUsuario);
-            this.Controls.Add(this.lblUsuarioHistorial);
+            this.Controls.Add(this.pnlUsuarioHistorial);
             this.Controls.Add(this.lblTituloHistorialUsuario);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -117,12 +142,16 @@ namespace TpIDS
             this.Tag = "FormUserHistory.Title";
             ((System.ComponentModel.ISupportInitialize)(this.dgvHistorialUsuario)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCambiosEstado)).EndInit();
+            this.pnlUsuarioHistorial.ResumeLayout(false);
+            this.pnlUsuarioHistorial.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
         private System.Windows.Forms.Label lblTituloHistorialUsuario;
+        private System.Windows.Forms.FlowLayoutPanel pnlUsuarioHistorial;
         private System.Windows.Forms.Label lblUsuarioHistorial;
+        private System.Windows.Forms.Label lblUsuarioHistorialNombre;
         private System.Windows.Forms.DataGridView dgvHistorialUsuario;
         private System.Windows.Forms.DataGridView dgvCambiosEstado;
         private System.Windows.Forms.Button btnRestaurarVersion;

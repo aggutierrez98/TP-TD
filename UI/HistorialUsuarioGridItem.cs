@@ -19,10 +19,10 @@ namespace TpIDS
         [GridColumn("FormUserHistory.Grid.ActorUsernameSnapshot", Order = 4)]
         public string ActorUsernameSnapshot { get; set; }
 
-        [GridColumn("FormUserHistory.Grid.Action", Order = 5)]
+        [GridColumn("FormUserHistory.Grid.Action", Order = 5, TraducirValor = true)]
         public string Accion { get; set; }
 
-        [GridColumn("FormUserHistory.Grid.Observations", Order = 6)]
+        [GridColumn("FormUserHistory.Grid.Observations", Order = 6, TraducirValor = true)]
         public string Observaciones { get; set; }
 
         [GridColumn("FormUserHistory.Grid.Username", Order = 7)]

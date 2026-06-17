@@ -3,16 +3,16 @@ using System.Linq;
 
 namespace SERVICIOS
 {
-    public class IdiomaService
+    public class IdiomaService : IObservado
     {
         private static IdiomaService _instancia;
 
-        private readonly List<System.Action<Idioma>> _observadoresRegistrados;
+        private readonly List<IObservador> _observadores;
         private Idioma _idiomaActual;
 
         private IdiomaService()
         {
-            _observadoresRegistrados = new List<System.Action<Idioma>>();
+            _observadores = new List<IObservador>();
         }
 
         public static IdiomaService GetInstance()
@@ -30,39 +30,49 @@ namespace SERVICIOS
             get { return _idiomaActual; }
         }
 
-        public void RegistrarObservador(System.Action<Idioma> observador)
+        public void RegistrarObservador(IObservador observador)
         {
-            if (observador == null || _observadoresRegistrados.Contains(observador))
+            if (observador == null || _observadores.Contains(observador))
             {
                 return;
             }
 
-            _observadoresRegistrados.Add(observador);
+            _observadores.Add(observador);
+
+            if (_idiomaActual != null)
+            {
+                observador.Actualizar(this);
+            }
         }
 
-        public void DesregistrarObservador(System.Action<Idioma> observador)
+        public void DesregistrarObservador(IObservador observador)
         {
             if (observador == null)
             {
                 return;
             }
 
-            _observadoresRegistrados.Remove(observador);
+            _observadores.Remove(observador);
+        }
+
+        public void Notificar()
+        {
+            if (_idiomaActual == null)
+            {
+                return;
+            }
+
+            foreach (IObservador observador in _observadores.ToList())
+            {
+                observador.Actualizar(this);
+            }
         }
 
         public void CambiarIdioma(Idioma idioma)
         {
             _idiomaActual = idioma;
 
-            if (_idiomaActual == null)
-            {
-                return;
-            }
-
-            foreach (System.Action<Idioma> observador in _observadoresRegistrados.ToList())
-            {
-                observador(_idiomaActual);
-            }
+            Notificar();
         }
     }
 }

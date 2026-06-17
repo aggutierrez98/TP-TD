@@ -2,43 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Windows.Forms;
-using SERVICIOS;
 
 namespace TpIDS
 {
-    internal static class GrillaFormHelper
+    // Construye las columnas de una grilla a partir de los atributos [GridColumn] del tipo de fila.
+    // Cachea las definiciones por tipo para no reflexionar en cada recarga.
+    internal static class GrillaColumnasBuilder
     {
-        private static readonly Dictionary<Type, List<GridColumnDefinition>> ColumnasPorTipo =
+        private static readonly Dictionary<Type, List<GridColumnDefinition>> DefinicionesPorTipo =
             new Dictionary<Type, List<GridColumnDefinition>>();
 
-        public static void Recargar<TFuente, TFila>(
-            DataGridView grilla,
-            IEnumerable<TFuente> datos,
-            Func<TFuente, Idioma, TFila> proyector,
-            Idioma idioma,
-            Action<DataGridView> posDataSource = null)
-            where TFila : class
-        {
+        // Por grilla: nombres de columnas cuyas celdas guardan una clave y se traducen al pintarse.
+        private static readonly ConditionalWeakTable<DataGridView, HashSet<string>> ColumnasTraducibles =
+            new ConditionalWeakTable<DataGridView, HashSet<string>>();
 
-            // Filas de proyecciones a columnas
-            List<TFila> filas = datos == null
-                ? new List<TFila>()
-                : datos.Select(item => proyector(item, idioma)).ToList();
+        // Por grilla: tipo de fila ya configurado. Las columnas se arman una sola vez.
+        private static readonly ConditionalWeakTable<DataGridView, Type> TipoConfigurado =
+            new ConditionalWeakTable<DataGridView, Type>();
 
-            ConfigurarColumnas<TFila>(grilla);
-            grilla.DataSource = null;
-            grilla.DataSource = filas;
-
-            if (posDataSource != null)
-            {
-                posDataSource(grilla);
-            }
-
-            IdiomaFormHelper.AplicarDataGridView(grilla, idioma);
-        }
-
-        private static void ConfigurarColumnas<TFila>(DataGridView grilla)
+        public static void Configurar<TFila>(DataGridView grilla)
             where TFila : class
         {
             if (grilla == null)
@@ -46,27 +30,67 @@ namespace TpIDS
                 return;
             }
 
-            List<GridColumnDefinition> definiciones = ObtenerDefiniciones(typeof(TFila));
+            // Las columnas se arman una sola vez por grilla: las recargas posteriores solo cambian
+            // los datos. Asi los headers (que traduce el Observer segun el Tag) y los anchos no se pierden.
+            if (TipoConfigurado.TryGetValue(grilla, out Type tipo) && tipo == typeof(TFila))
+            {
+                return;
+            }
+
             grilla.AutoGenerateColumns = false;
             grilla.Columns.Clear();
 
-            // Solo agrega gridItem definidos
-            foreach (GridColumnDefinition definicion in definiciones)
+            HashSet<string> traducibles = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (GridColumnDefinition definicion in ObtenerDefiniciones(typeof(TFila)))
             {
                 grilla.Columns.Add(CrearColumna(definicion));
+
+                if (definicion.TraducirValor)
+                {
+                    traducibles.Add(definicion.ColumnName);
+                }
             }
+
+            ColumnasTraducibles.Remove(grilla);
+            ColumnasTraducibles.Add(grilla, traducibles);
+
+            // Suscribir una sola vez: el -= remueve la suscripcion previa del mismo metodo estatico.
+            grilla.CellFormatting -= TraducirCelda;
+            grilla.CellFormatting += TraducirCelda;
+
+            TipoConfigurado.Remove(grilla);
+            TipoConfigurado.Add(grilla, typeof(TFila));
+        }
+
+        // En cada pintado, las celdas de columnas marcadas traducen su clave al idioma vigente.
+        private static void TraducirCelda(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.Value == null || e.RowIndex < 0)
+            {
+                return;
+            }
+
+            DataGridView grilla = (DataGridView)sender;
+            if (!ColumnasTraducibles.TryGetValue(grilla, out HashSet<string> traducibles) ||
+                !traducibles.Contains(grilla.Columns[e.ColumnIndex].Name))
+            {
+                return;
+            }
+
+            e.Value = UiDialogHelper.TraducirSiExiste(e.Value.ToString());
+            e.FormattingApplied = true;
         }
 
         private static List<GridColumnDefinition> ObtenerDefiniciones(Type tipoFila)
         {
-            lock (ColumnasPorTipo)
+            lock (DefinicionesPorTipo)
             {
-                if (ColumnasPorTipo.TryGetValue(tipoFila, out List<GridColumnDefinition> definiciones))
+                if (DefinicionesPorTipo.TryGetValue(tipoFila, out List<GridColumnDefinition> definiciones))
                 {
                     return definiciones;
                 }
 
-                // Reflection: APLICAR DEFINICIONES GridItem
                 definiciones = tipoFila
                     .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                     .Select(propiedad => new
@@ -87,12 +111,13 @@ namespace TpIDS
                         Width = item.Atributo.Width,
                         FillWeight = item.Atributo.FillWeight,
                         ReadOnly = item.Atributo.ReadOnly,
+                        TraducirValor = item.Atributo.TraducirValor,
                         EsBooleano = item.Propiedad.PropertyType == typeof(bool) ||
                                      item.Propiedad.PropertyType == typeof(bool?)
                     })
                     .ToList();
 
-                ColumnasPorTipo[tipoFila] = definiciones;
+                DefinicionesPorTipo[tipoFila] = definiciones;
                 return definiciones;
             }
         }
@@ -126,17 +151,12 @@ namespace TpIDS
         private sealed class GridColumnDefinition
         {
             public string ColumnName { get; set; }
-
             public string DataPropertyName { get; set; }
-
             public string TranslationKey { get; set; }
-
             public int Width { get; set; }
-
             public float FillWeight { get; set; }
-
             public bool ReadOnly { get; set; }
-
+            public bool TraducirValor { get; set; }
             public bool EsBooleano { get; set; }
         }
     }

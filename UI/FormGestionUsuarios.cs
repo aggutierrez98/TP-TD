@@ -29,13 +29,14 @@ namespace TpIDS
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
+            GrillaColumnasBuilder.Configurar<UsuarioGridItem>(dgvUsuarios);
             chkbUsuarioActivo.Checked = true;
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             AplicarPermisosPantalla();
-            CargarGrilla();
+            RefrescarDatos();
         }
 
-        private void CargarGrilla()
+        private void RefrescarDatos()
         {
             int idAnterior = _idSeleccionado;
             _cargandoGrillaUsuarios = true;
@@ -43,13 +44,9 @@ namespace TpIDS
             try
             {
                 List<Usuario> usuarios = usuarioBLL.ObtenerTodos();
-                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-                GrillaFormHelper.Recargar(
-                    dgvUsuarios,
-                    usuarios,
-                    ProyectarUsuarioFila,
-                    idioma,
-                    grilla => ReseleccionarUsuario(grilla, idAnterior));
+                dgvUsuarios.DataSource = null;
+                dgvUsuarios.DataSource = usuarios.Select(ProyectarUsuarioFila).ToList();
+                ReseleccionarUsuario(dgvUsuarios, idAnterior);
             }
             catch (Exception ex)
             {
@@ -139,7 +136,7 @@ namespace TpIDS
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserCreated");
                     LimpiarSeleccion();
-                    CargarGrilla();
+                    RefrescarDatos();
                 }
             }
             catch (Exception ex)
@@ -201,7 +198,7 @@ namespace TpIDS
                             : "FormUserManagement.Success.UserUpdated";
                     UiDialogHelper.MostrarInfo(successKey);
                     LimpiarSeleccion();
-                    CargarGrilla();
+                    RefrescarDatos();
                 }
             }
             catch (Exception ex)
@@ -241,7 +238,7 @@ namespace TpIDS
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserDeleted");
                     LimpiarSeleccion();
-                    CargarGrilla();
+                    RefrescarDatos();
                 }
             }
             catch (Exception ex)
@@ -350,7 +347,7 @@ namespace TpIDS
             return ids;
         }
 
-        private UsuarioGridItem ProyectarUsuarioFila(Usuario usuario, Idioma idioma)
+        private UsuarioGridItem ProyectarUsuarioFila(Usuario usuario)
         {
             return new UsuarioGridItem
             {
@@ -413,23 +410,11 @@ namespace TpIDS
             }
         }
 
-        protected override void OnIdiomaActualizado(Idioma idioma)
-        {
-            base.OnIdiomaActualizado(idioma);
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
-        }
-
+        // El username es estado de sesion, no de idioma: el prefijo lo traduce el helper via Tag
+        // y aca solo refrescamos el dato cuando la sesion cambia.
         private void ActualizarSesionActualLabel(string username)
         {
-            string prefijo = ObtenerTextoActual("FormUserManagement.SessionLabelPrefix");
-            string nombreUsuario = string.IsNullOrWhiteSpace(username) ? "-" : username;
-            lblSesionActual.Text = string.Format("{0} {1}", prefijo, nombreUsuario);
-        }
-
-        private string ObtenerTextoActual(string key)
-        {
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-            return idioma == null ? key : idioma.ObtenerTraduccion(key);
+            lblSesionActualUsuario.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
         private void btnConfiguracion_Click(object sender, EventArgs e)
@@ -485,7 +470,7 @@ namespace TpIDS
                 formHistorialUsuario.ShowDialog(this);
             }
 
-            CargarGrilla();
+            RefrescarDatos();
             CargarPermisosUsuario();
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows.Forms;
 using SERVICIOS;
 
@@ -6,6 +7,8 @@ namespace TpIDS
 {
     internal static class IdiomaFormHelper
     {
+
+        // Aplica traducciones sobre formulario y sus controles
         public static void Aplicar(Form form, Idioma idioma)
         {
             if (form == null || idioma == null)
@@ -13,8 +16,49 @@ namespace TpIDS
                 return;
             }
 
-            AplicarControl(form, idioma);
-            Aplicar(form.Controls, idioma);
+
+            foreach (Control item in form.Controls)
+            {
+                    
+                Aplicar(item, idioma);
+            }
+        }
+
+        // Aplica traducciones sobre un control y sus hijos
+        public static void Aplicar(Control control, Idioma idioma)
+        {
+            if (control == null || idioma == null)
+            {
+                return;
+            }
+
+            if (control is DataGridView grilla)
+            {
+                // Encabezados: se traducen aca. Celdas: se traducen solas al repintar (CellFormatting).
+                AplicarDataGridView(grilla, idioma);
+                grilla.Invalidate();
+                return;
+            }
+
+            if (control is ComboBox combo && TieneOpcionesTraducibles(combo))
+            {
+                AplicarComboBox(combo, idioma);
+                return;
+            }
+
+            if (control.Tag is string key)
+            {
+                control.Text = idioma.ObtenerTraduccion(key);
+            }
+
+            if (control.HasChildren)
+            {
+
+                foreach (Control item in control.Controls)
+                {
+                    Aplicar(item, idioma);
+                }
+            }
         }
 
         public static void AplicarDataGridView(DataGridView grilla, Idioma idioma)
@@ -44,31 +88,31 @@ namespace TpIDS
             }
         }
 
-        private static void Aplicar(Control.ControlCollection controls, Idioma idioma)
+        private static bool TieneOpcionesTraducibles(ComboBox combo)
         {
-            foreach (Control control in controls)
-            {
-                AplicarControl(control, idioma);
-
-                if (control.HasChildren)
-                {
-                    Aplicar(control.Controls, idioma);
-                }
-            }
+            return combo.Items.Count > 0 && combo.Items[0] is OpcionTraducible;
         }
 
-        private static void AplicarControl(Control control, Idioma idioma)
+        private static void AplicarComboBox(ComboBox combo, Idioma idioma)
         {
-            if (control is DataGridView grilla)
+            int seleccion = combo.SelectedIndex;
+            object[] items = combo.Items.Cast<object>().ToArray();
+
+            foreach (OpcionTraducible opcion in items.OfType<OpcionTraducible>())
             {
-                AplicarDataGridView(grilla, idioma);
-                return;
+                opcion.Texto = idioma.ObtenerTraduccion(opcion.Clave);
             }
 
-            if (control.Tag is string key)
+            // Re-agregar los items fuerza a que el combo recalcule el texto mostrado.
+            combo.BeginUpdate();
+            combo.Items.Clear();
+            combo.Items.AddRange(items);
+            if (seleccion >= 0 && seleccion < combo.Items.Count)
             {
-                control.Text = idioma.ObtenerTraduccion(key);
+                combo.SelectedIndex = seleccion;
             }
+
+            combo.EndUpdate();
         }
 
         private static string ObtenerPrefijoDataGrid(DataGridView grilla)

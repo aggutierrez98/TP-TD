@@ -1,0 +1,74 @@
+@startuml
+title T04 - Gestion de Perfiles de Usuario - Autorizacion por Permiso - Secuencia
+
+actor "Usuario autenticado" as UsuarioAutenticado
+participant "Componente protegido" as ComponenteProtegido
+participant "UsuarioBLL" as UsuarioBLL
+participant "PermisoBLL" as PermisoBLL
+participant "AutorizacionService" as AutorizacionService
+participant "PermisoService" as PermisoService
+participant "UsuarioPermisoDAL" as UsuarioPermisoDAL
+participant "PermisoDAL" as PermisoDAL
+
+group Carga previa de permisos en sesion actual
+  UsuarioBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(usuarioId)
+  PermisoBLL -> UsuarioPermisoDAL : ObtenerPermisoIdsPorUsuario(usuarioId)
+  UsuarioPermisoDAL --> PermisoBLL : permisosId
+  PermisoBLL -> PermisoDAL : ObtenerNodos()
+  PermisoDAL --> PermisoBLL : nodos
+  PermisoBLL -> PermisoDAL : ObtenerRelaciones()
+  PermisoDAL --> PermisoBLL : relaciones
+  PermisoBLL -> PermisoService : ConstruirArbol(nodos, relaciones)
+  PermisoService --> PermisoBLL : catalogo
+  PermisoBLL -> PermisoBLL : filtrar catalogo por permisosId
+  PermisoBLL --> UsuarioBLL : permisosDirectos
+  UsuarioBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
+end
+
+UsuarioAutenticado -> ComponenteProtegido : ejecutar accion protegida
+ComponenteProtegido -> AutorizacionService : GetInstance()
+AutorizacionService --> ComponenteProtegido : instancia
+ComponenteProtegido -> AutorizacionService : TienePermiso("Grupo.Permiso")
+
+alt ruta vacia o sesion sin permisos cargados
+  AutorizacionService --> ComponenteProtegido : false
+  ComponenteProtegido --> UsuarioAutenticado : operacion denegada
+else ruta valida y existen permisos cargados
+  AutorizacionService -> PermisoService : ObtenerPermisosReconocidos(_permisosUsuarioActual)
+  PermisoService --> AutorizacionService : permisosReconocidos
+
+  alt existe PermisoNodo.Ruta igual a "Grupo.Permiso"
+    AutorizacionService --> ComponenteProtegido : true
+    ComponenteProtegido --> UsuarioAutenticado : operacion permitida
+  else no existe coincidencia de ruta
+    AutorizacionService --> ComponenteProtegido : false
+    ComponenteProtegido --> UsuarioAutenticado : operacion denegada
+  end
+end
+
+note right of AutorizacionService
+Compara ignorando mayusculas/minusculas.
+La coincidencia se hace contra PermisoNodo.Ruta.
+TienePermiso(...) no consulta DAL.
+Evalua los permisos ya cargados en memoria.
+end note
+
+note over PermisoService
+Los permisos reconocidos incluyen grupos y permisos hoja.
+Esto permite validar rutas como:
+- Grupo.Permiso
+- Grupo.Grupo.Permiso
+- niveles mas profundos
+end note
+
+note over ComponenteProtegido
+La ruta validada debe venir del catalogo jerarquico de permisos.
+PermisoService.ConstruirArbol(...) asigna esas rutas en PermisoNodo.Ruta.
+end note
+
+note over UsuarioBLL,AutorizacionService
+La carga previa ocurre cuando la sesion inicia o se refresca.
+Ejemplos reales en codigo: UsuarioBLL.Login(...) y RefrescarSesionSiCorresponde(...).
+end note
+
+@enduml

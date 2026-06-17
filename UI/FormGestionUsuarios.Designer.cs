@@ -17,7 +17,9 @@ namespace TpIDS
         private void InitializeComponent()
         {
             this.lblTituloGestionUsuarios = new System.Windows.Forms.Label();
+            this.pnlSesionActual = new System.Windows.Forms.FlowLayoutPanel();
             this.lblSesionActual = new System.Windows.Forms.Label();
+            this.lblSesionActualUsuario = new System.Windows.Forms.Label();
             this.dgvUsuarios = new System.Windows.Forms.DataGridView();
             this.groupBoxGestion = new System.Windows.Forms.GroupBox();
             this.lblPasswordUsuario = new System.Windows.Forms.Label();
@@ -37,6 +39,7 @@ namespace TpIDS
             this.btnHistorialUsuario = new System.Windows.Forms.Button();
             this.btnBitacora = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
+            this.pnlSesionActual.SuspendLayout();
             this.groupBoxGestion.SuspendLayout();
             this.groupBoxPermisosUsuario.SuspendLayout();
             this.SuspendLayout();
@@ -51,18 +54,41 @@ namespace TpIDS
             this.lblTituloGestionUsuarios.TabIndex = 0;
             this.lblTituloGestionUsuarios.Tag = "FormUserManagement.TitleLabel";
             this.lblTituloGestionUsuarios.Text = "Gestion de Usuarios";
-            // 
+            //
+            // pnlSesionActual
+            //
+            this.pnlSesionActual.AutoSize = true;
+            this.pnlSesionActual.Controls.Add(this.lblSesionActual);
+            this.pnlSesionActual.Controls.Add(this.lblSesionActualUsuario);
+            this.pnlSesionActual.Location = new System.Drawing.Point(12, 42);
+            this.pnlSesionActual.Name = "pnlSesionActual";
+            this.pnlSesionActual.Size = new System.Drawing.Size(110, 15);
+            this.pnlSesionActual.TabIndex = 1;
+            this.pnlSesionActual.WrapContents = false;
+            //
             // lblSesionActual
-            // 
+            //
             this.lblSesionActual.AutoSize = true;
             this.lblSesionActual.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
             this.lblSesionActual.ForeColor = System.Drawing.Color.DimGray;
-            this.lblSesionActual.Location = new System.Drawing.Point(14, 45);
+            this.lblSesionActual.Margin = new System.Windows.Forms.Padding(0);
             this.lblSesionActual.Name = "lblSesionActual";
-            this.lblSesionActual.Size = new System.Drawing.Size(86, 15);
-            this.lblSesionActual.TabIndex = 1;
-            this.lblSesionActual.Text = "Sesion activa: -";
-            // 
+            this.lblSesionActual.Size = new System.Drawing.Size(75, 15);
+            this.lblSesionActual.TabIndex = 0;
+            this.lblSesionActual.Tag = "FormUserManagement.SessionLabelPrefix";
+            this.lblSesionActual.Text = "Sesion activa:";
+            //
+            // lblSesionActualUsuario
+            //
+            this.lblSesionActualUsuario.AutoSize = true;
+            this.lblSesionActualUsuario.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+            this.lblSesionActualUsuario.ForeColor = System.Drawing.Color.DimGray;
+            this.lblSesionActualUsuario.Margin = new System.Windows.Forms.Padding(4, 0, 0, 0);
+            this.lblSesionActualUsuario.Name = "lblSesionActualUsuario";
+            this.lblSesionActualUsuario.Size = new System.Drawing.Size(11, 15);
+            this.lblSesionActualUsuario.TabIndex = 1;
+            this.lblSesionActualUsuario.Text = "-";
+            //
             // dgvUsuarios
             // 
             this.dgvUsuarios.AllowUserToAddRows = false;
@@ -281,7 +307,7 @@ namespace TpIDS
             this.Controls.Add(this.btnGestionIdiomas);
             this.Controls.Add(this.btnConfiguracion);
             this.Controls.Add(this.lblTituloGestionUsuarios);
-            this.Controls.Add(this.lblSesionActual);
+            this.Controls.Add(this.pnlSesionActual);
             this.Controls.Add(this.dgvUsuarios);
             this.Controls.Add(this.groupBoxGestion);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -292,6 +318,8 @@ namespace TpIDS
             this.Text = "Gestion de Usuarios";
             this.Load += new System.EventHandler(this.FormGestionUsuarios_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).EndInit();
+            this.pnlSesionActual.ResumeLayout(false);
+            this.pnlSesionActual.PerformLayout();
             this.groupBoxGestion.ResumeLayout(false);
             this.groupBoxGestion.PerformLayout();
             this.groupBoxPermisosUsuario.ResumeLayout(false);
@@ -301,7 +329,9 @@ namespace TpIDS
         }
 
         private System.Windows.Forms.Label lblTituloGestionUsuarios;
+        private System.Windows.Forms.FlowLayoutPanel pnlSesionActual;
         private System.Windows.Forms.Label lblSesionActual;
+        private System.Windows.Forms.Label lblSesionActualUsuario;
         private System.Windows.Forms.DataGridView dgvUsuarios;
         private System.Windows.Forms.GroupBox groupBoxGestion;
         private System.Windows.Forms.Label lblPasswordUsuario;

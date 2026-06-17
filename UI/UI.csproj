@@ -108,9 +108,10 @@
     <Compile Include="BitacoraGridItem.cs" />
     <Compile Include="CambioEstadoGridItem.cs" />
     <Compile Include="GridColumnAttribute.cs" />
-    <Compile Include="GrillaFormHelper.cs" />
+    <Compile Include="GrillaColumnasBuilder.cs" />
     <Compile Include="HistorialUsuarioGridItem.cs" />
     <Compile Include="IdiomaFormHelper.cs" />
+    <Compile Include="OpcionTraducible.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TraduccionGridItem.cs" />
