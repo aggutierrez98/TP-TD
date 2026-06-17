@@ -11,6 +11,7 @@ participant "UsuarioEstadoBLL" as UsuarioEstadoBLL
 participant "BitacoraService" as BitacoraService
 participant "Sesion" as Sesion
 participant "AutorizacionService" as AutorizacionService
+participant "PermisoService" as PermisoService
 
 Administrador -> FormGestionUsuarios : btnGuardarPermisosUsuario_Click()
 FormGestionUsuarios -> PermisoBLL : GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados)
@@ -27,6 +28,7 @@ alt usuario modificado es sesion actual
   PermisoBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(usuarioId)
   PermisoBLL --> PermisoBLL : permisosDirectos
   PermisoBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
+  AutorizacionService -> PermisoService : ObtenerPermisosEfectivos(permisosDirectos)
 end
 
 PermisoBLL --> FormGestionUsuarios : void

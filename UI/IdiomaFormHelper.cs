@@ -34,12 +34,9 @@ namespace TpIDS
 
             if (control is DataGridView grilla)
             {
-                // Si la grilla sabe re-proyectar sus datos (celdas traducibles) lo hace
-                if (!GrillaFormHelper.Retraducir(grilla, idioma))
-                {
-                    AplicarDataGridView(grilla, idioma);
-                }
-
+                // Encabezados: se traducen aca. Celdas: se traducen solas al repintar (CellFormatting).
+                AplicarDataGridView(grilla, idioma);
+                grilla.Invalidate();
                 return;
             }
 

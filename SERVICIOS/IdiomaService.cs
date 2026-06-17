@@ -41,8 +41,6 @@ namespace SERVICIOS
 
             if (_idiomaActual != null)
             {
-                //observador.Act(_idiomaActual); // sincronización al adjuntar
-
                 observador.Actualizar(this);
             }
         }

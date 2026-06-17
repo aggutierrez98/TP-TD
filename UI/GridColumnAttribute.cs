@@ -26,5 +26,9 @@ namespace TpIDS
         public bool ReadOnly { get; set; }
 
         public string ColumnName { get; set; }
+
+        // Si es true, el valor de las celdas de esta columna se traduce en tiempo de render
+        // (la celda guarda la clave y el helper la traduce al pintarse).
+        public bool TraducirValor { get; set; }
     }
 }

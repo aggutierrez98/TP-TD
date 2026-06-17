@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using BE;
 using BLL;
 using SERVICIOS;
 
@@ -9,13 +10,16 @@ namespace TpIDS
 {
     public partial class FormGestionPermisos : FormTraducibleBase
     {
-        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private const string PermisoGestionPermisos = "gestionpermisos";
 
-        private List<PermisoNodo> catalogoRaiz;
+        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private readonly PermisoService permisoService = new PermisoService();
+
+        private List<object> catalogoRaiz;
 
         public FormGestionPermisos()
         {
-            catalogoRaiz = new List<PermisoNodo>();
+            catalogoRaiz = new List<object>();
             InitializeComponent();
             Load += FormGestionPermisos_Load;
         }
@@ -39,22 +43,35 @@ namespace TpIDS
 
         private void CargarCatalogo()
         {
+            Dictionary<int, object> cache = new Dictionary<int, object>();
             catalogoRaiz = permisoBLL.ObtenerCatalogo()
-                .Select(ClonarNodo)
+                .Select(item => ClonarNodo(item, cache))
                 .ToList();
 
             RefrescarArbol();
         }
 
-        private PermisoNodo ClonarNodo(PermisoNodo origen)
+        private object ClonarNodo(object origen, IDictionary<int, object> cache)
         {
-            PermisoNodo copia = origen.EsGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
-            copia.Id = origen.Id;
-            copia.Nombre = origen.Nombre;
+            dynamic permisoOrigen = origen;
 
-            foreach (PermisoNodo hijo in origen.HijosNodos)
+            if ((int)permisoOrigen.Id > 0 && cache.ContainsKey((int)permisoOrigen.Id))
             {
-                copia.AgregarHijo(ClonarNodo(hijo));
+                return cache[(int)permisoOrigen.Id];
+            }
+
+            dynamic copia = permisoOrigen.EsGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+            copia.Id = permisoOrigen.Id;
+            copia.Nombre = permisoOrigen.Nombre;
+
+            if ((int)permisoOrigen.Id > 0)
+            {
+                cache[(int)permisoOrigen.Id] = copia;
+            }
+
+            foreach (object hijo in permisoOrigen.Hijos)
+            {
+                permisoService.AgregarHijo(copia, ClonarNodo(hijo, cache));
             }
 
             return copia;
@@ -64,7 +81,7 @@ namespace TpIDS
         {
             tvwCatalogoPermisos.Nodes.Clear();
 
-            foreach (PermisoNodo raiz in catalogoRaiz)
+            foreach (object raiz in catalogoRaiz)
             {
                 tvwCatalogoPermisos.Nodes.Add(CrearNodoTreeView(raiz));
             }
@@ -72,14 +89,15 @@ namespace TpIDS
             tvwCatalogoPermisos.ExpandAll();
         }
 
-        private TreeNode CrearNodoTreeView(PermisoNodo permiso)
+        private TreeNode CrearNodoTreeView(object permiso)
         {
-            TreeNode nodo = new TreeNode(permiso.Nombre)
+            dynamic permisoActual = permiso;
+            TreeNode nodo = new TreeNode((string)permisoActual.Nombre)
             {
                 Tag = permiso
             };
 
-            foreach (PermisoNodo hijo in permiso.HijosNodos)
+            foreach (object hijo in permisoActual.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoTreeView(hijo));
             }
@@ -89,13 +107,15 @@ namespace TpIDS
 
         private void tvwCatalogoPermisos_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            if (!(e.Node.Tag is PermisoNodo permiso))
+            object permiso = e.Node.Tag;
+            if (permiso == null)
             {
                 return;
             }
 
-            txtbNombrePermiso.Text = permiso.Nombre;
-            SeleccionarTipoPermiso(permiso.EsGrupo);
+            dynamic permisoActual = permiso;
+            txtbNombrePermiso.Text = (string)permisoActual.Nombre;
+            SeleccionarTipoPermiso((bool)permisoActual.EsGrupo);
         }
 
         private void SeleccionarTipoPermiso(bool esGrupo)
@@ -114,7 +134,7 @@ namespace TpIDS
         {
             try
             {
-                PermisoNodo nodo = CrearNodoDesdeFormulario();
+                object nodo = CrearNodoDesdeFormulario();
                 catalogoRaiz.Add(nodo);
                 RefrescarArbol();
                 txtbNombrePermiso.Clear();
@@ -127,13 +147,15 @@ namespace TpIDS
 
         private void btnAgregarHijoPermiso_Click(object sender, EventArgs e)
         {
-            if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo padre))
+            object padre = tvwCatalogoPermisos.SelectedNode?.Tag;
+            if (padre == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectParentGroup");
                 return;
             }
 
-            if (!padre.EsGrupo)
+            dynamic grupoPadre = padre;
+            if (!grupoPadre.EsGrupo)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.OnlyGroupsCanContainChildren");
                 return;
@@ -141,7 +163,7 @@ namespace TpIDS
 
             try
             {
-                padre.AgregarHijo(CrearNodoDesdeFormulario());
+                permisoService.AgregarHijo(grupoPadre, CrearNodoDesdeFormulario());
                 RefrescarArbol();
                 txtbNombrePermiso.Clear();
             }
@@ -153,7 +175,8 @@ namespace TpIDS
 
         private void btnRenombrarPermiso_Click(object sender, EventArgs e)
         {
-            if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo permiso))
+            object permiso = tvwCatalogoPermisos.SelectedNode?.Tag;
+            if (permiso == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPermission");
                 return;
@@ -172,13 +195,14 @@ namespace TpIDS
                 return;
             }
 
-            permiso.Nombre = nuevoNombre;
+            ((dynamic)permiso).Nombre = nuevoNombre;
             RefrescarArbol();
         }
 
         private void btnEliminarPermiso_Click(object sender, EventArgs e)
         {
-            if (!(tvwCatalogoPermisos.SelectedNode?.Tag is PermisoNodo permiso))
+            object permiso = tvwCatalogoPermisos.SelectedNode?.Tag;
+            if (permiso == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPermission");
                 return;
@@ -196,7 +220,7 @@ namespace TpIDS
 
             if (!catalogoRaiz.Remove(permiso))
             {
-                foreach (PermisoNodo raiz in catalogoRaiz)
+                foreach (object raiz in catalogoRaiz)
                 {
                     if (QuitarNodo(raiz, permiso))
                     {
@@ -209,13 +233,14 @@ namespace TpIDS
             txtbNombrePermiso.Clear();
         }
 
-        private bool QuitarNodo(PermisoNodo padre, PermisoNodo objetivo)
+        private bool QuitarNodo(object padre, object objetivo)
         {
-            foreach (PermisoNodo hijo in padre.HijosNodos.ToList())
+            dynamic padreActual = padre;
+            foreach (object hijo in ((System.Collections.IEnumerable)padreActual.Hijos).Cast<object>().ToList())
             {
                 if (ReferenceEquals(hijo, objetivo))
                 {
-                    padre.QuitarHijo(hijo);
+                    permisoService.QuitarHijo(padreActual, hijo);
                     return true;
                 }
 
@@ -242,7 +267,7 @@ namespace TpIDS
             }
         }
 
-        private PermisoNodo CrearNodoDesdeFormulario()
+        private object CrearNodoDesdeFormulario()
         {
             string nombre = txtbNombrePermiso.Text.Trim();
             if (string.IsNullOrWhiteSpace(nombre))
@@ -257,8 +282,8 @@ namespace TpIDS
 
             OpcionTraducible opcion = cmbTipoPermiso.SelectedItem as OpcionTraducible;
             bool esGrupo = opcion != null && opcion.Valor is bool valorGrupo && valorGrupo;
-            PermisoNodo nodo = esGrupo ? (PermisoNodo)new PermisoGrupo() : new PermisoSimple();
-            nodo.Nombre = nombre;
+            object nodo = esGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+            ((dynamic)nodo).Nombre = nombre;
             return nodo;
         }
     }

@@ -29,48 +29,45 @@ package "BE" {
 }
 
 package "SERVICIOS" {
-  abstract class PermisoNodo {
+  class PermisoSimple {
     +Id : int
     +Nombre : string
-    +Ruta : string
-    +EsGrupo : bool
+    +EsGrupo : bool = false
     +Hijos : IList<IPermiso>
-    +HijosNodos : IList<PermisoNodo>
     +Agregar(permiso : IPermiso) : void
     +Quitar(permiso : IPermiso) : void
-    +AgregarHijo(permiso : PermisoNodo) : void
-    +QuitarHijo(permiso : PermisoNodo) : void
     +Contiene(id : int) : bool
     +ObtenerPermisosHoja() : IList<IPermiso>
-    +ObtenerClave() : string
   }
 
-  class PermisoSimple
-  class PermisoGrupo
-
-  class PermisoRelacion {
-    +GrupoId : int
-    +PermisoId : int
+  class PermisoGrupo {
+    +Id : int
+    +Nombre : string
+    +EsGrupo : bool = true
+    +Hijos : IList<IPermiso>
+    +Agregar(permiso : IPermiso) : void
+    +Quitar(permiso : IPermiso) : void
+    +Contiene(id : int) : bool
+    +ObtenerPermisosHoja() : IList<IPermiso>
   }
 
   class PermisoService {
-    +ConstruirArbol(nodos : IList<PermisoNodo>, relaciones : IList<PermisoRelacion>) : IList<PermisoNodo>
-    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
-    +ObtenerPermisosReconocidos(permisosAsignados : IEnumerable<IPermiso>) : IList<IPermiso>
+    +ConstruirArbol(nodos : IList, relaciones : IList<Tuple<int,int>>) : List<object>
+    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable) : List<object>
+    +NormalizarNombre(nombre : string) : string
     +ValidarNombre(nombre : string) : void
-    +ValidarNombresUnicos(raices : IEnumerable<PermisoNodo>) : void
-    +ValidarGruposNoVacios(nodos : IEnumerable<PermisoNodo>) : void
-    +ValidarSinCiclos(raices : IEnumerable<PermisoNodo>) : void
-    +Aplanar(raices : IEnumerable<PermisoNodo>) : IList<PermisoNodo>
-    +ObtenerRelaciones(raices : IEnumerable<PermisoNodo>) : IList<PermisoRelacion>
+    +ValidarNombresUnicos(raices : IEnumerable) : void
+    +ValidarGruposNoVacios(nodos : IEnumerable) : void
+    +ValidarSinCiclos(raices : IEnumerable) : void
+    +Aplanar(raices : IEnumerable) : List<object>
+    +ObtenerRelaciones(raices : IEnumerable) : List<Tuple<int,int>>
   }
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IList<PermisoNodo>) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
     +Limpiar() : void
     +TienePermiso(rutaPermiso : string) : bool
-    +ObtenerPermisosEfectivos() : IList<IPermiso>
   }
 
   class BitacoraService <<singleton>> {
@@ -86,12 +83,12 @@ package "SERVICIOS" {
 
 package "DAL" {
   class PermisoDAL {
-    +ObtenerNodos() : List<PermisoNodo>
-    +ObtenerRelaciones() : List<PermisoRelacion>
-    +InsertarPermiso(nombre : string) : int
-    +ActualizarNombre(id : int, nombre : string) : bool
-    +ReemplazarRelaciones(relaciones : List<PermisoRelacion>) : bool
-    +EliminarPermisos(idsPermiso : List<int>) : bool
+    +ObtenerNodos(accesoDatos : AccesoDatos = null) : List<object>
+    +ObtenerRelaciones(accesoDatos : AccesoDatos = null) : List<Tuple<int,int>>
+    +Guardar(permiso : object, accesoDatos : AccesoDatos = null) : int
+    +ReemplazarRelaciones(relaciones : List<Tuple<int,int>>, accesoDatos : AccesoDatos = null) : bool
+    +EliminarPermisos(idsPermiso : List<int>, accesoDatos : AccesoDatos = null) : bool
+    +ObtenerIdPorNombre(nombre : string, accesoDatos : AccesoDatos = null) : int
   }
 
   class UsuarioPermisoDAL {
@@ -103,8 +100,7 @@ package "DAL" {
     +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
   }
 
-  class AccesoDatos
-  {
+  class AccesoDatos {
     +BeginTransactionScope() : void
     +CommitTransactionScope() : void
     +RollbackTransactionScope() : void
@@ -113,12 +109,13 @@ package "DAL" {
 
 package "BLL" {
   class PermisoBLL {
-    +ObtenerCatalogo() : List<PermisoNodo>
-    +GuardarCatalogo(raices : List<PermisoNodo>) : void
+    +ObtenerCatalogo() : List<object>
+    +GuardarCatalogo(raices : List<object>) : void
     +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
     +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<PermisoNodo>
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
     +CargarPermisosEnUsuario(usuario : Usuario) : void
+    +AsignarPerfilBasico(usuarioId : int, accesoDatos : AccesoDatos) : void
   }
 
   class UsuarioBLL {
@@ -135,9 +132,8 @@ package "UI" {
   class FormGestionUsuarios
 }
 
-IPermiso <|.. PermisoNodo
-PermisoNodo <|-- PermisoSimple
-PermisoNodo <|-- PermisoGrupo
+IPermiso <|.. PermisoSimple
+IPermiso <|.. PermisoGrupo
 Usuario --> IPermiso : Permisos
 
 PermisoBLL --> PermisoDAL

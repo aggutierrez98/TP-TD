@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using BLL;
 using SERVICIOS;
@@ -28,12 +29,15 @@ namespace TpIDS
 
         private void FormHistorialUsuario_Load(object sender, EventArgs e)
         {
-            CargarHistorial();
+            // Configurar columnas (tags) una sola vez; los datos se cargan/refrescan abajo.
+            GrillaColumnasBuilder.Configurar<HistorialUsuarioGridItem>(dgvHistorialUsuario);
+            GrillaColumnasBuilder.Configurar<CambioEstadoGridItem>(dgvCambiosEstado);
+            RefrescarDatos();
         }
 
         private void btnRefrescarHistorial_Click(object sender, EventArgs e)
         {
-            CargarHistorial();
+            RefrescarDatos();
         }
 
         private void btnRestaurarVersion_Click(object sender, EventArgs e)
@@ -59,7 +63,7 @@ namespace TpIDS
             {
                 _usuarioBLL.RestaurarVersion(historialId);
                 UiDialogHelper.MostrarInfo("FormUserHistory.Success.VersionRestored");
-                CargarHistorial();
+                RefrescarDatos();
             }
             catch (Exception ex)
             {
@@ -78,13 +82,9 @@ namespace TpIDS
             int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
             try
             {
-                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
                 List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
-                GrillaFormHelper.Recargar(
-                    dgvCambiosEstado,
-                    diferencias,
-                    ProyectarCambioEstadoGridItem,
-                    idioma);
+                dgvCambiosEstado.DataSource = null;
+                dgvCambiosEstado.DataSource = diferencias.Select(ProyectarCambioEstadoGridItem).ToList();
             }
             catch (Exception ex)
             {
@@ -92,17 +92,13 @@ namespace TpIDS
             }
         }
 
-        private void CargarHistorial()
+        private void RefrescarDatos()
         {
             try
             {
                 List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
-                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
-                GrillaFormHelper.Recargar(
-                    dgvHistorialUsuario,
-                    historial,
-                    ProyectarHistorialFila,
-                    idioma);
+                dgvHistorialUsuario.DataSource = null;
+                dgvHistorialUsuario.DataSource = historial.Select(ProyectarHistorialFila).ToList();
             }
             catch (Exception ex)
             {
@@ -110,7 +106,9 @@ namespace TpIDS
             }
         }
 
-        private HistorialUsuarioGridItem ProyectarHistorialFila(UsuarioHistorialSnapshot snap, Idioma idioma)
+        // Las celdas guardan la clave cruda; la traduccion ocurre en tiempo de render
+        // (columnas marcadas con TraducirValor en HistorialUsuarioGridItem / CambioEstadoGridItem).
+        private HistorialUsuarioGridItem ProyectarHistorialFila(UsuarioHistorialSnapshot snap)
         {
             return new HistorialUsuarioGridItem
             {
@@ -119,32 +117,22 @@ namespace TpIDS
                 FechaHora = snap.FechaHora,
                 ActorUsuarioId = snap.ActorUsuarioId,
                 ActorUsernameSnapshot = snap.ActorUsernameSnapshot,
-                Accion = UiDialogHelper.TraducirSiExiste(snap.Accion),
-                Observaciones = UiDialogHelper.TraducirSiExiste(snap.Observaciones),
+                Accion = snap.Accion,
+                Observaciones = snap.Observaciones,
                 Username = snap.Username,
                 Activo = snap.Activo,
                 IdiomaId = snap.IdiomaId
             };
         }
 
-        private CambioEstadoGridItem ProyectarCambioEstadoGridItem(ResultadoComparacionEstado diff, Idioma idioma)
+        private CambioEstadoGridItem ProyectarCambioEstadoGridItem(ResultadoComparacionEstado diff)
         {
             return new CambioEstadoGridItem
             {
-                Campo = UiDialogHelper.TraducirSiExiste(diff.Campo),
-                ValorAnterior = TraducirValor(diff.ValorAnterior),
-                ValorNuevo = TraducirValor(diff.ValorNuevo)
+                Campo = diff.Campo,
+                ValorAnterior = diff.ValorAnterior,
+                ValorNuevo = diff.ValorNuevo
             };
-        }
-
-        private string TraducirValor(string valor)
-        {
-            if (valor == null || valor == "-")
-            {
-                return valor ?? string.Empty;
-            }
-
-            return UiDialogHelper.TraducirSiExiste(valor);
         }
     }
 }

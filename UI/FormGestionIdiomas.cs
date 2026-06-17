@@ -21,6 +21,7 @@ namespace TpIDS
 
         private void FormGestionIdiomas_Load(object sender, EventArgs e)
         {
+            GrillaColumnasBuilder.Configurar<TraduccionGridItem>(dgvTraducciones);
             CargarIdiomas(null);
         }
 
@@ -245,7 +246,7 @@ namespace TpIDS
             }
 
             LimpiarEdicionManual();
-            CargarDetalleIdioma(idioma.Id, null);
+            RefrescarDatos(idioma.Id, null);
         }
 
         private void dgvTraducciones_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -281,11 +282,11 @@ namespace TpIDS
 
             if (cmbIdiomas.SelectedItem is Idioma idioma)
             {
-                CargarDetalleIdioma(idioma.Id, null);
+                RefrescarDatos(idioma.Id, null);
             }
         }
 
-        private void CargarDetalleIdioma(int idiomaId, string keySeleccionada)
+        private void RefrescarDatos(int idiomaId, string keySeleccionada)
         {
             Idioma idioma = idiomaBLL.ObtenerIdioma(idiomaId);
             if (idioma == null)
@@ -296,11 +297,12 @@ namespace TpIDS
             txtbNombreIdioma.Text = idioma.Nombre;
             chkbIdiomaDefault.Checked = idioma.Default;
 
-            GrillaFormHelper.Recargar(
-                dgvTraducciones,
-                idioma.Traducciones.OfType<Traduccion>().OrderBy(item => item.Palabra.Key),
-                ProyectarTraduccionFila,
-                IdiomaService.GetInstance().IdiomaActual);
+            dgvTraducciones.DataSource = null;
+            dgvTraducciones.DataSource = idioma.Traducciones
+                .OfType<Traduccion>()
+                .OrderBy(item => item.Palabra.Key)
+                .Select(ProyectarTraduccionFila)
+                .ToList();
             SeleccionarTraduccion(keySeleccionada);
         }
 
@@ -406,7 +408,7 @@ namespace TpIDS
             return string.Format("traducciones-{0}.json", nombreBase);
         }
 
-        private TraduccionGridItem ProyectarTraduccionFila(Traduccion traduccion, Idioma idioma)
+        private TraduccionGridItem ProyectarTraduccionFila(Traduccion traduccion)
         {
             return new TraduccionGridItem
             {

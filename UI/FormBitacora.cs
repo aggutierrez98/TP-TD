@@ -24,8 +24,9 @@ namespace TpIDS
 
         private void FormBitacora_Load(object sender, EventArgs e)
         {
+            GrillaColumnasBuilder.Configurar<BitacoraGridItem>(dgvBitacora);
             CargarNiveles();
-            Buscar();
+            RefrescarDatos();
         }
 
         // El combo se puebla una sola vez con los codigos de nivel (dominio); su texto lo traduce
@@ -43,10 +44,10 @@ namespace TpIDS
 
         private void btnBuscarBitacora_Click(object sender, EventArgs e)
         {
-            Buscar();
+            RefrescarDatos();
         }
 
-        private void Buscar()
+        private void RefrescarDatos()
         {
             try
             {
@@ -61,14 +62,14 @@ namespace TpIDS
 
                 List<EventoBitacora> registros = _bitacoraBLL.Buscar(filtro);
                 string filtroActividad = txtbActividadBitacora.Text.Trim();
-                Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
 
                 IEnumerable<EventoBitacora> filtrados = string.IsNullOrWhiteSpace(filtroActividad)
                     ? registros
                     : registros.Where(r => UiDialogHelper.TraducirSiExiste(r.Actividad)
                         .IndexOf(filtroActividad, StringComparison.OrdinalIgnoreCase) >= 0);
 
-                GrillaFormHelper.Recargar(dgvBitacora, filtrados, ProyectarBitacoraFila, idioma);
+                dgvBitacora.DataSource = null;
+                dgvBitacora.DataSource = filtrados.Select(ProyectarBitacoraFila).ToList();
             }
             catch (Exception ex)
             {
@@ -76,7 +77,9 @@ namespace TpIDS
             }
         }
 
-        private BitacoraGridItem ProyectarBitacoraFila(EventoBitacora evento, Idioma idioma)
+        // Las celdas guardan la clave cruda; la traduccion ocurre en tiempo de render
+        // (columnas marcadas con TraducirValor en BitacoraGridItem). Para Nivel se guarda la key.
+        private BitacoraGridItem ProyectarBitacoraFila(EventoBitacora evento)
         {
             return new BitacoraGridItem
             {
@@ -84,9 +87,9 @@ namespace TpIDS
                 FechaHora = evento.FechaHora,
                 UsuarioId = evento.UsuarioId,
                 UsernameSnapshot = evento.UsernameSnapshot,
-                Actividad = UiDialogHelper.TraducirSiExiste(evento.Actividad),
-                Informacion = UiDialogHelper.TraducirSiExiste(evento.Informacion),
-                Nivel = ObtenerTextoNivel(idioma, evento.Nivel),
+                Actividad = evento.Actividad,
+                Informacion = evento.Informacion,
+                Nivel = ObtenerKeyNivel(evento.Nivel),
                 Origen = evento.Origen,
                 EsTecnica = evento.EsTecnica
             };
@@ -99,16 +102,16 @@ namespace TpIDS
             return string.IsNullOrWhiteSpace(nivel) ? null : nivel;
         }
 
-        private string ObtenerTextoNivel(Idioma idioma, string codigoNivel)
+        private static string ObtenerKeyNivel(string codigoNivel)
         {
             switch (codigoNivel)
             {
                 case NivelInformacion:
-                    return idioma == null ? NivelInformacion : idioma.ObtenerTraduccion("FormAuditLog.Level.Information");
+                    return "FormAuditLog.Level.Information";
                 case NivelAdvertencia:
-                    return idioma == null ? NivelAdvertencia : idioma.ObtenerTraduccion("FormAuditLog.Level.Warning");
+                    return "FormAuditLog.Level.Warning";
                 case NivelError:
-                    return idioma == null ? NivelError : idioma.ObtenerTraduccion("FormAuditLog.Level.Error");
+                    return "FormAuditLog.Level.Error";
                 default:
                     return codigoNivel;
             }

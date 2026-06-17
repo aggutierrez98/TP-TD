@@ -55,8 +55,6 @@
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
     <Compile Include="PermisoGrupo.cs" />
-    <Compile Include="PermisoNodo.cs" />
-    <Compile Include="PermisoRelacion.cs" />
     <Compile Include="PermisoService.cs" />
     <Compile Include="PermisoSimple.cs" />
     <Compile Include="PasswordHasher.cs" />
