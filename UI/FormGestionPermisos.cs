@@ -26,19 +26,7 @@ namespace TpIDS
 
         private void FormGestionPermisos_Load(object sender, EventArgs e)
         {
-            CargarTiposPermiso();
             CargarCatalogo();
-        }
-
-        // El combo se puebla una sola vez con los valores de dominio; su texto lo traduce
-        // IdiomaFormHelper al cambiar el idioma (ver OpcionTraducible), sin hooks por-form.
-        private void CargarTiposPermiso()
-        {
-            cmbTipoPermiso.DisplayMember = "Texto";
-            cmbTipoPermiso.Items.Clear();
-            cmbTipoPermiso.Items.Add(new OpcionTraducible("FormPermissionManagement.TypeGroup", true));
-            cmbTipoPermiso.Items.Add(new OpcionTraducible("FormPermissionManagement.TypeLeaf", false));
-            cmbTipoPermiso.SelectedIndex = 0;
         }
 
         private void CargarCatalogo()
@@ -53,6 +41,8 @@ namespace TpIDS
 
         private object ClonarNodo(object origen, IDictionary<int, object> cache)
         {
+            // TODO: logica de clonar nodos en permisoService para evitar dynamic y object lo max posible
+
             dynamic permisoOrigen = origen;
 
             if ((int)permisoOrigen.Id > 0 && cache.ContainsKey((int)permisoOrigen.Id))
@@ -60,7 +50,7 @@ namespace TpIDS
                 return cache[(int)permisoOrigen.Id];
             }
 
-            dynamic copia = permisoOrigen.EsGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+            dynamic copia = permisoOrigen.EsGrupo ? (object) new PermisoGrupo() : new PermisoSimple();
             copia.Id = permisoOrigen.Id;
             copia.Nombre = permisoOrigen.Nombre;
 
@@ -115,19 +105,6 @@ namespace TpIDS
 
             dynamic permisoActual = permiso;
             txtbNombrePermiso.Text = (string)permisoActual.Nombre;
-            SeleccionarTipoPermiso((bool)permisoActual.EsGrupo);
-        }
-
-        private void SeleccionarTipoPermiso(bool esGrupo)
-        {
-            foreach (object item in cmbTipoPermiso.Items)
-            {
-                if (item is OpcionTraducible opcion && opcion.Valor is bool valor && valor == esGrupo)
-                {
-                    cmbTipoPermiso.SelectedItem = item;
-                    return;
-                }
-            }
         }
 
         private void btnAgregarRaizPermiso_Click(object sender, EventArgs e)
@@ -280,9 +257,7 @@ namespace TpIDS
                 throw new ExcepcionNegocio("FormPermissionManagement.Warning.NameContainsDot");
             }
 
-            OpcionTraducible opcion = cmbTipoPermiso.SelectedItem as OpcionTraducible;
-            bool esGrupo = opcion != null && opcion.Valor is bool valorGrupo && valorGrupo;
-            object nodo = esGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+            PermisoGrupo nodo = new PermisoGrupo();
             ((dynamic)nodo).Nombre = nombre;
             return nodo;
         }

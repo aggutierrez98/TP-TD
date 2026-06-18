@@ -487,5 +487,20 @@ namespace TpIDS
                 formBitacora.ShowDialog(this);
             }
         }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormLogin.Confirm.LogoutMessage",
+                MessageBoxIcon.Warning);
+
+            if (confirmacion != DialogResult.Yes)
+            {
+                return;
+            }
+
+            usuarioBLL.CerrarSesionActual();
+            Close();
+        }
     }
 }

@@ -212,7 +212,7 @@ namespace DAL
         private static object MapNodo(DataRow row)
         {
             bool esGrupo = row["EsGrupo"] != DBNull.Value && Convert.ToBoolean(row["EsGrupo"]);
-            object nodo = esGrupo ? (object)new PermisoGrupo() : new PermisoSimple();
+            object nodo = esGrupo ? (object) new PermisoGrupo() : new PermisoSimple();
 
             if (nodo is PermisoGrupo grupo)
             {

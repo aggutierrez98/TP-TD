@@ -4,6 +4,7 @@ using ABSTRACCIONES;
 
 namespace SERVICIOS
 {
+
     public class PermisoGrupo : IPermiso
     {
         public PermisoGrupo()

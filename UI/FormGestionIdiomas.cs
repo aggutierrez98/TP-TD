@@ -29,7 +29,7 @@ namespace TpIDS
         {
             try
             {
-                int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
+                int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text);
                 CargarIdiomas(idiomaId);
                 RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
                 UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageCreated");
@@ -417,6 +417,32 @@ namespace TpIDS
                 Valor = traduccion.Valor,
                 EsKeyBase = traduccion.Palabra.EsBase
             };
+        }
+
+        private void btnIdiomaDefault_Click(object sender, EventArgs e)
+        {
+
+            if (!(cmbIdiomas.SelectedItem is Idioma idioma))
+            {
+                UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectLanguage");
+                return;
+            }
+
+            try
+            {
+                bool actualizado = idiomaBLL.HacerIdiomaDefault(idioma.Id);
+                if (actualizado)
+                {
+                    CargarIdiomas(idioma.Id);
+                    RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
+                    UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageUpdated");
+                }
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Edicion de idioma");
+            }
+
         }
     }
 }

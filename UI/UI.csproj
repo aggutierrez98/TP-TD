@@ -121,6 +121,9 @@
     <EmbeddedResource Include="FormGestionIdiomas.resx">
       <DependentUpon>FormGestionIdiomas.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormGestionPermisos.resx">
+      <DependentUpon>FormGestionPermisos.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormGestionUsuarios.resx">
       <DependentUpon>FormGestionUsuarios.cs</DependentUpon>
     </EmbeddedResource>

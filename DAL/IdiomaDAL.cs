@@ -308,11 +308,15 @@ namespace DAL
             }
         }
 
-        public bool EstablecerIdiomaDefault(int idiomaId)
+        public bool SwitchearIdiomaDefault(int idiomaId)
         {
             const string query = @"
                 UPDATE Idioma
-                SET [Default] = CASE WHEN Id = @IdiomaId THEN 1 ELSE 0 END;";
+                SET [Default] = CASE 
+                    WHEN Id = @IdiomaId 
+                        THEN 1 ELSE 0 
+                END;
+            ";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {

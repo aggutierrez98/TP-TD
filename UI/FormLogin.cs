@@ -40,12 +40,10 @@ namespace TpIDS
 
                 FormGestionUsuarios formGestion = new FormGestionUsuarios();
                 formGestion.Show();
-                Hide();
 
                 formGestion.FormClosed += (s, args) =>
                 {
                     gestorUsuario.CerrarSesionActual();
-                    Close();
                 };
             }
             catch (Exception ex)

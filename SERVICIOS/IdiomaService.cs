@@ -39,6 +39,8 @@ namespace SERVICIOS
 
             _observadores.Add(observador);
 
+            // Solo para actualizar Headers de datagrid
+            // TODO: Vuela cuando tags pasen a arxchivos designer
             if (_idiomaActual != null)
             {
                 observador.Actualizar(this);
