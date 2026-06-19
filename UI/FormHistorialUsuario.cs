@@ -29,10 +29,36 @@ namespace TpIDS
 
         private void FormHistorialUsuario_Load(object sender, EventArgs e)
         {
-            // Configurar columnas (tags) una sola vez; los datos se cargan/refrescan abajo.
-            GrillaColumnasBuilder.Configurar<HistorialUsuarioGridItem>(dgvHistorialUsuario);
-            GrillaColumnasBuilder.Configurar<CambioEstadoGridItem>(dgvCambiosEstado);
+            dgvHistorialUsuario.CellFormatting += Grilla_CellFormatting;
+            dgvCambiosEstado.CellFormatting += Grilla_CellFormatting;
             RefrescarDatos();
+        }
+
+        // Traduce el contenido de las celdas que guardan una clave cruda, al pintarse.
+        private void Grilla_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.Value == null || e.RowIndex < 0)
+            {
+                return;
+            }
+
+            DataGridView grilla = (DataGridView)sender;
+            switch (grilla.Columns[e.ColumnIndex].Name)
+            {
+                case "Action":
+                case "Observations":
+                case "Field":
+                case "PreviousValue":
+                case "NewValue":
+                    Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+                    if (idioma != null)
+                    {
+                        e.Value = idioma.ObtenerTraduccion(e.Value.ToString());
+                        e.FormattingApplied = true;
+                    }
+
+                    break;
+            }
         }
 
         private void btnRefrescarHistorial_Click(object sender, EventArgs e)
@@ -48,7 +74,7 @@ namespace TpIDS
                 return;
             }
 
-            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
+            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistoryId"].Value);
             DialogResult confirmacion = UiDialogHelper.Confirmar(
                 "FormUserHistory.Confirm.RestoreVersionMessage",
                 "FormUserHistory.Confirm.RestoreVersionTitle",
@@ -79,12 +105,12 @@ namespace TpIDS
                 return;
             }
 
-            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistorialId"].Value);
+            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistoryId"].Value);
             try
             {
                 List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
                 dgvCambiosEstado.DataSource = null;
-                dgvCambiosEstado.DataSource = diferencias.Select(ProyectarCambioEstadoGridItem).ToList();
+                dgvCambiosEstado.DataSource = diferencias;
             }
             catch (Exception ex)
             {
@@ -98,7 +124,7 @@ namespace TpIDS
             {
                 List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
                 dgvHistorialUsuario.DataSource = null;
-                dgvHistorialUsuario.DataSource = historial.Select(ProyectarHistorialFila).ToList();
+                dgvHistorialUsuario.DataSource = historial;
             }
             catch (Exception ex)
             {
@@ -106,33 +132,5 @@ namespace TpIDS
             }
         }
 
-        // Las celdas guardan la clave cruda; la traduccion ocurre en tiempo de render
-        // (columnas marcadas con TraducirValor en HistorialUsuarioGridItem / CambioEstadoGridItem).
-        private HistorialUsuarioGridItem ProyectarHistorialFila(UsuarioHistorialSnapshot snap)
-        {
-            return new HistorialUsuarioGridItem
-            {
-                HistorialId = snap.HistorialId,
-                UsuarioId = snap.UsuarioId,
-                FechaHora = snap.FechaHora,
-                ActorUsuarioId = snap.ActorUsuarioId,
-                ActorUsernameSnapshot = snap.ActorUsernameSnapshot,
-                Accion = snap.Accion,
-                Observaciones = snap.Observaciones,
-                Username = snap.Username,
-                Activo = snap.Activo,
-                IdiomaId = snap.IdiomaId
-            };
-        }
-
-        private CambioEstadoGridItem ProyectarCambioEstadoGridItem(ResultadoComparacionEstado diff)
-        {
-            return new CambioEstadoGridItem
-            {
-                Campo = diff.Campo,
-                ValorAnterior = diff.ValorAnterior,
-                ValorNuevo = diff.ValorNuevo
-            };
-        }
     }
 }

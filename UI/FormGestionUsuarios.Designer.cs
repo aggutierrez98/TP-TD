@@ -39,6 +39,9 @@ namespace TpIDS
             this.btnHistorialUsuario = new System.Windows.Forms.Button();
             this.btnBitacora = new System.Windows.Forms.Button();
             this.btnLogout = new System.Windows.Forms.Button();
+            this.colUsuariosId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colUsuariosUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colUsuariosActive = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlSesionActual.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
             this.groupBoxGestion.SuspendLayout();
@@ -96,10 +99,15 @@ namespace TpIDS
             // 
             this.dgvUsuarios.AllowUserToAddRows = false;
             this.dgvUsuarios.AllowUserToDeleteRows = false;
+            this.dgvUsuarios.AutoGenerateColumns = false;
             this.dgvUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvUsuarios.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvUsuarios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvUsuarios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colUsuariosId,
+            this.colUsuariosUsername,
+            this.colUsuariosActive});
             this.dgvUsuarios.Location = new System.Drawing.Point(15, 70);
             this.dgvUsuarios.MultiSelect = false;
             this.dgvUsuarios.Name = "dgvUsuarios";
@@ -309,9 +317,30 @@ namespace TpIDS
             this.btnLogout.Text = "Logout";
             this.btnLogout.UseVisualStyleBackColor = false;
             this.btnLogout.Click += new System.EventHandler(this.btnLogout_Click);
-            // 
+            //
+            // colUsuariosId
+            //
+            this.colUsuariosId.DataPropertyName = "Id";
+            this.colUsuariosId.HeaderText = "Id";
+            this.colUsuariosId.Name = "Id";
+            this.colUsuariosId.ReadOnly = true;
+            //
+            // colUsuariosUsername
+            //
+            this.colUsuariosUsername.DataPropertyName = "Username";
+            this.colUsuariosUsername.HeaderText = "Usuario";
+            this.colUsuariosUsername.Name = "Username";
+            this.colUsuariosUsername.ReadOnly = true;
+            //
+            // colUsuariosActive
+            //
+            this.colUsuariosActive.DataPropertyName = "Activo";
+            this.colUsuariosActive.HeaderText = "Activo";
+            this.colUsuariosActive.Name = "Active";
+            this.colUsuariosActive.ReadOnly = true;
+            //
             // FormGestionUsuarios
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1140, 585);
@@ -367,5 +396,8 @@ namespace TpIDS
         private System.Windows.Forms.Button btnHistorialUsuario;
         private System.Windows.Forms.Button btnBitacora;
         private System.Windows.Forms.Button btnLogout;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosUsername;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuariosActive;
     }
 }

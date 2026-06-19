@@ -29,5 +29,5 @@ Mantener alineados estos artefactos:
 - Si una key nueva aparece en UI/BLL/SERVICIOS, debe terminar en `translation-seeds/base.es.json` en el mismo cambio. El SQL generado solo debe cambiar si cambia la estructura del bloque o la ruta resuelta al archivo.
 - Para que el script sea portable entre clones, `script_bd.sql` debe ejecutarse con `sqlcmd` desde la raiz del repo; el bloque generado puede resolver ahi la ruta absoluta del JSON antes de invocar `OPENROWSET`.
 - El script SQL de base debe asumir recreacion completa de la BD. No debe intentar completar esquemas existentes ni agregar constraints faltantes en caliente.
-- Las keys base deben seguir persistidas en BD con `Palabra.EsBase = 1`.
+- Las keys del seed se persisten en `Palabra` (no hay flag `EsBase`: todas las keys son del sistema y solo entran por el seed, nunca desde la UI).
 - **Todos los tipos de key pertenecen a `base.es.json`**, sin excepcion: `Dialog.*`, `Error.*`, `Form*.Warning.*`, `Form*.Confirm.*`, `Form*.Success.*`, `Form*.Grid.*`, labels, botones, etc. No hay subtipo de key que quede solo en `UiDialogHelper.TextosBase`; ese diccionario es unicamente el fallback en caso de que el idioma no este cargado desde BD.

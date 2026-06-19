@@ -34,12 +34,13 @@ namespace SERVICIOS
                 return false;
             }
 
-            List<Traduccion> traduccionesBase = idioma.Traducciones
-                .Where(item => item.Palabra != null && item.Palabra.EsBase)
+            // Un idioma esta completo si tiene valor en TODAS las keys del sistema
+            List<Traduccion> traducciones = idioma.Traducciones
+                .Where(item => item.Palabra != null)
                 .ToList();
 
-            return traduccionesBase.Count > 0 &&
-                   traduccionesBase.All(item => !string.IsNullOrWhiteSpace(item.Valor));
+            return traducciones.Count > 0 &&
+                   traducciones.All(item => !string.IsNullOrWhiteSpace(item.Valor));
         }
 
         public void ValidarIdiomaSeleccionable(Idioma idioma)

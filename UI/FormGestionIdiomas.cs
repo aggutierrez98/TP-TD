@@ -21,8 +21,15 @@ namespace TpIDS
 
         private void FormGestionIdiomas_Load(object sender, EventArgs e)
         {
-            GrillaColumnasBuilder.Configurar<TraduccionGridItem>(dgvTraducciones);
             CargarIdiomas(null);
+        }
+
+        // View-model plano para la grilla
+        private sealed class FilaTraduccion
+        {
+            public int PalabraId { get; set; }
+            public string Key { get; set; }
+            public string Valor { get; set; }
         }
 
         private void btnAgregarIdioma_Click(object sender, EventArgs e)
@@ -208,17 +215,9 @@ namespace TpIDS
                 return;
             }
 
-            if (!(dgvTraducciones.CurrentRow?.DataBoundItem is TraduccionGridItem item))
+            if (!(dgvTraducciones.CurrentRow?.DataBoundItem is FilaTraduccion item))
             {
                 UiDialogHelper.MostrarWarning("FormLanguageManagement.Warning.SelectTranslation");
-                return;
-            }
-
-            if (item.EsKeyBase)
-            {
-                UiDialogHelper.MostrarWarningConTitulo(
-                    "FormLanguageManagement.Warning.DeleteBaseTranslation",
-                    "FormLanguageManagement.Warning.DeleteBaseTranslationTitle");
                 return;
             }
 
@@ -337,7 +336,7 @@ namespace TpIDS
 
         private void CargarTraduccionSeleccionada()
         {
-            if (!(dgvTraducciones.CurrentRow?.DataBoundItem is TraduccionGridItem item))
+            if (!(dgvTraducciones.CurrentRow?.DataBoundItem is FilaTraduccion item))
             {
                 LimpiarEdicionManual();
                 return;
@@ -363,7 +362,7 @@ namespace TpIDS
                     .Cast<DataGridViewRow>()
                     .FirstOrDefault(item =>
                     {
-                        TraduccionGridItem traduccion = item.DataBoundItem as TraduccionGridItem;
+                        FilaTraduccion traduccion = item.DataBoundItem as FilaTraduccion;
                         return traduccion != null &&
                                string.Equals(traduccion.Key, keySeleccionada, StringComparison.Ordinal);
                     });
@@ -408,14 +407,13 @@ namespace TpIDS
             return string.Format("traducciones-{0}.json", nombreBase);
         }
 
-        private TraduccionGridItem ProyectarTraduccionFila(Traduccion traduccion)
+        private FilaTraduccion ProyectarTraduccionFila(Traduccion traduccion)
         {
-            return new TraduccionGridItem
+            return new FilaTraduccion
             {
                 PalabraId = traduccion.PalabraId,
                 Key = traduccion.Palabra.Key,
-                Valor = traduccion.Valor,
-                EsKeyBase = traduccion.Palabra.EsBase
+                Valor = traduccion.Valor
             };
         }
 

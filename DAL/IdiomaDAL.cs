@@ -22,36 +22,14 @@ namespace DAL
             }
         }
 
-        public List<Palabra> ObtenerPalabras()
-        {
-            const string query = "SELECT Id, [Key], EsBase FROM Palabra ORDER BY [Key]";
-
-            using (AccesoDatos accesoDatos = new AccesoDatos())
-            {
-                DataTable dataTable = accesoDatos.Read(query);
-                return dataTable.Rows.Cast<DataRow>()
-                    .Select(MapPalabra)
-                    .ToList();
-            }
-        }
-
         public Idioma ObtenerIdiomaCompleto(int idiomaId)
         {
             const string query = @"
-                SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
+                SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], t.Valor
                 FROM Idioma i
-                INNER JOIN Palabra p ON p.EsBase = 1
+                INNER JOIN Palabra p ON 1 = 1
                 LEFT JOIN Traduccion t ON t.IdiomaId = i.Id AND t.PalabraId = p.Id
                 WHERE i.Id = @IdiomaId
-
-                UNION ALL
-
-                SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], p.EsBase, t.Valor
-                FROM Idioma i
-                INNER JOIN Traduccion t ON t.IdiomaId = i.Id
-                INNER JOIN Palabra p ON p.Id = t.PalabraId
-                WHERE i.Id = @IdiomaId
-                  AND p.EsBase = 0
                 ORDER BY [Key]";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
@@ -103,8 +81,7 @@ namespace DAL
                         Palabra = new Palabra
                         {
                             Id = Convert.ToInt32(row["PalabraId"]),
-                            Key = row["Key"].ToString(),
-                            EsBase = Convert.ToBoolean(row["EsBase"])
+                            Key = row["Key"].ToString()
                         }
                     });
                 }
@@ -218,41 +195,20 @@ namespace DAL
             }
         }
 
-        public int ObtenerOCrearPalabra(string key, bool esBase)
+        // Devuelve el Id de la key existente, o 0 si no existe
+        public int ObtenerPalabraIdPorKey(string key)
         {
-            const string query = @"
-                DECLARE @PalabraId INT;
-
-                SELECT @PalabraId = Id
-                FROM Palabra
-                WHERE [Key] = @Key;
-
-                IF @PalabraId IS NULL
-                BEGIN
-                    INSERT INTO Palabra ([Key], EsBase)
-                    VALUES (@Key, @EsBase);
-
-                    SET @PalabraId = SCOPE_IDENTITY();
-                END
-                ELSE IF @EsBase = 1
-                BEGIN
-                    UPDATE Palabra
-                    SET EsBase = 1
-                    WHERE Id = @PalabraId
-                      AND EsBase = 0;
-                END
-
-                SELECT @PalabraId;";
+            const string query = "SELECT Id FROM Palabra WHERE [Key] = @Key";
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Key", SqlDbType.VarChar, key),
-                    accesoDatos.CreateParameter("@EsBase", SqlDbType.Bit, esBase)
+                    accesoDatos.CreateParameter("@Key", SqlDbType.VarChar, key)
                 };
 
-                return accesoDatos.WriteWithResult(query, parametros);
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return dataTable.Rows.Count == 0 ? 0 : Convert.ToInt32(dataTable.Rows[0]["Id"]);
             }
         }
 
@@ -336,16 +292,6 @@ namespace DAL
                 Id = Convert.ToInt32(row["Id"]),
                 Nombre = row["Nombre"].ToString(),
                 Default = Convert.ToBoolean(row["Default"])
-            };
-        }
-
-        private static Palabra MapPalabra(DataRow row)
-        {
-            return new Palabra
-            {
-                Id = Convert.ToInt32(row["Id"]),
-                Key = row["Key"].ToString(),
-                EsBase = Convert.ToBoolean(row["EsBase"])
             };
         }
     }

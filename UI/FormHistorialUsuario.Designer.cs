@@ -22,6 +22,19 @@ namespace TpIDS
             this.lblUsuarioHistorialNombre = new System.Windows.Forms.Label();
             this.dgvHistorialUsuario = new System.Windows.Forms.DataGridView();
             this.dgvCambiosEstado = new System.Windows.Forms.DataGridView();
+            this.colHistorialHistoryId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialUserId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialActorUserId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialActorUsernameSnapshot = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialAction = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialObservations = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colHistorialActive = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.colHistorialLanguageId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colCambiosField = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colCambiosPreviousValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colCambiosNewValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnRestaurarVersion = new System.Windows.Forms.Button();
             this.btnRefrescarHistorial = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHistorialUsuario)).BeginInit();
@@ -76,6 +89,17 @@ namespace TpIDS
             this.dgvHistorialUsuario.AutoGenerateColumns = false;
             this.dgvHistorialUsuario.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvHistorialUsuario.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvHistorialUsuario.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colHistorialHistoryId,
+            this.colHistorialUserId,
+            this.colHistorialDateTime,
+            this.colHistorialActorUserId,
+            this.colHistorialActorUsernameSnapshot,
+            this.colHistorialAction,
+            this.colHistorialObservations,
+            this.colHistorialUsername,
+            this.colHistorialActive,
+            this.colHistorialLanguageId});
             this.dgvHistorialUsuario.Location = new System.Drawing.Point(20, 75);
             this.dgvHistorialUsuario.MultiSelect = false;
             this.dgvHistorialUsuario.Name = "dgvHistorialUsuario";
@@ -94,6 +118,10 @@ namespace TpIDS
             this.dgvCambiosEstado.AutoGenerateColumns = false;
             this.dgvCambiosEstado.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvCambiosEstado.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvCambiosEstado.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colCambiosField,
+            this.colCambiosPreviousValue,
+            this.colCambiosNewValue});
             this.dgvCambiosEstado.Location = new System.Drawing.Point(20, 330);
             this.dgvCambiosEstado.MultiSelect = false;
             this.dgvCambiosEstado.Name = "dgvCambiosEstado";
@@ -123,9 +151,100 @@ namespace TpIDS
             this.btnRefrescarHistorial.TabIndex = 4;
             this.btnRefrescarHistorial.UseVisualStyleBackColor = true;
             this.btnRefrescarHistorial.Click += new System.EventHandler(this.btnRefrescarHistorial_Click);
-            // 
+            //
+            // colHistorialHistoryId
+            //
+            this.colHistorialHistoryId.DataPropertyName = "HistorialId";
+            this.colHistorialHistoryId.HeaderText = "Id historial";
+            this.colHistorialHistoryId.Name = "HistoryId";
+            this.colHistorialHistoryId.ReadOnly = true;
+            //
+            // colHistorialUserId
+            //
+            this.colHistorialUserId.DataPropertyName = "UsuarioId";
+            this.colHistorialUserId.HeaderText = "Id usuario";
+            this.colHistorialUserId.Name = "UserId";
+            this.colHistorialUserId.ReadOnly = true;
+            //
+            // colHistorialDateTime
+            //
+            this.colHistorialDateTime.DataPropertyName = "FechaHora";
+            this.colHistorialDateTime.HeaderText = "Fecha y hora";
+            this.colHistorialDateTime.Name = "DateTime";
+            this.colHistorialDateTime.ReadOnly = true;
+            //
+            // colHistorialActorUserId
+            //
+            this.colHistorialActorUserId.DataPropertyName = "ActorUsuarioId";
+            this.colHistorialActorUserId.HeaderText = "Id actor";
+            this.colHistorialActorUserId.Name = "ActorUserId";
+            this.colHistorialActorUserId.ReadOnly = true;
+            //
+            // colHistorialActorUsernameSnapshot
+            //
+            this.colHistorialActorUsernameSnapshot.DataPropertyName = "ActorUsernameSnapshot";
+            this.colHistorialActorUsernameSnapshot.HeaderText = "Actor";
+            this.colHistorialActorUsernameSnapshot.Name = "ActorUsernameSnapshot";
+            this.colHistorialActorUsernameSnapshot.ReadOnly = true;
+            //
+            // colHistorialAction
+            //
+            this.colHistorialAction.DataPropertyName = "Accion";
+            this.colHistorialAction.HeaderText = "Accion";
+            this.colHistorialAction.Name = "Action";
+            this.colHistorialAction.ReadOnly = true;
+            //
+            // colHistorialObservations
+            //
+            this.colHistorialObservations.DataPropertyName = "Observaciones";
+            this.colHistorialObservations.HeaderText = "Observaciones";
+            this.colHistorialObservations.Name = "Observations";
+            this.colHistorialObservations.ReadOnly = true;
+            //
+            // colHistorialUsername
+            //
+            this.colHistorialUsername.DataPropertyName = "Username";
+            this.colHistorialUsername.HeaderText = "Usuario";
+            this.colHistorialUsername.Name = "Username";
+            this.colHistorialUsername.ReadOnly = true;
+            //
+            // colHistorialActive
+            //
+            this.colHistorialActive.DataPropertyName = "Activo";
+            this.colHistorialActive.HeaderText = "Activo";
+            this.colHistorialActive.Name = "Active";
+            this.colHistorialActive.ReadOnly = true;
+            //
+            // colHistorialLanguageId
+            //
+            this.colHistorialLanguageId.DataPropertyName = "IdiomaId";
+            this.colHistorialLanguageId.HeaderText = "Id idioma";
+            this.colHistorialLanguageId.Name = "LanguageId";
+            this.colHistorialLanguageId.ReadOnly = true;
+            //
+            // colCambiosField
+            //
+            this.colCambiosField.DataPropertyName = "Campo";
+            this.colCambiosField.HeaderText = "Campo";
+            this.colCambiosField.Name = "Field";
+            this.colCambiosField.ReadOnly = true;
+            //
+            // colCambiosPreviousValue
+            //
+            this.colCambiosPreviousValue.DataPropertyName = "ValorAnterior";
+            this.colCambiosPreviousValue.HeaderText = "Valor anterior";
+            this.colCambiosPreviousValue.Name = "PreviousValue";
+            this.colCambiosPreviousValue.ReadOnly = true;
+            //
+            // colCambiosNewValue
+            //
+            this.colCambiosNewValue.DataPropertyName = "ValorNuevo";
+            this.colCambiosNewValue.HeaderText = "Valor nuevo";
+            this.colCambiosNewValue.Name = "NewValue";
+            this.colCambiosNewValue.ReadOnly = true;
+            //
             // FormHistorialUsuario
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 575);
@@ -156,5 +275,18 @@ namespace TpIDS
         private System.Windows.Forms.DataGridView dgvCambiosEstado;
         private System.Windows.Forms.Button btnRestaurarVersion;
         private System.Windows.Forms.Button btnRefrescarHistorial;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialHistoryId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialUserId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialDateTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialActorUserId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialActorUsernameSnapshot;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialAction;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialObservations;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialUsername;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colHistorialActive;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialLanguageId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosField;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosPreviousValue;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosNewValue;
     }
 }

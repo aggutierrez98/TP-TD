@@ -24,7 +24,6 @@ entity "Palabra" as Palabra {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
   Key : varchar(150) <<UQ, NOT NULL>>
-  EsBase : bit <<NOT NULL>>
 }
 
 entity "Traduccion" as Traduccion {

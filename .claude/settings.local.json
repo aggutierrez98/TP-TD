@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \".agents\\\\skills\\\\translation-base-seed-sync\\\\scripts\\\\sync-i18n-base-seed.ps1\")"
+      "Bash(powershell -NoProfile -ExecutionPolicy Bypass -File \".agents\\\\skills\\\\translation-base-seed-sync\\\\scripts\\\\sync-i18n-base-seed.ps1\")",
+      "Bash(rm -f BitacoraGridItem.cs CambioEstadoGridItem.cs GridColumnAttribute.cs GrillaColumnasBuilder.cs HistorialUsuarioGridItem.cs TraduccionGridItem.cs UsuarioGridItem.cs)",
+      "Bash(ls *GridItem.cs GridColumnAttribute.cs GrillaColumnasBuilder.cs)",
+      "Bash(find . -maxdepth 2 -iname \"*.sln\")",
+      "Bash(find . -maxdepth 2 -iname \"*.csproj\")",
+      "PowerShell($msbuild = \"C:\\\\Program Files\\\\Microsoft Visual Studio\\\\18\\\\Community\\\\MSBuild\\\\Current\\\\Bin\\\\MSBuild.exe\"; & $msbuild \"C:\\\\Users\\\\agust\\\\Desktop\\\\IDS\\\\TpIDS\\\\TpIDS.sln\" /t:Build /p:Configuration=Debug /v:minimal /nologo /clp:ErrorsOnly 2>&1 | Select-Object -Last 20; Write-Output \"EXITCODE=$LASTEXITCODE\")",
+      "Bash(find . -iname \"Idioma.cs\" -path \"*SERVICIOS*\" -o -iname \"Idioma.cs\" -path \"*BE*\")",
+      "Bash(grep -rn \"ObtenerTraduccion\\\\|TieneTraduccion\" SERVICIOS/Idioma.cs)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('translation-seeds/base.es.json', encoding='utf-8'\\)\\); print\\('JSON OK -', len\\(d\\), 'keys'\\); print\\('quedan keys DeleteBase?', any\\('DeleteBaseTranslation' in k or 'CannotDeleteBaseTranslation' in k for k in d\\)\\)\")",
+      "PowerShell(try { $d = Get-Content \"C:\\\\Users\\\\agust\\\\Desktop\\\\IDS\\\\TpIDS\\\\translation-seeds\\\\base.es.json\" -Raw -Encoding UTF8 | ConvertFrom-Json; $n = \\($d.PSObject.Properties | Measure-Object\\).Count; $hit = $d.PSObject.Properties.Name | Where-Object { $_ -match \"DeleteBaseTranslation|CannotDeleteBaseTranslation\" }; Write-Output \"JSON OK - $n keys; residuos: $\\($hit -join ', '\\)\" } catch { Write-Output \"JSON INVALIDO: $_\" })"
     ]
   }
 }

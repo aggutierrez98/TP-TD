@@ -5,7 +5,5 @@ namespace ABSTRACCIONES
         int Id { get; set; }
 
         string Key { get; set; }
-
-        bool EsBase { get; set; }
     }
 }

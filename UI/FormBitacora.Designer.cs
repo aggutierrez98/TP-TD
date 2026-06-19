@@ -31,6 +31,15 @@ namespace TpIDS
             this.chkbSoloTecnicaBitacora = new System.Windows.Forms.CheckBox();
             this.btnBuscarBitacora = new System.Windows.Forms.Button();
             this.dgvBitacora = new System.Windows.Forms.DataGridView();
+            this.colBitacoraId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraUserId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraUsernameSnapshot = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraActivity = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraInformation = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraLevel = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colBitacoraIsTechnical = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.groupBoxFiltrosBitacora.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBitacora)).BeginInit();
             this.SuspendLayout();
@@ -177,6 +186,16 @@ namespace TpIDS
             this.dgvBitacora.AllowUserToDeleteRows = false;
             this.dgvBitacora.AutoGenerateColumns = false;
             this.dgvBitacora.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvBitacora.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colBitacoraId,
+            this.colBitacoraDateTime,
+            this.colBitacoraUserId,
+            this.colBitacoraUsernameSnapshot,
+            this.colBitacoraActivity,
+            this.colBitacoraInformation,
+            this.colBitacoraLevel,
+            this.colBitacoraSource,
+            this.colBitacoraIsTechnical});
             this.dgvBitacora.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvBitacora.Location = new System.Drawing.Point(18, 175);
             this.dgvBitacora.MultiSelect = false;
@@ -188,8 +207,71 @@ namespace TpIDS
             this.dgvBitacora.Tag = "FormAuditLog.Grid";
             this.dgvBitacora.TabIndex = 2;
             //
+            // colBitacoraId
+            //
+            this.colBitacoraId.DataPropertyName = "Id";
+            this.colBitacoraId.HeaderText = "Id";
+            this.colBitacoraId.Name = "Id";
+            this.colBitacoraId.ReadOnly = true;
+            //
+            // colBitacoraDateTime
+            //
+            this.colBitacoraDateTime.DataPropertyName = "FechaHora";
+            this.colBitacoraDateTime.HeaderText = "Fecha y hora";
+            this.colBitacoraDateTime.Name = "DateTime";
+            this.colBitacoraDateTime.ReadOnly = true;
+            //
+            // colBitacoraUserId
+            //
+            this.colBitacoraUserId.DataPropertyName = "UsuarioId";
+            this.colBitacoraUserId.HeaderText = "Id usuario";
+            this.colBitacoraUserId.Name = "UserId";
+            this.colBitacoraUserId.ReadOnly = true;
+            //
+            // colBitacoraUsernameSnapshot
+            //
+            this.colBitacoraUsernameSnapshot.DataPropertyName = "UsernameSnapshot";
+            this.colBitacoraUsernameSnapshot.HeaderText = "Usuario";
+            this.colBitacoraUsernameSnapshot.Name = "UsernameSnapshot";
+            this.colBitacoraUsernameSnapshot.ReadOnly = true;
+            //
+            // colBitacoraActivity
+            //
+            this.colBitacoraActivity.DataPropertyName = "Actividad";
+            this.colBitacoraActivity.HeaderText = "Actividad";
+            this.colBitacoraActivity.Name = "Activity";
+            this.colBitacoraActivity.ReadOnly = true;
+            //
+            // colBitacoraInformation
+            //
+            this.colBitacoraInformation.DataPropertyName = "Informacion";
+            this.colBitacoraInformation.HeaderText = "Informacion";
+            this.colBitacoraInformation.Name = "Information";
+            this.colBitacoraInformation.ReadOnly = true;
+            //
+            // colBitacoraLevel
+            //
+            this.colBitacoraLevel.DataPropertyName = "Nivel";
+            this.colBitacoraLevel.HeaderText = "Nivel";
+            this.colBitacoraLevel.Name = "Level";
+            this.colBitacoraLevel.ReadOnly = true;
+            //
+            // colBitacoraSource
+            //
+            this.colBitacoraSource.DataPropertyName = "Origen";
+            this.colBitacoraSource.HeaderText = "Origen";
+            this.colBitacoraSource.Name = "Source";
+            this.colBitacoraSource.ReadOnly = true;
+            //
+            // colBitacoraIsTechnical
+            //
+            this.colBitacoraIsTechnical.DataPropertyName = "EsTecnica";
+            this.colBitacoraIsTechnical.HeaderText = "Tecnica";
+            this.colBitacoraIsTechnical.Name = "IsTechnical";
+            this.colBitacoraIsTechnical.ReadOnly = true;
+            //
             // FormBitacora
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(980, 555);
@@ -223,5 +305,14 @@ namespace TpIDS
         private System.Windows.Forms.CheckBox chkbSoloTecnicaBitacora;
         private System.Windows.Forms.Button btnBuscarBitacora;
         private System.Windows.Forms.DataGridView dgvBitacora;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraDateTime;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraUserId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraUsernameSnapshot;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraActivity;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraInformation;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraLevel;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraSource;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colBitacoraIsTechnical;
     }
 }

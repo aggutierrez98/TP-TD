@@ -37,6 +37,8 @@ namespace TpIDS
             this.txtbKeyManual = new System.Windows.Forms.TextBox();
             this.lblKeyManual = new System.Windows.Forms.Label();
             this.dgvTraducciones = new System.Windows.Forms.DataGridView();
+            this.colTraduccionesKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTraduccionesValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBoxIdioma.SuspendLayout();
             this.groupBoxTraducciones.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvTraducciones)).BeginInit();
@@ -244,6 +246,7 @@ namespace TpIDS
             // 
             this.txtbKeyManual.Location = new System.Drawing.Point(14, 283);
             this.txtbKeyManual.Name = "txtbKeyManual";
+            this.txtbKeyManual.ReadOnly = true;
             this.txtbKeyManual.Size = new System.Drawing.Size(161, 20);
             this.txtbKeyManual.TabIndex = 2;
             // 
@@ -261,7 +264,12 @@ namespace TpIDS
             // 
             this.dgvTraducciones.AllowUserToAddRows = false;
             this.dgvTraducciones.AllowUserToDeleteRows = false;
+            this.dgvTraducciones.AutoGenerateColumns = false;
+            this.dgvTraducciones.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvTraducciones.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvTraducciones.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colTraduccionesKey,
+            this.colTraduccionesValue});
             this.dgvTraducciones.Location = new System.Drawing.Point(14, 24);
             this.dgvTraducciones.MultiSelect = false;
             this.dgvTraducciones.Name = "dgvTraducciones";
@@ -272,9 +280,23 @@ namespace TpIDS
             this.dgvTraducciones.TabIndex = 0;
             this.dgvTraducciones.Tag = "FormLanguageManagement.Grid";
             this.dgvTraducciones.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvTraducciones_CellClick);
-            // 
+            //
+            // colTraduccionesKey
+            //
+            this.colTraduccionesKey.DataPropertyName = "Key";
+            this.colTraduccionesKey.HeaderText = "Key";
+            this.colTraduccionesKey.Name = "Key";
+            this.colTraduccionesKey.ReadOnly = true;
+            //
+            // colTraduccionesValue
+            //
+            this.colTraduccionesValue.DataPropertyName = "Valor";
+            this.colTraduccionesValue.HeaderText = "Valor";
+            this.colTraduccionesValue.Name = "Value";
+            this.colTraduccionesValue.ReadOnly = true;
+            //
             // FormGestionIdiomas
-            // 
+            //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(760, 579);
@@ -322,6 +344,8 @@ namespace TpIDS
         private System.Windows.Forms.TextBox txtbKeyManual;
         private System.Windows.Forms.Label lblKeyManual;
         private System.Windows.Forms.DataGridView dgvTraducciones;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTraduccionesKey;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTraduccionesValue;
         private System.Windows.Forms.Button btnIdiomaDefault;
     }
 }

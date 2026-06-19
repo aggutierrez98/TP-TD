@@ -42,7 +42,6 @@ CREATE TABLE dbo.Palabra
 (
     Id INT IDENTITY(1,1) NOT NULL,
     [Key] VARCHAR(150) NOT NULL,
-    EsBase BIT NOT NULL CONSTRAINT DF_Palabra_EsBase DEFAULT (0),
     CONSTRAINT PK_Palabra PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT UQ_Palabra_Key UNIQUE ([Key])
 );
@@ -282,8 +281,8 @@ BEGIN
     THROW 50003, 'El archivo translation-seeds/base.es.json contiene keys o valores incompatibles con el esquema esperado.', 1;
 END
 
-INSERT INTO dbo.Palabra ([Key], EsBase)
-SELECT [Key], 1
+INSERT INTO dbo.Palabra ([Key])
+SELECT [Key]
 FROM @Seed
 ORDER BY [Key];
 

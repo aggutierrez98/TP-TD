@@ -29,7 +29,6 @@ namespace TpIDS
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
-            GrillaColumnasBuilder.Configurar<UsuarioGridItem>(dgvUsuarios);
             chkbUsuarioActivo.Checked = true;
             ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
             AplicarPermisosPantalla();
@@ -45,7 +44,7 @@ namespace TpIDS
             {
                 List<Usuario> usuarios = usuarioBLL.ObtenerTodos();
                 dgvUsuarios.DataSource = null;
-                dgvUsuarios.DataSource = usuarios.Select(ProyectarUsuarioFila).ToList();
+                dgvUsuarios.DataSource = usuarios;
                 ReseleccionarUsuario(dgvUsuarios, idAnterior);
             }
             catch (Exception ex)
@@ -249,12 +248,12 @@ namespace TpIDS
 
         private bool ObtenerEstadoActivoSeleccionado()
         {
-            if (dgvUsuarios.SelectedRows.Count == 0 || !dgvUsuarios.Columns.Contains("Activo"))
+            if (dgvUsuarios.SelectedRows.Count == 0 || !dgvUsuarios.Columns.Contains("Active"))
             {
                 return true;
             }
 
-            object valorActivo = dgvUsuarios.SelectedRows[0].Cells["Activo"].Value;
+            object valorActivo = dgvUsuarios.SelectedRows[0].Cells["Active"].Value;
             return valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
         }
 
@@ -347,22 +346,12 @@ namespace TpIDS
             return ids;
         }
 
-        private UsuarioGridItem ProyectarUsuarioFila(Usuario usuario)
-        {
-            return new UsuarioGridItem
-            {
-                Id = usuario.Id,
-                Username = usuario.Username,
-                Activo = usuario.Activo
-            };
-        }
-
         private void AplicarSeleccionActualDesdeGrilla()
         {
             if (dgvUsuarios.SelectedRows.Count == 0 ||
                 !dgvUsuarios.Columns.Contains("Id") ||
                 !dgvUsuarios.Columns.Contains("Username") ||
-                !dgvUsuarios.Columns.Contains("Activo"))
+                !dgvUsuarios.Columns.Contains("Active"))
             {
                 _idSeleccionado = -1;
                 txtbNombreUsuario.Clear();
@@ -376,7 +365,7 @@ namespace TpIDS
             _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
             txtbNombreUsuario.Text = fila.Cells["Username"].Value == null ? string.Empty : fila.Cells["Username"].Value.ToString();
             txtbPasswordUsuario.Clear();
-            object valorActivo = fila.Cells["Activo"].Value;
+            object valorActivo = fila.Cells["Active"].Value;
             chkbUsuarioActivo.Checked = valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
             CargarPermisosUsuario();
         }
@@ -392,7 +381,7 @@ namespace TpIDS
                 .Cast<DataGridViewRow>()
                 .FirstOrDefault(item =>
                 {
-                    UsuarioGridItem usuario = item.DataBoundItem as UsuarioGridItem;
+                    Usuario usuario = item.DataBoundItem as Usuario;
                     return usuario != null && usuario.Id == usuarioId;
                 });
 
@@ -502,5 +491,6 @@ namespace TpIDS
             usuarioBLL.CerrarSesionActual();
             Close();
         }
+
     }
 }

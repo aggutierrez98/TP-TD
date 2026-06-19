@@ -145,9 +145,11 @@ namespace TpIDS
                 return tag.Trim();
             }
 
-            string nombreColumna = !string.IsNullOrWhiteSpace(columna.DataPropertyName)
-                ? columna.DataPropertyName.Trim()
-                : columna.Name;
+            // La key sale del Name de la columna (sufijo) + el prefijo de la grilla. El Name se
+            // edita y conserva siempre desde el diseñador; DataPropertyName solo es respaldo.
+            string nombreColumna = !string.IsNullOrWhiteSpace(columna.Name)
+                ? columna.Name.Trim()
+                : columna.DataPropertyName?.Trim();
 
             return string.IsNullOrWhiteSpace(nombreColumna)
                 ? null

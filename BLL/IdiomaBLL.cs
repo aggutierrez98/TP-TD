@@ -190,7 +190,12 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.TranslationRequired");
             }
 
-            int palabraId = _idiomaDAL.ObtenerOCrearPalabra(key.Trim(), false);
+            int palabraId = _idiomaDAL.ObtenerPalabraIdPorKey(key.Trim());
+            if (palabraId == 0)
+            {
+                throw new ExcepcionNegocio("Error.Language.KeyNotFound");
+            }
+
             _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationUpdate", "FormAuditLog.Value.Info.TranslationUpdate", "IdiomaBLL");
         }
@@ -212,11 +217,7 @@ namespace BLL
                 return false;
             }
 
-            if (traduccion.Palabra.EsBase)
-            {
-                throw new ExcepcionNegocio("Error.Language.CannotDeleteBaseTranslation");
-            }
-
+            // Las keys base tambien se pueden borrar: al hacerlo, su traduccion queda vacia
             bool eliminado = _idiomaDAL.EliminarTraduccion(idiomaId, palabraId);
             if (eliminado)
             {

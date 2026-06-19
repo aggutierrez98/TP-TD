@@ -24,9 +24,38 @@ namespace TpIDS
 
         private void FormBitacora_Load(object sender, EventArgs e)
         {
-            GrillaColumnasBuilder.Configurar<BitacoraGridItem>(dgvBitacora);
+            dgvBitacora.CellFormatting += dgvBitacora_CellFormatting;
             CargarNiveles();
             RefrescarDatos();
+        }
+
+        // Traduce el contenido de las celdas al pintarse: Actividad/Informacion guardan la clave
+        // cruda; Nivel guarda el codigo de dominio y se mapea a su clave antes de traducir.
+        private void dgvBitacora_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.Value == null || e.RowIndex < 0)
+            {
+                return;
+            }
+
+            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            if (idioma == null)
+            {
+                return;
+            }
+
+            switch (dgvBitacora.Columns[e.ColumnIndex].Name)
+            {
+                case "Activity":
+                case "Information":
+                    e.Value = idioma.ObtenerTraduccion(e.Value.ToString());
+                    e.FormattingApplied = true;
+                    break;
+                case "Level":
+                    e.Value = idioma.ObtenerTraduccion(ObtenerKeyNivel(e.Value.ToString()));
+                    e.FormattingApplied = true;
+                    break;
+            }
         }
 
         // El combo se puebla una sola vez con los codigos de nivel (dominio); su texto lo traduce
@@ -69,30 +98,12 @@ namespace TpIDS
                         .IndexOf(filtroActividad, StringComparison.OrdinalIgnoreCase) >= 0);
 
                 dgvBitacora.DataSource = null;
-                dgvBitacora.DataSource = filtrados.Select(ProyectarBitacoraFila).ToList();
+                dgvBitacora.DataSource = filtrados.ToList();
             }
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Consulta de bitacora");
             }
-        }
-
-        // Las celdas guardan la clave cruda; la traduccion ocurre en tiempo de render
-        // (columnas marcadas con TraducirValor en BitacoraGridItem). Para Nivel se guarda la key.
-        private BitacoraGridItem ProyectarBitacoraFila(EventoBitacora evento)
-        {
-            return new BitacoraGridItem
-            {
-                Id = evento.Id,
-                FechaHora = evento.FechaHora,
-                UsuarioId = evento.UsuarioId,
-                UsernameSnapshot = evento.UsernameSnapshot,
-                Actividad = evento.Actividad,
-                Informacion = evento.Informacion,
-                Nivel = ObtenerKeyNivel(evento.Nivel),
-                Origen = evento.Origen,
-                EsTecnica = evento.EsTecnica
-            };
         }
 
         private string ObtenerNivelSeleccionado()
