@@ -1,4 +1,0 @@
-interface:
-  display_name: "TP Docs Diagram Sync"
-  short_description: "Sync code, PlantUML, and TP docs"
-  default_prompt: "Use $tp-docs-diagram-sync to keep code, PlantUML diagrams, and the formal TP documentation synchronized."
