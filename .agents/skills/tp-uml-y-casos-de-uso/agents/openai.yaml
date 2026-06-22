@@ -1,0 +1,4 @@
+interface:
+  display_name: "TP UML y Casos de Uso"
+  short_description: "Punto central de diagramas UML y casos de uso del TP"
+  default_prompt: "Use $tp-uml-y-casos-de-uso para crear, actualizar o validar diagramas UML y especificaciones de casos de uso del TP, orquestando las subskills de PlantUML y de especificacion de casos de uso."

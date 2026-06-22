@@ -1,0 +1,64 @@
+{
+  "requisito": "T02-login-logout",
+  "titulo": "T02. Login y Logout",
+  "subtitulo": "Especificaciones de casos de uso",
+  "introduccion": "A continuacion se especifican los casos de uso de autenticacion del sistema segun la implementacion vigente.",
+  "casos_de_uso": [
+    {
+      "id_nombre": "CU01 Login",
+      "estado": "Implementado",
+      "descripcion": "Permite que un usuario registrado ingrese al sistema mediante su nombre de usuario y contrasena.",
+      "actor_principal": "Usuario",
+      "actor_secundario": "-",
+      "precondiciones": "La aplicacion se encuentra iniciada y el usuario ya se encuentra registrado en la base de datos.",
+      "puntos_extension": "CU02 Registro.",
+      "condicion": "El usuario desea autenticarse para acceder a la gestion de usuarios.",
+      "escenario_principal": [
+        "1. El usuario ingresa su nombre de usuario y contrasena en el formulario de login.",
+        "2. El usuario presiona el boton de ingreso.",
+        "3. El sistema valida que ambos campos esten completos.",
+        "4. El sistema busca el usuario por nombre de usuario.",
+        "5. El sistema verifica la contrasena ingresada contra el hash almacenado.",
+        "6. El sistema carga los permisos del usuario.",
+        "7. El sistema inicia la sesion del usuario y actualiza sus permisos efectivos.",
+        "8. El sistema aplica el idioma configurado para el usuario.",
+        "9. El sistema limpia los campos del formulario, abre la pantalla de gestion de usuarios y oculta la pantalla de login."
+      ],
+      "flujos_alternativos": [
+        "1a. Si el nombre de usuario o la contrasena estan vacios, el sistema informa que debe completar todos los campos y finaliza el caso de uso.",
+        "4a. Si el usuario no existe, el sistema informa credenciales incorrectas y finaliza el caso de uso.",
+        "5a. Si la contrasena no coincide con el hash almacenado, el sistema informa credenciales incorrectas y finaliza el caso de uso.",
+        "9a. Si ocurre una excepcion durante el proceso, el sistema informa el error de login y finaliza el caso de uso."
+      ],
+      "postcondiciones": "La sesion del usuario queda iniciada, con idioma y permisos cargados, y la pantalla de gestion de usuarios queda visible."
+    },
+    {
+      "id_nombre": "CU02 Registro",
+      "estado": "Implementado",
+      "descripcion": "Permite crear un nuevo usuario en el sistema a partir de un nombre de usuario y una contrasena.",
+      "actor_principal": "Usuario",
+      "actor_secundario": "-",
+      "precondiciones": "La aplicacion se encuentra iniciada.",
+      "puntos_extension": "Es invocado desde CU01 Login mediante el boton de registro.",
+      "condicion": "El usuario desea darse de alta antes de iniciar sesion.",
+      "escenario_principal": [
+        "1. El usuario presiona el boton de registro desde la pantalla de login.",
+        "2. El sistema muestra el formulario de registro en una ventana modal.",
+        "3. El usuario ingresa nombre de usuario y contrasena.",
+        "4. El usuario presiona el boton de registro.",
+        "5. El sistema valida que ambos campos esten completos.",
+        "6. El sistema valida que no exista otro usuario con el mismo nombre de usuario.",
+        "7. El sistema genera el hash seguro de la contrasena.",
+        "8. El sistema crea el nuevo usuario y lo guarda en la base de datos.",
+        "9. El sistema informa que el usuario fue registrado con exito y cierra el formulario de registro."
+      ],
+      "flujos_alternativos": [
+        "1a. Si el usuario cancela o cierra el formulario, el caso de uso finaliza sin cambios.",
+        "5a. Si nombre de usuario o contrasena estan vacios, el sistema informa que debe completar todos los campos y finaliza el caso de uso.",
+        "6a. Si el nombre de usuario ya existe, el sistema informa el error y finaliza el caso de uso.",
+        "8a. Si ocurre una excepcion durante el alta, el sistema informa el error de registro y finaliza el caso de uso."
+      ],
+      "postcondiciones": "El nuevo usuario queda almacenado en la base de datos con la contrasena hasheada y el usuario regresa a la pantalla de login."
+    }
+  ]
+}
