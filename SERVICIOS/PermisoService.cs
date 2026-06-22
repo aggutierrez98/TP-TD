@@ -26,6 +26,52 @@ namespace SERVICIOS
             Convertir(padre).Quitar(Convertir(hijo));
         }
 
+        public bool EsGrupo(object permiso)
+        {
+            return Convertir(permiso).EsGrupo;
+        }
+
+        public int ObtenerId(object permiso)
+        {
+            return Convertir(permiso).Id;
+        }
+
+        public void EstablecerId(object permiso, int id)
+        {
+            Convertir(permiso).Id = id;
+        }
+
+        public string ObtenerNombre(object permiso)
+        {
+            return Convertir(permiso).Nombre;
+        }
+
+        public void EstablecerNombre(object permiso, string nombre)
+        {
+            Convertir(permiso).Nombre = nombre;
+        }
+
+        public List<object> ObtenerHijos(object permiso)
+        {
+            return Convertir(permiso).Hijos
+                .Cast<object>()
+                .ToList();
+        }
+
+        public List<object> FiltrarFamilias(IEnumerable nodos)
+        {
+            return Aplanar(nodos)
+                .Where(item => EsGrupo(item))
+                .ToList();
+        }
+
+        public List<object> FiltrarPatentes(IEnumerable nodos)
+        {
+            return Aplanar(nodos)
+                .Where(item => !EsGrupo(item))
+                .ToList();
+        }
+
         internal List<IPermiso> ConstruirArbol(IList<IPermiso> nodos, IList<Tuple<int, int>> relaciones)
         {
             Dictionary<int, IPermiso> indice = nodos.ToDictionary(item => item.Id);

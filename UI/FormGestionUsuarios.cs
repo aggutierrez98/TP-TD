@@ -480,7 +480,7 @@ namespace TpIDS
         private void btnLogout_Click(object sender, EventArgs e)
         {
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormLogin.Confirm.LogoutMessage",
+                "FormUserManagement.Confirm.LogoutMessage",
                 MessageBoxIcon.Warning);
 
             if (confirmacion != DialogResult.Yes)
