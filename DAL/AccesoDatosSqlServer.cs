@@ -7,14 +7,14 @@ using SERVICIOS;
 
 namespace DAL
 {
-    public sealed class AccesoDatos : IDisposable
+    public sealed class AccesoDatosSqlServer : IDisposable
     {
         private static readonly string[] ConnectionStringNames = { "TpIDS", "TpIDS-UAI" };
 
         private SqlConnection connection;
         private SqlTransaction transaction;
 
-        public AccesoDatos()
+        public AccesoDatosSqlServer()
         {
         }
 

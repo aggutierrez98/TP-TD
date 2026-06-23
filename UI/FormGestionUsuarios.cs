@@ -131,7 +131,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Registrar(username, password))
+                if (usuarioBLL.Registrar(new Usuario(username), password))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserCreated");
                     LimpiarSeleccion();

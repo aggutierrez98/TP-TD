@@ -1,35 +1,53 @@
 using System.Collections.Generic;
 using System.Linq;
-using DAL;
+using REPOSITORIO;
 using SERVICIOS;
 
 namespace BLL
 {
-    public class UsuarioEstadoBLL
+    public class UsuarioEstadoBLL : IUsuarioEstadoBLL
     {
-        private readonly UsuarioDAL _usuarioDAL;
-        private readonly UsuarioPermisoDAL _usuarioPermisoDAL;
-        private readonly UsuarioPreferenciaDAL _usuarioPreferenciaDAL;
-        private readonly PermisoDAL _permisoDAL;
+        private readonly IUsuarioRepositorio _usuarioRepositorio;
+        private readonly IUsuarioPermisoRepositorio _usuarioPermisoRepositorio;
+        private readonly IUsuarioPreferenciaRepositorio _usuarioPreferenciaRepositorio;
+        private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
 
         public UsuarioEstadoBLL()
+            : this(
+                new UsuarioRepositorio(),
+                new UsuarioPermisoRepositorio(),
+                new UsuarioPreferenciaRepositorio(),
+                new UnidadDeTrabajoFactory())
         {
-            BootstrapAplicacionBLL.Inicializar();
-            _usuarioDAL = new UsuarioDAL();
-            _usuarioPermisoDAL = new UsuarioPermisoDAL();
-            _usuarioPreferenciaDAL = new UsuarioPreferenciaDAL();
-            _permisoDAL = new PermisoDAL();
         }
 
-        public UsuarioHistorialSnapshot ConstruirSnapshotActual(int usuarioId, string accion, string observaciones, AccesoDatos accesoDatos = null)
+        internal UsuarioEstadoBLL(
+            IUsuarioRepositorio usuarioRepositorio,
+            IUsuarioPermisoRepositorio usuarioPermisoRepositorio,
+            IUsuarioPreferenciaRepositorio usuarioPreferenciaRepositorio,
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
         {
-            BE.Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
+            BootstrapAplicacionBLL.Inicializar();
+            _usuarioRepositorio = usuarioRepositorio;
+            _usuarioPermisoRepositorio = usuarioPermisoRepositorio;
+            _usuarioPreferenciaRepositorio = usuarioPreferenciaRepositorio;
+            _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+        }
+
+        public UsuarioHistorialSnapshot ConstruirSnapshotActual(int usuarioId, string accion, string observaciones)
+        {
+            return ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, null);
+        }
+
+        internal UsuarioHistorialSnapshot ConstruirSnapshotActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        {
+            BE.Usuario usuario = _usuarioRepositorio.ObtenerPorId(usuarioId, unidad);
             if (usuario == null)
             {
                 return null;
             }
 
-            UsuarioPreferencia preferencia = _usuarioPreferenciaDAL.ObtenerPorUsuarioId(usuarioId, accesoDatos);
+            UsuarioPreferencia preferencia = _usuarioPreferenciaRepositorio.ObtenerPorUsuarioId(usuarioId, unidad);
 
             return new UsuarioHistorialSnapshot
             {
@@ -43,16 +61,36 @@ namespace BLL
                 PasswordHash = usuario.PasswordHash,
                 Activo = usuario.Activo,
                 IdiomaId = preferencia == null ? (int?)null : preferencia.IdiomaId,
-                PermisosIds = _usuarioPermisoDAL.ObtenerPermisoIdsPorUsuario(usuarioId, accesoDatos)
+                PermisosIds = _usuarioPermisoRepositorio.ObtenerPermisoIdsPorUsuario(usuarioId, unidad)
             };
         }
 
-        public int GuardarVersionActual(int usuarioId, string accion, string observaciones, AccesoDatos accesoDatos = null)
+        public int GuardarVersionActual(int usuarioId, string accion, string observaciones)
         {
-            UsuarioHistorialSnapshot snapshot = ConstruirSnapshotActual(usuarioId, accion, observaciones, accesoDatos);
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                unidad.Begin();
+
+                try
+                {
+                    int resultado = GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
+                    unidad.Commit();
+                    return resultado;
+                }
+                catch
+                {
+                    unidad.Rollback();
+                    throw;
+                }
+            }
+        }
+
+        internal int GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        {
+            UsuarioHistorialSnapshot snapshot = ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, unidad);
             return snapshot == null
                 ? 0
-                : HistorialEstadosService.GetInstance().GuardarVersionUsuario(snapshot, accesoDatos);
+                : HistorialEstadosService.GetInstance().GuardarVersionUsuario(snapshot, unidad);
         }
 
         public List<UsuarioHistorialSnapshot> ObtenerHistorial(int usuarioId)
@@ -97,7 +135,7 @@ namespace BLL
             return diferencias;
         }
 
-        public void AplicarSnapshot(UsuarioHistorialSnapshot snapshot, AccesoDatos accesoDatos)
+        internal void AplicarSnapshotInterno(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad)
         {
             BE.Usuario usuario = new BE.Usuario
             {
@@ -107,11 +145,19 @@ namespace BLL
                 Activo = snapshot.Activo
             };
 
-            _usuarioDAL.GuardarEstadoCompleto(usuario, accesoDatos);
+            _usuarioRepositorio.GuardarEstadoCompleto(usuario, unidad);
+            _usuarioPermisoRepositorio.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList(), unidad);
+            _usuarioPreferenciaRepositorio.Guardar(snapshot.UsuarioId, snapshot.IdiomaId, unidad);
+        }
 
-            _usuarioPermisoDAL.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList(), accesoDatos);
+        int IUsuarioEstadoBLL.GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        {
+            return GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
+        }
 
-            _usuarioPreferenciaDAL.Guardar(snapshot.UsuarioId, snapshot.IdiomaId, accesoDatos);
+        void IUsuarioEstadoBLL.AplicarSnapshotInterno(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad)
+        {
+            AplicarSnapshotInterno(snapshot, unidad);
         }
 
         private void AgregarDiferencia(ICollection<ResultadoComparacionEstado> diferencias, string campo, string anterior, string actual)
@@ -154,29 +200,18 @@ namespace BLL
 
         private string FormatearBool(bool valor)
         {
-            return valor
-                ? "FormUserHistory.Value.Marker.True"
-                : "FormUserHistory.Value.Marker.False";
+            return valor ? "FormUserHistory.Value.Boolean.Yes" : "FormUserHistory.Value.Boolean.No";
         }
 
-        private string FormatearPermisos(IList<int> permisosIds)
+        private string FormatearPermisos(IEnumerable<int> permisosIds)
         {
-            if (permisosIds == null || permisosIds.Count == 0)
+            if (permisosIds == null)
             {
                 return "-";
             }
 
-            Dictionary<int, string> indice = _permisoDAL.ObtenerNodos()
-                .GroupBy(item => (int)((dynamic)item).Id)
-                .ToDictionary(group => group.Key, group => (string)((dynamic)group.First()).Nombre);
-
-            List<string> nombres = permisosIds
-                .Distinct()
-                .OrderBy(item => item)
-                .Select(item => indice.ContainsKey(item) ? indice[item] : "Permiso #" + item)
-                .ToList();
-
-            return string.Join(", ", nombres);
+            List<int> ordenados = permisosIds.OrderBy(id => id).ToList();
+            return ordenados.Count == 0 ? "-" : string.Join(", ", ordenados);
         }
     }
 }

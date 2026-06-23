@@ -14,7 +14,8 @@ $allowedDependencies = [ordered]@{
     "BE" = @("ABSTRACCIONES")
     "SERVICIOS" = @("ABSTRACCIONES")
     "DAL" = @("BE", "SERVICIOS")
-    "BLL" = @("BE", "DAL", "SERVICIOS")
+    "REPOSITORIO" = @("BE", "DAL", "SERVICIOS")
+    "BLL" = @("BE", "REPOSITORIO", "SERVICIOS")
     "UI" = @("BE", "BLL", "SERVICIOS")
 }
 

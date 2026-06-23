@@ -44,11 +44,13 @@
   <ItemGroup>
     <Compile Include="BootstrapAplicacionBLL.cs" />
     <Compile Include="BitacoraBLL.cs" />
+    <Compile Include="ContratosInternosBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
     <Compile Include="InicializacionBitacoraBLL.cs" />
     <Compile Include="InicializacionHistorialBLL.cs" />
     <Compile Include="IntegridadBLL.cs" />
     <Compile Include="ManejadorExcepcionesBLL.cs" />
+    <Compile Include="PasswordHashService.cs" />
     <Compile Include="PermisoBLL.cs" />
     <Compile Include="UsuarioEstadoBLL.cs" />
     <Compile Include="UsuarioBLL.cs" />
@@ -59,9 +61,9 @@
       <Project>{faea6c55-0705-4f3b-8e31-6adeecb20d6f}</Project>
       <Name>BE</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DAL\DAL.csproj">
-      <Project>{707854bb-8fac-4561-aa0f-864933cdd3a0}</Project>
-      <Name>DAL</Name>
+    <ProjectReference Include="..\REPOSITORIO\REPOSITORIO.csproj">
+      <Project>{b6e1f6b4-8c5d-4c6f-9e4b-a7c6e9f23412}</Project>
+      <Name>REPOSITORIO</Name>
     </ProjectReference>
     <ProjectReference Include="..\SERVICIOS\SERVICIOS.csproj">
       <Project>{1424234b-6cac-47f9-a5f5-a1d83c778dc2}</Project>

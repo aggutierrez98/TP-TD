@@ -19,17 +19,23 @@ namespace TpIDS
 
         private void btnIngreso_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
+            if (string.IsNullOrWhiteSpace(txtbNickname.Text.Trim()) || string.IsNullOrWhiteSpace(txtbPassword.Text.Trim()))
             {
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginEmptyFields", "UsuarioBLL");
                 UiDialogHelper.MostrarWarning("FormLogin.Warning.CompleteFields");
                 return;
             }
 
             try
             {
-                Usuario usuario = gestorUsuario.Login(txtbNickname.Text, txtbPassword.Text);
+                Usuario usuario = new Usuario()
+                {
+                    Username = txtbNickname.Text
+                };
 
-                if (usuario == null)
+                Usuario usuarioEncontrado = gestorUsuario.Login(usuario, txtbPassword.Text);
+
+                if (usuarioEncontrado == null)
                 {
                     UiDialogHelper.MostrarError("FormLogin.Error.InvalidCredentials");
                     return;

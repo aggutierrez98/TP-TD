@@ -236,7 +236,7 @@ GO
 -- SOURCE OF TRUTH: translation-seeds/base.es.json
 -- Dejar RepoRoot = . solo si ejecuta con sqlcmd desde la raiz del repo.
 -- Si ejecuta desde SSMS en SQLCMD Mode, cambie RepoRoot por la ruta absoluta del repo en su maquina.
-:setvar RepoRoot "."
+:setvar RepoRoot "C:\Users\agust\Desktop\IDS\TpIDS"
 -- Recomendado: ejecutar con sqlcmd desde la raiz del repo. SQLCMD Mode en SSMS queda solo como alternativa manual.
 -- Ejemplo: sqlcmd -S .\\SQLEXPRESS -E -b -i script_bd.sql
 -- El helper prepara una copia publica del JSON para que OPENROWSET no dependa de permisos sobre el perfil del usuario.

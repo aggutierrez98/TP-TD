@@ -27,7 +27,9 @@ Leer siempre:
 
 - agregar una referencia `SERVICIOS -> BE`, `SERVICIOS -> DAL` o `SERVICIOS -> BLL`
 - agregar una referencia `BE -> SERVICIOS`, `BE -> DAL`, `BE -> BLL` o `BE -> UI`
+- agregar una referencia `BLL -> DAL`
 - invocar `DAL` directamente desde `UI`
+- invocar `DAL` directamente desde `BLL`
 - usar `ABSTRACCIONES` para alojar implementaciones concretas
 - crear bypasses a `BLL` para resolver casos de uso desde `UI`
 

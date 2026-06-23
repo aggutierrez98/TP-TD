@@ -42,7 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AccesoDatos.cs" />
+    <Compile Include="AccesoDatosSqlServer.cs" />
     <Compile Include="BitacoraDAL.cs" />
     <Compile Include="IdiomaDAL.cs" />
     <Compile Include="IntegridadDAL.cs" />

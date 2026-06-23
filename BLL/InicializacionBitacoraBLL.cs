@@ -1,4 +1,4 @@
-using DAL;
+using REPOSITORIO;
 using SERVICIOS;
 
 namespace BLL
@@ -22,12 +22,12 @@ namespace BLL
                     return;
                 }
 
-                BitacoraDAL bitacoraDAL = new BitacoraDAL();
+                BitacoraRepositorio bitacoraRepositorio = new BitacoraRepositorio();
                 Sesion sesion = Sesion.GetInstance();
 
                 BitacoraService.GetInstance().Configurar(
-                    (evento, contexto) => bitacoraDAL.Guardar(evento, contexto as AccesoDatos),
-                    filtro => bitacoraDAL.Buscar(filtro),
+                    (evento, contexto) => bitacoraRepositorio.Guardar(evento, contexto as IUnidadDeTrabajo),
+                    filtro => bitacoraRepositorio.Buscar(filtro),
                     sesion.GetUsuarioActualId,
                     sesion.GetUsuarioActualNombre);
 

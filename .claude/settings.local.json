@@ -10,7 +10,25 @@
       "Bash(find . -iname \"Idioma.cs\" -path \"*SERVICIOS*\" -o -iname \"Idioma.cs\" -path \"*BE*\")",
       "Bash(grep -rn \"ObtenerTraduccion\\\\|TieneTraduccion\" SERVICIOS/Idioma.cs)",
       "Bash(python -c \"import json; d=json.load\\(open\\('translation-seeds/base.es.json', encoding='utf-8'\\)\\); print\\('JSON OK -', len\\(d\\), 'keys'\\); print\\('quedan keys DeleteBase?', any\\('DeleteBaseTranslation' in k or 'CannotDeleteBaseTranslation' in k for k in d\\)\\)\")",
-      "PowerShell(try { $d = Get-Content \"C:\\\\Users\\\\agust\\\\Desktop\\\\IDS\\\\TpIDS\\\\translation-seeds\\\\base.es.json\" -Raw -Encoding UTF8 | ConvertFrom-Json; $n = \\($d.PSObject.Properties | Measure-Object\\).Count; $hit = $d.PSObject.Properties.Name | Where-Object { $_ -match \"DeleteBaseTranslation|CannotDeleteBaseTranslation\" }; Write-Output \"JSON OK - $n keys; residuos: $\\($hit -join ', '\\)\" } catch { Write-Output \"JSON INVALIDO: $_\" })"
+      "PowerShell(try { $d = Get-Content \"C:\\\\Users\\\\agust\\\\Desktop\\\\IDS\\\\TpIDS\\\\translation-seeds\\\\base.es.json\" -Raw -Encoding UTF8 | ConvertFrom-Json; $n = \\($d.PSObject.Properties | Measure-Object\\).Count; $hit = $d.PSObject.Properties.Name | Where-Object { $_ -match \"DeleteBaseTranslation|CannotDeleteBaseTranslation\" }; Write-Output \"JSON OK - $n keys; residuos: $\\($hit -join ', '\\)\" } catch { Write-Output \"JSON INVALIDO: $_\" })",
+      "PowerShell(python --version)",
+      "PowerShell(python -c \"import docx; print\\('python-docx', docx.__version__\\)\" 2>&1)",
+      "PowerShell($found=$false; foreach\\($c in 'py','python3'\\){ try { & $c --version 2>$null; if\\($?\\){ Write-Output \"FOUND: $c\"; $found=$true } } catch {} }; if\\(-not $found\\){ Write-Output 'No python launcher found' })",
+      "PowerShell(try { $j = Get-Content -Raw -Encoding UTF8 \".agents\\\\skills\\\\tp-use-case-spec\\\\examples\\\\ejemplo-casos-de-uso.json\" | ConvertFrom-Json; Write-Output \\(\"JSON valido. requisito=\" + $j.requisito + \" casos=\" + $j.casos_de_uso.Count\\) } catch { Write-Output \\(\"JSON invalido: \" + $_.Exception.Message\\) })",
+      "Bash(git mv *)",
+      "Bash(gh pr *)",
+      "Bash(git -C /c/Users/agust/Desktop/IDS/TpIDS remote -v)",
+      "PowerShell(\\(Get-Command gh -ErrorAction SilentlyContinue\\).Source)",
+      "Bash(sudo apt update)",
+      "Bash(sudo apt install -y pipx)",
+      "Bash(pip3 install *)",
+      "Bash(python3 *)",
+      "Bash(curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ~/.local/bin/yt-dlp)",
+      "Bash(chmod +x ~/.local/bin/yt-dlp)",
+      "Bash(yt-dlp *)",
+      "Bash(ffprobe -v quiet -show_format -show_streams \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\")",
+      "Bash(ffmpeg -i \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\" -vf \"scale=-2:720\" -c:v libx264 -b:v 200k -c:a aac -b:a 96k -movflags +faststart \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C# \\(comprimido\\).mp4\")",
+      "Bash(ffmpeg -y -i \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\" -vf \"scale=-2:720\" -c:v libx264 -b:v 170k -c:a aac -b:a 80k -movflags +faststart \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C# \\(comprimido\\).mp4\")"
     ]
   }
 }

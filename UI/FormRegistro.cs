@@ -24,7 +24,14 @@ namespace TpIDS
 
             try
             {
-                bool success = gestorJugador.Registrar(txtbNickname.Text, txtbPassword.Text);
+                
+
+                BE.Usuario usuario = new BE.Usuario()
+                {
+                    Username = txtbNickname.Text
+                };
+
+                bool success = gestorJugador.Registrar(usuario, txtbPassword.Text);
 
                 if (success)
                 {

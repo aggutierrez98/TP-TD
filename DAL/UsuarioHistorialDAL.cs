@@ -9,7 +9,7 @@ namespace DAL
 {
     public class UsuarioHistorialDAL
     {
-        public int GuardarVersion(UsuarioHistorialSnapshot snapshot, AccesoDatos accesoDatos = null)
+        public int GuardarVersion(UsuarioHistorialSnapshot snapshot, AccesoDatosSqlServer accesoDatos = null)
         {
             const string insertHistorial = @"
                 INSERT INTO UsuarioHistorial
@@ -41,7 +41,7 @@ namespace DAL
                 )";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -104,7 +104,7 @@ namespace DAL
                 WHERE UsuarioId = @UsuarioId
                 ORDER BY FechaHora DESC, HistorialId DESC";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
@@ -126,7 +126,7 @@ namespace DAL
                 FROM UsuarioHistorial
                 WHERE HistorialId = @HistorialId";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
@@ -143,7 +143,7 @@ namespace DAL
             }
         }
 
-        private UsuarioHistorialSnapshot Map(DataRow row, AccesoDatos accesoDatos)
+        private UsuarioHistorialSnapshot Map(DataRow row, AccesoDatosSqlServer accesoDatos)
         {
             int historialId = (int)row["HistorialId"];
             return new UsuarioHistorialSnapshot
@@ -163,7 +163,7 @@ namespace DAL
             };
         }
 
-        private List<int> ObtenerPermisos(int historialId, AccesoDatos accesoDatos)
+        private List<int> ObtenerPermisos(int historialId, AccesoDatosSqlServer accesoDatos)
         {
             const string query = @"
                 SELECT PermisoId

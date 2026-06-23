@@ -19,7 +19,7 @@ namespace DAL
             };
         }
 
-        public Usuario ObtenerPorId(int id, AccesoDatos accesoDatos = null)
+        public Usuario ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, Username, PasswordHash, Activo, DVH
@@ -27,7 +27,7 @@ namespace DAL
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -48,7 +48,7 @@ namespace DAL
             }
         }
 
-        public Usuario ObtenerPorUsername(string username, AccesoDatos accesoDatos = null)
+        public Usuario ObtenerPorUsername(string username, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, Username, PasswordHash, Activo, DVH
@@ -56,7 +56,7 @@ namespace DAL
                 WHERE Username = @Username";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -77,7 +77,7 @@ namespace DAL
             }
         }
 
-        public int InsertarYObtenerId(Usuario usuario, AccesoDatos accesoDatos = null)
+        public int InsertarYObtenerId(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 INSERT INTO Usuarios (Username, PasswordHash, Activo, DVH)
@@ -85,7 +85,7 @@ namespace DAL
                 VALUES (@Username, @PasswordHash, @Activo, @DVH)";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -108,7 +108,7 @@ namespace DAL
             }
         }
 
-        public bool Insertar(Usuario usuario, AccesoDatos accesoDatos = null)
+        public bool Insertar(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             return InsertarYObtenerId(usuario, accesoDatos) > 0;
         }
@@ -120,7 +120,7 @@ namespace DAL
                 FROM Usuarios
                 ORDER BY Activo DESC, Username";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 DataTable dataTable = accesoDatos.Read(query);
                 List<Usuario> usuarios = new List<Usuario>();
@@ -137,7 +137,7 @@ namespace DAL
         // Sobrecarga ordenada por Id para el control de integridad: el DVV depende del
         // orden de los DVH, por lo que debe ser deterministico y reutilizable dentro
         // de la transaccion de escritura en curso.
-        public List<Usuario> ObtenerTodos(AccesoDatos accesoDatos)
+        public List<Usuario> ObtenerTodos(AccesoDatosSqlServer accesoDatos)
         {
             const string query = @"
                 SELECT Id, Username, PasswordHash, Activo, DVH
@@ -145,7 +145,7 @@ namespace DAL
                 ORDER BY Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -168,7 +168,7 @@ namespace DAL
             }
         }
 
-        public bool Actualizar(Usuario usuario, AccesoDatos accesoDatos = null)
+        public bool Actualizar(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -179,7 +179,7 @@ namespace DAL
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -205,7 +205,7 @@ namespace DAL
 
         // Actualiza unicamente el DVH de una fila. Se usa al inicializar las firmas o
         // tras restaurar un estado historico, sin reescribir el resto de las columnas.
-        public bool ActualizarDVH(int id, string dvh, AccesoDatos accesoDatos = null)
+        public bool ActualizarDVH(int id, string dvh, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -213,7 +213,7 @@ namespace DAL
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -234,7 +234,7 @@ namespace DAL
             }
         }
 
-        public bool GuardarEstadoCompleto(Usuario usuario, AccesoDatos accesoDatos = null)
+        public bool GuardarEstadoCompleto(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -244,7 +244,7 @@ namespace DAL
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -267,7 +267,7 @@ namespace DAL
             }
         }
 
-        public bool Desactivar(int id, AccesoDatos accesoDatos = null)
+        public bool Desactivar(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -276,7 +276,7 @@ namespace DAL
                   AND Activo = 1";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -296,7 +296,7 @@ namespace DAL
             }
         }
 
-        public bool EliminarFisicamente(int id, AccesoDatos accesoDatos = null)
+        public bool EliminarFisicamente(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE UsuarioHistorial
@@ -326,7 +326,7 @@ namespace DAL
                 WHERE Id = @Id;";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {

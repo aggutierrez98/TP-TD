@@ -2,96 +2,112 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using BE;
-using DAL;
+using REPOSITORIO;
 using SERVICIOS;
 
 namespace BLL
 {
-    // Orquesta el control de integridad de datos mediante digitos verificadores (T07).
-    public class IntegridadBLL
+    public class IntegridadBLL : IIntegridadBLL
     {
-        // Nombre logico de la tabla bajo analisis (entidad mas sensible del sistema).
         private const string TablaUsuarios = "Usuarios";
 
         private readonly IIntegridadService _integridadService;
-        private readonly IntegridadDAL _integridadDAL;
-        private readonly UsuarioDAL _usuarioDAL;
+        private readonly IIntegridadRepositorio _integridadRepositorio;
+        private readonly IUsuarioRepositorio _usuarioRepositorio;
+        private readonly IBitacoraBLL _bitacoraBLL;
+        private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
 
         public IntegridadBLL()
+            : this(
+                new IntegridadService(),
+                new IntegridadRepositorio(),
+                new UsuarioRepositorio(),
+                new BitacoraBLL(),
+                new UnidadDeTrabajoFactory())
         {
-            BootstrapAplicacionBLL.Inicializar();
-            _integridadService = new IntegridadService();
-            _integridadDAL = new IntegridadDAL();
-            _usuarioDAL = new UsuarioDAL();
         }
 
-        // Calcula el DVH de una entidad integrable.
+        internal IntegridadBLL(
+            IIntegridadService integridadService,
+            IIntegridadRepositorio integridadRepositorio,
+            IUsuarioRepositorio usuarioRepositorio,
+            IBitacoraBLL bitacoraBLL,
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
+        {
+            BootstrapAplicacionBLL.Inicializar();
+            _integridadService = integridadService;
+            _integridadRepositorio = integridadRepositorio;
+            _usuarioRepositorio = usuarioRepositorio;
+            _bitacoraBLL = bitacoraBLL;
+            _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+        }
+
         public string CalcularDVH<T>(T entidad) where T : class
         {
             return _integridadService.CalcularDVH(entidad);
         }
 
-        // Recalcula y persiste el DVV de una tabla a partir de los DVH actuales (en orden).
-        public void RecalcularDVV(string tabla, IEnumerable<string> listaDVH, AccesoDatos accesoDatos)
+        internal void RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad)
         {
             string dvv = _integridadService.CalcularDVV(listaDVH);
-            _integridadDAL.GuardarDVV(tabla, dvv, accesoDatos);
+            _integridadRepositorio.GuardarDVV(tabla, dvv, unidad);
         }
 
-        // Verificacion de integridad ejecutada al arrancar la aplicacion, antes del login.
+        void IIntegridadBLL.RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad)
+        {
+            RecalcularDVVInterno(tabla, listaDVH, unidad);
+        }
+
         public void ValidarIntegridadGlobal()
         {
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                accesoDatos.BeginTransactionScope();
+                unidad.Begin();
 
                 try
                 {
-                    // Las filas se leen ordenadas por Id para que el DVV sea deterministico
-                    // y consistente con el calculo de las operaciones de escritura.
-                    List<Usuario> usuarios = _usuarioDAL.ObtenerTodos(accesoDatos);
-                    string dvvAlmacenado = _integridadDAL.ObtenerDVV(TablaUsuarios, accesoDatos);
+                    List<Usuario> usuarios = _usuarioRepositorio.ObtenerTodos(unidad);
+                    string dvvAlmacenado = _integridadRepositorio.ObtenerDVV(TablaUsuarios, unidad);
 
                     if (EstaSinInicializar(usuarios, dvvAlmacenado))
                     {
-                        InicializarFirmas(usuarios, accesoDatos);
-                        accesoDatos.CommitTransactionScope();
+                        InicializarFirmas(usuarios, unidad);
+                        unidad.Commit();
                         return;
                     }
 
                     VerificarHorizontal(usuarios);
                     VerificarVertical(usuarios, dvvAlmacenado);
 
-                    accesoDatos.CommitTransactionScope();
+                    unidad.Commit();
                 }
                 catch (Exception)
                 {
-                    accesoDatos.RollbackTransactionScope();
+                    unidad.Rollback();
                     throw;
                 }
             }
         }
 
-        // La tabla nunca fue firmada: no existe DVV y ninguna fila tiene DVH.
         private static bool EstaSinInicializar(IEnumerable<Usuario> usuarios, string dvvAlmacenado)
         {
             return dvvAlmacenado == null && usuarios.All(usuario => string.IsNullOrEmpty(usuario.DVH));
         }
 
-        private void InicializarFirmas(List<Usuario> usuarios, AccesoDatos accesoDatos)
+        private void InicializarFirmas(List<Usuario> usuarios, IUnidadDeTrabajo unidad)
         {
             foreach (Usuario usuario in usuarios)
             {
                 usuario.DVH = _integridadService.CalcularDVH(usuario);
-                _usuarioDAL.ActualizarDVH(usuario.Id, usuario.DVH, accesoDatos);
+                _usuarioRepositorio.ActualizarDVH(usuario.Id, usuario.DVH, unidad);
             }
 
-            RecalcularDVV(TablaUsuarios, usuarios.Select(usuario => usuario.DVH), accesoDatos);
-            BitacoraService.GetInstance().RegistrarOperacion(
+            RecalcularDVVInterno(TablaUsuarios, usuarios.Select(usuario => usuario.DVH), unidad);
+            _bitacoraBLL.RegistrarOperacionInterno(
                 "FormAuditLog.Value.Activity.IntegritySignaturesInitialized",
                 "FormAuditLog.Value.Info.IntegritySignaturesInitialized",
                 "IntegridadBLL",
-                accesoDatos);
+                unidad);
         }
 
         private void VerificarHorizontal(IEnumerable<Usuario> usuarios)
@@ -101,9 +117,7 @@ namespace BLL
                 string dvhCalculado = _integridadService.CalcularDVH(usuario);
                 if (!string.Equals(dvhCalculado, usuario.DVH, StringComparison.Ordinal))
                 {
-                    // El fallo se registra sin contexto transaccional para que persista
-                    // aunque la verificacion haga rollback.
-                    BitacoraService.GetInstance().RegistrarFalloNegocio(
+                    _bitacoraBLL.RegistrarFalloNegocio(
                         "FormAuditLog.Value.Activity.IntegrityCheckFailed",
                         "FormAuditLog.Value.Info.IntegrityHorizontalCorruption",
                         "IntegridadBLL");
@@ -117,7 +131,7 @@ namespace BLL
             string dvvCalculado = _integridadService.CalcularDVV(usuarios.Select(usuario => usuario.DVH));
             if (!string.Equals(dvvCalculado, dvvAlmacenado, StringComparison.Ordinal))
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio(
+                _bitacoraBLL.RegistrarFalloNegocio(
                     "FormAuditLog.Value.Activity.IntegrityCheckFailed",
                     "FormAuditLog.Value.Info.IntegrityVerticalCorruption",
                     "IntegridadBLL");

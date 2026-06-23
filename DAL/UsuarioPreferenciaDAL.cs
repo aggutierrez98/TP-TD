@@ -7,7 +7,7 @@ namespace DAL
 {
     public class UsuarioPreferenciaDAL
     {
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, AccesoDatos accesoDatos = null)
+        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT UsuarioId, IdiomaId
@@ -15,7 +15,7 @@ namespace DAL
                 WHERE UsuarioId = @UsuarioId";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -46,12 +46,12 @@ namespace DAL
             }
         }
 
-        public bool Guardar(UsuarioPreferencia preferencia, AccesoDatos accesoDatos = null)
+        public bool Guardar(UsuarioPreferencia preferencia, AccesoDatosSqlServer accesoDatos = null)
         {
             return Guardar(preferencia == null ? 0 : preferencia.UsuarioId, preferencia == null ? (int?)null : preferencia.IdiomaId, accesoDatos);
         }
 
-        public bool Guardar(int usuarioId, int? idiomaId, AccesoDatos accesoDatos = null)
+        public bool Guardar(int usuarioId, int? idiomaId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 IF @IdiomaId IS NULL
@@ -75,7 +75,7 @@ namespace DAL
                 END";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
