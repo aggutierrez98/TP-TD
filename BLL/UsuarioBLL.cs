@@ -14,6 +14,10 @@ namespace BLL
         private readonly IdiomaBLL _idiomaBLL;
         private readonly PermisoBLL _permisoBLL;
         private readonly UsuarioEstadoBLL _usuarioEstadoBLL;
+        private readonly IntegridadBLL _integridadBLL;
+
+        // Tabla bajo control de integridad (debe coincidir con la usada en la verificacion).
+        private const string TablaUsuarios = "Usuarios";
 
         public UsuarioBLL()
         {
@@ -23,6 +27,7 @@ namespace BLL
             _idiomaBLL = new IdiomaBLL();
             _permisoBLL = new PermisoBLL();
             _usuarioEstadoBLL = new UsuarioEstadoBLL();
+            _integridadBLL = new IntegridadBLL();
         }
 
         public Usuario Login(string username, string passwordRaw)
@@ -97,10 +102,13 @@ namespace BLL
                         Activo = true
                     };
 
+                    // El DVH se calcula antes de persistir para que la fila se guarde firmada.
+                    nuevoUsuario.DVH = _integridadBLL.CalcularDVH(nuevoUsuario);
                     nuevoUsuario.Id = _usuarioDAL.InsertarYObtenerId(nuevoUsuario, accesoDatos);
                     _permisoBLL.AsignarPerfilBasico(nuevoUsuario.Id, accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(nuevoUsuario.Id, "FormUserHistory.Value.Action.Creation", "FormUserHistory.Value.Obs.InitialCreation", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserCreation", "FormAuditLog.Value.Info.UserCreation", "UsuarioBLL", accesoDatos);
+                    SincronizarDvvUsuarios(accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -167,6 +175,8 @@ namespace BLL
                         usuario.PasswordHash = _passwordHasher.HashPassword(passwordNormalizada);
                     }
                     usuario.Activo = activo;
+                    // Se recalcula el DVH con el nuevo estado antes de persistir la fila.
+                    usuario.DVH = _integridadBLL.CalcularDVH(usuario);
                     bool actualizado = _usuarioDAL.Actualizar(usuario, accesoDatos);
                     if (!actualizado)
                     {
@@ -203,6 +213,7 @@ namespace BLL
 
                     _usuarioEstadoBLL.GuardarVersionActual(id, accionHistorial, observacionesHistorial, accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion(actividadBitacora, informacionBitacora, "UsuarioBLL", accesoDatos);
+                    SincronizarDvvUsuarios(accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -253,6 +264,8 @@ namespace BLL
                     }
 
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserHardDelete", "FormAuditLog.Value.Info.UserHardDelete", "UsuarioBLL", accesoDatos);
+                    // Cambio la cantidad de filas: hay que recalcular el DVV de la tabla.
+                    SincronizarDvvUsuarios(accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -323,8 +336,12 @@ namespace BLL
                     }
 
                     _usuarioEstadoBLL.AplicarSnapshot(snapshot, accesoDatos);
+                    // El estado restaurado cambia los atributos firmados: recalculo el DVH de la fila.
+                    Usuario usuarioRestaurado = _usuarioDAL.ObtenerPorId(snapshot.UsuarioId, accesoDatos);
+                    _usuarioDAL.ActualizarDVH(snapshot.UsuarioId, _integridadBLL.CalcularDVH(usuarioRestaurado), accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(snapshot.UsuarioId, "FormUserHistory.Value.Action.Restoration", "FormUserHistory.Value.Obs.Restoration", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserRestoration", "FormAuditLog.Value.Info.UserRestoration", "UsuarioBLL", accesoDatos);
+                    SincronizarDvvUsuarios(accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -360,6 +377,15 @@ namespace BLL
             Sesion.GetInstance().ActualizarUsuarioActualNombre(usuario.Username);
             AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
+        }
+
+        // Recalcula y persiste el DVV de la tabla de usuarios tras una operacion de escritura.
+        // Lee las filas ordenadas por Id (sobrecarga transaccional) para que el DVV resulte
+        // consistente con el que valida el arranque.
+        private void SincronizarDvvUsuarios(AccesoDatos accesoDatos)
+        {
+            List<Usuario> filas = _usuarioDAL.ObtenerTodos(accesoDatos);
+            _integridadBLL.RecalcularDVV(TablaUsuarios, filas.Select(usuario => usuario.DVH), accesoDatos);
         }
     }
 }

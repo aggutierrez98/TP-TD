@@ -23,8 +23,20 @@ CREATE TABLE dbo.Usuarios
     Username VARCHAR(50) NOT NULL,
     PasswordHash VARCHAR(MAX) NOT NULL,
     Activo BIT NOT NULL CONSTRAINT DF_Usuarios_Activo DEFAULT (1),
+    DVH VARCHAR(100) NULL,
     CONSTRAINT PK_Usuarios PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT UQ_Usuarios_Username UNIQUE (Username)
+);
+GO
+
+-- T07: tabla de control de digitos verificadores verticales (DVV).
+-- Almacena, por cada tabla bajo analisis, la firma consolidada de sus DVH.
+CREATE TABLE dbo.DigitoVerificadorVertical
+(
+    NombreTabla VARCHAR(100) NOT NULL,
+    Valor VARCHAR(100) NOT NULL,
+    FechaActualizacion DATETIME NOT NULL,
+    CONSTRAINT PK_DigitoVerificadorVertical PRIMARY KEY CLUSTERED (NombreTabla)
 );
 GO
 
