@@ -1,7 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -17,6 +17,8 @@ namespace BLL
         private readonly IUsuarioEstadoBLL _usuarioEstadoBLL;
         private readonly IBitacoraBLL _bitacoraBLL;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
+        private readonly ISesion _sesion;
+        private readonly IAutorizacion _autorizacion;
 
         public PermisoBLL()
             : this(
@@ -26,7 +28,9 @@ namespace BLL
                 new UsuarioRepositorio(),
                 new UsuarioEstadoBLL(),
                 new BitacoraBLL(),
-                new UnidadDeTrabajoFactory())
+                new UnidadDeTrabajoFactory(),
+                CompositionRoot.Sesion,
+                CompositionRoot.Autorizacion)
         {
         }
 
@@ -37,9 +41,10 @@ namespace BLL
             IUsuarioRepositorio usuarioRepositorio,
             IUsuarioEstadoBLL usuarioEstadoBLL,
             IBitacoraBLL bitacoraBLL,
-            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
+            ISesion sesion,
+            IAutorizacion autorizacion)
         {
-            BootstrapAplicacionBLL.Inicializar();
             _permisoRepositorio = permisoRepositorio;
             _usuarioPermisoRepositorio = usuarioPermisoRepositorio;
             _permisoService = permisoService;
@@ -47,16 +52,18 @@ namespace BLL
             _usuarioEstadoBLL = usuarioEstadoBLL;
             _bitacoraBLL = bitacoraBLL;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+            _sesion = sesion;
+            _autorizacion = autorizacion;
         }
 
-        public List<object> ObtenerCatalogo()
+        public List<IPermiso> ObtenerCatalogo()
         {
-            List<object> nodos = _permisoRepositorio.ObtenerNodos();
+            List<IPermiso> nodos = _permisoRepositorio.ObtenerNodos();
             List<Tuple<int, int>> relaciones = _permisoRepositorio.ObtenerRelaciones();
             return _permisoService.ConstruirArbol(nodos, relaciones).ToList();
         }
 
-        public void GuardarCatalogo(List<object> raices)
+        public void GuardarCatalogo(List<IPermiso> raices)
         {
             if (raices == null || raices.Count == 0)
             {
@@ -66,8 +73,8 @@ namespace BLL
 
             _permisoService.ValidarSinCiclos(raices);
 
-            List<object> nodos = _permisoService.Aplanar(raices).ToList();
-            foreach (dynamic nodo in nodos)
+            List<IPermiso> nodos = _permisoService.Aplanar(raices).ToList();
+            foreach (IPermiso nodo in nodos)
             {
                 _permisoService.ValidarNombre(nodo.Nombre);
                 nodo.Nombre = _permisoService.NormalizarNombre(nodo.Nombre);
@@ -76,23 +83,23 @@ namespace BLL
             _permisoService.ValidarNombresUnicos(raices);
             _permisoService.ValidarGruposNoVacios(nodos);
 
-            List<object> existentes = _permisoRepositorio.ObtenerNodos();
+            List<IPermiso> existentes = _permisoRepositorio.ObtenerNodos();
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 unidad.Begin();
 
                 try
                 {
-                    foreach (dynamic nodo in nodos)
+                    foreach (IPermiso nodo in nodos)
                     {
                         nodo.Id = _permisoRepositorio.Guardar(nodo, unidad);
                     }
 
                     _permisoRepositorio.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList(), unidad);
 
-                    List<int> idsActuales = nodos.Select(item => (int)((dynamic)item).Id).Distinct().ToList();
+                    List<int> idsActuales = nodos.Select(item => item.Id).Distinct().ToList();
                     List<int> idsEliminados = existentes
-                        .Select(item => (int)((dynamic)item).Id)
+                        .Select(item => item.Id)
                         .Where(id => !idsActuales.Contains(id))
                         .ToList();
 
@@ -149,45 +156,24 @@ namespace BLL
                 }
             }
 
-            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            int? usuarioActualId = _sesion.GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == usuarioId)
             {
-                AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
+                _autorizacion.ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
             }
         }
 
-        public List<object> ObtenerPermisosDirectosUsuario(int usuarioId)
+        public List<IPermiso> ObtenerPermisosDirectosUsuario(int usuarioId)
         {
             List<int> permisosId = ObtenerPermisoIdsDeUsuario(usuarioId);
-            List<object> catalogo = ObtenerCatalogo();
-            Dictionary<int, object> indice = _permisoService.Aplanar(catalogo)
-                .ToDictionary(item => (int)((dynamic)item).Id, item => item);
+            List<IPermiso> catalogo = ObtenerCatalogo();
+            Dictionary<int, IPermiso> indice = _permisoService.Aplanar(catalogo)
+                .ToDictionary(item => item.Id, item => item);
 
             return permisosId
                 .Where(indice.ContainsKey)
                 .Select(id => indice[id])
                 .ToList();
-        }
-
-        public void CargarPermisosEnUsuario(Usuario usuario)
-        {
-            if (usuario == null)
-            {
-                return;
-            }
-
-            IList permisos = usuario.PermisosNoTipados;
-            if (permisos == null)
-            {
-                return;
-            }
-
-            permisos.Clear();
-
-            foreach (object permiso in ObtenerPermisosDirectosUsuario(usuario.Id))
-            {
-                permisos.Add(permiso);
-            }
         }
 
         internal void AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad)

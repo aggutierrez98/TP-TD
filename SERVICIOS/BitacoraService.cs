@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using ABSTRACCIONES;
 
 namespace SERVICIOS
 {
-    public class BitacoraService
+    public class BitacoraService : IBitacora
     {
         private static BitacoraService _instancia;
 
@@ -93,6 +95,30 @@ namespace SERVICIOS
             };
 
             _registrador(evento, contextoPersistencia);
+        }
+
+        // Implementacion explicita del contrato transversal IBitacora: delega en los
+        // metodos existentes (la persistencia transaccional la maneja el caso de uso BLL).
+        void IBitacora.RegistrarOperacion(string actividad, string informacion, string origen)
+        {
+            RegistrarOperacion(actividad, informacion, origen);
+        }
+
+        void IBitacora.RegistrarFalloNegocio(string actividad, string informacion, string origen)
+        {
+            RegistrarFalloNegocio(actividad, informacion, origen);
+        }
+
+        void IBitacora.RegistrarExcepcionTecnica(string actividad, Exception exception, string origen)
+        {
+            RegistrarExcepcionTecnica(actividad, exception, origen);
+        }
+
+        IList<IEventoBitacora> IBitacora.ConsultarBitacora(IFiltroBitacora filtro)
+        {
+            return ConsultarBitacora(filtro as FiltroBitacora)
+                .Cast<IEventoBitacora>()
+                .ToList();
         }
     }
 }

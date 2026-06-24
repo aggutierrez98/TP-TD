@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using SERVICIOS;
 
 namespace TpIDS
@@ -90,7 +91,7 @@ namespace TpIDS
                 return string.Empty;
             }
 
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idioma = IdiomaService.GetInstance().IdiomaActual;
             if (idioma != null && idioma.TieneTraduccion(key))
             {
                 string traduccion = idioma.ObtenerTraduccion(key);

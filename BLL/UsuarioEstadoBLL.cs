@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 using REPOSITORIO;
 using SERVICIOS;
 
@@ -11,13 +12,15 @@ namespace BLL
         private readonly IUsuarioPermisoRepositorio _usuarioPermisoRepositorio;
         private readonly IUsuarioPreferenciaRepositorio _usuarioPreferenciaRepositorio;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
+        private readonly ISesion _sesion;
 
         public UsuarioEstadoBLL()
             : this(
                 new UsuarioRepositorio(),
                 new UsuarioPermisoRepositorio(),
                 new UsuarioPreferenciaRepositorio(),
-                new UnidadDeTrabajoFactory())
+                new UnidadDeTrabajoFactory(),
+                CompositionRoot.Sesion)
         {
         }
 
@@ -25,13 +28,14 @@ namespace BLL
             IUsuarioRepositorio usuarioRepositorio,
             IUsuarioPermisoRepositorio usuarioPermisoRepositorio,
             IUsuarioPreferenciaRepositorio usuarioPreferenciaRepositorio,
-            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
+            ISesion sesion)
         {
-            BootstrapAplicacionBLL.Inicializar();
             _usuarioRepositorio = usuarioRepositorio;
             _usuarioPermisoRepositorio = usuarioPermisoRepositorio;
             _usuarioPreferenciaRepositorio = usuarioPreferenciaRepositorio;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+            _sesion = sesion;
         }
 
         public UsuarioHistorialSnapshot ConstruirSnapshotActual(int usuarioId, string accion, string observaciones)
@@ -53,8 +57,8 @@ namespace BLL
             {
                 UsuarioId = usuario.Id,
                 FechaHora = System.DateTime.Now,
-                ActorUsuarioId = Sesion.GetInstance().GetUsuarioActualId(),
-                ActorUsernameSnapshot = Sesion.GetInstance().GetUsuarioActualNombre(),
+                ActorUsuarioId = _sesion.GetUsuarioActualId(),
+                ActorUsernameSnapshot = _sesion.GetUsuarioActualNombre(),
                 Accion = accion,
                 Observaciones = observaciones,
                 Username = usuario.Username,

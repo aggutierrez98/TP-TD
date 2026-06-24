@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace SERVICIOS
 {
-    public class AutorizacionService
+    public class AutorizacionService : IAutorizacion
     {
         private static AutorizacionService _instancia;
 

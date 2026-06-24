@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
@@ -21,16 +22,25 @@ namespace TpIDS
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
         private int _idSeleccionado = -1;
         private bool _cargandoGrillaUsuarios;
+        private readonly IAutorizacion _autorizacion;
+        private readonly ISesion _sesion;
 
         public FormGestionUsuarios()
+            : this(CompositionRoot.Autorizacion, CompositionRoot.Sesion)
         {
+        }
+
+        public FormGestionUsuarios(IAutorizacion autorizacion, ISesion sesion)
+        {
+            _autorizacion = autorizacion;
+            _sesion = sesion;
             InitializeComponent();
         }
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
             chkbUsuarioActivo.Checked = true;
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+            ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
             AplicarPermisosPantalla();
             RefrescarDatos();
         }
@@ -70,12 +80,12 @@ namespace TpIDS
 
         private void AplicarPermisosPantalla()
         {
-            bool puedeGestionarUsuarios = AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios);
-            bool puedeGestionarPermisos = AutorizacionService.GetInstance().TienePermiso(PermisoGestionPermisos);
-            bool puedeVerHistorial = AutorizacionService.GetInstance().TienePermiso(PermisoHistorialUsuarios);
-            bool puedeVerBitacora = AutorizacionService.GetInstance().TienePermiso(PermisoBitacora);
-            bool puedeConfigurarUsuario = AutorizacionService.GetInstance().TienePermiso(PermisoConfiguracion);
-            bool puedeGestionarIdiomas = AutorizacionService.GetInstance().TienePermiso(PermisoGestionIdiomas);
+            bool puedeGestionarUsuarios = _autorizacion.TienePermiso(PermisoGestionUsuarios);
+            bool puedeGestionarPermisos = _autorizacion.TienePermiso(PermisoGestionPermisos);
+            bool puedeVerHistorial = _autorizacion.TienePermiso(PermisoHistorialUsuarios);
+            bool puedeVerBitacora = _autorizacion.TienePermiso(PermisoBitacora);
+            bool puedeConfigurarUsuario = _autorizacion.TienePermiso(PermisoConfiguracion);
+            bool puedeGestionarIdiomas = _autorizacion.TienePermiso(PermisoGestionIdiomas);
 
             btnAgregarUsuario.Enabled = puedeGestionarUsuarios;
             btnEditarUsuario.Enabled = puedeGestionarUsuarios;
@@ -91,7 +101,7 @@ namespace TpIDS
 
         private bool ValidarPermiso(string permiso)
         {
-            if (AutorizacionService.GetInstance().TienePermiso(permiso))
+            if (_autorizacion.TienePermiso(permiso))
             {
                 return true;
             }
@@ -189,7 +199,7 @@ namespace TpIDS
 
                 if (usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername, nuevaPassword, usuarioActivo))
                 {
-                    ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+                    ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
                     string successKey = !usuarioEstabaActivo && usuarioActivo
                         ? "FormUserManagement.Success.UserActivated"
                         : usuarioEstabaActivo && !usuarioActivo
@@ -260,17 +270,17 @@ namespace TpIDS
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
-            if (_idSeleccionado == -1 || !AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios))
+            if (_idSeleccionado == -1 || !_autorizacion.TienePermiso(PermisoGestionUsuarios))
             {
                 return;
             }
 
             try
             {
-                List<object> catalogo = permisoBLL.ObtenerCatalogo();
+                List<IPermiso> catalogo = permisoBLL.ObtenerCatalogo();
                 HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
 
-                foreach (object raiz in catalogo)
+                foreach (IPermiso raiz in catalogo)
                 {
                     tvwPermisosUsuario.Nodes.Add(CrearNodoPermiso(raiz, permisosAsignados));
                 }
@@ -283,17 +293,15 @@ namespace TpIDS
             }
         }
 
-        private TreeNode CrearNodoPermiso(object permiso, ISet<int> permisosAsignados)
+        private TreeNode CrearNodoPermiso(IPermiso permiso, ISet<int> permisosAsignados)
         {
-            dynamic permisoActual = permiso;
-
-            TreeNode nodo = new TreeNode((string)permisoActual.Nombre)
+            TreeNode nodo = new TreeNode(permiso.Nombre)
             {
                 Tag = permiso,
-                Checked = permisosAsignados.Contains((int)permisoActual.Id)
+                Checked = permisosAsignados.Contains(permiso.Id)
             };
 
-            foreach (object hijo in permisoActual.Hijos)
+            foreach (IPermiso hijo in permiso.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoPermiso(hijo, permisosAsignados));
             }
@@ -334,10 +342,10 @@ namespace TpIDS
             List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
-                object permiso = nodo.Tag;
+                IPermiso permiso = nodo.Tag as IPermiso;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add((int)((dynamic)permiso).Id);
+                    ids.Add(permiso.Id);
                 }
 
                 ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
@@ -461,7 +469,7 @@ namespace TpIDS
 
             RefrescarDatos();
             CargarPermisosUsuario();
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+            ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
         }
 
         private void btnBitacora_Click(object sender, EventArgs e)

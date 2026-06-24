@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ABSTRACCIONES;
 using DAL;
 
 namespace REPOSITORIO
@@ -13,7 +14,7 @@ namespace REPOSITORIO
             _permisoDAL = new PermisoDAL();
         }
 
-        public List<object> ObtenerNodos(IUnidadDeTrabajo unidad = null)
+        public List<IPermiso> ObtenerNodos(IUnidadDeTrabajo unidad = null)
         {
             return _permisoDAL.ObtenerNodos(ObtenerAccesoDatos(unidad));
         }
@@ -23,7 +24,7 @@ namespace REPOSITORIO
             return _permisoDAL.ObtenerRelaciones(ObtenerAccesoDatos(unidad));
         }
 
-        public int Guardar(object permiso, IUnidadDeTrabajo unidad = null)
+        public int Guardar(IPermiso permiso, IUnidadDeTrabajo unidad = null)
         {
             return _permisoDAL.Guardar(permiso, ObtenerAccesoDatos(unidad));
         }

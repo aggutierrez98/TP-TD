@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -10,9 +11,18 @@ namespace TpIDS
     public partial class FormConfiguracionUsuario : FormTraducibleBase
     {
         private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly ISesion _sesion;
+        private readonly IObservado _servicioIdioma;
 
         public FormConfiguracionUsuario()
+            : this(CompositionRoot.Sesion, CompositionRoot.ServicioIdioma)
         {
+        }
+
+        public FormConfiguracionUsuario(ISesion sesion, IObservado servicioIdioma)
+        {
+            _sesion = sesion;
+            _servicioIdioma = servicioIdioma;
             InitializeComponent();
             Load += FormConfiguracionUsuario_Load;
         }
@@ -25,7 +35,7 @@ namespace TpIDS
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
         {
-            int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
+            int? usuarioId = _sesion.GetUsuarioActualId();
             if (!usuarioId.HasValue)
             {
                 UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
@@ -57,7 +67,7 @@ namespace TpIDS
         // y aca solo seteamos el dato.
         private void CargarUsuarioActual()
         {
-            string username = Sesion.GetInstance().GetUsuarioActualNombre();
+            string username = _sesion.GetUsuarioActualNombre();
             lblUsuarioActualNombre.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
@@ -69,7 +79,7 @@ namespace TpIDS
             cmbIdiomas.ValueMember = "Id";
             cmbIdiomas.DataSource = idiomas;
 
-            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idiomaActual = _servicioIdioma.IdiomaActual;
             if (idiomaActual != null)
             {
                 Idioma idiomaSeleccionado = idiomas.FirstOrDefault(item => item.Id == idiomaActual.Id);

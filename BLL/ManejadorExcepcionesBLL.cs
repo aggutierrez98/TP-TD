@@ -24,11 +24,11 @@ namespace BLL
 
         public static void RegistrarExcepcionTecnica(Exception exception, string actividad, string origen)
         {
-            BootstrapAplicacionBLL.Inicializar();
+            CompositionRoot.Inicializar();
 
             try
             {
-                BitacoraService.GetInstance().RegistrarExcepcionTecnica(actividad, exception, origen);
+                CompositionRoot.Bitacora.RegistrarExcepcionTecnica(actividad, exception, origen);
             }
             catch
             {

@@ -9,7 +9,6 @@ namespace BLL
     {
         public BitacoraBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
         }
 
         public List<EventoBitacora> Buscar(FiltroBitacora filtro)

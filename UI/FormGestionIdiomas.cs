@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -318,7 +319,7 @@ namespace TpIDS
 
         private void RefrescarIdiomaRuntimeSiCorresponde(int idiomaIdAfectado)
         {
-            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
             Idioma idiomaDefault = idiomaBLL.ObtenerIdiomaDefault();
 
             if (idiomaActual != null && idiomaActual.Id == idiomaIdAfectado)
@@ -391,7 +392,7 @@ namespace TpIDS
         }
         private string ObtenerTextoActual(string key)
         {
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTraduccion(key);
         }
 

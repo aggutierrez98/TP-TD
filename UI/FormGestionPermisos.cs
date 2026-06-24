@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -12,12 +13,12 @@ namespace TpIDS
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
         private readonly PermisoService permisoService = new PermisoService();
 
-        private List<object> catalogoRaiz;
-        private object familiaActiva;
+        private List<IPermiso> catalogoRaiz;
+        private IPermiso familiaActiva;
 
         public FormGestionPermisos()
         {
-            catalogoRaiz = new List<object>();
+            catalogoRaiz = new List<IPermiso>();
             InitializeComponent();
             Load += FormGestionPermisos_Load;
         }
@@ -29,7 +30,7 @@ namespace TpIDS
 
         private void CargarCatalogo()
         {
-            Dictionary<int, object> cache = new Dictionary<int, object>();
+            Dictionary<int, IPermiso> cache = new Dictionary<int, IPermiso>();
             catalogoRaiz = permisoBLL.ObtenerCatalogo()
                 .Select(item => ClonarNodo(item, cache))
                 .ToList();
@@ -39,28 +40,26 @@ namespace TpIDS
             Refrescar();
         }
 
-        private object ClonarNodo(object origen, IDictionary<int, object> cache)
+        private IPermiso ClonarNodo(IPermiso origen, IDictionary<int, IPermiso> cache)
         {
-            int id = permisoService.ObtenerId(origen);
+            int id = origen.Id;
             if (id > 0 && cache.ContainsKey(id))
             {
                 return cache[id];
             }
 
-            object copia = permisoService.EsGrupo(origen)
-                ? (object)new PermisoGrupo()
-                : new PermisoSimple();
-            permisoService.EstablecerId(copia, id);
-            permisoService.EstablecerNombre(copia, permisoService.ObtenerNombre(origen));
+            IPermiso copia = origen.EsGrupo ? (IPermiso)new PermisoGrupo() : new PermisoSimple();
+            copia.Id = id;
+            copia.Nombre = origen.Nombre;
 
             if (id > 0)
             {
                 cache[id] = copia;
             }
 
-            foreach (object hijo in permisoService.ObtenerHijos(origen))
+            foreach (IPermiso hijo in origen.Hijos)
             {
-                permisoService.AgregarHijo(copia, ClonarNodo(hijo, cache));
+                copia.Agregar(ClonarNodo(hijo, cache));
             }
 
             return copia;
@@ -81,7 +80,7 @@ namespace TpIDS
 
             tvwCatalogoPermisos.Nodes.Clear();
             TreeNode raiz = new TreeNode("Raiz") { Tag = null };
-            foreach (object familia in catalogoRaiz)
+            foreach (IPermiso familia in catalogoRaiz)
             {
                 raiz.Nodes.Add(CrearNodoTreeView(familia));
             }
@@ -97,7 +96,7 @@ namespace TpIDS
         {
             lstbFamiliasDisponibles.BeginUpdate();
             lstbFamiliasDisponibles.Items.Clear();
-            foreach (object familia in permisoService.FiltrarFamilias(catalogoRaiz))
+            foreach (IPermiso familia in permisoService.FiltrarFamilias(catalogoRaiz))
             {
                 if (!ReferenceEquals(familia, familiaActiva))
                 {
@@ -109,7 +108,7 @@ namespace TpIDS
 
             lstbPatentesDisponibles.BeginUpdate();
             lstbPatentesDisponibles.Items.Clear();
-            foreach (object patente in permisoService.FiltrarPatentes(catalogoRaiz))
+            foreach (IPermiso patente in permisoService.FiltrarPatentes(catalogoRaiz))
             {
                 lstbPatentesDisponibles.Items.Add(patente);
             }
@@ -139,18 +138,18 @@ namespace TpIDS
             btnEliminarSeleccionado.Enabled = hayFamiliaActiva;
             btnGuardarFamilia.Enabled = hayFamiliaActiva;
 
-            object seleccionCatalogo = tvwCatalogoPermisos.SelectedNode?.Tag;
-            btnEliminarFamilia.Enabled = seleccionCatalogo != null && permisoService.EsGrupo(seleccionCatalogo);
+            IPermiso seleccionCatalogo = tvwCatalogoPermisos.SelectedNode?.Tag as IPermiso;
+            btnEliminarFamilia.Enabled = seleccionCatalogo != null && seleccionCatalogo.EsGrupo;
         }
 
-        private TreeNode CrearNodoTreeView(object permiso)
+        private TreeNode CrearNodoTreeView(IPermiso permiso)
         {
-            TreeNode nodo = new TreeNode(permisoService.ObtenerNombre(permiso))
+            TreeNode nodo = new TreeNode(permiso.Nombre)
             {
                 Tag = permiso
             };
 
-            foreach (object hijo in permisoService.ObtenerHijos(permiso))
+            foreach (IPermiso hijo in permiso.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoTreeView(hijo));
             }
@@ -179,12 +178,12 @@ namespace TpIDS
 
         private void tvwCatalogoPermisos_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            object permiso = e.Node.Tag;
+            IPermiso permiso = e.Node.Tag as IPermiso;
 
-            if (permiso != null && permisoService.EsGrupo(permiso))
+            if (permiso != null && permiso.EsGrupo)
             {
                 familiaActiva = permiso;
-                txtbNombreFamilia.Text = permisoService.ObtenerNombre(permiso);
+                txtbNombreFamilia.Text = permiso.Nombre;
             }
             else
             {
@@ -205,7 +204,7 @@ namespace TpIDS
                 return;
             }
 
-            permisoService.EstablecerNombre(familiaActiva, txtbNombreFamilia.Text);
+            familiaActiva.Nombre = txtbNombreFamilia.Text;
 
             if (tvwPreviewFamilia.Nodes.Count > 0)
             {
@@ -242,14 +241,14 @@ namespace TpIDS
                 return;
             }
 
-            object familia = lstbFamiliasDisponibles.SelectedItem;
+            IPermiso familia = lstbFamiliasDisponibles.SelectedItem as IPermiso;
             if (familia == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyFromList");
                 return;
             }
 
-            permisoService.AgregarHijo(familiaActiva, familia);
+            familiaActiva.Agregar(familia);
             Refrescar();
         }
 
@@ -261,14 +260,14 @@ namespace TpIDS
                 return;
             }
 
-            object patente = lstbPatentesDisponibles.SelectedItem;
+            IPermiso patente = lstbPatentesDisponibles.SelectedItem as IPermiso;
             if (patente == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPatentFromList");
                 return;
             }
 
-            permisoService.AgregarHijo(familiaActiva, patente);
+            familiaActiva.Agregar(patente);
             Refrescar();
         }
 
@@ -281,21 +280,21 @@ namespace TpIDS
                 return;
             }
 
-            object hijo = seleccionado.Tag;
-            object padre = seleccionado.Parent.Tag;
+            IPermiso hijo = seleccionado.Tag as IPermiso;
+            IPermiso padre = seleccionado.Parent.Tag as IPermiso;
             if (hijo == null || padre == null)
             {
                 return;
             }
 
-            permisoService.QuitarHijo(padre, hijo);
+            padre.Quitar(hijo);
             Refrescar();
         }
 
         private void btnEliminarFamilia_Click(object sender, EventArgs e)
         {
-            object permiso = tvwCatalogoPermisos.SelectedNode?.Tag;
-            if (permiso == null || !permisoService.EsGrupo(permiso))
+            IPermiso permiso = tvwCatalogoPermisos.SelectedNode?.Tag as IPermiso;
+            if (permiso == null || !permiso.EsGrupo)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyToDelete");
                 return;
@@ -313,7 +312,7 @@ namespace TpIDS
 
             if (!catalogoRaiz.Remove(permiso))
             {
-                foreach (object raiz in catalogoRaiz)
+                foreach (IPermiso raiz in catalogoRaiz)
                 {
                     if (QuitarNodo(raiz, permiso))
                     {
@@ -331,13 +330,13 @@ namespace TpIDS
             Refrescar();
         }
 
-        private bool QuitarNodo(object padre, object objetivo)
+        private bool QuitarNodo(IPermiso padre, IPermiso objetivo)
         {
-            foreach (object hijo in permisoService.ObtenerHijos(padre))
+            foreach (IPermiso hijo in padre.Hijos)
             {
                 if (ReferenceEquals(hijo, objetivo))
                 {
-                    permisoService.QuitarHijo(padre, hijo);
+                    padre.Quitar(hijo);
                     return true;
                 }
 

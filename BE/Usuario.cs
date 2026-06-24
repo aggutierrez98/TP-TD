@@ -17,19 +17,12 @@ namespace BE
         [DigitoVerificador(3)]
         public bool Activo { get; set; }
 
-        public IList<IPermiso> Permisos { get; set; }
-        public IList PermisosNoTipados
-        {
-            get { return Permisos as IList; }
-        }
-
         // Digito verificador horizontal (DVH) de la fila. Lo calcula IntegridadService.
         public string DVH { get; set; }
 
         public Usuario()
         {
             Activo = true;
-            Permisos = new List<IPermiso>();
         }
 
         public Usuario(string username)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web.Script.Serialization;
+using ABSTRACCIONES;
 using REPOSITORIO;
 using SERVICIOS;
 
@@ -18,6 +19,7 @@ namespace BLL
         private readonly IUsuarioEstadoBLL _usuarioEstadoBLL;
         private readonly IBitacoraBLL _bitacoraBLL;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
+        private readonly IObservado _servicioIdioma;
 
         public IdiomaBLL()
             : this(
@@ -27,7 +29,8 @@ namespace BLL
                 new IdiomaCatalogoService(),
                 new UsuarioEstadoBLL(),
                 new BitacoraBLL(),
-                new UnidadDeTrabajoFactory())
+                new UnidadDeTrabajoFactory(),
+                CompositionRoot.ServicioIdioma)
         {
         }
 
@@ -38,9 +41,9 @@ namespace BLL
             IdiomaCatalogoService idiomaCatalogoService,
             IUsuarioEstadoBLL usuarioEstadoBLL,
             IBitacoraBLL bitacoraBLL,
-            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
+            IObservado servicioIdioma)
         {
-            BootstrapAplicacionBLL.Inicializar();
             _idiomaRepositorio = idiomaRepositorio;
             _usuarioPreferenciaRepositorio = usuarioPreferenciaRepositorio;
             _traduccionRepositorio = traduccionRepositorio;
@@ -48,6 +51,7 @@ namespace BLL
             _usuarioEstadoBLL = usuarioEstadoBLL;
             _bitacoraBLL = bitacoraBLL;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+            _servicioIdioma = servicioIdioma;
         }
 
         public void InicializarAplicacion()
@@ -55,7 +59,7 @@ namespace BLL
             Idioma idiomaDefault = ObtenerIdiomaDefault();
             if (idiomaDefault != null)
             {
-                IdiomaService.GetInstance().CambiarIdioma(idiomaDefault);
+                _servicioIdioma.CambiarIdioma(idiomaDefault);
             }
         }
 
@@ -88,7 +92,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.DefaultNotFound");
             }
 
-            IdiomaService.GetInstance().CambiarIdioma(idioma);
+            _servicioIdioma.CambiarIdioma(idioma);
         }
 
         public bool GuardarPreferencia(int usuarioId, int idiomaId)
@@ -336,7 +340,7 @@ namespace BLL
         {
             Idioma idioma = _idiomaRepositorio.ObtenerIdiomaCompleto(idiomaId);
             _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
-            IdiomaService.GetInstance().CambiarIdioma(idioma);
+            _servicioIdioma.CambiarIdioma(idioma);
         }
 
         private Idioma ObtenerIdiomaParaUsuario(int usuarioId)

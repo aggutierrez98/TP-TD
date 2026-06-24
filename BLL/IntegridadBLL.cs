@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -19,7 +20,7 @@ namespace BLL
 
         public IntegridadBLL()
             : this(
-                new IntegridadService(),
+                CompositionRoot.IntegridadService,
                 new IntegridadRepositorio(),
                 new UsuarioRepositorio(),
                 new BitacoraBLL(),
@@ -34,7 +35,6 @@ namespace BLL
             IBitacoraBLL bitacoraBLL,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
         {
-            BootstrapAplicacionBLL.Inicializar();
             _integridadService = integridadService;
             _integridadRepositorio = integridadRepositorio;
             _usuarioRepositorio = usuarioRepositorio;

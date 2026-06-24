@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 
 namespace SERVICIOS
 {
@@ -8,7 +9,7 @@ namespace SERVICIOS
         private static IdiomaService _instancia;
 
         private readonly List<IObservador> _observadores;
-        private Idioma _idiomaActual;
+        private IIdioma _idiomaActual;
 
         private IdiomaService()
         {
@@ -25,7 +26,7 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        public Idioma IdiomaActual
+        public IIdioma IdiomaActual
         {
             get { return _idiomaActual; }
         }
@@ -70,7 +71,7 @@ namespace SERVICIOS
             }
         }
 
-        public void CambiarIdioma(Idioma idioma)
+        public void CambiarIdioma(IIdioma idioma)
         {
             _idiomaActual = idioma;
 

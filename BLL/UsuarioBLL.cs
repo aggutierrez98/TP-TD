@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -17,6 +18,8 @@ namespace BLL
         private readonly IIntegridadBLL _integridadBLL;
         private readonly IBitacoraBLL _bitacoraBLL;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
+        private readonly ISesion _sesion;
+        private readonly IAutorizacion _autorizacion;
 
         private const string TablaUsuarios = "Usuarios";
 
@@ -29,7 +32,9 @@ namespace BLL
                 new UsuarioEstadoBLL(),
                 new IntegridadBLL(),
                 new BitacoraBLL(),
-                new UnidadDeTrabajoFactory())
+                new UnidadDeTrabajoFactory(),
+                CompositionRoot.Sesion,
+                CompositionRoot.Autorizacion)
         {
         }
 
@@ -41,9 +46,10 @@ namespace BLL
             IUsuarioEstadoBLL usuarioEstadoBLL,
             IIntegridadBLL integridadBLL,
             IBitacoraBLL bitacoraBLL,
-            IUnidadDeTrabajoFactory unidadDeTrabajoFactory)
+            IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
+            ISesion sesion,
+            IAutorizacion autorizacion)
         {
-            BootstrapAplicacionBLL.Inicializar();
             _usuarioRepositorio = usuarioRepositorio;
             _passwordHasher = passwordHasher;
             _idiomaBLL = idiomaBLL;
@@ -52,6 +58,8 @@ namespace BLL
             _integridadBLL = integridadBLL;
             _bitacoraBLL = bitacoraBLL;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
+            _sesion = sesion;
+            _autorizacion = autorizacion;
         }
 
         public Usuario Login(BE.Usuario usuarioEntidad, string passwordRaw)
@@ -76,9 +84,8 @@ namespace BLL
                 return null;
             }
 
-            _permisoBLL.CargarPermisosEnUsuario(usuarioBD);
-            Sesion.GetInstance().IniciarSesion(usuarioBD.Id, usuarioBD.Username);
-            AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioBD.Id));
+            _sesion.IniciarSesion(usuarioBD);
+            _autorizacion.ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioBD.Id));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioBD.Id);
             _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.SuccessfulLogin", "FormAuditLog.Value.Info.SuccessfulLogin", "UsuarioBLL");
             return usuarioBD;
@@ -86,8 +93,8 @@ namespace BLL
 
         public void CerrarSesionActual()
         {
-            AutorizacionService.GetInstance().Limpiar();
-            Sesion.GetInstance().CerrarSesion();
+            _autorizacion.Limpiar();
+            _sesion.CerrarSesion();
         }
 
         public bool Registrar(Usuario usuario, string passwordRaw)
@@ -169,7 +176,7 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
 
-                    int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+                    int? usuarioActualId = _sesion.GetUsuarioActualId();
                     if (usuarioActualId.HasValue && usuarioActualId.Value == id && !activo)
                     {
                         _bitacoraBLL.RegistrarFalloNegocioInterno("FormAuditLog.Value.Activity.RejectedUserUpdate", "FormAuditLog.Value.Info.AttemptedCurrentSessionUserDeactivation", "UsuarioBLL", unidad);
@@ -245,9 +252,9 @@ namespace BLL
                 }
             }
 
-            if (Sesion.GetInstance().GetUsuarioActualId() == id)
+            if (_sesion.GetUsuarioActualId() == id)
             {
-                Sesion.GetInstance().ActualizarUsuarioActualNombre(usernameNormalizado);
+                _sesion.ActualizarUsuarioActualNombre(usernameNormalizado);
             }
 
             return true;
@@ -255,7 +262,7 @@ namespace BLL
 
         public bool Eliminar(int id)
         {
-            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            int? usuarioActualId = _sesion.GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == id)
             {
                 _bitacoraBLL.RegistrarFalloNegocio("FormAuditLog.Value.Activity.RejectedUserHardDelete", "FormAuditLog.Value.Info.AttemptedCurrentSessionUserHardDelete", "UsuarioBLL");
@@ -333,7 +340,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.User.RestoreVersionNotFound");
             }
 
-            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            int? usuarioActualId = _sesion.GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == snapshot.UsuarioId && !snapshot.Activo)
             {
                 throw new ExcepcionNegocio("Error.User.CannotRestoreInactiveCurrentSession");
@@ -377,7 +384,7 @@ namespace BLL
 
         private void RefrescarSesionSiCorresponde(int usuarioId)
         {
-            int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
+            int? usuarioActualId = _sesion.GetUsuarioActualId();
             if (!usuarioActualId.HasValue || usuarioActualId.Value != usuarioId)
             {
                 return;
@@ -389,8 +396,8 @@ namespace BLL
                 return;
             }
 
-            Sesion.GetInstance().ActualizarUsuarioActualNombre(usuario.Username);
-            AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
+            _sesion.ActualizarUsuarioActualNombre(usuario.Username);
+            _autorizacion.ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
         }
 

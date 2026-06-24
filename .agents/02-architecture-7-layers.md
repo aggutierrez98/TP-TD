@@ -6,10 +6,10 @@ Este proyecto implementa rigurosamente un modelo por capas con `REPOSITORIO` ent
 
 Solo se permiten estas dependencias de compilacion:
 
-1. **UI/PRESENTACION (`TpIDS`)** -> `BLL`, `BE`, `SERVICIOS`
-2. **BLL** -> `REPOSITORIO`, `BE`, `SERVICIOS`
-3. **REPOSITORIO** -> `DAL`, `BE`, `SERVICIOS`
-4. **DAL** -> `BE`, `SERVICIOS`
+1. **UI/PRESENTACION (`TpIDS`)** -> `ABSTRACCIONES`, `BLL`, `BE`, `SERVICIOS`
+2. **BLL** -> `ABSTRACCIONES`, `REPOSITORIO`, `BE`, `SERVICIOS`
+3. **REPOSITORIO** -> `ABSTRACCIONES`, `DAL`, `BE`, `SERVICIOS`
+4. **DAL** -> `ABSTRACCIONES`, `BE`, `SERVICIOS`
 5. **BE** -> `ABSTRACCIONES`
 6. **SERVICIOS** -> `ABSTRACCIONES`
 7. **ABSTRACCIONES** -> sin dependencias
@@ -25,6 +25,7 @@ Cualquier referencia fuera de esa matriz esta prohibida.
 5. `BE` contiene entidades de negocio y solo puede depender de contratos definidos en `ABSTRACCIONES`.
 6. `SERVICIOS` es la capa concreta reusable y solo puede depender de `ABSTRACCIONES`.
 7. `ABSTRACCIONES` debe contener solo interfaces o contratos. No debe contener implementaciones concretas.
+8. Todas las capas pueden depender de `ABSTRACCIONES` (es el nucleo de contratos). Asi `BLL`/`UI` consumen las utilidades de `SERVICIOS` por interfaz (DIP) y las implementaciones concretas de `SERVICIOS` quedan intercambiables sin tocar a los consumidores. `ABSTRACCIONES` no depende de nada y no debe contener tipos del dominio ni concretos; solo contratos estables.
 
 ## Guard rail automatica
 

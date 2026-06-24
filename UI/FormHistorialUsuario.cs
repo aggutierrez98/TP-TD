@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -50,7 +51,7 @@ namespace TpIDS
                 case "Field":
                 case "PreviousValue":
                 case "NewValue":
-                    Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+                    IIdioma idioma = IdiomaService.GetInstance().IdiomaActual;
                     if (idioma != null)
                     {
                         e.Value = idioma.ObtenerTraduccion(e.Value.ToString());

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -27,9 +28,7 @@ namespace BLL
 
     internal interface IPermisoBLL
     {
-        List<object> ObtenerPermisosDirectosUsuario(int usuarioId);
-
-        void CargarPermisosEnUsuario(Usuario usuario);
+        List<IPermiso> ObtenerPermisosDirectosUsuario(int usuarioId);
 
         void AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad);
 
