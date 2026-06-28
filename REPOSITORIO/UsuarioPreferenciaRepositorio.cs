@@ -6,30 +6,32 @@ namespace REPOSITORIO
     public class UsuarioPreferenciaRepositorio : IUsuarioPreferenciaRepositorio
     {
         private readonly UsuarioPreferenciaDAL _usuarioPreferenciaDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public UsuarioPreferenciaRepositorio()
+            : this(null)
+        {
+        }
+
+        internal UsuarioPreferenciaRepositorio(AccesoDatosSqlServer accesoDatos)
         {
             _usuarioPreferenciaDAL = new UsuarioPreferenciaDAL();
+            _accesoDatos = accesoDatos;
         }
 
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, IUnidadDeTrabajo unidad = null)
+        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
         {
-            return _usuarioPreferenciaDAL.ObtenerPorUsuarioId(usuarioId, ObtenerAccesoDatos(unidad));
+            return _usuarioPreferenciaDAL.ObtenerPorUsuarioId(usuarioId, _accesoDatos);
         }
 
-        public bool Guardar(UsuarioPreferencia preferencia, IUnidadDeTrabajo unidad = null)
+        public bool Guardar(UsuarioPreferencia preferencia)
         {
-            return _usuarioPreferenciaDAL.Guardar(preferencia, ObtenerAccesoDatos(unidad));
+            return _usuarioPreferenciaDAL.Guardar(preferencia, _accesoDatos);
         }
 
-        public bool Guardar(int usuarioId, int? idiomaId, IUnidadDeTrabajo unidad = null)
+        public bool Guardar(int usuarioId, int? idiomaId)
         {
-            return _usuarioPreferenciaDAL.Guardar(usuarioId, idiomaId, ObtenerAccesoDatos(unidad));
-        }
-
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
+            return _usuarioPreferenciaDAL.Guardar(usuarioId, idiomaId, _accesoDatos);
         }
     }
 }

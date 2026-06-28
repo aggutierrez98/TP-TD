@@ -5,25 +5,27 @@ namespace REPOSITORIO
     public class IntegridadRepositorio : IIntegridadRepositorio
     {
         private readonly IntegridadDAL _integridadDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public IntegridadRepositorio()
+            : this(null)
+        {
+        }
+
+        internal IntegridadRepositorio(AccesoDatosSqlServer accesoDatos)
         {
             _integridadDAL = new IntegridadDAL();
+            _accesoDatos = accesoDatos;
         }
 
-        public string ObtenerDVV(string nombreTabla, IUnidadDeTrabajo unidad = null)
+        public string ObtenerDVV(string nombreTabla)
         {
-            return _integridadDAL.ObtenerDVV(nombreTabla, ObtenerAccesoDatos(unidad));
+            return _integridadDAL.ObtenerDVV(nombreTabla, _accesoDatos);
         }
 
-        public void GuardarDVV(string nombreTabla, string valor, IUnidadDeTrabajo unidad = null)
+        public void GuardarDVV(string nombreTabla, string valor)
         {
-            _integridadDAL.GuardarDVV(nombreTabla, valor, ObtenerAccesoDatos(unidad));
-        }
-
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
+            _integridadDAL.GuardarDVV(nombreTabla, valor, _accesoDatos);
         }
     }
 }

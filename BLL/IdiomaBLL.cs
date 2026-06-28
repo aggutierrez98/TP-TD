@@ -102,11 +102,9 @@ namespace BLL
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    bool guardado = _usuarioPreferenciaRepositorio.Guardar(usuarioId, idiomaId, unidad);
+                    bool guardado = unidad.UsuarioPreferencias.Guardar(usuarioId, idiomaId);
                     if (!guardado)
                     {
                         throw new ExcepcionTecnica("Error.Language.PreferenceSaveFailed");
@@ -114,16 +112,14 @@ namespace BLL
 
                     _usuarioEstadoBLL.GuardarVersionActualInterno(usuarioId, "FormUserHistory.Value.Action.PreferredLanguageUpdate", "FormUserHistory.Value.Obs.LanguagePreferenceUpdate", unidad);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.LanguagePreferenceUpdate", "FormAuditLog.Value.Info.LanguagePreferenceUpdate", "IdiomaBLL", unidad);
-                    unidad.Commit();
+                    unidad.Save();
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.Language.UserPreferenceSaveFailed", ex);
                 }
             }
@@ -137,43 +133,39 @@ namespace BLL
             string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
             _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaRepositorio.ObtenerIdiomas(), nombreNormalizado, null);
 
-            int idiomaId = _idiomaRepositorio.InsertarIdioma(new Idioma
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                Nombre = nombreNormalizado,
-                Default = false
-            });
+                int idiomaId = unidad.Idiomas.InsertarIdioma(new Idioma
+                {
+                    Nombre = nombreNormalizado,
+                    Default = false
+                });
 
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.LanguageCreation", "FormAuditLog.Value.Info.LanguageCreation", "IdiomaBLL");
-            return idiomaId;
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.LanguageCreation", "FormAuditLog.Value.Info.LanguageCreation", "IdiomaBLL", unidad);
+                unidad.Save();
+                return idiomaId;
+            }
         }
 
         public bool HacerIdiomaDefault(int idiomaId)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Idioma idiomaDefault = _idiomaRepositorio.ObtenerIdiomaDefault(unidad);
+                    Idioma idiomaDefault = unidad.Idiomas.ObtenerIdiomaDefault();
                     if (idiomaDefault != null)
                     {
-                        _idiomaRepositorio.SwitchearIdiomaDefault(idiomaDefault.Id, unidad);
+                        unidad.Idiomas.SwitchearIdiomaDefault(idiomaDefault.Id);
                     }
 
-                    bool resultado = _idiomaRepositorio.SwitchearIdiomaDefault(idiomaId, unidad);
-                    unidad.Commit();
+                    bool resultado = unidad.Idiomas.SwitchearIdiomaDefault(idiomaId);
+                    unidad.Save();
                     return resultado;
                 }
                 catch (InvalidOperationException)
                 {
-                    unidad.Rollback();
                     return false;
-                }
-                catch
-                {
-                    unidad.Rollback();
-                    throw;
                 }
             }
         }
@@ -183,19 +175,23 @@ namespace BLL
             string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
             _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaRepositorio.ObtenerIdiomas(), nombreNormalizado, idiomaId);
 
-            bool actualizado = _idiomaRepositorio.ActualizarIdioma(new Idioma
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                Id = idiomaId,
-                Nombre = nombreNormalizado
-            });
+                bool actualizado = unidad.Idiomas.ActualizarIdioma(new Idioma
+                {
+                    Id = idiomaId,
+                    Nombre = nombreNormalizado
+                });
 
-            if (!actualizado)
-            {
-                return false;
+                if (!actualizado)
+                {
+                    return false;
+                }
+
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.LanguageUpdate", "FormAuditLog.Value.Info.LanguageUpdate", "IdiomaBLL", unidad);
+                unidad.Save();
+                return true;
             }
-
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.LanguageUpdate", "FormAuditLog.Value.Info.LanguageUpdate", "IdiomaBLL");
-            return true;
         }
 
         public bool EliminarIdioma(int idiomaId)
@@ -212,62 +208,59 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.CannotDeleteDefaultLanguage");
             }
 
-            bool eliminado = _idiomaRepositorio.EliminarIdioma(idiomaId);
-            if (!eliminado)
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                return false;
-            }
+                bool eliminado = unidad.Idiomas.EliminarIdioma(idiomaId);
+                if (!eliminado)
+                {
+                    return false;
+                }
 
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.LanguageDeletion", "FormAuditLog.Value.Info.LanguageDeletion", "IdiomaBLL");
-            return true;
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.LanguageDeletion", "FormAuditLog.Value.Info.LanguageDeletion", "IdiomaBLL", unidad);
+                unidad.Save();
+                return true;
+            }
         }
 
         public void GuardarTraduccion(int idiomaId, string key, string valor)
         {
-            if (string.IsNullOrWhiteSpace(key))
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                throw new ExcepcionNegocio("Error.Language.KeyRequired");
+                GuardarTraduccionInterno(idiomaId, key, valor, unidad);
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.TranslationUpdate", "FormAuditLog.Value.Info.TranslationUpdate", "IdiomaBLL", unidad);
+                unidad.Save();
             }
-
-            if (string.IsNullOrWhiteSpace(valor))
-            {
-                throw new ExcepcionNegocio("Error.Language.TranslationRequired");
-            }
-
-            int palabraId = _traduccionRepositorio.ObtenerPalabraIdPorKey(key.Trim());
-            if (palabraId == 0)
-            {
-                throw new ExcepcionNegocio("Error.Language.KeyNotFound");
-            }
-
-            _traduccionRepositorio.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.TranslationUpdate", "FormAuditLog.Value.Info.TranslationUpdate", "IdiomaBLL");
         }
 
         public bool EliminarTraduccion(int idiomaId, int palabraId)
         {
-            Idioma idioma = _idiomaRepositorio.ObtenerIdiomaCompleto(idiomaId);
-            if (idioma == null)
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                throw new ExcepcionNegocio("Error.Language.NotFound");
+                Idioma idioma = unidad.Idiomas.ObtenerIdiomaCompleto(idiomaId);
+                if (idioma == null)
+                {
+                    throw new ExcepcionNegocio("Error.Language.NotFound");
+                }
+
+                Traduccion traduccion = idioma.Traducciones
+                    .OfType<Traduccion>()
+                    .FirstOrDefault(item => item.PalabraId == palabraId);
+
+                if (traduccion == null || traduccion.Palabra == null)
+                {
+                    unidad.Save();
+                    return false;
+                }
+
+                bool eliminado = unidad.Traducciones.EliminarTraduccion(idiomaId, palabraId);
+                if (eliminado)
+                {
+                    _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.TranslationDeletion", "FormAuditLog.Value.Info.TranslationDeletion", "IdiomaBLL", unidad);
+                }
+
+                unidad.Save();
+                return eliminado;
             }
-
-            Traduccion traduccion = idioma.Traducciones
-                .OfType<Traduccion>()
-                .FirstOrDefault(item => item.PalabraId == palabraId);
-
-            if (traduccion == null || traduccion.Palabra == null)
-            {
-                return false;
-            }
-
-            bool eliminado = _traduccionRepositorio.EliminarTraduccion(idiomaId, palabraId);
-            if (eliminado)
-            {
-                _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.TranslationDeletion", "FormAuditLog.Value.Info.TranslationDeletion", "IdiomaBLL");
-            }
-
-            return eliminado;
         }
 
         public void ImportarJson(int idiomaId, string rutaArchivo)
@@ -295,12 +288,16 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.JsonEmpty");
             }
 
-            foreach (KeyValuePair<string, string> item in traducciones)
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                GuardarTraduccion(idiomaId, item.Key, item.Value);
-            }
+                foreach (KeyValuePair<string, string> item in traducciones)
+                {
+                    GuardarTraduccionInterno(idiomaId, item.Key, item.Value, unidad);
+                }
 
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsImport", "FormAuditLog.Value.Info.TranslationsImport", "IdiomaBLL");
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.TranslationsImport", "FormAuditLog.Value.Info.TranslationsImport", "IdiomaBLL", unidad);
+                unidad.Save();
+            }
         }
 
         public void ExportarJson(int idiomaId, string rutaArchivo)
@@ -328,7 +325,11 @@ namespace BLL
             string contenido = serializer.Serialize(traducciones);
             File.WriteAllText(rutaArchivo, contenido, new UTF8Encoding(false));
 
-            _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsExport", "FormAuditLog.Value.Info.TranslationsExport", "IdiomaBLL");
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.TranslationsExport", "FormAuditLog.Value.Info.TranslationsExport", "IdiomaBLL", unidad);
+                unidad.Save();
+            }
         }
 
         public bool EstaCompleto(int idiomaId)
@@ -356,6 +357,32 @@ namespace BLL
             }
 
             return ObtenerIdiomaDefault();
+        }
+
+        private void GuardarTraduccionInterno(int idiomaId, string key, string valor, IUnidadDeTrabajo unidad)
+        {
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ExcepcionNegocio("Error.Language.KeyRequired");
+            }
+
+            if (string.IsNullOrWhiteSpace(valor))
+            {
+                throw new ExcepcionNegocio("Error.Language.TranslationRequired");
+            }
+
+            int palabraId = unidad.Traducciones.ObtenerPalabraIdPorKey(key.Trim());
+            if (palabraId == 0)
+            {
+                throw new ExcepcionNegocio("Error.Language.KeyNotFound");
+            }
+
+            unidad.Traducciones.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
         }
     }
 }

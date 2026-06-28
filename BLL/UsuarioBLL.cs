@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
@@ -108,13 +107,13 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.User.EmptyCredentials");
             }
 
+            string passwordHash = _passwordHasher.HashPassword(passwordNormalizada);
+
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Usuario existente = _usuarioRepositorio.ObtenerPorUsername(usernameNormalizado, unidad);
+                    Usuario existente = unidad.Usuarios.ObtenerPorUsername(usernameNormalizado);
                     if (existente != null)
                     {
                         _bitacoraBLL.RegistrarFalloNegocioInterno("FormAuditLog.Value.Activity.RejectedUserCreation", "FormAuditLog.Value.Info.UsernameAlreadyExists", "UsuarioBLL", unidad);
@@ -123,27 +122,28 @@ namespace BLL
 
                     Usuario nuevoUsuario = new Usuario(usernameNormalizado)
                     {
-                        PasswordHash = _passwordHasher.HashPassword(passwordNormalizada),
+                        PasswordHash = passwordHash,
                         Activo = true
                     };
 
                     nuevoUsuario.DVH = _integridadBLL.CalcularDVH(nuevoUsuario);
-                    nuevoUsuario.Id = _usuarioRepositorio.InsertarYObtenerId(nuevoUsuario, unidad);
+                    nuevoUsuario.Id = unidad.Usuarios.InsertarYObtenerId(nuevoUsuario);
                     _permisoBLL.AsignarPerfilBasicoInterno(nuevoUsuario.Id, unidad);
                     _usuarioEstadoBLL.GuardarVersionActualInterno(nuevoUsuario.Id, "FormUserHistory.Value.Action.Creation", "FormUserHistory.Value.Obs.InitialCreation", unidad);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserCreation", "FormAuditLog.Value.Info.UserCreation", "UsuarioBLL", unidad);
-                    SincronizarDvvUsuarios(unidad);
-                    unidad.Commit();
+
+                    // Alta: no hay DVH anterior. Se suma el DVH del usuario
+                    // nuevo al DVV persistido sin escanear Usuarios.
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, null, nuevoUsuario.DVH, unidad);
+                    unidad.Save();
                     return true;
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.User.RegisterFailed", ex);
                 }
             }
@@ -158,6 +158,7 @@ namespace BLL
         {
             string usernameNormalizado = (nuevoUsername ?? string.Empty).Trim();
             string passwordNormalizada = (nuevaPasswordRaw ?? string.Empty).Trim();
+            string passwordHash = string.IsNullOrWhiteSpace(passwordNormalizada) ? null : _passwordHasher.HashPassword(passwordNormalizada);
             if (string.IsNullOrWhiteSpace(usernameNormalizado))
             {
                 _bitacoraBLL.RegistrarFalloNegocio("FormAuditLog.Value.Activity.RejectedUserUpdate", "FormAuditLog.Value.Info.UserUpdateEmptyUsername", "UsuarioBLL");
@@ -166,11 +167,9 @@ namespace BLL
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Usuario usuario = _usuarioRepositorio.ObtenerPorId(id, unidad);
+                    Usuario usuario = unidad.Usuarios.ObtenerPorId(id);
                     if (usuario == null)
                     {
                         throw new ExcepcionNegocio("Error.User.NotFound");
@@ -183,25 +182,29 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.User.CannotDeactivateActiveSession");
                     }
 
-                    Usuario existente = _usuarioRepositorio.ObtenerPorUsername(usernameNormalizado, unidad);
+                    Usuario existente = unidad.Usuarios.ObtenerPorUsername(usernameNormalizado);
                     if (existente != null && existente.Id != id)
                     {
                         _bitacoraBLL.RegistrarFalloNegocioInterno("FormAuditLog.Value.Activity.RejectedUserUpdate", "FormAuditLog.Value.Info.UsernameAlreadyExists", "UsuarioBLL", unidad);
                         throw new ExcepcionNegocio("Error.User.UsernameExists");
                     }
 
+                    // Guardar el DVH antes de modificar la entidad es obligatorio:
+                    // el DVV incremental necesita restar la firma vieja y sumar
+                    // la firma nueva calculada mas abajo.
+                    string dvhAnterior = usuario.DVH;
                     bool usuarioEstabaActivo = usuario.Activo;
                     string usernameAnterior = usuario.Username;
                     bool actualizaPassword = !string.IsNullOrWhiteSpace(passwordNormalizada);
                     usuario.Username = usernameNormalizado;
                     if (actualizaPassword)
                     {
-                        usuario.PasswordHash = _passwordHasher.HashPassword(passwordNormalizada);
+                        usuario.PasswordHash = passwordHash;
                     }
 
                     usuario.Activo = activo;
                     usuario.DVH = _integridadBLL.CalcularDVH(usuario);
-                    bool actualizado = _usuarioRepositorio.Actualizar(usuario, unidad);
+                    bool actualizado = unidad.Usuarios.Actualizar(usuario);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.User.UpdateFailed");
@@ -237,17 +240,18 @@ namespace BLL
 
                     _usuarioEstadoBLL.GuardarVersionActualInterno(id, accionHistorial, observacionesHistorial, unidad);
                     _bitacoraBLL.RegistrarOperacionInterno(actividadBitacora, informacionBitacora, "UsuarioBLL", unidad);
-                    SincronizarDvvUsuarios(unidad);
-                    unidad.Commit();
+
+                    // Modificacion: reemplaza la contribucion anterior por la
+                    // nueva dentro de la misma transaccion de usuario/historial.
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, usuario.DVH, unidad);
+                    unidad.Save();
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.User.UpdateFailed", ex);
                 }
             }
@@ -271,35 +275,37 @@ namespace BLL
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Usuario usuario = _usuarioRepositorio.ObtenerPorId(id, unidad);
+                    Usuario usuario = unidad.Usuarios.ObtenerPorId(id);
                     if (usuario == null)
                     {
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
 
-                    bool eliminado = _usuarioRepositorio.EliminarFisicamente(id, unidad);
+                    // Baja fisica: capturar la firma antes del DELETE permite
+                    // restarla del DVV luego de eliminar la fila.
+                    string dvhAnterior = usuario.DVH;
+                    bool eliminado = unidad.Usuarios.EliminarFisicamente(id);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.User.DeleteFailed");
                     }
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserHardDelete", "FormAuditLog.Value.Info.UserHardDelete", "UsuarioBLL", unidad);
-                    SincronizarDvvUsuarios(unidad);
-                    unidad.Commit();
+
+                    // Baja: el DVH nuevo es null porque la fila ya no participa
+                    // del conjunto controlado por DVV.
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, null, unidad);
+                    unidad.Save();
                     return true;
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.User.DeleteFailed", ex);
                 }
             }
@@ -348,32 +354,36 @@ namespace BLL
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Usuario usuario = _usuarioRepositorio.ObtenerPorId(snapshot.UsuarioId, unidad);
+                    Usuario usuario = unidad.Usuarios.ObtenerPorId(snapshot.UsuarioId);
                     if (usuario == null)
                     {
                         throw new ExcepcionNegocio("Error.User.HistoryUserNotFound");
                     }
 
+                    // Restauracion: el snapshot reescribe datos de usuario. Por
+                    // eso se conserva la firma previa y luego se calcula la firma
+                    // del estado restaurado.
+                    string dvhAnterior = usuario.DVH;
                     _usuarioEstadoBLL.AplicarSnapshotInterno(snapshot, unidad);
-                    Usuario usuarioRestaurado = _usuarioRepositorio.ObtenerPorId(snapshot.UsuarioId, unidad);
-                    _usuarioRepositorio.ActualizarDVH(snapshot.UsuarioId, _integridadBLL.CalcularDVH(usuarioRestaurado), unidad);
+                    Usuario usuarioRestaurado = unidad.Usuarios.ObtenerPorId(snapshot.UsuarioId);
+                    string dvhNuevo = _integridadBLL.CalcularDVH(usuarioRestaurado);
+                    unidad.Usuarios.ActualizarDVH(snapshot.UsuarioId, dvhNuevo);
                     _usuarioEstadoBLL.GuardarVersionActualInterno(snapshot.UsuarioId, "FormUserHistory.Value.Action.Restoration", "FormUserHistory.Value.Obs.Restoration", unidad);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserRestoration", "FormAuditLog.Value.Info.UserRestoration", "UsuarioBLL", unidad);
-                    SincronizarDvvUsuarios(unidad);
-                    unidad.Commit();
+
+                    // Restauracion: se reemplaza la contribucion del estado
+                    // anterior por la del estado restaurado.
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, dvhNuevo, unidad);
+                    unidad.Save();
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.User.RestoreVersionFailed", ex);
                 }
             }
@@ -401,10 +411,5 @@ namespace BLL
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
         }
 
-        private void SincronizarDvvUsuarios(IUnidadDeTrabajo unidad)
-        {
-            List<Usuario> filas = _usuarioRepositorio.ObtenerTodos(unidad);
-            _integridadBLL.RecalcularDVVInterno(TablaUsuarios, filas.Select(usuario => usuario.DVH), unidad);
-        }
     }
 }

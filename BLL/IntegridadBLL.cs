@@ -49,8 +49,31 @@ namespace BLL
 
         internal void RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad)
         {
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            // Camino completo: se usa al inicializar firmas o al validar toda la
+            // tabla. Aca si se dispone de todos los DVH y se reconstruye el DVV
+            // esperado desde cero.
             string dvv = _integridadService.CalcularDVV(listaDVH);
-            _integridadRepositorio.GuardarDVV(tabla, dvv, unidad);
+            unidad.Integridad.GuardarDVV(tabla, dvv);
+        }
+
+        internal void ActualizarDVVInterno(string tabla, string dvhAnterior, string dvhNuevo, IUnidadDeTrabajo unidad)
+        {
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            // Camino incremental: las escrituras de usuario no vuelven a leer la
+            // tabla completa. Parten del DVV persistido y aplican solo la
+            // diferencia entre el DVH anterior y el nuevo dentro de la misma UoW.
+            string dvvActual = unidad.Integridad.ObtenerDVV(tabla);
+            string dvv = _integridadService.CalcularDVVIncremental(dvvActual, dvhAnterior, dvhNuevo);
+            unidad.Integridad.GuardarDVV(tabla, dvv);
         }
 
         void IIntegridadBLL.RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad)
@@ -58,34 +81,29 @@ namespace BLL
             RecalcularDVVInterno(tabla, listaDVH, unidad);
         }
 
+        void IIntegridadBLL.ActualizarDVVInterno(string tabla, string dvhAnterior, string dvhNuevo, IUnidadDeTrabajo unidad)
+        {
+            ActualizarDVVInterno(tabla, dvhAnterior, dvhNuevo, unidad);
+        }
+
         public void ValidarIntegridadGlobal()
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
+                List<Usuario> usuarios = unidad.Usuarios.ObtenerTodos();
+                string dvvAlmacenado = unidad.Integridad.ObtenerDVV(TablaUsuarios);
 
-                try
+                if (EstaSinInicializar(usuarios, dvvAlmacenado))
                 {
-                    List<Usuario> usuarios = _usuarioRepositorio.ObtenerTodos(unidad);
-                    string dvvAlmacenado = _integridadRepositorio.ObtenerDVV(TablaUsuarios, unidad);
-
-                    if (EstaSinInicializar(usuarios, dvvAlmacenado))
-                    {
-                        InicializarFirmas(usuarios, unidad);
-                        unidad.Commit();
-                        return;
-                    }
-
-                    VerificarHorizontal(usuarios);
-                    VerificarVertical(usuarios, dvvAlmacenado);
-
-                    unidad.Commit();
+                    InicializarFirmas(usuarios, unidad);
+                    unidad.Save();
+                    return;
                 }
-                catch (Exception)
-                {
-                    unidad.Rollback();
-                    throw;
-                }
+
+                VerificarHorizontal(usuarios);
+                VerificarVertical(usuarios, dvvAlmacenado);
+
+                unidad.Save();
             }
         }
 
@@ -99,7 +117,7 @@ namespace BLL
             foreach (Usuario usuario in usuarios)
             {
                 usuario.DVH = _integridadService.CalcularDVH(usuario);
-                _usuarioRepositorio.ActualizarDVH(usuario.Id, usuario.DVH, unidad);
+                unidad.Usuarios.ActualizarDVH(usuario.Id, usuario.DVH);
             }
 
             RecalcularDVVInterno(TablaUsuarios, usuarios.Select(usuario => usuario.DVH), unidad);

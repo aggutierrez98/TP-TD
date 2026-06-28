@@ -16,6 +16,7 @@ namespace SERVICIOS
     {
         // Separador entre atributos dentro de la cadena canonica.
         private const string SeparadorAtributo = "//";
+        private const int LongitudHashBytes = 32;
 
         public string CalcularDVH<T>(T entidad) where T : class
         {
@@ -65,9 +66,35 @@ namespace SERVICIOS
                 throw new ArgumentNullException(nameof(listaDVH));
             }
 
-            // Combinacion de todos los DVH en el orden recibido.
-            string concatenado = string.Join("|", listaDVH.Select(dvh => dvh ?? string.Empty));
-            return CalcularHash(concatenado);
+            // El DVV se define como suma modular de contribuciones de DVH.
+            // Antes era un hash de la concatenacion completa, lo que obligaba a
+            // leer toda la tabla en cada escritura. Con esta forma, la
+            // recomputacion completa y la actualizacion incremental producen el
+            // mismo valor.
+            byte[] acumulador = CrearAcumuladorVacio();
+            foreach (string dvh in listaDVH)
+            {
+                Sumar(acumulador, ObtenerContribucionDVH(dvh));
+            }
+
+            return Convert.ToBase64String(acumulador);
+        }
+
+        public string CalcularDVVIncremental(string dvvActual, string dvhAnterior, string dvhNuevo)
+        {
+            byte[] acumulador = ObtenerAcumulador(dvvActual);
+
+            // Paso incremental:
+            // 1. Partir del DVV persistido.
+            // 2. Sacar la contribucion del DVH viejo, si existia.
+            // 3. Agregar la contribucion del DVH nuevo, si existe.
+            // Alta: anterior null, nuevo con valor.
+            // Baja: anterior con valor, nuevo null.
+            // Modificacion: ambos con valor.
+            Restar(acumulador, ObtenerContribucionDVH(dvhAnterior));
+            Sumar(acumulador, ObtenerContribucionDVH(dvhNuevo));
+
+            return Convert.ToBase64String(acumulador);
         }
 
         private static List<PropiedadVerificable> ObtenerPropiedadesVerificables(Type tipo)
@@ -102,6 +129,91 @@ namespace SERVICIOS
                 byte[] bytes = Encoding.UTF8.GetBytes(contenido);
                 byte[] hash = sha256.ComputeHash(bytes);
                 return Convert.ToBase64String(hash);
+            }
+        }
+
+        private static byte[] CrearAcumuladorVacio()
+        {
+            return new byte[LongitudHashBytes];
+        }
+
+        private static byte[] ObtenerAcumulador(string dvv)
+        {
+            if (string.IsNullOrWhiteSpace(dvv))
+            {
+                // Si la tabla de DVV todavia no tiene fila, el neutro de la
+                // suma modular permite iniciar el acumulador sin caso especial.
+                return CrearAcumuladorVacio();
+            }
+
+            return DecodificarHashBase64(dvv, nameof(dvv));
+        }
+
+        private static byte[] ObtenerContribucionDVH(string dvh)
+        {
+            if (string.IsNullOrWhiteSpace(dvh))
+            {
+                // Un DVH inexistente no aporta nada al DVV. Esto modela altas y
+                // bajas sin bifurcar la formula incremental.
+                return CrearAcumuladorVacio();
+            }
+
+            return DecodificarHashBase64(dvh, nameof(dvh));
+        }
+
+        private static byte[] DecodificarHashBase64(string valor, string nombreParametro)
+        {
+            byte[] bytes;
+            try
+            {
+                bytes = Convert.FromBase64String(valor);
+            }
+            catch (FormatException ex)
+            {
+                throw new ArgumentException("El valor debe ser un hash SHA-256 en Base64.", nombreParametro, ex);
+            }
+
+            if (bytes.Length != LongitudHashBytes)
+            {
+                throw new ArgumentException("El valor debe representar exactamente 32 bytes.", nombreParametro);
+            }
+
+            return bytes;
+        }
+
+        private static void Sumar(byte[] acumulador, byte[] contribucion)
+        {
+            // Suma big-endian modulo 2^256. El acarreo final se descarta a
+            // proposito: eso cierra el espacio de 32 bytes y mantiene el valor
+            // serializable como Base64 de SHA-256.
+            int acarreo = 0;
+            for (int indice = acumulador.Length - 1; indice >= 0; indice--)
+            {
+                int suma = acumulador[indice] + contribucion[indice] + acarreo;
+                acumulador[indice] = (byte)(suma & 0xFF);
+                acarreo = suma >> 8;
+            }
+        }
+
+        private static void Restar(byte[] acumulador, byte[] contribucion)
+        {
+            // Resta big-endian modulo 2^256. Si hay prestamo al salir del byte
+            // mas significativo, queda implicito por el comportamiento modular.
+            int prestamo = 0;
+            for (int indice = acumulador.Length - 1; indice >= 0; indice--)
+            {
+                int resta = acumulador[indice] - contribucion[indice] - prestamo;
+                if (resta < 0)
+                {
+                    resta += 256;
+                    prestamo = 1;
+                }
+                else
+                {
+                    prestamo = 0;
+                }
+
+                acumulador[indice] = (byte)resta;
             }
         }
 

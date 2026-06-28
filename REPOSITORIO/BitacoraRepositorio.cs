@@ -7,15 +7,22 @@ namespace REPOSITORIO
     public class BitacoraRepositorio : IBitacoraRepositorio
     {
         private readonly BitacoraDAL _bitacoraDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public BitacoraRepositorio()
+            : this(null)
         {
-            _bitacoraDAL = new BitacoraDAL();
         }
 
-        public int Guardar(EventoBitacora evento, IUnidadDeTrabajo unidad = null)
+        internal BitacoraRepositorio(AccesoDatosSqlServer accesoDatos)
         {
-            return _bitacoraDAL.Guardar(evento, ObtenerAccesoDatos(unidad));
+            _bitacoraDAL = new BitacoraDAL();
+            _accesoDatos = accesoDatos;
+        }
+
+        public int Guardar(EventoBitacora evento)
+        {
+            return _bitacoraDAL.Guardar(evento, _accesoDatos);
         }
 
         public List<EventoBitacora> Buscar(FiltroBitacora filtro)
@@ -23,9 +30,5 @@ namespace REPOSITORIO
             return _bitacoraDAL.Buscar(filtro);
         }
 
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
-        }
     }
 }

@@ -43,7 +43,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutorizacionService.cs" />
-    <Compile Include="BitacoraService.cs" />
     <Compile Include="EventoBitacora.cs" />
     <Compile Include="ExcepcionIntegridad.cs" />
     <Compile Include="ExcepcionNegocio.cs" />

@@ -6,16 +6,16 @@ namespace REPOSITORIO
 {
     public interface IPermisoRepositorio
     {
-        List<IPermiso> ObtenerNodos(IUnidadDeTrabajo unidad = null);
+        List<IPermiso> ObtenerNodos();
 
-        List<Tuple<int, int>> ObtenerRelaciones(IUnidadDeTrabajo unidad = null);
+        List<Tuple<int, int>> ObtenerRelaciones();
 
-        int Guardar(IPermiso permiso, IUnidadDeTrabajo unidad = null);
+        int Guardar(IPermiso permiso);
 
-        bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones, IUnidadDeTrabajo unidad = null);
+        bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones);
 
-        bool EliminarPermisos(List<int> idsPermiso, IUnidadDeTrabajo unidad = null);
+        bool EliminarPermisos(List<int> idsPermiso);
 
-        int ObtenerIdPorNombre(string nombre, IUnidadDeTrabajo unidad = null);
+        int ObtenerIdPorNombre(string nombre);
     }
 }

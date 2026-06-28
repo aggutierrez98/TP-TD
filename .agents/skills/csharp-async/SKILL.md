@@ -1,6 +1,6 @@
 ---
 name: csharp-async
-description: 'Get best practices for C# async programming'
+description: 'Best practices for C# asynchronous programming. Use when writing, reviewing, or refactoring async/await code: naming async methods, choosing return types (Task, Task<T>, ValueTask), avoiding async void or sync-over-async deadlocks, cancellation tokens, or ConfigureAwait.'
 ---
 
 # C# Async Programming Best Practices

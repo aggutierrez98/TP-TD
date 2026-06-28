@@ -51,7 +51,6 @@
     <Compile Include="IUsuarioPreferenciaRepositorio.cs" />
     <Compile Include="IUsuarioRepositorio.cs" />
     <Compile Include="PermisoRepositorio.cs" />
-    <Compile Include="Repositorio.cs" />
     <Compile Include="TraduccionRepositorio.cs" />
     <Compile Include="UnidadDeTrabajoSqlServer.cs" />
     <Compile Include="UnidadDeTrabajoFactory.cs" />

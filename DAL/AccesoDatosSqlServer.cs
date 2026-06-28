@@ -110,12 +110,20 @@ namespace DAL
                 }
                 catch (SqlException ex)
                 {
-                    RollbackTransaction();
+                    if (transaccionCreadaEnLlamada)
+                    {
+                        RollbackTransaction();
+                    }
+
                     throw new ExcepcionTecnica("Error.Technical.SqlFailure", ex);
                 }
                 catch
                 {
-                    RollbackTransaction();
+                    if (transaccionCreadaEnLlamada)
+                    {
+                        RollbackTransaction();
+                    }
+
                     throw;
                 }
             }

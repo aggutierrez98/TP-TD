@@ -5,7 +5,7 @@ namespace REPOSITORIO
 {
     public interface IBitacoraRepositorio
     {
-        int Guardar(EventoBitacora evento, IUnidadDeTrabajo unidad = null);
+        int Guardar(EventoBitacora evento);
 
         List<EventoBitacora> Buscar(FiltroBitacora filtro);
     }

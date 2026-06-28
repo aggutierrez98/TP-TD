@@ -8,45 +8,47 @@ namespace REPOSITORIO
     public class PermisoRepositorio : IPermisoRepositorio
     {
         private readonly PermisoDAL _permisoDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public PermisoRepositorio()
+            : this(null)
+        {
+        }
+
+        internal PermisoRepositorio(AccesoDatosSqlServer accesoDatos)
         {
             _permisoDAL = new PermisoDAL();
+            _accesoDatos = accesoDatos;
         }
 
-        public List<IPermiso> ObtenerNodos(IUnidadDeTrabajo unidad = null)
+        public List<IPermiso> ObtenerNodos()
         {
-            return _permisoDAL.ObtenerNodos(ObtenerAccesoDatos(unidad));
+            return _permisoDAL.ObtenerNodos(_accesoDatos);
         }
 
-        public List<Tuple<int, int>> ObtenerRelaciones(IUnidadDeTrabajo unidad = null)
+        public List<Tuple<int, int>> ObtenerRelaciones()
         {
-            return _permisoDAL.ObtenerRelaciones(ObtenerAccesoDatos(unidad));
+            return _permisoDAL.ObtenerRelaciones(_accesoDatos);
         }
 
-        public int Guardar(IPermiso permiso, IUnidadDeTrabajo unidad = null)
+        public int Guardar(IPermiso permiso)
         {
-            return _permisoDAL.Guardar(permiso, ObtenerAccesoDatos(unidad));
+            return _permisoDAL.Guardar(permiso, _accesoDatos);
         }
 
-        public bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones, IUnidadDeTrabajo unidad = null)
+        public bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones)
         {
-            return _permisoDAL.ReemplazarRelaciones(relaciones, ObtenerAccesoDatos(unidad));
+            return _permisoDAL.ReemplazarRelaciones(relaciones, _accesoDatos);
         }
 
-        public bool EliminarPermisos(List<int> idsPermiso, IUnidadDeTrabajo unidad = null)
+        public bool EliminarPermisos(List<int> idsPermiso)
         {
-            return _permisoDAL.EliminarPermisos(idsPermiso, ObtenerAccesoDatos(unidad));
+            return _permisoDAL.EliminarPermisos(idsPermiso, _accesoDatos);
         }
 
-        public int ObtenerIdPorNombre(string nombre, IUnidadDeTrabajo unidad = null)
+        public int ObtenerIdPorNombre(string nombre)
         {
-            return _permisoDAL.ObtenerIdPorNombre(nombre, ObtenerAccesoDatos(unidad));
-        }
-
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
+            return _permisoDAL.ObtenerIdPorNombre(nombre, _accesoDatos);
         }
     }
 }

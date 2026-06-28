@@ -5,7 +5,7 @@ namespace REPOSITORIO
 {
     public interface IUsuarioHistorialRepositorio
     {
-        int GuardarVersion(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad = null);
+        int GuardarVersion(UsuarioHistorialSnapshot snapshot);
 
         List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId);
 

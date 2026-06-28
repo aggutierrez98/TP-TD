@@ -1,6 +1,6 @@
 ---
 name: csharp-tunit
-description: 'Get best practices for TUnit unit testing, including data-driven tests'
+description: 'Best practices for TUnit unit testing, including data-driven tests. Use when writing, reviewing, or refactoring unit tests with TUnit ([Test], [Arguments], fluent TUnit.Assertions) on .NET 8.0+.'
 ---
 
 # TUnit Best Practices

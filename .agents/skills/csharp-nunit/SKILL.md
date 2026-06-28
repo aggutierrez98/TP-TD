@@ -1,6 +1,6 @@
 ---
 name: csharp-nunit
-description: 'Get best practices for NUnit unit testing, including data-driven tests'
+description: 'Best practices for NUnit unit testing, including data-driven tests. Use when writing, reviewing, or refactoring unit tests with NUnit ([TestFixture], [Test], [TestCase], Assert.That).'
 ---
 
 # NUnit Best Practices

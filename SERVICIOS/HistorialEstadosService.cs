@@ -9,7 +9,6 @@ namespace SERVICIOS
     {
         private static HistorialEstadosService _instancia;
 
-        private Func<UsuarioHistorialSnapshot, object, int> _guardadorVersionUsuario;
         private Func<int, IList<UsuarioHistorialSnapshot>> _obtenedorVersionesUsuario;
         private Func<int, UsuarioHistorialSnapshot> _obtenedorVersionUsuario;
 
@@ -28,28 +27,11 @@ namespace SERVICIOS
         }
 
         public void Configurar(
-            Func<UsuarioHistorialSnapshot, object, int> guardadorVersionUsuario,
             Func<int, IList<UsuarioHistorialSnapshot>> obtenedorVersionesUsuario,
             Func<int, UsuarioHistorialSnapshot> obtenedorVersionUsuario)
         {
-            _guardadorVersionUsuario = guardadorVersionUsuario;
             _obtenedorVersionesUsuario = obtenedorVersionesUsuario;
             _obtenedorVersionUsuario = obtenedorVersionUsuario;
-        }
-
-        public int GuardarVersionUsuario(UsuarioHistorialSnapshot snapshot, object contextoPersistencia = null)
-        {
-            if (snapshot == null)
-            {
-                throw new ArgumentNullException("snapshot");
-            }
-
-            if (_guardadorVersionUsuario == null)
-            {
-                throw new InvalidOperationException("El historial de estados no fue configurado.");
-            }
-
-            return _guardadorVersionUsuario(snapshot, contextoPersistencia);
         }
 
         public IList<UsuarioHistorialSnapshot> ObtenerVersionesUsuario(int usuarioId)
@@ -70,11 +52,6 @@ namespace SERVICIOS
             }
 
             return _obtenedorVersionUsuario(historialId);
-        }
-
-        int IServicioHistorialEstados.GuardarVersionUsuario(IUsuarioSnapshot snapshot, object contextoPersistencia)
-        {
-            return GuardarVersionUsuario(snapshot as UsuarioHistorialSnapshot, contextoPersistencia);
         }
 
         IList<IUsuarioSnapshot> IServicioHistorialEstados.ObtenerVersionesUsuario(int usuarioId)

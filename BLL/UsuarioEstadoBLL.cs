@@ -38,20 +38,20 @@ namespace BLL
             _sesion = sesion;
         }
 
-        public UsuarioHistorialSnapshot ConstruirSnapshotActual(int usuarioId, string accion, string observaciones)
-        {
-            return ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, null);
-        }
-
         internal UsuarioHistorialSnapshot ConstruirSnapshotActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
         {
-            BE.Usuario usuario = _usuarioRepositorio.ObtenerPorId(usuarioId, unidad);
+            if (unidad == null)
+            {
+                throw new System.ArgumentNullException("unidad");
+            }
+
+            BE.Usuario usuario = unidad.Usuarios.ObtenerPorId(usuarioId);
             if (usuario == null)
             {
                 return null;
             }
 
-            UsuarioPreferencia preferencia = _usuarioPreferenciaRepositorio.ObtenerPorUsuarioId(usuarioId, unidad);
+            UsuarioPreferencia preferencia = unidad.UsuarioPreferencias.ObtenerPorUsuarioId(usuarioId);
 
             return new UsuarioHistorialSnapshot
             {
@@ -65,7 +65,7 @@ namespace BLL
                 PasswordHash = usuario.PasswordHash,
                 Activo = usuario.Activo,
                 IdiomaId = preferencia == null ? (int?)null : preferencia.IdiomaId,
-                PermisosIds = _usuarioPermisoRepositorio.ObtenerPermisoIdsPorUsuario(usuarioId, unidad)
+                PermisosIds = unidad.UsuarioPermisos.ObtenerPermisoIdsPorUsuario(usuarioId)
             };
         }
 
@@ -73,19 +73,9 @@ namespace BLL
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
-                try
-                {
-                    int resultado = GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
-                    unidad.Commit();
-                    return resultado;
-                }
-                catch
-                {
-                    unidad.Rollback();
-                    throw;
-                }
+                int resultado = GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
+                unidad.Save();
+                return resultado;
             }
         }
 
@@ -94,7 +84,7 @@ namespace BLL
             UsuarioHistorialSnapshot snapshot = ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, unidad);
             return snapshot == null
                 ? 0
-                : HistorialEstadosService.GetInstance().GuardarVersionUsuario(snapshot, unidad);
+                : unidad.UsuarioHistorial.GuardarVersion(snapshot);
         }
 
         public List<UsuarioHistorialSnapshot> ObtenerHistorial(int usuarioId)
@@ -141,6 +131,11 @@ namespace BLL
 
         internal void AplicarSnapshotInterno(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad)
         {
+            if (unidad == null)
+            {
+                throw new System.ArgumentNullException("unidad");
+            }
+
             BE.Usuario usuario = new BE.Usuario
             {
                 Id = snapshot.UsuarioId,
@@ -149,9 +144,9 @@ namespace BLL
                 Activo = snapshot.Activo
             };
 
-            _usuarioRepositorio.GuardarEstadoCompleto(usuario, unidad);
-            _usuarioPermisoRepositorio.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList(), unidad);
-            _usuarioPreferenciaRepositorio.Guardar(snapshot.UsuarioId, snapshot.IdiomaId, unidad);
+            unidad.Usuarios.GuardarEstadoCompleto(usuario);
+            unidad.UsuarioPermisos.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList());
+            unidad.UsuarioPreferencias.Guardar(snapshot.UsuarioId, snapshot.IdiomaId);
         }
 
         int IUsuarioEstadoBLL.GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)

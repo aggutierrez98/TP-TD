@@ -37,10 +37,8 @@ namespace BLL
                 _sesion = SERVICIOS.Sesion.GetInstance();
                 _autorizacion = SERVICIOS.AutorizacionService.GetInstance();
 
-                // Cablear la persistencia de las utilidades transversales antes de exponerlas.
-                InicializacionBitacoraBLL.Inicializar();
                 InicializacionHistorialBLL.Inicializar();
-                _bitacora = SERVICIOS.BitacoraService.GetInstance();
+                _bitacora = new BitacoraBLL();
 
                 // Servicios sin estado.
                 _passwordHasher = new SERVICIOS.PasswordHasher();

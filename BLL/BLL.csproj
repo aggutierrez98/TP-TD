@@ -46,7 +46,6 @@
     <Compile Include="BitacoraBLL.cs" />
     <Compile Include="ContratosInternosBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
-    <Compile Include="InicializacionBitacoraBLL.cs" />
     <Compile Include="InicializacionHistorialBLL.cs" />
     <Compile Include="IntegridadBLL.cs" />
     <Compile Include="ManejadorExcepcionesBLL.cs" />

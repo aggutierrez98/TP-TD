@@ -10,8 +10,12 @@ namespace ABSTRACCIONES
         // Calcula el digito verificador horizontal (DVH) de una entidad.
         string CalcularDVH<T>(T entidad) where T : class;
 
-        // Calcula el digito verificador vertical (DVV) a partir de los DVH de una
-        // tabla, en el orden recibido.
+        // Calcula el digito verificador vertical (DVV) como agregado de los DVH
+        // de una tabla. Se usa para inicializar firmas y para validar toda la tabla.
         string CalcularDVV(IEnumerable<string> listaDVH);
+
+        // Calcula un nuevo DVV a partir del valor almacenado y el DVH que cambia.
+        // Permite mantener el DVV en O(1): resta el DVH anterior y suma el nuevo.
+        string CalcularDVVIncremental(string dvvActual, string dvhAnterior, string dvhNuevo);
     }
 }

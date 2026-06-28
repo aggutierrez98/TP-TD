@@ -2,12 +2,12 @@ using System;
 using System.Windows.Forms;
 using BE;
 using BLL;
-using SERVICIOS;
 
 namespace TpIDS
 {
     public partial class FormLogin : FormTraducibleBase
     {
+        private readonly BitacoraBLL gestorBitacora = new BitacoraBLL();
         private readonly IdiomaBLL gestorIdioma = new IdiomaBLL();
         private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
 
@@ -21,7 +21,7 @@ namespace TpIDS
         {
             if (string.IsNullOrWhiteSpace(txtbNickname.Text.Trim()) || string.IsNullOrWhiteSpace(txtbPassword.Text.Trim()))
             {
-                BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginEmptyFields", "UsuarioBLL");
+                gestorBitacora.RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginEmptyFields", "UsuarioBLL");
                 UiDialogHelper.MostrarWarning("FormLogin.Warning.CompleteFields");
                 return;
             }

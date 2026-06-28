@@ -7,70 +7,72 @@ namespace REPOSITORIO
     public class IdiomaRepositorio : IIdiomaRepositorio
     {
         private readonly IdiomaDAL _idiomaDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public IdiomaRepositorio()
+            : this(null)
+        {
+        }
+
+        internal IdiomaRepositorio(AccesoDatosSqlServer accesoDatos)
         {
             _idiomaDAL = new IdiomaDAL();
+            _accesoDatos = accesoDatos;
         }
 
-        public List<Idioma> ObtenerIdiomas(IUnidadDeTrabajo unidad = null)
+        public List<Idioma> ObtenerIdiomas()
         {
-            return _idiomaDAL.ObtenerIdiomas(ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ObtenerIdiomas(_accesoDatos);
         }
 
-        public Idioma ObtenerIdiomaCompleto(int idiomaId, IUnidadDeTrabajo unidad = null)
+        public Idioma ObtenerIdiomaCompleto(int idiomaId)
         {
-            return _idiomaDAL.ObtenerIdiomaCompleto(idiomaId, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ObtenerIdiomaCompleto(idiomaId, _accesoDatos);
         }
 
-        public Idioma ObtenerIdiomaDefault(IUnidadDeTrabajo unidad = null)
+        public Idioma ObtenerIdiomaDefault()
         {
-            return _idiomaDAL.ObtenerIdiomaDefault(ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ObtenerIdiomaDefault(_accesoDatos);
         }
 
-        public int InsertarIdioma(Idioma idioma, IUnidadDeTrabajo unidad = null)
+        public int InsertarIdioma(Idioma idioma)
         {
-            return _idiomaDAL.InsertarIdioma(idioma, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.InsertarIdioma(idioma, _accesoDatos);
         }
 
-        public bool ActualizarIdioma(Idioma idioma, IUnidadDeTrabajo unidad = null)
+        public bool ActualizarIdioma(Idioma idioma)
         {
-            return _idiomaDAL.ActualizarIdioma(idioma, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ActualizarIdioma(idioma, _accesoDatos);
         }
 
-        public bool EliminarIdioma(int idiomaId, IUnidadDeTrabajo unidad = null)
+        public bool EliminarIdioma(int idiomaId)
         {
-            return _idiomaDAL.EliminarIdioma(idiomaId, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.EliminarIdioma(idiomaId, _accesoDatos);
         }
 
-        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId, IUnidadDeTrabajo unidad = null)
+        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
         {
-            return _idiomaDAL.ConsolidarIdioma(idiomaOrigenId, idiomaDestinoId, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ConsolidarIdioma(idiomaOrigenId, idiomaDestinoId, _accesoDatos);
         }
 
-        public int ObtenerPalabraIdPorKey(string key, IUnidadDeTrabajo unidad = null)
+        public int ObtenerPalabraIdPorKey(string key)
         {
-            return _idiomaDAL.ObtenerPalabraIdPorKey(key, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.ObtenerPalabraIdPorKey(key, _accesoDatos);
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor, IUnidadDeTrabajo unidad = null)
+        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
         {
-            return _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor, _accesoDatos);
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId, IUnidadDeTrabajo unidad = null)
+        public bool EliminarTraduccion(int idiomaId, int palabraId)
         {
-            return _idiomaDAL.EliminarTraduccion(idiomaId, palabraId, ObtenerAccesoDatos(unidad));
+            return _idiomaDAL.EliminarTraduccion(idiomaId, palabraId, _accesoDatos);
         }
 
-        public bool SwitchearIdiomaDefault(int idiomaId, IUnidadDeTrabajo unidad = null)
+        public bool SwitchearIdiomaDefault(int idiomaId)
         {
-            return _idiomaDAL.SwitchearIdiomaDefault(idiomaId, ObtenerAccesoDatos(unidad));
-        }
-
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
+            return _idiomaDAL.SwitchearIdiomaDefault(idiomaId, _accesoDatos);
         }
     }
 }

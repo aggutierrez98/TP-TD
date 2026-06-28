@@ -7,15 +7,22 @@ namespace REPOSITORIO
     public class UsuarioHistorialRepositorio : IUsuarioHistorialRepositorio
     {
         private readonly UsuarioHistorialDAL _usuarioHistorialDAL;
+        private readonly AccesoDatosSqlServer _accesoDatos;
 
         public UsuarioHistorialRepositorio()
+            : this(null)
         {
-            _usuarioHistorialDAL = new UsuarioHistorialDAL();
         }
 
-        public int GuardarVersion(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad = null)
+        internal UsuarioHistorialRepositorio(AccesoDatosSqlServer accesoDatos)
         {
-            return _usuarioHistorialDAL.GuardarVersion(snapshot, ObtenerAccesoDatos(unidad));
+            _usuarioHistorialDAL = new UsuarioHistorialDAL();
+            _accesoDatos = accesoDatos;
+        }
+
+        public int GuardarVersion(UsuarioHistorialSnapshot snapshot)
+        {
+            return _usuarioHistorialDAL.GuardarVersion(snapshot, _accesoDatos);
         }
 
         public List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId)
@@ -28,9 +35,5 @@ namespace REPOSITORIO
             return _usuarioHistorialDAL.ObtenerVersion(historialId);
         }
 
-        private static AccesoDatosSqlServer ObtenerAccesoDatos(IUnidadDeTrabajo unidad)
-        {
-            return unidad == null ? null : ((UnidadDeTrabajoSqlServer)unidad).AccesoDatosSqlServer;
-        }
     }
 }

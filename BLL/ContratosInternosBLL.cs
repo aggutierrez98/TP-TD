@@ -37,8 +37,6 @@ namespace BLL
 
     internal interface IUsuarioEstadoBLL
     {
-        UsuarioHistorialSnapshot ConstruirSnapshotActual(int usuarioId, string accion, string observaciones);
-
         int GuardarVersionActual(int usuarioId, string accion, string observaciones);
 
         int GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad);
@@ -57,6 +55,8 @@ namespace BLL
         string CalcularDVH<T>(T entidad) where T : class;
 
         void RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad);
+
+        void ActualizarDVVInterno(string tabla, string dvhAnterior, string dvhNuevo, IUnidadDeTrabajo unidad);
 
         void ValidarIntegridadGlobal();
     }

@@ -1,27 +1,34 @@
 namespace REPOSITORIO
 {
+    using DAL;
+
     public class TraduccionRepositorio : ITraduccionRepositorio
     {
         private readonly IdiomaRepositorio _idiomaRepositorio;
 
         public TraduccionRepositorio()
+            : this(null)
         {
-            _idiomaRepositorio = new IdiomaRepositorio();
         }
 
-        public int ObtenerPalabraIdPorKey(string key, IUnidadDeTrabajo unidad = null)
+        internal TraduccionRepositorio(AccesoDatosSqlServer accesoDatos)
         {
-            return _idiomaRepositorio.ObtenerPalabraIdPorKey(key, unidad);
+            _idiomaRepositorio = new IdiomaRepositorio(accesoDatos);
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor, IUnidadDeTrabajo unidad = null)
+        public int ObtenerPalabraIdPorKey(string key)
         {
-            return _idiomaRepositorio.GuardarTraduccion(idiomaId, palabraId, valor, unidad);
+            return _idiomaRepositorio.ObtenerPalabraIdPorKey(key);
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId, IUnidadDeTrabajo unidad = null)
+        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
         {
-            return _idiomaRepositorio.EliminarTraduccion(idiomaId, palabraId, unidad);
+            return _idiomaRepositorio.GuardarTraduccion(idiomaId, palabraId, valor);
+        }
+
+        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        {
+            return _idiomaRepositorio.EliminarTraduccion(idiomaId, palabraId);
         }
     }
 }

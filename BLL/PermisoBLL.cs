@@ -83,19 +83,17 @@ namespace BLL
             _permisoService.ValidarNombresUnicos(raices);
             _permisoService.ValidarGruposNoVacios(nodos);
 
-            List<IPermiso> existentes = _permisoRepositorio.ObtenerNodos();
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
+                    List<IPermiso> existentes = unidad.Permisos.ObtenerNodos();
                     foreach (IPermiso nodo in nodos)
                     {
-                        nodo.Id = _permisoRepositorio.Guardar(nodo, unidad);
+                        nodo.Id = unidad.Permisos.Guardar(nodo);
                     }
 
-                    _permisoRepositorio.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList(), unidad);
+                    unidad.Permisos.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList());
 
                     List<int> idsActuales = nodos.Select(item => item.Id).Distinct().ToList();
                     List<int> idsEliminados = existentes
@@ -103,18 +101,16 @@ namespace BLL
                         .Where(id => !idsActuales.Contains(id))
                         .ToList();
 
-                    _permisoRepositorio.EliminarPermisos(idsEliminados, unidad);
+                    unidad.Permisos.EliminarPermisos(idsEliminados);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.PermissionCatalogUpdate", "FormAuditLog.Value.Info.PermissionCatalogUpdate", "PermisoBLL", unidad);
-                    unidad.Commit();
+                    unidad.Save();
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.Permission.SaveCatalogFailed", ex);
                 }
             }
@@ -129,11 +125,9 @@ namespace BLL
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                unidad.Begin();
-
                 try
                 {
-                    Usuario usuario = _usuarioRepositorio.ObtenerPorId(usuarioId, unidad);
+                    Usuario usuario = unidad.Usuarios.ObtenerPorId(usuarioId);
                     if (usuario == null)
                     {
                         throw new ExcepcionNegocio("Error.Permission.UserNotFound");
@@ -142,16 +136,14 @@ namespace BLL
                     GuardarPermisosUsuarioInterno(usuarioId, permisosId, unidad);
                     _usuarioEstadoBLL.GuardarVersionActualInterno(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", unidad);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserPermissionsUpdate", "FormAuditLog.Value.Info.UserPermissionsUpdate", "PermisoBLL", unidad);
-                    unidad.Commit();
+                    unidad.Save();
                 }
                 catch (ExcepcionNegocio)
                 {
-                    unidad.Rollback();
                     throw;
                 }
                 catch (Exception ex)
                 {
-                    unidad.Rollback();
                     throw new ExcepcionTecnica("Error.Permission.SaveUserPermissionsFailed", ex);
                 }
             }
@@ -178,21 +170,30 @@ namespace BLL
 
         internal void AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad)
         {
-            int perfilBasicoId = _permisoRepositorio.ObtenerIdPorNombre("basico", unidad);
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            int perfilBasicoId = unidad.Permisos.ObtenerIdPorNombre("basico");
             if (perfilBasicoId <= 0)
             {
                 return;
             }
 
-            _usuarioPermisoRepositorio.ReemplazarPermisosUsuario(usuarioId, new List<int> { perfilBasicoId }, unidad);
+            unidad.UsuarioPermisos.ReemplazarPermisosUsuario(usuarioId, new List<int> { perfilBasicoId });
         }
 
         internal void GuardarPermisosUsuarioInterno(int usuarioId, List<int> permisosId, IUnidadDeTrabajo unidad)
         {
-            _usuarioPermisoRepositorio.ReemplazarPermisosUsuario(
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            unidad.UsuarioPermisos.ReemplazarPermisosUsuario(
                 usuarioId,
-                permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
-                unidad);
+                permisosId == null ? new List<int>() : permisosId.Distinct().ToList());
         }
 
         void IPermisoBLL.AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad)

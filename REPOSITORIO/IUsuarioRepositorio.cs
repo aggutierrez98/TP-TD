@@ -5,20 +5,20 @@ namespace REPOSITORIO
 {
     public interface IUsuarioRepositorio
     {
-        Usuario ObtenerPorId(int id, IUnidadDeTrabajo unidad = null);
+        Usuario ObtenerPorId(int id);
 
-        Usuario ObtenerPorUsername(string username, IUnidadDeTrabajo unidad = null);
+        Usuario ObtenerPorUsername(string username);
 
-        int InsertarYObtenerId(Usuario usuario, IUnidadDeTrabajo unidad = null);
+        int InsertarYObtenerId(Usuario usuario);
 
-        bool Actualizar(Usuario usuario, IUnidadDeTrabajo unidad = null);
+        bool Actualizar(Usuario usuario);
 
-        bool ActualizarDVH(int id, string dvh, IUnidadDeTrabajo unidad = null);
+        bool ActualizarDVH(int id, string dvh);
 
-        bool GuardarEstadoCompleto(Usuario usuario, IUnidadDeTrabajo unidad = null);
+        bool GuardarEstadoCompleto(Usuario usuario);
 
-        bool EliminarFisicamente(int id, IUnidadDeTrabajo unidad = null);
+        bool EliminarFisicamente(int id);
 
-        List<Usuario> ObtenerTodos(IUnidadDeTrabajo unidad = null);
+        List<Usuario> ObtenerTodos();
     }
 }
