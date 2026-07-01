@@ -18,8 +18,8 @@ namespace TpIDS
         private const string PermisoGestionUsuarios = "gestionusuarios";
         private const string PermisoHistorialUsuarios = "historialusuarios";
 
-        private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
-        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
+        private readonly PermisoBLL permisoBLL = CompositionRoot.Permiso;
         private int _idSeleccionado = -1;
         private bool _cargandoGrillaUsuarios;
         private readonly IAutorizacion _autorizacion;

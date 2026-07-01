@@ -14,16 +14,6 @@ namespace BLL
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly ISesion _sesion;
 
-        public UsuarioEstadoBLL()
-            : this(
-                new UsuarioRepositorio(),
-                new UsuarioPermisoRepositorio(),
-                new UsuarioPreferenciaRepositorio(),
-                new UnidadDeTrabajoFactory(),
-                CompositionRoot.Sesion)
-        {
-        }
-
         internal UsuarioEstadoBLL(
             IUsuarioRepositorio usuarioRepositorio,
             IUsuarioPermisoRepositorio usuarioPermisoRepositorio,

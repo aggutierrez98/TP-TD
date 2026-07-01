@@ -10,6 +10,7 @@ Todo el conocimiento de contexto se ubica dentro del subdirectorio `.agents/`. L
 ## Skills del repositorio
 
 - [Architecture Dependency Guard](.agents/skills/architecture-dependency-guard/SKILL.md): obliga a respetar la matriz exacta de dependencias entre UI, BLL, REPOSITORIO, DAL, BE, SERVICIOS y ABSTRACCIONES; ademas se valida automaticamente durante el build.
+- [Composition Root Guard](.agents/skills/composition-root-guard/SKILL.md): obliga a la disciplina de composicion/inyeccion dentro de esas capas: los BLL se construyen solo desde `CompositionRoot` (nada de `new XxxBLL()` fuera del root ni ctores por defecto), ninguno actua como Service Locator, y define como dar de alta un BLL o servicio en el grafo de dependencias. Se valida automaticamente durante el build. Complementa a `architecture-dependency-guard`.
 - [WinForms Build Verification](.agents/skills/winforms-build-verification/SKILL.md): obliga a compilar `TpIDS.sln` con MSBuild antes de dar una tarea por terminada.
 - [WinForms UI Control Naming](.agents/skills/winforms-ui-control-naming/SKILL.md): define la nomenclatura obligatoria para controles visuales y handlers WinForms.
 - [TP Delivery Standards](.agents/skills/tp-delivery-standards/SKILL.md): aplica restricciones tecnicas, criterios de entrega, balanceo documentacion-codigo y exigencias del TP.
@@ -43,7 +44,8 @@ Estas skills viven fuera del repo (no se clonan con el). Instalarlas bajo el hom
 
 - Todo cambio funcional, bugfix, refactor o cambio de formularios debe respetar el stack documentado y la arquitectura por capas.
 - Toda modificacion de referencias entre proyectos o movimiento de clases entre capas debe respetar estrictamente la matriz `UI -> ABSTRACCIONES, BLL, BE, SERVICIOS`, `BLL -> ABSTRACCIONES, REPOSITORIO, BE, SERVICIOS`, `REPOSITORIO -> ABSTRACCIONES, DAL, BE, SERVICIOS`, `DAL -> ABSTRACCIONES, BE, SERVICIOS`, `BE -> ABSTRACCIONES`, `SERVICIOS -> ABSTRACCIONES`, `ABSTRACCIONES -> sin dependencias`. Todas las capas pueden depender de `ABSTRACCIONES` (nucleo de contratos) para consumir las utilidades por interfaz (DIP); `ABSTRACCIONES` no depende de nada y solo contiene contratos estables.
-- Todo cambio sobre la solucion debe cerrar con compilacion exitosa de `TpIDS.sln`, incluyendo la validacion automatica de arquitectura.
+- Todo cambio sobre la solucion debe cerrar con compilacion exitosa de `TpIDS.sln`, incluyendo la validacion automatica de arquitectura (matriz de capas) y del Composition Root.
+- Todo alta o cambio de un BLL o servicio transversal debe pasar por `CompositionRoot` segun la skill `composition-root-guard`: construir el BLL solo desde el root (sin `new XxxBLL()` fuera de el ni constructores por defecto), inyectar dependencias por el ctor `internal`, y no usar `CompositionRoot` como Service Locator dentro de los BLL.
 - Todo agregado o renombre de controles visuales WinForms debe respetar la nomenclatura documentada en las skills del repositorio.
 - Todo cambio sobre textos traducibles, tags `Form...`, encabezados de grillas o nuevas keys de idioma en la UI debe ejecutar la skill `translation-base-seed-sync` y dejar actualizado `translation-seeds/base.es.json` en el mismo cambio. `script_bd.sql` solo debe cambiar cuando cambie el bloque generador o la ruta resuelta al archivo externo.
 - Todo diagrama UML nuevo o modificado debe realizarse en PlantUML y guardarse como codigo fuente dentro del repo antes de reflejarse en la documentacion final.

@@ -16,7 +16,7 @@ namespace TpIDS
 
         public FormHistorialUsuario(int usuarioId, string username)
         {
-            _usuarioBLL = new UsuarioBLL();
+            _usuarioBLL = CompositionRoot.Usuario;
             _usuarioId = usuarioId;
             _username = username;
             InitializeComponent();

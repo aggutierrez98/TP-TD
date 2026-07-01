@@ -47,6 +47,7 @@
     <Compile Include="ContratosInternosBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
     <Compile Include="InicializacionHistorialBLL.cs" />
+    <Compile Include="InicializadorAplicacionBLL.cs" />
     <Compile Include="IntegridadBLL.cs" />
     <Compile Include="ManejadorExcepcionesBLL.cs" />
     <Compile Include="PasswordHashService.cs" />

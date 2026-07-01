@@ -7,7 +7,7 @@ namespace TpIDS
 {
     public partial class FormRegistro : FormTraducibleBase
     {
-        private readonly UsuarioBLL gestorJugador = new UsuarioBLL();
+        private readonly UsuarioBLL gestorJugador = CompositionRoot.Usuario;
 
         public FormRegistro()
         {

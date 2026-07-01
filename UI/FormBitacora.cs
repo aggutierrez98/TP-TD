@@ -18,7 +18,7 @@ namespace TpIDS
 
         public FormBitacora()
         {
-            _bitacoraBLL = new BitacoraBLL();
+            _bitacoraBLL = CompositionRoot.GestorBitacora;
             InitializeComponent();
             Load += FormBitacora_Load;
         }

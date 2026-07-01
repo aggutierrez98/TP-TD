@@ -22,11 +22,8 @@ namespace TpIDS
 
             try
             {
-                // Se carga el idioma antes de validar para que la contingencia se muestre traducida.
-                new IdiomaBLL().InicializarAplicacion();
-
-                // T07: verificacion de integridad obligatoria antes de habilitar el login.
-                new IntegridadBLL().ValidarIntegridadGlobal();
+                // Arranque funcional (carga de idioma T05 + verificacion de integridad T07).
+                InicializadorAplicacionBLL.Inicializar();
             }
             catch (ExcepcionIntegridad ex)
             {

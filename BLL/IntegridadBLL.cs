@@ -18,16 +18,6 @@ namespace BLL
         private readonly IBitacoraBLL _bitacoraBLL;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
 
-        public IntegridadBLL()
-            : this(
-                CompositionRoot.IntegridadService,
-                new IntegridadRepositorio(),
-                new UsuarioRepositorio(),
-                new BitacoraBLL(),
-                new UnidadDeTrabajoFactory())
-        {
-        }
-
         internal IntegridadBLL(
             IIntegridadService integridadService,
             IIntegridadRepositorio integridadRepositorio,

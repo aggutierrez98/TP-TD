@@ -20,20 +20,6 @@ namespace BLL
         private readonly ISesion _sesion;
         private readonly IAutorizacion _autorizacion;
 
-        public PermisoBLL()
-            : this(
-                new PermisoRepositorio(),
-                new UsuarioPermisoRepositorio(),
-                new PermisoService(),
-                new UsuarioRepositorio(),
-                new UsuarioEstadoBLL(),
-                new BitacoraBLL(),
-                new UnidadDeTrabajoFactory(),
-                CompositionRoot.Sesion,
-                CompositionRoot.Autorizacion)
-        {
-        }
-
         internal PermisoBLL(
             IPermisoRepositorio permisoRepositorio,
             IUsuarioPermisoRepositorio usuarioPermisoRepositorio,

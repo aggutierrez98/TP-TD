@@ -7,9 +7,9 @@ namespace TpIDS
 {
     public partial class FormLogin : FormTraducibleBase
     {
-        private readonly BitacoraBLL gestorBitacora = new BitacoraBLL();
-        private readonly IdiomaBLL gestorIdioma = new IdiomaBLL();
-        private readonly UsuarioBLL gestorUsuario = new UsuarioBLL();
+        private readonly BitacoraBLL gestorBitacora = CompositionRoot.GestorBitacora;
+        private readonly IdiomaBLL gestorIdioma = CompositionRoot.Idioma;
+        private readonly UsuarioBLL gestorUsuario = CompositionRoot.Usuario;
 
         public FormLogin()
         {

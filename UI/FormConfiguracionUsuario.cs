@@ -10,7 +10,7 @@ namespace TpIDS
 {
     public partial class FormConfiguracionUsuario : FormTraducibleBase
     {
-        private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly IdiomaBLL idiomaBLL = CompositionRoot.Idioma;
         private readonly ISesion _sesion;
         private readonly IObservado _servicioIdioma;
 

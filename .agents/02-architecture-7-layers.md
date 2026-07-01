@@ -30,3 +30,5 @@ Cualquier referencia fuera de esa matriz esta prohibida.
 ## Guard rail automatica
 
 La solucion incorpora una validacion automatica durante el build para revisar esta matriz sobre los `.csproj`. Si una capa referencia a otra no permitida, el build debe fallar.
+
+Ademas de la matriz de `.csproj`, un segundo guard (`verify-composition-root.ps1`, tambien en el build) vela por la disciplina de composicion/inyeccion: los BLL se construyen solo desde `CompositionRoot` y ninguno actua como Service Locator. Ver la skill `composition-root-guard`.

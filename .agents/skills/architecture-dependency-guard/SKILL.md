@@ -33,6 +33,10 @@ Leer siempre:
 - usar `ABSTRACCIONES` para alojar implementaciones concretas
 - crear bypasses a `BLL` para resolver casos de uso desde `UI`
 
+## Related
+
+- Esta skill vela por la matriz de referencias entre `.csproj`. La disciplina de COMO se construyen e inyectan las instancias dentro de esas capas (Composition Root, sin `new` de BLL fuera del root, sin Service Locator escondido) la cubre [composition-root-guard](../composition-root-guard/SKILL.md). Aplicar ambas cuando se agregan BLLs o servicios.
+
 ## Response rule
 
 - Informar si la guardia de arquitectura fue ejecutada o quedo validada via build.

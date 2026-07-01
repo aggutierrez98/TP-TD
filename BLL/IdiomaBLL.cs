@@ -21,19 +21,6 @@ namespace BLL
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly IObservado _servicioIdioma;
 
-        public IdiomaBLL()
-            : this(
-                new IdiomaRepositorio(),
-                new UsuarioPreferenciaRepositorio(),
-                new TraduccionRepositorio(),
-                new IdiomaCatalogoService(),
-                new UsuarioEstadoBLL(),
-                new BitacoraBLL(),
-                new UnidadDeTrabajoFactory(),
-                CompositionRoot.ServicioIdioma)
-        {
-        }
-
         internal IdiomaBLL(
             IIdiomaRepositorio idiomaRepositorio,
             IUsuarioPreferenciaRepositorio usuarioPreferenciaRepositorio,

@@ -10,7 +10,7 @@ namespace TpIDS
 {
     public partial class FormGestionPermisos : FormTraducibleBase
     {
-        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private readonly PermisoBLL permisoBLL = CompositionRoot.Permiso;
         private readonly PermisoService permisoService = new PermisoService();
 
         private List<IPermiso> catalogoRaiz;

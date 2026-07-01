@@ -13,14 +13,6 @@ namespace BLL
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly ISesion _sesion;
 
-        public BitacoraBLL()
-            : this(
-                new BitacoraRepositorio(),
-                new UnidadDeTrabajoFactory(),
-                Sesion.GetInstance())
-        {
-        }
-
         internal BitacoraBLL(
             IBitacoraRepositorio bitacoraRepositorio,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,

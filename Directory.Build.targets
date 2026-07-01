@@ -9,4 +9,11 @@
     Condition="'$(ArchitectureGuardEnabled)' == 'true' and Exists('$(MSBuildThisFileDirectory).agents\scripts\verify-architecture-dependencies.ps1')">
     <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory).agents\scripts\verify-architecture-dependencies.ps1&quot;" />
   </Target>
+
+  <Target
+    Name="VerifyCompositionRoot"
+    BeforeTargets="BeforeBuild"
+    Condition="'$(ArchitectureGuardEnabled)' == 'true' and Exists('$(MSBuildThisFileDirectory).agents\scripts\verify-composition-root.ps1')">
+    <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory).agents\scripts\verify-composition-root.ps1&quot;" />
+  </Target>
 </Project>

@@ -22,21 +22,6 @@ namespace BLL
 
         private const string TablaUsuarios = "Usuarios";
 
-        public UsuarioBLL()
-            : this(
-                new UsuarioRepositorio(),
-                new PasswordHashService(),
-                new IdiomaBLL(),
-                new PermisoBLL(),
-                new UsuarioEstadoBLL(),
-                new IntegridadBLL(),
-                new BitacoraBLL(),
-                new UnidadDeTrabajoFactory(),
-                CompositionRoot.Sesion,
-                CompositionRoot.Autorizacion)
-        {
-        }
-
         internal UsuarioBLL(
             IUsuarioRepositorio usuarioRepositorio,
             IPasswordHashService passwordHasher,

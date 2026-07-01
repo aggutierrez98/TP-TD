@@ -11,7 +11,7 @@ namespace TpIDS
 {
     public partial class FormGestionIdiomas : FormTraducibleBase
     {
-        private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly IdiomaBLL idiomaBLL = CompositionRoot.Idioma;
         private bool cargandoIdiomas;
 
         public FormGestionIdiomas()
