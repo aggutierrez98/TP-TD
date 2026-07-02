@@ -41,7 +41,20 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
 
    Por defecto produce `diagramas/<requisito>/<requisito>-casos-de-uso.docx` y `.md`.
    Overrides disponibles: `--output-docx`, `--output-md`, `--no-md`, `--no-docx`.
-4. Revisar el `.md` espejo en el diff antes de incorporar el `.docx` a la entrega formal.
+4. **Documento consolidado (todas las especificaciones en un solo `.docx`)**: pasar varios
+   JSON o un directorio a `--input`. El script arma un unico documento con todas las
+   especificaciones, un cuadro abajo de otro, separadas por el titulo del requisito (T0X).
+
+   ```
+   # Todos los CU bajo diagramas/ (ordenados por ruta: T02, T03, ... T07)
+   python .agents/skills/tp-use-case-spec/scripts/build-use-case-spec.py --input diagramas
+   ```
+
+   Salida por defecto: `diagramas/TP-especificaciones-casos-de-uso.docx` (y `.md`). Flags:
+   `--consolidar` (fuerza el modo con un solo JSON), `--doc-title` (titulo general),
+   `--page-break-por-requisito` (cada T0X en pagina nueva; por defecto van seguidos).
+   Regenerar este consolidado cada vez que se agrega o edita un CU, para mantenerlo al dia.
+5. Revisar el `.md` espejo en el diff antes de incorporar el `.docx` a la entrega formal.
 
 ## Reglas
 

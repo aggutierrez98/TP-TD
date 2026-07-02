@@ -9,6 +9,13 @@ namespace SERVICIOS
     // (las capas consumidoras tipan fuerte, sin object/dynamic).
     public class PermisoService
     {
+        /// <summary>
+        /// Metodo para construir un arbol de permisos a partir de nodos y relaciones padre-hijo.
+        /// Limpia los hijos de las familias y devuelve solo las raices ordenadas por nombre.
+        /// </summary>
+        /// <param name="nodos">La coleccion completa de permisos disponibles.</param>
+        /// <param name="relaciones">La coleccion de relaciones entre permiso padre e hijo.</param>
+        /// <returns>La lista de permisos raiz del arbol construido.</returns>
         public List<IPermiso> ConstruirArbol(IList<IPermiso> nodos, IList<Tuple<int, int>> relaciones)
         {
             Dictionary<int, IPermiso> indice = nodos.ToDictionary(item => item.Id);
@@ -35,6 +42,12 @@ namespace SERVICIOS
                 .ToList();
         }
 
+        /// <summary>
+        /// Metodo para obtener las patentes efectivas a partir de los permisos asignados.
+        /// Expande las familias y elimina duplicados por identificador o nombre normalizado.
+        /// </summary>
+        /// <param name="permisosAsignados">La coleccion de permisos asignados al usuario o perfil.</param>
+        /// <returns>La lista de permisos hoja efectivos.</returns>
         public List<IPermiso> ObtenerPermisosEfectivos(IEnumerable<IPermiso> permisosAsignados)
         {
             List<IPermiso> permisos = new List<IPermiso>();
@@ -42,16 +55,34 @@ namespace SERVICIOS
             return permisos;
         }
 
+        /// <summary>
+        /// Metodo para filtrar solo las familias dentro de un conjunto de permisos.
+        /// Aplana previamente el arbol para incluir familias en cualquier nivel.
+        /// </summary>
+        /// <param name="nodos">La coleccion de permisos raiz o parciales.</param>
+        /// <returns>La lista de permisos que representan grupos.</returns>
         public List<IPermiso> FiltrarFamilias(IEnumerable<IPermiso> nodos)
         {
             return Aplanar(nodos).Where(item => item.EsGrupo).ToList();
         }
 
+        /// <summary>
+        /// Metodo para filtrar solo las patentes dentro de un conjunto de permisos.
+        /// Aplana previamente el arbol para incluir patentes en cualquier nivel.
+        /// </summary>
+        /// <param name="nodos">La coleccion de permisos raiz o parciales.</param>
+        /// <returns>La lista de permisos que no representan grupos.</returns>
         public List<IPermiso> FiltrarPatentes(IEnumerable<IPermiso> nodos)
         {
             return Aplanar(nodos).Where(item => !item.EsGrupo).ToList();
         }
 
+        /// <summary>
+        /// Metodo para normalizar nombres de permisos antes de compararlos.
+        /// Convierte valores nulos o vacios en cadena vacia y aplica trim con minusculas invariantes.
+        /// </summary>
+        /// <param name="nombre">El nombre del permiso a normalizar.</param>
+        /// <returns>El nombre normalizado.</returns>
         public string NormalizarNombre(string nombre)
         {
             return string.IsNullOrWhiteSpace(nombre)
@@ -59,6 +90,12 @@ namespace SERVICIOS
                 : nombre.Trim().ToLowerInvariant();
         }
 
+        /// <summary>
+        /// Metodo para validar el nombre de un permiso.
+        /// Rechaza nombres vacios y nombres que contienen puntos.
+        /// </summary>
+        /// <param name="nombre">El nombre de permiso a validar.</param>
+        /// <exception cref="ExcepcionNegocio">El nombre esta vacio o contiene un punto.</exception>
         public void ValidarNombre(string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre))
@@ -72,11 +109,23 @@ namespace SERVICIOS
             }
         }
 
+        /// <summary>
+        /// Metodo para validar que no existan nombres duplicados entre permisos hermanos.
+        /// La validacion se aplica recursivamente por cada nivel del arbol.
+        /// </summary>
+        /// <param name="raices">La coleccion de permisos raiz a validar.</param>
+        /// <exception cref="ExcepcionNegocio">Existen permisos hermanos con nombres duplicados.</exception>
         public void ValidarNombresUnicos(IEnumerable<IPermiso> raices)
         {
             ValidarNombresUnicosPorNivel(raices);
         }
 
+        /// <summary>
+        /// Metodo para validar que todas las familias tengan al menos un hijo.
+        /// Usado para evitar perfiles o grupos vacios.
+        /// </summary>
+        /// <param name="nodos">La coleccion de permisos a validar.</param>
+        /// <exception cref="ExcepcionNegocio">Existe una familia sin permisos hijos.</exception>
         public void ValidarGruposNoVacios(IEnumerable<IPermiso> nodos)
         {
             if (nodos.Any(item => item.EsGrupo && item.Hijos.Count == 0))
@@ -85,6 +134,12 @@ namespace SERVICIOS
             }
         }
 
+        /// <summary>
+        /// Metodo para validar que el arbol de permisos no contenga ciclos.
+        /// Recorre cada raiz manteniendo la rama visitada.
+        /// </summary>
+        /// <param name="raices">La coleccion de permisos raiz a validar.</param>
+        /// <exception cref="ExcepcionNegocio">Existe un ciclo dentro del arbol de permisos.</exception>
         public void ValidarSinCiclos(IEnumerable<IPermiso> raices)
         {
             foreach (IPermiso raiz in raices)
@@ -93,6 +148,12 @@ namespace SERVICIOS
             }
         }
 
+        /// <summary>
+        /// Metodo para aplanar un arbol de permisos.
+        /// Evita duplicados por identificador cuando el permiso ya esta persistido.
+        /// </summary>
+        /// <param name="raices">La coleccion de permisos raiz a recorrer.</param>
+        /// <returns>La lista plana de permisos encontrados.</returns>
         public List<IPermiso> Aplanar(IEnumerable<IPermiso> raices)
         {
             List<IPermiso> resultado = new List<IPermiso>();
@@ -104,6 +165,12 @@ namespace SERVICIOS
             return resultado;
         }
 
+        /// <summary>
+        /// Metodo para obtener las relaciones padre-hijo desde un arbol de permisos.
+        /// Evita duplicar la misma relacion durante el recorrido recursivo.
+        /// </summary>
+        /// <param name="raices">La coleccion de permisos raiz a recorrer.</param>
+        /// <returns>La lista de tuplas con identificador de padre e identificador de hijo.</returns>
         public List<Tuple<int, int>> ObtenerRelaciones(IEnumerable<IPermiso> raices)
         {
             List<Tuple<int, int>> relaciones = new List<Tuple<int, int>>();

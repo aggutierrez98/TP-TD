@@ -19,6 +19,13 @@ namespace SERVICIOS
         private const string SeparadorAtributo = "//";
         private const int LongitudHashBytes = 32;
 
+        /// <summary>
+        /// Metodo para calcular el DVH de una entidad en base a sus propiedades verificables.
+        /// Usa las propiedades marcadas con DigitoVerificadorAttribute y una representacion canonica estable.
+        /// </summary>
+        /// <param name="entidad">La entidad sobre la que se calcula el digito verificador horizontal.</param>
+        /// <returns>El DVH calculado.</returns>
+        /// <exception cref="ArgumentNullException">La entidad es <see langword="null" />.</exception>
         public string CalcularDVH<T>(T entidad) where T : class
         {
             if (entidad == null)
@@ -64,8 +71,9 @@ namespace SERVICIOS
         /// Metodo para calcular el DVV en base a los DVH de una entidad.
         /// Usado solo para el primer calculo del DVV.
         /// </summary>
-        /// <returns>El DVV calculado</returns>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <param name="listaDVH">La coleccion de DVH que componen el DVV de la tabla.</param>
+        /// <returns>El DVV calculado.</returns>
+        /// <exception cref="ArgumentNullException">La lista de DVH es <see langword="null" />.</exception>
         public string CalcularDVV(IEnumerable<string> listaDVH)
         {
             if (listaDVH == null)
@@ -86,8 +94,11 @@ namespace SERVICIOS
         /// Metodo para calcular el DVV en base a el ultimo DVV de una entidad y un DVH correspondiente a cambios sobre una entidad.
         /// Usado cuando un DVV ya fue calculado y se quiere actualizar con un nuevo DVH.
         /// </summary>
-        /// <returns>El DVV calculado</returns>
-        /// <exception cref="ArgumentNullException"></exception>
+        /// <param name="dvvActual">El DVV persistido antes del cambio.</param>
+        /// <param name="dvhAnterior">El DVH que debe descontarse del DVV, si corresponde.</param>
+        /// <param name="dvhNuevo">El DVH que debe incorporarse al DVV, si corresponde.</param>
+        /// <returns>El DVV calculado.</returns>
+        /// <exception cref="ArgumentException">El DVV o alguno de los DVH no representa un hash SHA-256 en Base64.</exception>
         public string CalcularDVVIncremental(string dvvActual, string dvhAnterior, string dvhNuevo)
         {
             byte[] acumulador = ObtenerAcumulador(dvvActual);

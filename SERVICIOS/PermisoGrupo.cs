@@ -23,6 +23,11 @@ namespace SERVICIOS
 
         public IList<IPermiso> Hijos { get; private set; }
 
+        /// <summary>
+        /// Metodo para agregar un permiso hijo a la familia.
+        /// Ignora valores nulos, referencias repetidas y duplicados por identificador o nombre.
+        /// </summary>
+        /// <param name="permiso">El permiso que se quiere agregar como hijo.</param>
         public void Agregar(IPermiso permiso)
         {
             if (permiso == null)
@@ -52,6 +57,11 @@ namespace SERVICIOS
             Hijos.Add(permiso);
         }
 
+        /// <summary>
+        /// Metodo para quitar un permiso hijo de la familia.
+        /// Busca por referencia o por identificador del permiso recibido.
+        /// </summary>
+        /// <param name="permiso">El permiso que se quiere quitar.</param>
         public void Quitar(IPermiso permiso)
         {
             if (permiso == null)
@@ -66,6 +76,12 @@ namespace SERVICIOS
             }
         }
 
+        /// <summary>
+        /// Metodo para indicar si la familia contiene un permiso por identificador.
+        /// Recorre recursivamente todos los hijos del grupo.
+        /// </summary>
+        /// <param name="id">El identificador del permiso buscado.</param>
+        /// <returns><see langword="true" /> si el permiso esta contenido; en caso contrario, <see langword="false" />.</returns>
         public bool Contiene(int id)
         {
             if (Id == id)
@@ -76,6 +92,11 @@ namespace SERVICIOS
             return Hijos.Any(item => item.Contiene(id));
         }
 
+        /// <summary>
+        /// Metodo para obtener todas las patentes contenidas por la familia.
+        /// Expande recursivamente las familias hijas y evita duplicados por identificador.
+        /// </summary>
+        /// <returns>La lista de permisos hoja contenidos por la familia.</returns>
         public IList<IPermiso> ObtenerPermisosHoja()
         {
             List<IPermiso> resultado = new List<IPermiso>();
@@ -94,6 +115,11 @@ namespace SERVICIOS
             return resultado;
         }
 
+        /// <summary>
+        /// Metodo para representar el permiso con su nombre.
+        /// Usado principalmente por controles visuales y depuracion.
+        /// </summary>
+        /// <returns>El nombre del permiso.</returns>
         public override string ToString()
         {
             return Nombre;

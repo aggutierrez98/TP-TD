@@ -5,6 +5,13 @@ namespace SERVICIOS
 {
     public class IdiomaCatalogoService
     {
+        /// <summary>
+        /// Metodo para normalizar el nombre de un idioma antes de validarlo o persistirlo.
+        /// Elimina espacios sobrantes y rechaza nombres vacios.
+        /// </summary>
+        /// <param name="nombre">El nombre ingresado para el idioma.</param>
+        /// <returns>El nombre normalizado.</returns>
+        /// <exception cref="ExcepcionNegocio">El nombre esta vacio o contiene solo espacios.</exception>
         public string NormalizarNombre(string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre))
@@ -15,6 +22,14 @@ namespace SERVICIOS
             return nombre.Trim();
         }
 
+        /// <summary>
+        /// Metodo para validar que no exista otro idioma con el mismo nombre.
+        /// Permite excluir el idioma actual durante una edicion.
+        /// </summary>
+        /// <param name="idiomas">La coleccion de idiomas existentes.</param>
+        /// <param name="nombre">El nombre normalizado que se quiere validar.</param>
+        /// <param name="idiomaId">El identificador del idioma en edicion, si corresponde.</param>
+        /// <exception cref="ExcepcionNegocio">Ya existe otro idioma con el mismo nombre.</exception>
         public void ValidarNombreDuplicado(IEnumerable<Idioma> idiomas, string nombre, int? idiomaId)
         {
             bool existe = idiomas.Any(item =>
@@ -27,6 +42,12 @@ namespace SERVICIOS
             }
         }
 
+        /// <summary>
+        /// Metodo para determinar si un idioma tiene todas sus traducciones cargadas.
+        /// Usado para evitar seleccionar idiomas incompletos en la interfaz.
+        /// </summary>
+        /// <param name="idioma">El idioma a evaluar.</param>
+        /// <returns><see langword="true" /> si todas las traducciones tienen valor; en caso contrario, <see langword="false" />.</returns>
         public bool EstaCompleto(Idioma idioma)
         {
             if (idioma == null)
@@ -43,6 +64,12 @@ namespace SERVICIOS
                    traducciones.All(item => !string.IsNullOrWhiteSpace(item.Valor));
         }
 
+        /// <summary>
+        /// Metodo para validar que un idioma pueda ser seleccionado como idioma activo.
+        /// Requiere que el idioma exista y que su catalogo de traducciones este completo.
+        /// </summary>
+        /// <param name="idioma">El idioma candidato a seleccionar.</param>
+        /// <exception cref="ExcepcionNegocio">El idioma no existe o esta incompleto.</exception>
         public void ValidarIdiomaSeleccionable(Idioma idioma)
         {
             if (idioma == null)

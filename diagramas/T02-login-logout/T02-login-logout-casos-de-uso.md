@@ -1,8 +1,8 @@
 # T02. Gestion de Login y Logout
 
-_Especificacion de caso de uso - CU01 Login_
+_Especificaciones de casos de uso_
 
-Especificacion del caso de uso de autenticacion (login) del sistema, segun la implementacion vigente en UsuarioBLL.Login y FormLogin.
+Casos de uso de autenticacion del sistema (login, registro y logout), segun la implementacion vigente en UsuarioBLL y las pantallas de la capa UI.
 
 ---
 

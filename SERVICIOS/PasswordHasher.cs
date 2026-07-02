@@ -10,6 +10,12 @@ namespace SERVICIOS
         private const int HashSize = 32; // Tamaño para el hash
         private const int Iterations = 20000; // Numero de iteraciones del algoritmo PBKDF2
 
+        /// <summary>
+        /// Metodo para generar un hash seguro de password con salt aleatorio.
+        /// Usa PBKDF2 y devuelve el salt junto con el hash codificados en Base64.
+        /// </summary>
+        /// <param name="password">El password en texto plano ingresado por el usuario.</param>
+        /// <returns>El hash con salt incorporado, codificado en Base64.</returns>
         public string HashPassword(string password)
         {
             byte[] salt;
@@ -31,6 +37,14 @@ namespace SERVICIOS
             return Convert.ToBase64String(hashBytes);
         }
 
+        /// <summary>
+        /// Metodo para verificar un password contra un hash almacenado.
+        /// Reutiliza el salt persistido dentro del valor Base64 recibido.
+        /// </summary>
+        /// <param name="password">El password en texto plano a verificar.</param>
+        /// <param name="storedHash">El hash almacenado con salt incorporado.</param>
+        /// <returns><see langword="true" /> si el password coincide; en caso contrario, <see langword="false" />.</returns>
+        /// <exception cref="FormatException">El hash almacenado no tiene formato Base64 valido.</exception>
         public bool VerifyPassword(string password, string storedHash)
         {
             // Obtenemos los bytes del hash que esta en la BD
