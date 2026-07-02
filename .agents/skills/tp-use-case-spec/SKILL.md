@@ -54,6 +54,16 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
    `--consolidar` (fuerza el modo con un solo JSON), `--doc-title` (titulo general),
    `--page-break-por-requisito` (cada T0X en pagina nueva; por defecto van seguidos).
    Regenerar este consolidado cada vez que se agrega o edita un CU, para mantenerlo al dia.
+
+   **Numeracion de CU**: en el consolidado los CU se **renumeran global y correlativamente**
+   (CU01, CU02, ... de corrido segun el orden de los requisitos), para que no se repitan los
+   codigos entre requisitos. Los documentos puntuales por requisito conservan la numeracion
+   **local** (CU01, CU02, ... dentro del requisito), que es la que coincide con los `.puml` de
+   secuencia por CU. Flags: `--sin-renumerar` (respeta el codigo de cada JSON en el
+   consolidado), `--renumerar-global` (fuerza el renumerado tambien en puntual), `--inicio N`
+   (numero inicial). El orden de los requisitos en el consolidado surge del orden de `--input`
+   (o del orden alfabetico de rutas al pasar un directorio); para un orden distinto, pasar los
+   JSON explicitamente en el orden deseado.
 5. Revisar el `.md` espejo en el diff antes de incorporar el `.docx` a la entrega formal.
 
 ## Reglas

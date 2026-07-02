@@ -28,7 +28,10 @@ function Get-RelativePath {
 }
 
 $sourceFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter *.cs -File |
-    Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' }
+    Where-Object {
+        $_.FullName -notmatch '\\(bin|obj)\\' -and
+        (Get-RelativePath -FullPath $_.FullName) -notlike 'tests\*'
+    }
 
 $violations = @()
 

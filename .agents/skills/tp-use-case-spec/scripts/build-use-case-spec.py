@@ -38,7 +38,31 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
+
+
+# Token de codigo de CU al principio de id_nombre: "CU01", "CU-T05-01", "CU 3", etc.
+CU_CODE_RE = re.compile(r"^\s*CU[\w\-]*?\d+\s*")
+
+
+def strip_cu_code(id_nombre):
+    """Devuelve solo el nombre del CU, sin el codigo 'CUNN' inicial."""
+    return CU_CODE_RE.sub("", id_nombre or "").strip()
+
+
+def renumber_specs(specs, inicio=1):
+    """Reasigna codigos de CU de forma global y correlativa (CU01, CU02, ...).
+
+    Recorre los requisitos en el orden recibido y renumera cada caso de uso,
+    conservando su nombre. Muta las copias en memoria; no toca los JSON fuente.
+    """
+    contador = inicio
+    for data in specs:
+        for caso in data.get("casos_de_uso", []):
+            caso["id_nombre"] = "CU%02d %s" % (contador, strip_cu_code(caso.get("id_nombre", "")))
+            contador += 1
+    return specs
 
 
 # Campos obligatorios de cada caso de uso. El orden define el render de la tabla.
@@ -191,6 +215,19 @@ def build_docx(specs, output_docx, doc_title=None, page_break_por_requisito=Fals
             elem.set(qn("w:space"), "0")
             elem.set(qn("w:color"), "000000")
 
+    def set_cell_width(cell, dxa=9360):
+        # Ancho explicito por celda (w:tcW). Word respeta el ancho de tabla aunque
+        # falte, pero el importador de Google Docs dimensiona las columnas segun el
+        # w:tcW de cada celda: sin esto, al subir el .docx a Drive la columna colapsa
+        # al ancho del contenido y el cuadro queda angosto.
+        tc_pr = cell._tc.get_or_add_tcPr()
+        tc_w = tc_pr.first_child_found_in("w:tcW")
+        if tc_w is None:
+            tc_w = OxmlElement("w:tcW")
+            tc_pr.append(tc_w)
+        tc_w.set(qn("w:w"), str(dxa))
+        tc_w.set(qn("w:type"), "dxa")
+
     def set_cell_margins(cell, left=40, right=40, top=0, bottom=0):
         tc_pr = cell._tc.get_or_add_tcPr()
         tc_mar = tc_pr.first_child_found_in("w:tcMar")
@@ -257,6 +294,7 @@ def build_docx(specs, output_docx, doc_title=None, page_break_por_requisito=Fals
         for cell in cells:
             cell.text = ""
             set_single_cell_borders(cell)
+            set_cell_width(cell, 9360)
             set_cell_margins(cell)
 
         idx = 0
@@ -449,6 +487,18 @@ def main(argv=None):
         "--page-break-por-requisito", action="store_true",
         help="En consolidado, arranca cada requisito en pagina nueva (por defecto van seguidos).",
     )
+    parser.add_argument(
+        "--renumerar-global", action="store_true",
+        help="Fuerza el renumerado global de CU (CU01, CU02, ...) tambien en modo puntual.",
+    )
+    parser.add_argument(
+        "--sin-renumerar", action="store_true",
+        help="Desactiva el renumerado global en modo consolidado (respeta el codigo de cada JSON).",
+    )
+    parser.add_argument(
+        "--inicio", type=int, default=1,
+        help="Numero inicial para el renumerado global (por defecto 1).",
+    )
     args = parser.parse_args(argv)
 
     repo_root = find_repo_root(os.path.dirname(__file__))
@@ -465,6 +515,13 @@ def main(argv=None):
         return 1
 
     consolidado = args.consolidar or len(specs) > 1
+
+    # Renumerado global de CU (CU01, CU02, ... de corrido). Por defecto activo en
+    # modo consolidado (para que no se repitan los codigos entre requisitos); en
+    # modo puntual se mantiene la numeracion local salvo --renumerar-global.
+    renumerar = args.renumerar_global or (consolidado and not args.sin_renumerar)
+    if renumerar:
+        renumber_specs(specs, inicio=args.inicio)
 
     if consolidado:
         output_docx, output_md = resolve_consolidated_outputs(args, repo_root)
