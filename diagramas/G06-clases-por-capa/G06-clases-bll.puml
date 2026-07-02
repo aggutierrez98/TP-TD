@@ -1,0 +1,107 @@
+@startuml
+title G06 - Diagrama de clases parcial - Capa BLL
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "BLL (reglas de negocio + composicion)" {
+
+  class CompositionRoot <<static>> {
+    +Inicializar() : void
+    +Usuario : UsuarioBLL
+    +Permiso : PermisoBLL
+    +Idioma : IdiomaBLL
+    +Integridad : IntegridadBLL
+    +GestorBitacora : BitacoraBLL
+    +Sesion : ISesion
+    +Autorizacion : IAutorizacion
+    +ServicioIdioma : IObservado
+  }
+
+  class UsuarioBLL {
+    +Login(usuario : Usuario, passwordRaw : string) : Usuario
+    +Registrar(usuario : Usuario, passwordRaw : string) : bool
+    +CerrarSesionActual() : void
+    +ObtenerTodos() : List<Usuario>
+    +Actualizar(...) : bool
+    +Eliminar(id : int) : bool
+    +ObtenerHistorialEstados(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +RestaurarVersion(historialId : int) : bool
+  }
+  class PermisoBLL {
+    +ObtenerCatalogo() : List<IPermiso>
+    +GuardarCatalogo(raices : List<IPermiso>) : void
+    +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
+  }
+  class IdiomaBLL {
+    +CrearIdioma(nombre : string) : int
+    +ActualizarIdioma(...) : bool
+    +EliminarIdioma(idiomaId : int) : bool
+    +GuardarTraduccion(idiomaId : int, key : string, valor : string) : void
+    +ImportarJson(...) : void
+    +ExportarJson(...) : void
+    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
+  }
+  class UsuarioEstadoBLL {
+    +GuardarVersionActual(...) : int
+    +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +CompararVersiones(...) : List<ResultadoComparacionEstado>
+  }
+  class IntegridadBLL {
+    +CalcularDVH<T>(entidad : T) : string
+    +ValidarIntegridadGlobal() : void
+  }
+  class BitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    +RegistrarOperacion(...) : void
+    +RegistrarExcepcionTecnica(...) : void
+  }
+  class PasswordHashService <<internal>>
+  class ManejadorExcepcionesBLL <<static>>
+  class InicializadorAplicacionBLL <<static>>
+  class InicializacionHistorialBLL <<static>>
+
+  package "Contratos internos" {
+    interface IBitacoraBLL
+    interface IPermisoBLL
+    interface IIdiomaBLL
+    interface IUsuarioEstadoBLL
+    interface IIntegridadBLL
+    interface IPasswordHashService
+  }
+}
+
+CompositionRoot ..> UsuarioBLL : <<creates>>
+CompositionRoot ..> PermisoBLL : <<creates>>
+CompositionRoot ..> IdiomaBLL : <<creates>>
+CompositionRoot ..> IntegridadBLL : <<creates>>
+CompositionRoot ..> BitacoraBLL : <<creates>>
+CompositionRoot ..> UsuarioEstadoBLL : <<creates>>
+
+BitacoraBLL ..|> IBitacoraBLL
+PermisoBLL ..|> IPermisoBLL
+IdiomaBLL ..|> IIdiomaBLL
+UsuarioEstadoBLL ..|> IUsuarioEstadoBLL
+IntegridadBLL ..|> IIntegridadBLL
+PasswordHashService ..|> IPasswordHashService
+
+UsuarioBLL ..> IPermisoBLL
+UsuarioBLL ..> IIdiomaBLL
+UsuarioBLL ..> IUsuarioEstadoBLL
+UsuarioBLL ..> IIntegridadBLL
+UsuarioBLL ..> IBitacoraBLL
+UsuarioBLL ..> IPasswordHashService
+
+note bottom
+  Los BLL se construyen SOLO desde CompositionRoot (ctor internal,
+  sin new XxxBLL() afuera). Colaboran entre si por contratos internos
+  (no como Service Locator). BLL -> ABSTRACCIONES, REPOSITORIO, BE, SERVICIOS.
+end note
+
+@enduml

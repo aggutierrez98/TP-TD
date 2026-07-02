@@ -1,0 +1,34 @@
+@startuml
+title T07 - Gestion de Digitos Verificadores - DER
+
+hide methods
+hide stereotypes
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+entity "DigitoVerificadorVertical" as DVV {
+  *NombreTabla : varchar(100) <<PK, NOT NULL>>
+  --
+  Valor : varchar(100) <<NOT NULL>>
+  FechaActualizacion : datetime <<NOT NULL>>
+}
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL>>
+  DVH : varchar(100) <<NULL>>  ' digito verificador horizontal de la fila
+}
+
+DVV ..> Usuarios : NombreTabla = "Usuarios"\n(agrega los DVH de la tabla)
+
+note bottom of DVV
+  Una fila por tabla controlada (PK = NombreTabla).
+  Valor = DVV (suma modular de los DVH). No hay FK: la
+  relacion con Usuarios es logica (por nombre de tabla).
+end note
+
+@enduml

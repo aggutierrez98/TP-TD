@@ -1,0 +1,32 @@
+@startuml
+title T06a - CU01 Consultar bitacora - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormBitacora" as Form
+participant "BitacoraBLL" as BLL
+participant "IBitacoraRepositorio" as Repo
+participant "BitacoraDAL" as DAL
+
+Usuario -> Form : define filtros + btnBuscarBitacora_Click()
+activate Form
+Form -> Form : RefrescarDatos()
+Form -> Form : construir FiltroBitacora\n(FechaDesde/Hasta, Usuario, Nivel, EsTecnica)
+Form -> BLL : Buscar(filtro)
+activate BLL
+BLL -> Repo : Buscar(filtro ?? new FiltroBitacora())
+activate Repo
+Repo -> DAL : Buscar(filtro)
+DAL --> Repo : List<EventoBitacora>
+Repo --> BLL : registros
+deactivate Repo
+BLL --> Form : registros
+deactivate BLL
+Form -> Form : filtrar por Actividad (texto traducido) y bind a dgvBitacora
+Form -> Form : dgvBitacora_CellFormatting -> traduce Actividad/Informacion/Nivel
+Form --> Usuario : muestra eventos filtrados
+deactivate Form
+
+@enduml

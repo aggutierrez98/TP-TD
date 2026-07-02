@@ -1,0 +1,58 @@
+@startuml
+title T05 - CU02 Actualizar idioma - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "IdiomaBLL" as BLL
+participant "IdiomaCatalogoService" as Cat
+participant "IIdiomaRepositorio" as Repo
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IBitacoraBLL" as Bita
+participant "IdiomaService\n(IObservado)" as Obs
+
+Admin -> Form : selecciona idioma, edita nombre + btnActualizarIdioma_Click()
+activate Form
+alt no hay idioma seleccionado
+  Form --> Admin : Warning "SelectLanguage"
+else idioma seleccionado
+  Form -> BLL : ActualizarIdioma(idioma.Id, nombre, chkbIdiomaDefault.Checked)
+  activate BLL
+  BLL -> Cat : NormalizarNombre(nombre)
+  Cat --> BLL : nombreNormalizado
+  BLL -> Repo : ObtenerIdiomas()
+  Repo --> BLL : idiomas
+  BLL -> Cat : ValidarNombreDuplicado(idiomas, nombreNormalizado, idiomaId)
+  BLL -> UoWF : Crear()
+  UoWF --> BLL : unidad
+  activate UoW
+  BLL -> UoW : Idiomas.ActualizarIdioma({Id, Nombre})
+  UoW --> BLL : actualizado
+  alt actualizado
+    BLL -> Bita : RegistrarOperacionInterno("...LanguageUpdate", "...", "IdiomaBLL", unidad)
+    BLL -> UoW : Save()
+  end
+  deactivate UoW
+  BLL --> Form : actualizado
+  deactivate BLL
+  opt actualizado
+    Form -> Form : CargarIdiomas(idioma.Id)
+    Form -> Form : RefrescarIdiomaRuntimeSiCorresponde(idioma.Id)
+    opt idioma afectado == idioma actual
+      Form -> Obs : CambiarIdioma(idiomaRecargado)
+      Obs -> Form : Actualizar(this)  // Observer
+    end
+    Form --> Admin : Info "LanguageUpdated"
+  end
+end
+deactivate Form
+
+note right of BLL
+  El switch de idioma Default se hace por separado
+  (btnIdiomaDefault -> IdiomaBLL.HacerIdiomaDefault).
+end note
+
+@enduml

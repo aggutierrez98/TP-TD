@@ -1,0 +1,54 @@
+@startuml
+title T05 - CU03 Eliminar idioma - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "UiDialogHelper" as Dlg
+participant "IdiomaBLL" as BLL
+participant "IIdiomaRepositorio" as Repo
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IBitacoraBLL" as Bita
+participant "IdiomaService\n(IObservado)" as Obs
+
+Admin -> Form : selecciona idioma + btnEliminarIdioma_Click()
+activate Form
+Form -> Dlg : Confirmar("...DeleteLanguageMessage", idioma.Nombre)
+Dlg --> Form : confirmacion
+alt confirmacion != Yes
+  Form --> Admin : cancela
+else confirmacion == Yes
+  Form -> BLL : EliminarIdioma(idioma.Id)
+  activate BLL
+  BLL -> Repo : ObtenerIdiomas()
+  Repo --> BLL : idiomas
+  alt idioma.Default == true
+    BLL --> Form : throw ExcepcionNegocio("Error.Language.CannotDeleteDefaultLanguage")
+  else no es default
+    BLL -> UoWF : Crear()
+    UoWF --> BLL : unidad
+    activate UoW
+    BLL -> UoW : Idiomas.EliminarIdioma(idiomaId)
+    UoW --> BLL : eliminado
+    opt eliminado
+      BLL -> Bita : RegistrarOperacionInterno("...LanguageDeletion", "...", "IdiomaBLL", unidad)
+      BLL -> UoW : Save()
+    end
+    deactivate UoW
+    BLL --> Form : eliminado
+  end
+  deactivate BLL
+  opt eliminado
+    Form -> Form : CargarIdiomas(null)
+    Form -> Form : RefrescarIdiomaRuntimeSiCorresponde(idioma.Id)
+    Form -> Obs : CambiarIdioma(idiomaDefault)
+    Obs -> Form : Actualizar(this)  // Observer
+    Form --> Admin : Info "LanguageDeleted"
+  end
+end
+deactivate Form
+
+@enduml

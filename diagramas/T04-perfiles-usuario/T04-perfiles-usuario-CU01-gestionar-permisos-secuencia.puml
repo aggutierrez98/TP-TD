@@ -1,0 +1,71 @@
+@startuml
+title T04 - CU01 Gestionar permisos (catalogo) - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionPermisos" as Form
+participant "PermisoBLL" as PBLL
+participant "PermisoService" as PSvc
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IPermisoRepositorio" as Repo
+participant "IBitacoraBLL" as Bita
+participant "IPermiso\n(PermisoGrupo/PermisoSimple)" as Nodo
+
+== Carga del catalogo ==
+Admin -> Form : abrir pantalla
+activate Form
+Form -> PBLL : ObtenerCatalogo()
+activate PBLL
+PBLL -> Repo : ObtenerNodos()
+Repo --> PBLL : nodos
+PBLL -> Repo : ObtenerRelaciones()
+Repo --> PBLL : relaciones
+PBLL -> PSvc : ConstruirArbol(nodos, relaciones)
+PSvc --> PBLL : raices
+PBLL --> Form : List<IPermiso>
+deactivate PBLL
+Form --> Admin : muestra arbol de familias/patentes
+
+== Edicion en memoria (Composite) ==
+Admin -> Form : Crear familia / agregar familia o patente hija
+Form -> Nodo : Agregar(hijo) / Quitar(hijo)
+
+== Guardar catalogo ==
+Admin -> Form : btnGuardarFamilia_Click()
+Form -> PBLL : GuardarCatalogo(catalogoRaiz)
+activate PBLL
+PBLL -> PSvc : ValidarSinCiclos(raices)
+PBLL -> PSvc : Aplanar(raices)
+PSvc --> PBLL : nodos
+loop por cada nodo
+  PBLL -> PSvc : ValidarNombre(nodo.Nombre) / NormalizarNombre(...)
+end
+PBLL -> PSvc : ValidarNombresUnicos(raices)
+PBLL -> PSvc : ValidarGruposNoVacios(nodos)
+PBLL -> UoWF : Crear()
+UoWF --> PBLL : unidad
+activate UoW
+PBLL -> UoW : Permisos.ObtenerNodos()
+UoW -> Repo : ObtenerNodos()
+Repo --> PBLL : existentes
+loop por cada nodo
+  PBLL -> UoW : Permisos.Guardar(nodo)
+  UoW -> Repo : Guardar(nodo)
+  Repo --> PBLL : nodo.Id
+end
+PBLL -> PSvc : ObtenerRelaciones(raices)
+PSvc --> PBLL : relaciones
+PBLL -> UoW : Permisos.ReemplazarRelaciones(relaciones)
+PBLL -> UoW : Permisos.EliminarPermisos(idsEliminados)
+PBLL -> Bita : RegistrarOperacionInterno("...PermissionCatalogUpdate", "...", "PermisoBLL", unidad)
+PBLL -> UoW : Save()
+deactivate UoW
+deactivate PBLL
+Form -> PBLL : ObtenerCatalogo()  // recarga
+Form --> Admin : Info "CatalogSaved"
+deactivate Form
+
+@enduml

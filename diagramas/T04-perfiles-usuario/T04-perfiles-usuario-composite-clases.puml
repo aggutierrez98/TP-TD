@@ -1,6 +1,10 @@
 @startuml
 title T04 - Gestion de Perfiles de Usuario - Composite - Clases
 
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 hide empty members
@@ -16,138 +20,113 @@ package "ABSTRACCIONES" {
     +Contiene(id : int) : bool
     +ObtenerPermisosHoja() : IList<IPermiso>
   }
-}
-
-package "BE" {
-  class Usuario {
-    +Id : int
-    +Username : string
-    +PasswordHash : string
-    +Activo : bool
-    +Permisos : IList<IPermiso>
+  interface IAutorizacion {
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
+    +Limpiar() : void
+    +TienePermiso(rutaPermiso : string) : bool
   }
 }
 
 package "SERVICIOS" {
   class PermisoSimple {
-    +Id : int
-    +Nombre : string
     +EsGrupo : bool = false
-    +Hijos : IList<IPermiso>
-    +Agregar(permiso : IPermiso) : void
-    +Quitar(permiso : IPermiso) : void
-    +Contiene(id : int) : bool
     +ObtenerPermisosHoja() : IList<IPermiso>
   }
-
   class PermisoGrupo {
-    +Id : int
-    +Nombre : string
     +EsGrupo : bool = true
-    +Hijos : IList<IPermiso>
     +Agregar(permiso : IPermiso) : void
     +Quitar(permiso : IPermiso) : void
     +Contiene(id : int) : bool
     +ObtenerPermisosHoja() : IList<IPermiso>
   }
-
   class PermisoService {
-    +ConstruirArbol(nodos : IList, relaciones : IList<Tuple<int,int>>) : List<object>
-    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable) : List<object>
+    +ConstruirArbol(nodos : IList<IPermiso>, relaciones : IList<Tuple<int,int>>) : List<IPermiso>
+    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : List<IPermiso>
+    +Aplanar(raices : IEnumerable<IPermiso>) : List<IPermiso>
+    +ObtenerRelaciones(raices : IEnumerable<IPermiso>) : List<Tuple<int,int>>
+    +ValidarSinCiclos(raices : IEnumerable<IPermiso>) : void
+    +ValidarGruposNoVacios(nodos : IEnumerable<IPermiso>) : void
+    +ValidarNombresUnicos(raices : IEnumerable<IPermiso>) : void
     +NormalizarNombre(nombre : string) : string
-    +ValidarNombre(nombre : string) : void
-    +ValidarNombresUnicos(raices : IEnumerable) : void
-    +ValidarGruposNoVacios(nodos : IEnumerable) : void
-    +ValidarSinCiclos(raices : IEnumerable) : void
-    +Aplanar(raices : IEnumerable) : List<object>
-    +ObtenerRelaciones(raices : IEnumerable) : List<Tuple<int,int>>
   }
-
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
-    +Limpiar() : void
     +TienePermiso(rutaPermiso : string) : bool
-  }
-
-  class BitacoraService <<singleton>> {
-    +GetInstance() : BitacoraService
-    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-  }
-
-  class Sesion <<singleton>> {
-    +GetInstance() : Sesion
-    +GetUsuarioActualId() : int?
-  }
-}
-
-package "DAL" {
-  class PermisoDAL {
-    +ObtenerNodos(accesoDatos : AccesoDatos = null) : List<object>
-    +ObtenerRelaciones(accesoDatos : AccesoDatos = null) : List<Tuple<int,int>>
-    +Guardar(permiso : object, accesoDatos : AccesoDatos = null) : int
-    +ReemplazarRelaciones(relaciones : List<Tuple<int,int>>, accesoDatos : AccesoDatos = null) : bool
-    +EliminarPermisos(idsPermiso : List<int>, accesoDatos : AccesoDatos = null) : bool
-    +ObtenerIdPorNombre(nombre : string, accesoDatos : AccesoDatos = null) : int
-  }
-
-  class UsuarioPermisoDAL {
-    +ObtenerPermisoIdsPorUsuario(usuarioId : int, accesoDatos : AccesoDatos = null) : List<int>
-    +ReemplazarPermisosUsuario(usuarioId : int, permisosId : List<int>, accesoDatos : AccesoDatos = null) : bool
-  }
-
-  class UsuarioDAL {
-    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
-  }
-
-  class AccesoDatos {
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
   }
 }
 
 package "BLL" {
   class PermisoBLL {
-    +ObtenerCatalogo() : List<object>
-    +GuardarCatalogo(raices : List<object>) : void
+    +ObtenerCatalogo() : List<IPermiso>
+    +GuardarCatalogo(raices : List<IPermiso>) : void
     +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
     +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
-    +CargarPermisosEnUsuario(usuario : Usuario) : void
-    +AsignarPerfilBasico(usuarioId : int, accesoDatos : AccesoDatos) : void
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
   }
+}
 
-  class UsuarioBLL {
-    +Login(username : string, passwordRaw : string) : Usuario
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajo {
+    +Permisos : IPermisoRepositorio
+    +UsuarioPermisos : IUsuarioPermisoRepositorio
+    +Save() : void
   }
+  interface IPermisoRepositorio {
+    +ObtenerNodos() : List<IPermiso>
+    +ObtenerRelaciones() : List<Tuple<int,int>>
+    +Guardar(permiso : IPermiso) : int
+    +ReemplazarRelaciones(relaciones : List<Tuple<int,int>>) : bool
+    +EliminarPermisos(idsPermiso : List<int>) : bool
+    +ObtenerIdPorNombre(nombre : string) : int
+  }
+  interface IUsuarioPermisoRepositorio {
+    +ObtenerPermisoIdsPorUsuario(usuarioId : int) : List<int>
+    +ReemplazarPermisosUsuario(usuarioId : int, permisosId : List<int>) : bool
+  }
+  class PermisoRepositorio
+  class UsuarioPermisoRepositorio
+}
 
-  class UsuarioEstadoBLL {
-    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
-  }
+package "DAL" {
+  class PermisoDAL
+  class UsuarioPermisoDAL
 }
 
 package "UI" {
   class FormGestionPermisos
-  class FormGestionUsuarios
+  class FormGestionUsuarios {
+    +ValidarPermiso(permiso : string) : bool
+    +AplicarPermisosPantalla() : void
+  }
 }
 
+' ---- Composite ----
 IPermiso <|.. PermisoSimple
 IPermiso <|.. PermisoGrupo
-Usuario --> IPermiso : Permisos
+PermisoGrupo o--> "*" IPermiso : Hijos
 
-PermisoBLL --> PermisoDAL
-PermisoBLL --> UsuarioPermisoDAL
-PermisoBLL --> UsuarioDAL
-PermisoBLL --> UsuarioEstadoBLL
-PermisoBLL --> PermisoService
-PermisoBLL --> AutorizacionService
-PermisoBLL --> BitacoraService
-PermisoBLL --> Sesion
-UsuarioBLL --> PermisoBLL
+' ---- Servicio de dominio + autorizacion ----
+PermisoService ..> IPermiso
+AutorizacionService ..|> IAutorizacion
 AutorizacionService --> PermisoService
 
+' ---- BLL usa contratos (DIP) ----
+PermisoBLL --> IPermisoRepositorio
+PermisoBLL --> IUsuarioPermisoRepositorio
+PermisoBLL --> PermisoService
+PermisoBLL --> IAutorizacion
+PermisoBLL ..> IUnidadDeTrabajo
+
+IUnidadDeTrabajo --> IPermisoRepositorio : Permisos
+IUnidadDeTrabajo --> IUsuarioPermisoRepositorio : UsuarioPermisos
+PermisoRepositorio ..|> IPermisoRepositorio
+UsuarioPermisoRepositorio ..|> IUsuarioPermisoRepositorio
+PermisoRepositorio --> PermisoDAL
+UsuarioPermisoRepositorio --> UsuarioPermisoDAL
+
+' ---- UI ----
 FormGestionPermisos --> PermisoBLL
 FormGestionUsuarios --> PermisoBLL
+FormGestionUsuarios --> IAutorizacion
 
 @enduml

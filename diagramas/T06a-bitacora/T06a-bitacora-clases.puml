@@ -1,11 +1,41 @@
 @startuml
 title T06a - Gestion de Bitacora - Clases
 
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 hide empty members
 
+package "UI" {
+  class FormBitacora {
+    +btnBuscarBitacora_Click() : void
+    -RefrescarDatos() : void
+  }
+}
+
+package "BLL" {
+  class BitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    +RegistrarOperacionInterno(actividad : string, informacion : string, origen : string, unidad : IUnidadDeTrabajo) : void
+    +RegistrarFalloNegocioInterno(actividad : string, informacion : string, origen : string, unidad : IUnidadDeTrabajo) : void
+  }
+  interface IBitacoraBLL <<internal>>
+  class "otros BLL\n(UsuarioBLL, PermisoBLL, IdiomaBLL, ...)" as OtrosBLL
+}
+
 package "ABSTRACCIONES" {
+  interface IBitacora {
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    +ConsultarBitacora(filtro : IFiltroBitacora) : IList<IEventoBitacora>
+  }
   interface IEventoBitacora {
     +Id : int
     +FechaHora : DateTime
@@ -17,7 +47,6 @@ package "ABSTRACCIONES" {
     +Origen : string
     +EsTecnica : bool
   }
-
   interface IFiltroBitacora {
     +FechaDesde : DateTime?
     +FechaHasta : DateTime?
@@ -26,163 +55,59 @@ package "ABSTRACCIONES" {
     +Nivel : string
     +EsTecnica : bool?
   }
+  interface ISesion
 }
 
 package "SERVICIOS" {
-  class Idioma
-
-  class IdiomaService <<singleton>> {
-    +GetInstance() : IdiomaService
-    +IdiomaActual : Idioma
-  }
-
-  class EventoBitacora {
-    +Id : int
-    +FechaHora : DateTime
-    +UsuarioId : int?
-    +UsernameSnapshot : string
-    +Actividad : string
-    +Informacion : string
-    +Nivel : string
-    +Origen : string
-    +EsTecnica : bool
-  }
-
-  class FiltroBitacora {
-    +FechaDesde : DateTime?
-    +FechaHasta : DateTime?
-    +Usuario : string
-    +Actividad : string
-    +Nivel : string
-    +EsTecnica : bool?
-  }
-
-  class BitacoraService <<singleton>> {
-    +GetInstance() : BitacoraService
-    +Configurar(registrador, consultor, obtenedorUsuarioId, obtenedorUsername) : void
-    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string, contextoPersistencia : object = null) : void
-    +ConsultarBitacora(filtro : FiltroBitacora) : IList<EventoBitacora>
-  }
-
-  class Sesion <<singleton>> {
-    +GetInstance() : Sesion
-    +GetUsuarioActualId() : int?
-    +GetUsuarioActualNombre() : string
-  }
+  class EventoBitacora
+  class FiltroBitacora
 }
 
-package "BE" {
-  class Usuario {
-    +Id : int
-    +Username : string
-    +PasswordHash : string
-    +Activo : bool
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
   }
-}
-
-package "BLL" {
-  class UsuarioBLL {
-    +Actualizar(id : int, nuevoUsername : string, nuevaPasswordRaw : string, activo : bool) : bool
-    +Eliminar(id : int) : bool
+  interface IUnidadDeTrabajo {
+    +Bitacora : IBitacoraRepositorio
+    +Save() : void
   }
-
-  class UsuarioEstadoBLL {
-    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
-  }
-
-  class BitacoraBLL {
+  interface IBitacoraRepositorio {
+    +Guardar(evento : EventoBitacora) : int
     +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
   }
-
-  class ManejadorExcepcionesBLL {
-    +ObtenerMensajeUsuarioKey(exception : Exception, actividad : string) : string
-    +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
-  }
-
-  class InicializacionBitacoraBLL {
-    +Inicializar() : void
-  }
-
-  class BootstrapAplicacionBLL {
-    +Inicializar() : void
-  }
+  class BitacoraRepositorio
 }
 
 package "DAL" {
-  class UsuarioDAL {
-    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
-    +Actualizar(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
-    +EliminarFisicamente(id : int, accesoDatos : AccesoDatos = null) : bool
-  }
-
   class BitacoraDAL {
-    +Guardar(evento : EventoBitacora, accesoDatos : AccesoDatos = null) : int
+    +Guardar(evento : EventoBitacora, accesoDatos : AccesoDatosSqlServer = null) : int
     +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
   }
-
-  class AccesoDatos {
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
-  }
+  class AccesoDatosSqlServer
 }
 
-package "UI" {
-  class FormTraducibleBase {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
+BitacoraBLL ..|> IBitacora
+BitacoraBLL ..|> IBitacoraBLL
+EventoBitacora ..|> IEventoBitacora
+FiltroBitacora ..|> IFiltroBitacora
 
-  class FormGestionUsuarios {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class FormBitacora {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class UiDialogHelper {
-    +MostrarInfo(messageKey : string, args : object[]) : void
-    +MostrarWarning(messageKey : string, args : object[]) : void
-    +MostrarError(messageKey : string, args : object[]) : void
-    +Confirmar(messageKey : string, titleKey : string, icon : MessageBoxIcon, args : object[]) : DialogResult
-    +Traducir(key : string, args : object[]) : string
-  }
-
-  class UiExceptionHandler {
-    +Mostrar(exception : Exception, actividad : string) : void
-  }
-}
-
-IEventoBitacora <|.. EventoBitacora
-IFiltroBitacora <|.. FiltroBitacora
-
-FormTraducibleBase <|-- FormGestionUsuarios
-FormTraducibleBase <|-- FormBitacora
-BitacoraBLL --> BitacoraService
-UsuarioBLL --> UsuarioDAL
-UsuarioBLL --> UsuarioEstadoBLL
-UsuarioBLL --> BitacoraService
-ManejadorExcepcionesBLL --> BootstrapAplicacionBLL
-ManejadorExcepcionesBLL --> BitacoraService
-InicializacionBitacoraBLL --> BitacoraDAL
-InicializacionBitacoraBLL --> BitacoraService
-BitacoraService --> EventoBitacora
-BitacoraService --> FiltroBitacora
-BitacoraService ..> Sesion : proveedores de identidad
-UsuarioDAL --> AccesoDatos
-BitacoraDAL --> AccesoDatos
-FormGestionUsuarios --> UsuarioBLL
 FormBitacora --> BitacoraBLL
-UiDialogHelper --> IdiomaService
-UiExceptionHandler --> UiDialogHelper
-UiExceptionHandler --> ManejadorExcepcionesBLL
+OtrosBLL ..> IBitacoraBLL : registran eventos
 
-note right of BitacoraService
-  Servicio runtime transversal.
-  No referencia DAL de forma directa;
-  queda configurado desde BLL con delegados.
+BitacoraBLL --> IBitacoraRepositorio
+BitacoraBLL --> IUnidadDeTrabajoFactory
+BitacoraBLL --> ISesion : snapshot usuario actual
+BitacoraBLL ..> EventoBitacora : <<creates>>
+
+IUnidadDeTrabajo --> IBitacoraRepositorio : Bitacora
+BitacoraRepositorio ..|> IBitacoraRepositorio
+BitacoraRepositorio --> BitacoraDAL
+BitacoraDAL --> AccesoDatosSqlServer
+
+note bottom of BitacoraBLL
+  RegistrarOperacion/FalloNegocio/ExcepcionTecnica abren su propia
+  unidad (auditoria autonoma). Las variantes *Interno se enrolan en
+  la unidad de trabajo del caso de uso llamador (misma transaccion).
 end note
 
 @enduml

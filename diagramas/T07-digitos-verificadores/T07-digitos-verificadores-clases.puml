@@ -1,0 +1,135 @@
+@startuml
+title T07 - Gestion de Digitos Verificadores - Clases
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "UI" {
+  class Program <<static>> {
+    +Main() : void
+  }
+  class FormContingenciaIntegridad {
+    -_falla : ExcepcionIntegridad
+    +FormContingenciaIntegridad(falla : ExcepcionIntegridad)
+  }
+}
+
+package "BLL" {
+  class InicializadorAplicacionBLL <<static>> {
+    +Inicializar() : void
+  }
+  class IntegridadBLL {
+    +CalcularDVH<T>(entidad : T) : string
+    +RecalcularDVVInterno(tabla : string, listaDVH : IEnumerable<string>, unidad : IUnidadDeTrabajo) : void
+    +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) : void
+    +ValidarIntegridadGlobal() : void
+    -InicializarFirmas(usuarios : List<Usuario>, unidad : IUnidadDeTrabajo) : void
+    -VerificarHorizontal(usuarios : IEnumerable<Usuario>) : void
+    -VerificarVertical(usuarios : List<Usuario>, dvvAlmacenado : string) : void
+  }
+  class CompositionRoot <<static>> {
+    +Integridad : IntegridadBLL
+    +IntegridadService : IIntegridadService
+  }
+  interface IBitacoraBLL <<internal>>
+}
+
+package "ABSTRACCIONES" {
+  interface IIntegridadService {
+    +CalcularDVH<T>(entidad : T) : string
+    +CalcularDVV(listaDVH : IEnumerable<string>) : string
+    +CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
+  }
+  interface IIntegrable {
+    +DVH : string
+  }
+  class DigitoVerificadorAttribute <<Attribute>> {
+    +Orden : int
+  }
+}
+
+package "SERVICIOS" {
+  class IntegridadService {
+    +CalcularDVH<T>(entidad : T) : string
+    +CalcularDVV(listaDVH : IEnumerable<string>) : string
+    +CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
+  }
+  class ExcepcionIntegridad {
+    +Tipo : TipoFalloIntegridad
+    +Tabla : string
+    +RegistroId : int?
+  }
+  enum TipoFalloIntegridad {
+    Horizontal
+    Vertical
+  }
+}
+
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
+  }
+  interface IUnidadDeTrabajo {
+    +Usuarios : IUsuarioRepositorio
+    +Integridad : IIntegridadRepositorio
+    +Save() : void
+  }
+  interface IIntegridadRepositorio {
+    +ObtenerDVV(nombreTabla : string) : string
+    +GuardarDVV(nombreTabla : string, valor : string) : void
+  }
+  class IntegridadRepositorio
+}
+
+package "DAL" {
+  class IntegridadDAL {
+    +ObtenerDVV(nombreTabla : string, accesoDatos : AccesoDatosSqlServer = null) : string
+    +GuardarDVV(nombreTabla : string, valor : string, accesoDatos : AccesoDatosSqlServer = null) : void
+  }
+}
+
+package "BE" {
+  class Usuario {
+    +Username : string <<DigitoVerificador(1)>>
+    +PasswordHash : string <<DigitoVerificador(2)>>
+    +Activo : bool <<DigitoVerificador(3)>>
+    +DVH : string
+  }
+}
+
+Program ..> InicializadorAplicacionBLL : Inicializar()
+Program ..> FormContingenciaIntegridad : <<creates>> ante ExcepcionIntegridad
+InicializadorAplicacionBLL ..> IntegridadBLL : ValidarIntegridadGlobal()
+FormContingenciaIntegridad --> ExcepcionIntegridad
+
+IntegridadBLL ..|> "IIntegridadBLL"
+IntegridadBLL --> IIntegridadService
+IntegridadBLL ..> IUnidadDeTrabajo
+IntegridadBLL ..> IBitacoraBLL
+IntegridadBLL ..> ExcepcionIntegridad : throw
+
+IntegridadService ..|> IIntegridadService
+IntegridadService ..> DigitoVerificadorAttribute : reflexion (Orden)
+ExcepcionIntegridad --> TipoFalloIntegridad
+
+IUnidadDeTrabajo --> IIntegridadRepositorio : Integridad
+IntegridadRepositorio ..|> IIntegridadRepositorio
+IntegridadRepositorio --> IntegridadDAL
+
+Usuario ..|> IIntegrable
+Usuario ..> DigitoVerificadorAttribute : marca propiedades
+IntegridadService ..> Usuario : lee propiedades marcadas
+
+note bottom of IntegridadService
+  Motor generico: descubre por reflexion las propiedades con
+  DigitoVerificadorAttribute (ordenadas por Orden), arma la cadena
+  canonica y calcula DVH = Base64(SHA-256). El DVV es suma modular
+  2^256 de los DVH (permite recomputo total o incremental O(1)).
+end note
+
+@enduml

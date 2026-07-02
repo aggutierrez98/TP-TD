@@ -1,0 +1,70 @@
+@startuml
+title T07 - CU01 Verificar integridad de datos - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+participant "Program.Main" as Prog
+participant "InicializadorAplicacionBLL" as Init
+participant "IntegridadBLL" as IBLL
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioRepositorio" as URepo
+participant "IIntegridadRepositorio" as IRepo
+participant "IIntegridadService" as ISvc
+participant "IBitacoraBLL" as Bita
+participant "FormContingenciaIntegridad" as Cont
+
+Prog -> Init : Inicializar()
+activate Init
+Init -> IBLL : ValidarIntegridadGlobal()
+activate IBLL
+IBLL -> UoW : Usuarios.ObtenerTodos()
+UoW -> URepo : ObtenerTodos()
+URepo --> IBLL : usuarios
+IBLL -> UoW : Integridad.ObtenerDVV("Usuarios")
+UoW -> IRepo : ObtenerDVV("Usuarios")
+IRepo --> IBLL : dvvAlmacenado
+
+alt tabla sin inicializar (dvv null y todos los DVH vacios)
+  loop por cada usuario
+    IBLL -> ISvc : CalcularDVH(usuario)
+    ISvc --> IBLL : dvh
+    IBLL -> UoW : Usuarios.ActualizarDVH(usuario.Id, dvh)
+  end
+  IBLL -> ISvc : CalcularDVV(listaDVH)
+  ISvc --> IBLL : dvv
+  IBLL -> UoW : Integridad.GuardarDVV("Usuarios", dvv)
+  IBLL -> Bita : RegistrarOperacionInterno("...IntegritySignaturesInitialized", "...", "IntegridadBLL", unidad)
+  IBLL -> UoW : Save()
+else firmas ya inicializadas -> verificar
+  group Verificacion horizontal (DVH por fila)
+    loop por cada usuario
+      IBLL -> ISvc : CalcularDVH(usuario)
+      ISvc --> IBLL : dvhCalculado
+      alt dvhCalculado != usuario.DVH
+        IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...HorizontalCorruption", "IntegridadBLL")
+        IBLL -> Prog : throw ExcepcionIntegridad(Horizontal, "Usuarios", usuario.Id)
+      end
+    end
+  end
+  group Verificacion vertical (DVV de la tabla)
+    IBLL -> ISvc : CalcularDVV(usuarios.DVH)
+    ISvc --> IBLL : dvvCalculado
+    alt dvvCalculado != dvvAlmacenado
+      IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...VerticalCorruption", "IntegridadBLL")
+      IBLL -> Prog : throw ExcepcionIntegridad(Vertical, "Usuarios", null)
+    end
+  end
+  IBLL -> UoW : Save()
+end
+deactivate IBLL
+deactivate Init
+
+alt arranque sin fallas
+  Prog -> Prog : Application.Run(new FormLogin())
+else ExcepcionIntegridad
+  Prog -> Bita : RegistrarExcepcionTecnica(ex, "Verificacion de integridad", "Program")
+  Prog -> Cont : Application.Run(new FormContingenciaIntegridad(ex))
+end
+
+@enduml

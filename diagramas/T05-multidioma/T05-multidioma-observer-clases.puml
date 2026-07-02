@@ -1,11 +1,25 @@
 @startuml
 title T05 - Gestion de Multiples Idiomas - Observer - Clases
 
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 hide empty members
 
 package "ABSTRACCIONES" {
+  interface IObservado {
+    +IdiomaActual : IIdioma
+    +RegistrarObservador(observador : IObservador) : void
+    +DesregistrarObservador(observador : IObservador) : void
+    +Notificar() : void
+    +CambiarIdioma(idioma : IIdioma) : void
+  }
+  interface IObservador {
+    +Actualizar(observado : IObservado) : void
+  }
   interface IIdioma {
     +Id : int
     +Nombre : string
@@ -14,76 +28,29 @@ package "ABSTRACCIONES" {
     +ObtenerTraduccion(key : string) : string
     +TieneTraduccion(key : string) : bool
   }
-
-  interface ITraduccion {
-    +PalabraId : int
-    +IdiomaId : int
-    +Valor : string
-    +Palabra : IPalabra
-  }
-
-  interface IPalabra {
-    +Id : int
-    +Key : string
-  }
-
-  interface IUsuarioPreferencia {
-    +UsuarioId : int
-    +IdiomaId : int
-  }
+  interface ITraduccion
 }
 
 package "SERVICIOS" {
   class IdiomaService <<singleton>> {
     +GetInstance() : IdiomaService
-    +IdiomaActual : Idioma
-    +RegistrarObservador(observador : Action<Idioma>) : void
-    +DesregistrarObservador(observador : Action<Idioma>) : void
-    +CambiarIdioma(idioma : Idioma) : void
+    +IdiomaActual : IIdioma
+    +RegistrarObservador(observador : IObservador) : void
+    +DesregistrarObservador(observador : IObservador) : void
+    +Notificar() : void
+    +CambiarIdioma(idioma : IIdioma) : void
   }
-
+  class Idioma {
+    +ObtenerTraduccion(key : string) : string
+    +TieneTraduccion(key : string) : bool
+  }
+  class Traduccion
+  class Palabra
   class IdiomaCatalogoService {
     +NormalizarNombre(nombre : string) : string
     +ValidarNombreDuplicado(idiomas : IEnumerable<Idioma>, nombre : string, idiomaId : int?) : void
     +EstaCompleto(idioma : Idioma) : bool
     +ValidarIdiomaSeleccionable(idioma : Idioma) : void
-  }
-
-  class Idioma {
-    +Id : int
-    +Nombre : string
-    +Default : bool
-    +Traducciones : List<Traduccion>
-    +ObtenerTraduccion(key : string) : string
-    +TieneTraduccion(key : string) : bool
-  }
-
-  class Traduccion {
-    +PalabraId : int
-    +IdiomaId : int
-    +Valor : string
-    +Palabra : Palabra
-  }
-
-  class Palabra {
-    +Id : int
-    +Key : string
-  }
-
-  class UsuarioPreferencia {
-    +UsuarioId : int
-    +IdiomaId : int
-  }
-
-  class Sesion <<singleton>> {
-    +GetInstance() : Sesion
-    +GetUsuarioActualId() : int?
-    +GetUsuarioActualNombre() : string
-  }
-
-  class BitacoraService <<singleton>> {
-    +GetInstance() : BitacoraService
-    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
   }
 }
 
@@ -91,124 +58,91 @@ package "BLL" {
   class IdiomaBLL {
     +InicializarAplicacion() : void
     +ObtenerIdiomas() : List<Idioma>
-    +ObtenerIdioma(idiomaId : int) : Idioma
-    +ObtenerIdiomaDefault() : Idioma
-    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
-    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
-    +CrearIdioma(nombre : string, idiomaDefault : bool) : int
+    +CrearIdioma(nombre : string) : int
     +ActualizarIdioma(idiomaId : int, nombre : string, idiomaDefault : bool) : bool
     +EliminarIdioma(idiomaId : int) : bool
     +GuardarTraduccion(idiomaId : int, key : string, valor : string) : void
-    +EliminarTraduccion(idiomaId : int, palabraId : int) : bool
     +ImportarJson(idiomaId : int, rutaArchivo : string) : void
-    +EstaCompleto(idiomaId : int) : bool
+    +ExportarJson(idiomaId : int, rutaArchivo : string) : void
+    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
+    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
     +AplicarIdiomaSesion(idiomaId : int) : void
   }
-
-  class ManejadorExcepcionesBLL {
-    +ObtenerMensajeUsuarioKey(exception : Exception, actividad : string) : string
-    +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
-  }
-
-  class UsuarioEstadoBLL {
-    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+  class CompositionRoot <<static>> {
+    +ServicioIdioma : IObservado
+    +Idioma : IdiomaBLL
   }
 }
 
-package "DAL" {
-  class IdiomaDAL {
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajo {
+    +Idiomas : IIdiomaRepositorio
+    +Traducciones : ITraduccionRepositorio
+    +UsuarioPreferencias : IUsuarioPreferenciaRepositorio
+    +Save() : void
+  }
+  interface IIdiomaRepositorio {
     +ObtenerIdiomas() : List<Idioma>
-    +ObtenerPalabras() : List<Palabra>
     +ObtenerIdiomaCompleto(idiomaId : int) : Idioma
     +ObtenerIdiomaDefault() : Idioma
     +InsertarIdioma(idioma : Idioma) : int
     +ActualizarIdioma(idioma : Idioma) : bool
     +EliminarIdioma(idiomaId : int) : bool
+    +SwitchearIdiomaDefault(idiomaId : int) : bool
+  }
+  interface ITraduccionRepositorio {
     +ObtenerPalabraIdPorKey(key : string) : int
     +GuardarTraduccion(idiomaId : int, palabraId : int, valor : string) : bool
     +EliminarTraduccion(idiomaId : int, palabraId : int) : bool
-    +EstablecerIdiomaDefault(idiomaId : int) : bool
   }
-
-  class UsuarioPreferenciaDAL {
-    +ObtenerPorUsuarioId(usuarioId : int, accesoDatos : AccesoDatos = null) : UsuarioPreferencia
-    +Guardar(usuarioId : int, idiomaId : int?, accesoDatos : AccesoDatos = null) : bool
-  }
-
-  class AccesoDatos {
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
+  interface IUsuarioPreferenciaRepositorio {
+    +ObtenerPorUsuarioId(usuarioId : int) : UsuarioPreferencia
+    +Guardar(usuarioId : int, idiomaId : int?) : bool
   }
 }
 
 package "UI" {
   class FormTraducibleBase {
-    #OnIdiomaActualizado(idioma : Idioma) : void
+    +Actualizar(observado : IObservado) : void
   }
-
-  class FormLogin
-  class FormRegistro
-
-  class FormGestionUsuarios {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
   class FormGestionIdiomas
-
-  class FormConfiguracionUsuario {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class FormBitacora {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class FormHistorialUsuario {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class UiDialogHelper {
-    +MostrarInfo(messageKey : string, args : object[]) : void
-    +MostrarWarning(messageKey : string, args : object[]) : void
-    +MostrarError(messageKey : string, args : object[]) : void
-    +Confirmar(messageKey : string, titleKey : string, icon : MessageBoxIcon, args : object[]) : DialogResult
-    +Traducir(key : string, args : object[]) : string
-  }
-
-  class UiExceptionHandler {
-    +Mostrar(exception : Exception, actividad : string) : void
+  class FormConfiguracionUsuario
+  class IdiomaFormHelper <<static>> {
+    +Aplicar(form : Form, idioma : IIdioma) : void
   }
 }
 
-IIdioma <|.. Idioma
-ITraduccion <|.. Traduccion
-IPalabra <|.. Palabra
-IUsuarioPreferencia <|.. UsuarioPreferencia
+' ---- Observer ----
+IObservado <|.. IdiomaService
+IObservador <|.. FormTraducibleBase
+IdiomaService o--> "*" IObservador : _observadores
+IdiomaService --> IIdioma : _idiomaActual
+FormTraducibleBase ..> IdiomaFormHelper : Aplicar(this, idiomaActual)
 
-FormTraducibleBase <|-- FormLogin
-FormTraducibleBase <|-- FormRegistro
-FormTraducibleBase <|-- FormGestionUsuarios
-FormTraducibleBase <|-- FormGestionIdiomas
-FormTraducibleBase <|-- FormConfiguracionUsuario
-FormTraducibleBase <|-- FormBitacora
-FormTraducibleBase <|-- FormHistorialUsuario
-
-Idioma --> Traduccion
+' ---- Modelo de idioma ----
+Idioma ..|> IIdioma
+Traduccion ..|> ITraduccion
+Idioma --> "*" Traduccion
 Traduccion --> Palabra
 
-IdiomaBLL --> IdiomaDAL
-IdiomaBLL --> UsuarioPreferenciaDAL
+' ---- BLL orquesta ----
+FormGestionIdiomas --|> FormTraducibleBase
+FormConfiguracionUsuario --|> FormTraducibleBase
+FormGestionIdiomas --> IdiomaBLL
+FormConfiguracionUsuario --> IdiomaBLL
+IdiomaBLL --> IObservado : _servicioIdioma
+IdiomaBLL --> IIdiomaRepositorio
+IdiomaBLL --> ITraduccionRepositorio
+IdiomaBLL --> IUsuarioPreferenciaRepositorio
 IdiomaBLL --> IdiomaCatalogoService
-IdiomaBLL --> UsuarioEstadoBLL
-IdiomaBLL --> IdiomaService
-IdiomaBLL --> BitacoraService
-FormConfiguracionUsuario --> Sesion
-FormTraducibleBase --> IdiomaService
+IdiomaBLL ..> IUnidadDeTrabajo
+CompositionRoot ..> IdiomaService : GetInstance()
+CompositionRoot ..> IdiomaBLL : <<creates>>
 
-FormGestionIdiomas --> IdiomaService
-UiDialogHelper --> IdiomaService
-UiExceptionHandler --> UiDialogHelper
-UiExceptionHandler --> ManejadorExcepcionesBLL
+note bottom of IdiomaService
+  CambiarIdioma(idioma) fija _idiomaActual y llama Notificar(),
+  que recorre _observadores y ejecuta Actualizar(this) en cada
+  Form abierto (re-traduce la UI en caliente).
+end note
 
 @enduml

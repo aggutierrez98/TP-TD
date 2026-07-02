@@ -1,0 +1,51 @@
+@startuml
+title T05 - CU04 Importar JSON de traducciones - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "OpenFileDialog" as Ofd
+participant "IdiomaBLL" as BLL
+participant "JavaScriptSerializer" as Json
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "ITraduccionRepositorio" as TRepo
+participant "IBitacoraBLL" as Bita
+
+Admin -> Form : selecciona idioma + btnImportarJson_Click()
+activate Form
+Form -> Ofd : ShowDialog()
+Ofd --> Form : ruta del archivo (.json)
+Form -> BLL : ImportarJson(idioma.Id, rutaArchivo)
+activate BLL
+alt archivo inexistente
+  BLL --> Form : throw ExcepcionNegocio("Error.Language.JsonFileNotFound")
+else archivo valido
+  BLL -> Json : Deserialize<Dictionary<string,string>>(contenido)
+  Json --> BLL : traducciones
+  alt traducciones vacias / formato invalido
+    BLL --> Form : throw Excepcion (JsonEmpty / JsonInvalidFormat)
+  else contenido valido
+    BLL -> UoWF : Crear()
+    UoWF --> BLL : unidad
+    activate UoW
+    loop por cada (key, valor)
+      BLL -> UoW : Traducciones.ObtenerPalabraIdPorKey(key)
+      UoW -> TRepo : ObtenerPalabraIdPorKey(key)
+      TRepo --> BLL : palabraId
+      BLL -> UoW : Traducciones.GuardarTraduccion(idiomaId, palabraId, valor)
+    end
+    BLL -> Bita : RegistrarOperacionInterno("...TranslationsImport", "...", "IdiomaBLL", unidad)
+    BLL -> UoW : Save()
+    deactivate UoW
+  end
+end
+BLL --> Form : (fin)
+deactivate BLL
+Form -> Form : RecargarIdiomaSeleccionado + RefrescarIdiomaRuntimeSiCorresponde
+Form --> Admin : Info "TranslationsImported"
+deactivate Form
+
+@enduml

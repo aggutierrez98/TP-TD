@@ -1,0 +1,45 @@
+@startuml
+title T06a - CU02 Registrar en bitacora - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+participant "BLL llamador\n(UsuarioBLL, PermisoBLL, ...)" as Caller
+participant "BitacoraBLL" as BLL
+participant "ISesion" as Sesion
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IBitacoraRepositorio" as Repo
+participant "BitacoraDAL" as DAL
+
+alt Registro autonomo (auditoria fuera de un CU transaccional)
+  Caller -> BLL : RegistrarOperacion / RegistrarFalloNegocio / RegistrarExcepcionTecnica(actividad, info, origen)
+  activate BLL
+  BLL -> Sesion : GetUsuarioActualId() / GetUsuarioActualNombre()
+  Sesion --> BLL : usuarioId, username
+  BLL -> BLL : ConstruirEvento(actividad, info, nivel, origen, esTecnica)
+  BLL -> UoWF : Crear()
+  UoWF --> BLL : unidad
+  activate UoW
+  BLL -> UoW : Bitacora.Guardar(evento)
+  UoW -> Repo : Guardar(evento)
+  Repo -> DAL : Guardar(evento, accesoDatos)
+  DAL --> Repo : id
+  BLL -> UoW : Save()
+  deactivate UoW
+  deactivate BLL
+else Registro enrolado en la transaccion del CU llamador
+  Caller -> BLL : RegistrarOperacionInterno / RegistrarFalloNegocioInterno(actividad, info, origen, unidad)
+  activate BLL
+  BLL -> Sesion : GetUsuarioActualId() / GetUsuarioActualNombre()
+  Sesion --> BLL : usuarioId, username
+  BLL -> BLL : ConstruirEvento(...)
+  BLL -> UoW : Bitacora.Guardar(evento)
+  note right of BLL
+    No hace Save(): el commit lo hace el
+    caso de uso llamador (misma transaccion).
+  end note
+  deactivate BLL
+end
+
+@enduml

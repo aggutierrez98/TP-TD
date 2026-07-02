@@ -3,36 +3,45 @@ title T04 - Gestion de Perfiles de Usuario - DER
 
 hide methods
 hide stereotypes
+skinparam backgroundColor white
 skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+entity "Permiso" as Permiso {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Nombre : varchar(100) <<UQ (UQ_Permiso_Nombre), NOT NULL>>
+  EsGrupo : bit <<NOT NULL>>
+}
+
+entity "PermisoCompuesto" as PermisoCompuesto {
+  *PermisoPadreId : int <<PK, FK -> Permiso.Id, NOT NULL>>
+  *PermisoHijoId : int <<PK, FK -> Permiso.Id, NOT NULL>>
+}
+
+entity "UsuarioPermiso" as UsuarioPermiso {
+  *UsuarioId : int <<PK, FK -> Usuarios.Id, NOT NULL>>
+  *PermisoId : int <<PK, FK -> Permiso.Id, NOT NULL>>
+}
 
 entity "Usuarios" as Usuarios {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
   Username : varchar(50) <<UQ, NOT NULL>>
-  PasswordHash : varchar(max) <<NOT NULL>>
-  Activo : bit <<NOT NULL>>
 }
 
-entity "Permiso" as Permiso {
-  *Id : int <<PK, IDENTITY, NOT NULL>>
-  --
-  Nombre : varchar(100) <<UQ, NOT NULL>>
-  EsGrupo : bit <<NOT NULL>>
-}
+' Composite: un Permiso (grupo) contiene otros Permiso (auto-relacion N:M)
+Permiso ||--o{ PermisoCompuesto : padre
+Permiso ||--o{ PermisoCompuesto : hijo
 
-entity "PermisoCompuesto" as PermisoCompuesto {
-  *PermisoPadreId : int <<PK, FK, NOT NULL>>
-  *PermisoHijoId : int <<PK, FK, NOT NULL>>
-}
+' Asignacion de permisos a usuarios (N:M)
+Usuarios ||--o{ UsuarioPermiso
+Permiso  ||--o{ UsuarioPermiso
 
-entity "UsuarioPermiso" as UsuarioPermiso {
-  *UsuarioId : int <<PK, FK, NOT NULL>>
-  *PermisoId : int <<PK, FK, NOT NULL>>
-}
-
-Permiso ||--o{ PermisoCompuesto : FK_PermisoCompuesto_Padre
-Permiso ||--o| PermisoCompuesto : FK_PermisoCompuesto_Hijo
-Usuarios ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Usuario
-Permiso ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Permiso
+note bottom of PermisoCompuesto
+  Materializa el patron Composite:
+  PermisoPadreId (grupo) -> PermisoHijoId (grupo o patente).
+  PK compuesta (PermisoPadreId, PermisoHijoId).
+end note
 
 @enduml

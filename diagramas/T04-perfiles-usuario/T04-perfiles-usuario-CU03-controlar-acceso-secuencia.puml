@@ -1,0 +1,52 @@
+@startuml
+title T04 - CU03 Controlar acceso de usuario - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormGestionUsuarios" as Form
+participant "IAutorizacion\n(AutorizacionService)" as Autz
+participant "PermisoService" as PSvc
+participant "IPermiso\n(Composite)" as Nodo
+
+note over Autz
+  Los permisos efectivos del usuario ya fueron
+  cargados en el login (UsuarioBLL.Login ->
+  ActualizarPermisosUsuarioActual).
+end note
+
+== Al abrir la pantalla: habilitar/deshabilitar controles ==
+Usuario -> Form : FormGestionUsuarios_Load
+activate Form
+Form -> Form : AplicarPermisosPantalla()
+loop por cada permiso de pantalla\n(gestionusuarios, gestionpermisos, historialusuarios, verbitacora, ...)
+  Form -> Autz : TienePermiso(rutaPermiso)
+  activate Autz
+  Autz -> PSvc : NormalizarNombre(rutaPermiso)
+  Autz -> PSvc : ObtenerPermisosEfectivos(permisosUsuarioActual)
+  activate PSvc
+  PSvc -> Nodo : ObtenerPermisosHoja()
+  Nodo --> PSvc : hojas (patentes)
+  PSvc --> Autz : permisos efectivos
+  deactivate PSvc
+  Autz --> Form : true / false
+  deactivate Autz
+end
+Form --> Usuario : botones habilitados segun permisos
+deactivate Form
+
+== Al ejecutar una accion protegida ==
+Usuario -> Form : btnXxx_Click()
+activate Form
+Form -> Form : ValidarPermiso(permiso)
+Form -> Autz : TienePermiso(permiso)
+Autz --> Form : tienePermiso
+alt sin permiso
+  Form --> Usuario : Warning "NotPermitted"
+else con permiso
+  Form --> Usuario : ejecuta la accion
+end
+deactivate Form
+
+@enduml

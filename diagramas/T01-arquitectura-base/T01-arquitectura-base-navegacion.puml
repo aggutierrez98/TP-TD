@@ -1,0 +1,50 @@
+@startuml
+title T01 - Arquitectura Base - Mapa de Navegacion de Pantallas
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam ArrowColor black
+
+[*] --> Arranque
+
+state "Arranque\n(Program.Main)" as Arranque
+state "FormContingenciaIntegridad" as Cont
+state "FormLogin" as Login
+state "FormRegistro\n<<modal>>" as Registro
+state "FormGestionUsuarios\n<<hub principal>>" as Hub
+state "FormConfiguracionUsuario\n<<modal>>" as Config
+state "FormGestionIdiomas" as Idiomas
+state "FormGestionPermisos\n<<modal>>" as Permisos
+state "FormHistorialUsuario\n<<modal>>" as Historial
+state "FormBitacora\n<<modal>>" as Bitacora
+
+Arranque --> Cont : integridad invalida (T07)
+Arranque --> Login : integridad OK
+
+Login --> Registro : "Registrarse"
+Registro --> Login : cerrar
+Login --> Hub : login correcto
+Hub --> Login : Logout / cerrar
+
+Hub --> Config : Configuracion\n[perm]
+Hub --> Idiomas : Gestion Idiomas\n[perm]
+Hub --> Permisos : Gestion Permisos\n[perm]
+Hub --> Historial : Historial Usuario\n[perm + usuario sel.]
+Hub --> Bitacora : Bitacora\n[perm]
+
+Config --> Hub : cerrar
+Idiomas --> Hub : cerrar
+Permisos --> Hub : cerrar
+Historial --> Hub : cerrar
+Bitacora --> Hub : cerrar
+
+note right of Hub
+  Cada accion valida un IPermiso (T04)
+  antes de abrir la pantalla destino.
+end note
+
+@enduml

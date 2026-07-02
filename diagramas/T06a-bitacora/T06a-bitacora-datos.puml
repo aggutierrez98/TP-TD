@@ -3,21 +3,15 @@ title T06a - Gestion de Bitacora - DER
 
 hide methods
 hide stereotypes
+skinparam backgroundColor white
 skinparam classAttributeIconSize 0
-
-entity "Usuarios" as Usuarios {
-  *Id : int <<PK, IDENTITY, NOT NULL>>
-  --
-  Username : varchar(50) <<UQ, NOT NULL>>
-  PasswordHash : varchar(max) <<NOT NULL>>
-  Activo : bit <<NOT NULL>>
-}
+skinparam shadowing false
 
 entity "Bitacora" as Bitacora {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
   FechaHora : datetime <<NOT NULL>>
-  UsuarioId : int <<FK, NULL>>
+  UsuarioId : int <<FK -> Usuarios.Id, NULL>>
   UsernameSnapshot : varchar(50) <<NULL>>
   Actividad : varchar(100) <<NOT NULL>>
   Informacion : varchar(500) <<NULL>>
@@ -26,6 +20,16 @@ entity "Bitacora" as Bitacora {
   EsTecnica : bit <<NOT NULL>>
 }
 
-Usuarios ||--o{ Bitacora : FK_Bitacora_Usuario
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+}
+
+Usuarios ||--o{ Bitacora
+
+note bottom of Bitacora
+  UsuarioId es NULL-able: la FK se conserva pero se guarda
+  ademas UsernameSnapshot para no perder el autor si el
+  usuario se elimina. Nivel in {Informacion, Advertencia, Error}.
+end note
 
 @enduml

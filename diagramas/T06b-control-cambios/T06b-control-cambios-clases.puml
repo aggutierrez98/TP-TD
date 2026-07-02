@@ -1,99 +1,19 @@
 @startuml
 title T06b - Gestion de Control de Cambios - Clases
 
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
 hide empty members
 
-package "ABSTRACCIONES" {
-  interface IUsuarioSnapshot {
-    +HistorialId : int
-    +UsuarioId : int
-    +FechaHora : DateTime
-    +ActorUsuarioId : int?
-    +ActorUsernameSnapshot : string
-    +Accion : string
-    +Observaciones : string
-    +Username : string
-    +PasswordHash : string
-    +Activo : bool
-    +IdiomaId : int?
-    +PermisosIds : IList<int>
-  }
-
-  interface IServicioHistorialEstados {
-    +GuardarVersionUsuario(snapshot : IUsuarioSnapshot, contextoPersistencia : object = null) : int
-    +ObtenerVersionesUsuario(usuarioId : int) : IList<IUsuarioSnapshot>
-    +ObtenerVersionUsuario(historialId : int) : IUsuarioSnapshot
-  }
-
-  interface IResultadoComparacionEstado {
-    +Campo : string
-    +ValorAnterior : string
-    +ValorNuevo : string
-  }
-}
-
-package "BE" {
-  class Usuario {
-    +Id : int
-    +Username : string
-    +PasswordHash : string
-    +Activo : bool
-  }
-}
-
-package "SERVICIOS" {
-  class Idioma
-
-  class UsuarioPreferencia {
-    +UsuarioId : int
-    +IdiomaId : int
-  }
-
-  class Sesion <<singleton>> {
-    +GetInstance() : Sesion
-    +GetUsuarioActualId() : int?
-    +ActualizarUsuarioActualNombre(username : string) : void
-  }
-
-  class AutorizacionService <<singleton>> {
-    +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
-  }
-
-  class BitacoraService <<singleton>> {
-    +GetInstance() : BitacoraService
-    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-  }
-
-  class HistorialEstadosService <<singleton>> {
-    +GetInstance() : HistorialEstadosService
-    +Configurar(guardadorVersionUsuario, obtenedorVersionesUsuario, obtenedorVersionUsuario) : void
-    +GuardarVersionUsuario(snapshot : UsuarioHistorialSnapshot, contextoPersistencia : object = null) : int
-    +ObtenerVersionesUsuario(usuarioId : int) : IList<UsuarioHistorialSnapshot>
-    +ObtenerVersionUsuario(historialId : int) : UsuarioHistorialSnapshot
-  }
-
-  class UsuarioHistorialSnapshot {
-    +HistorialId : int
-    +UsuarioId : int
-    +FechaHora : DateTime
-    +ActorUsuarioId : int?
-    +ActorUsernameSnapshot : string
-    +Accion : string
-    +Observaciones : string
-    +Username : string
-    +PasswordHash : string
-    +Activo : bool
-    +IdiomaId : int?
-    +PermisosIds : IList<int>
-  }
-
-  class ResultadoComparacionEstado {
-    +Campo : string
-    +ValorAnterior : string
-    +ValorNuevo : string
+package "UI" {
+  class FormHistorialUsuario {
+    +btnRestaurarVersion_Click() : void
+    +dgvHistorialUsuario_SelectionChanged() : void
+    -RefrescarDatos() : void
   }
 }
 
@@ -103,100 +23,106 @@ package "BLL" {
     +ObtenerVersionHistorial(historialId : int) : UsuarioHistorialSnapshot
     +ObtenerDiferenciasConVersionAnterior(historialId : int) : List<ResultadoComparacionEstado>
     +RestaurarVersion(historialId : int) : bool
-    -RefrescarSesionSiCorresponde(usuarioId : int) : void
   }
-
   class UsuarioEstadoBLL {
-    +ConstruirSnapshotActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : UsuarioHistorialSnapshot
-    +GuardarVersionActual(usuarioId : int, accion : string, observaciones : string, accesoDatos : AccesoDatos = null) : int
+    +GuardarVersionActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : int
     +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
     +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
-    +CompararVersiones(versionActual : UsuarioHistorialSnapshot, versionAnterior : UsuarioHistorialSnapshot) : List<ResultadoComparacionEstado>
-    +AplicarSnapshot(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatos) : void
+    +CompararVersiones(actual : UsuarioHistorialSnapshot, anterior : UsuarioHistorialSnapshot) : List<ResultadoComparacionEstado>
+    +AplicarSnapshotInterno(snapshot : UsuarioHistorialSnapshot, unidad : IUnidadDeTrabajo) : void
+    +ConstruirSnapshotActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : UsuarioHistorialSnapshot
   }
-
-  class IdiomaBLL {
-    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
+  interface IIntegridadBLL <<internal>> {
+    +CalcularDVH<T>(entidad : T) : string
+    +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) : void
   }
+  interface IBitacoraBLL <<internal>>
+}
 
-  class PermisoBLL {
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
+package "ABSTRACCIONES" {
+  interface IServicioHistorialEstados {
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<IUsuarioSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : IUsuarioSnapshot
   }
+  interface IUsuarioSnapshot
+  interface IResultadoComparacionEstado
+  interface ISesion
+}
 
-  class BootstrapAplicacionBLL {
-    +Inicializar() : void
+package "SERVICIOS" {
+  class HistorialEstadosService <<singleton>> {
+    +GetInstance() : HistorialEstadosService
+    +Configurar(...) : void
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<UsuarioHistorialSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : UsuarioHistorialSnapshot
   }
-
-  class InicializacionHistorialBLL {
-    +Inicializar() : void
+  class UsuarioHistorialSnapshot {
+    +HistorialId : int
+    +UsuarioId : int
+    +FechaHora : DateTime
+    +Accion : string
+    +Observaciones : string
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+    +IdiomaId : int?
+    +PermisosIds : IList<int>
+  }
+  class ResultadoComparacionEstado {
+    +Campo : string
+    +ValorAnterior : string
+    +ValorNuevo : string
   }
 }
 
-package "DAL" {
-  class UsuarioDAL {
-    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
-    +GuardarEstadoCompleto(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajo {
+    +Usuarios : IUsuarioRepositorio
+    +UsuarioHistorial : IUsuarioHistorialRepositorio
+    +UsuarioPermisos : IUsuarioPermisoRepositorio
+    +UsuarioPreferencias : IUsuarioPreferenciaRepositorio
+    +Save() : void
   }
-
-  class UsuarioPermisoDAL {
-    +ObtenerPermisoIdsPorUsuario(usuarioId : int, accesoDatos : AccesoDatos = null) : List<int>
-    +ReemplazarPermisosUsuario(usuarioId : int, permisosId : List<int>, accesoDatos : AccesoDatos = null) : bool
-  }
-
-  class UsuarioPreferenciaDAL {
-    +ObtenerPorUsuarioId(usuarioId : int, accesoDatos : AccesoDatos = null) : UsuarioPreferencia
-    +Guardar(usuarioId : int, idiomaId : int?, accesoDatos : AccesoDatos = null) : bool
-  }
-
-  class UsuarioHistorialDAL {
-    +GuardarVersion(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatos = null) : int
+  interface IUsuarioHistorialRepositorio {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot) : int
     +ObtenerVersiones(usuarioId : int) : List<UsuarioHistorialSnapshot>
     +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
   }
+  class UsuarioHistorialRepositorio
+}
 
-  class AccesoDatos {
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
+package "DAL" {
+  class UsuarioHistorialDAL {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatosSqlServer = null) : int
+    +ObtenerVersiones(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
   }
 }
 
-package "UI" {
-  class FormTraducibleBase {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-
-  class FormHistorialUsuario {
-    #OnIdiomaActualizado(idioma : Idioma) : void
-  }
-}
-
-IUsuarioSnapshot <|.. UsuarioHistorialSnapshot
-IServicioHistorialEstados <|.. HistorialEstadosService
-IResultadoComparacionEstado <|.. ResultadoComparacionEstado
-
-FormTraducibleBase <|-- FormHistorialUsuario
-UsuarioBLL --> UsuarioEstadoBLL
-UsuarioBLL --> PermisoBLL
-UsuarioBLL --> IdiomaBLL
-UsuarioBLL --> Sesion
-UsuarioBLL --> AutorizacionService
-UsuarioBLL --> BitacoraService
-UsuarioEstadoBLL --> UsuarioDAL
-UsuarioEstadoBLL --> UsuarioPermisoDAL
-UsuarioEstadoBLL --> UsuarioPreferenciaDAL
-UsuarioEstadoBLL --> HistorialEstadosService
-UsuarioEstadoBLL --> Sesion
-InicializacionHistorialBLL --> HistorialEstadosService
-InicializacionHistorialBLL --> UsuarioHistorialDAL
-HistorialEstadosService --> UsuarioHistorialSnapshot
-UsuarioHistorialDAL --> AccesoDatos
 FormHistorialUsuario --> UsuarioBLL
+UsuarioBLL --> UsuarioEstadoBLL
+UsuarioBLL ..> IIntegridadBLL : restaurar recalcula DVH/DVV
+UsuarioBLL ..> IBitacoraBLL
 
-note right of UsuarioHistorialSnapshot
-  Snapshot persistente del estado del usuario.
-  El campo PasswordHash se conserva en historial,
-  pero la UI no lo expone en claro.
+UsuarioEstadoBLL ..|> "IUsuarioEstadoBLL"
+UsuarioEstadoBLL --> IServicioHistorialEstados : lectura de versiones
+UsuarioEstadoBLL ..> IUnidadDeTrabajo : escritura (GuardarVersion / AplicarSnapshot)
+UsuarioEstadoBLL ..> ResultadoComparacionEstado : <<creates>>
+
+HistorialEstadosService ..|> IServicioHistorialEstados
+HistorialEstadosService ..> IUsuarioHistorialRepositorio : delegados (Configurar)
+UsuarioHistorialSnapshot ..|> IUsuarioSnapshot
+ResultadoComparacionEstado ..|> IResultadoComparacionEstado
+
+IUnidadDeTrabajo --> IUsuarioHistorialRepositorio : UsuarioHistorial
+UsuarioHistorialRepositorio ..|> IUsuarioHistorialRepositorio
+UsuarioHistorialRepositorio --> UsuarioHistorialDAL
+
+note bottom of UsuarioEstadoBLL
+  Lectura del historial: HistorialEstadosService (singleton
+  configurado con delegados al repositorio en el arranque).
+  Escritura (guardar version / restaurar): via IUnidadDeTrabajo
+  dentro de la transaccion del caso de uso.
 end note
 
 @enduml

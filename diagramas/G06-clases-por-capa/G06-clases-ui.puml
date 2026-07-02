@@ -1,0 +1,69 @@
+@startuml
+title G06 - Diagrama de clases parcial - Capa UI (TpIDS / WinForms)
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "ABSTRACCIONES" <<Frame>> {
+  interface IObservador
+}
+
+package "UI (TpIDS)" {
+
+  class Program <<static>> {
+    +Main() : void
+  }
+
+  class FormTraducibleBase {
+    +Actualizar(observado : IObservado) : void
+  }
+
+  ' --- Pantallas ---
+  class FormLogin
+  class FormRegistro
+  class FormGestionUsuarios
+  class FormGestionPermisos
+  class FormGestionIdiomas
+  class FormConfiguracionUsuario
+  class FormHistorialUsuario
+  class FormBitacora
+  class FormContingenciaIntegridad
+
+  ' --- Controles / helpers ---
+  class PasswordTextBox
+  class IdiomaFormHelper <<static>>
+  class OpcionTraducible
+  class UiDialogHelper <<static>>
+  class UiExceptionHandler <<static>>
+}
+
+FormTraducibleBase ..|> IObservador
+FormTraducibleBase --|> "System.Windows.Forms.Form"
+
+FormLogin --|> FormTraducibleBase
+FormRegistro --|> FormTraducibleBase
+FormGestionUsuarios --|> FormTraducibleBase
+FormGestionPermisos --|> FormTraducibleBase
+FormGestionIdiomas --|> FormTraducibleBase
+FormConfiguracionUsuario --|> FormTraducibleBase
+FormHistorialUsuario --|> FormTraducibleBase
+FormBitacora --|> FormTraducibleBase
+FormContingenciaIntegridad --|> FormTraducibleBase
+
+FormTraducibleBase ..> IdiomaFormHelper : Aplicar(this, idiomaActual)
+Program ..> FormLogin : <<creates>>
+Program ..> FormContingenciaIntegridad : <<creates>>
+
+note bottom
+  Todas las pantallas heredan de FormTraducibleBase, que implementa
+  IObservador (Observer de idioma) y se re-traduce al cambiar el idioma.
+  La UI consume casos de uso via BLL (CompositionRoot) y conoce SERVICIOS/BE.
+  UI -> ABSTRACCIONES, BLL, BE, SERVICIOS.
+end note
+
+@enduml

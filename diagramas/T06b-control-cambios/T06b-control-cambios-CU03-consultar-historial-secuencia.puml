@@ -1,0 +1,53 @@
+@startuml
+title T06b - CU03 Consultar historial de usuario - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormHistorialUsuario" as Form
+participant "UsuarioBLL" as UBLL
+participant "UsuarioEstadoBLL" as EBLL
+participant "HistorialEstadosService\n(IServicioHistorialEstados)" as Hist
+participant "IUsuarioHistorialRepositorio" as Repo
+participant "UsuarioHistorialDAL" as DAL
+
+== Listar versiones ==
+Admin -> Form : abrir historial / btnRefrescarHistorial_Click()
+activate Form
+Form -> UBLL : ObtenerHistorialEstados(usuarioId)
+activate UBLL
+UBLL -> EBLL : ObtenerHistorial(usuarioId)
+activate EBLL
+EBLL -> Hist : ObtenerVersionesUsuario(usuarioId)
+activate Hist
+Hist -> Repo : ObtenerVersiones(usuarioId)
+Repo -> DAL : ObtenerVersiones(usuarioId)
+DAL --> Repo : List<UsuarioHistorialSnapshot>
+Repo --> Hist : versiones
+Hist --> EBLL : versiones
+deactivate Hist
+EBLL --> UBLL : historial (orden desc por fecha)
+deactivate EBLL
+UBLL --> Form : List<UsuarioHistorialSnapshot>
+deactivate UBLL
+Form --> Admin : grilla de versiones
+deactivate Form
+
+== Ver diferencias de una version ==
+Admin -> Form : selecciona una version (SelectionChanged)
+activate Form
+Form -> UBLL : ObtenerDiferenciasConVersionAnterior(historialId)
+activate UBLL
+UBLL -> EBLL : ObtenerVersion(historialId)
+EBLL --> UBLL : versionActual
+UBLL -> EBLL : ObtenerHistorial(versionActual.UsuarioId)
+EBLL --> UBLL : historial
+UBLL -> EBLL : CompararVersiones(versionActual, versionAnterior)
+EBLL --> UBLL : List<ResultadoComparacionEstado>
+UBLL --> Form : diferencias
+deactivate UBLL
+Form --> Admin : grilla de cambios (campo / anterior / nuevo)
+deactivate Form
+
+@enduml

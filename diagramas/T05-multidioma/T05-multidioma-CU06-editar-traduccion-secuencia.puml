@@ -1,0 +1,43 @@
+@startuml
+title T05 - CU06 Editar traduccion - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "IdiomaBLL" as BLL
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "ITraduccionRepositorio" as TRepo
+participant "IBitacoraBLL" as Bita
+participant "IdiomaService\n(IObservado)" as Obs
+
+Admin -> Form : selecciona key, edita valor + btnGuardarTraduccion_Click()
+activate Form
+Form -> BLL : GuardarTraduccion(idioma.Id, key, valor)
+activate BLL
+BLL -> UoWF : Crear()
+UoWF --> BLL : unidad
+activate UoW
+BLL -> UoW : Traducciones.ObtenerPalabraIdPorKey(key.Trim())
+UoW -> TRepo : ObtenerPalabraIdPorKey(key)
+TRepo --> BLL : palabraId
+alt palabraId == 0
+  BLL --> Form : throw ExcepcionNegocio("Error.Language.KeyNotFound")
+else key existente y valor no vacio
+  BLL -> UoW : Traducciones.GuardarTraduccion(idiomaId, palabraId, valor.Trim())
+  BLL -> Bita : RegistrarOperacionInterno("...TranslationUpdate", "...", "IdiomaBLL", unidad)
+  BLL -> UoW : Save()
+end
+deactivate UoW
+deactivate BLL
+Form -> Form : RecargarIdiomaSeleccionado + RefrescarIdiomaRuntimeSiCorresponde
+opt idioma editado == idioma actual
+  Form -> Obs : CambiarIdioma(idiomaRecargado)
+  Obs -> Form : Actualizar(this)  // Observer: refleja el nuevo texto
+end
+Form --> Admin : Info "TranslationSaved"
+deactivate Form
+
+@enduml

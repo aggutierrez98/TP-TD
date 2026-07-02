@@ -1,3 +1,4 @@
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -59,6 +60,12 @@ namespace SERVICIOS
             return CalcularHash(canonica.ToString());
         }
 
+        /// <summary>
+        /// Metodo para calcular el DVV en base a los DVH de una entidad.
+        /// Usado solo para el primer calculo del DVV.
+        /// </summary>
+        /// <returns>El DVV calculado</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public string CalcularDVV(IEnumerable<string> listaDVH)
         {
             if (listaDVH == null)
@@ -66,11 +73,6 @@ namespace SERVICIOS
                 throw new ArgumentNullException(nameof(listaDVH));
             }
 
-            // El DVV se define como suma modular de contribuciones de DVH.
-            // Antes era un hash de la concatenacion completa, lo que obligaba a
-            // leer toda la tabla en cada escritura. Con esta forma, la
-            // recomputacion completa y la actualizacion incremental producen el
-            // mismo valor.
             byte[] acumulador = CrearAcumuladorVacio();
             foreach (string dvh in listaDVH)
             {
@@ -80,17 +82,16 @@ namespace SERVICIOS
             return Convert.ToBase64String(acumulador);
         }
 
+        /// <summary>
+        /// Metodo para calcular el DVV en base a el ultimo DVV de una entidad y un DVH correspondiente a cambios sobre una entidad.
+        /// Usado cuando un DVV ya fue calculado y se quiere actualizar con un nuevo DVH.
+        /// </summary>
+        /// <returns>El DVV calculado</returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public string CalcularDVVIncremental(string dvvActual, string dvhAnterior, string dvhNuevo)
         {
             byte[] acumulador = ObtenerAcumulador(dvvActual);
 
-            // Paso incremental:
-            // 1. Partir del DVV persistido.
-            // 2. Sacar la contribucion del DVH viejo, si existia.
-            // 3. Agregar la contribucion del DVH nuevo, si existe.
-            // Alta: anterior null, nuevo con valor.
-            // Baja: anterior con valor, nuevo null.
-            // Modificacion: ambos con valor.
             Restar(acumulador, ObtenerContribucionDVH(dvhAnterior));
             Sumar(acumulador, ObtenerContribucionDVH(dvhNuevo));
 

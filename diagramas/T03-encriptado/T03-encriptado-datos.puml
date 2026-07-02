@@ -3,14 +3,34 @@ title T03 - Gestion de Encriptado - DER
 
 hide methods
 hide stereotypes
+skinparam backgroundColor white
 skinparam classAttributeIconSize 0
+skinparam shadowing false
 
 entity "Usuarios" as Usuarios {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
   Username : varchar(50) <<UQ, NOT NULL>>
-  PasswordHash : varchar(max) <<NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>  ' Base64(salt + PBKDF2)
   Activo : bit <<NOT NULL>>
+  DVH : varchar(100) <<NULL>>
 }
+
+entity "UsuarioHistorial" as Hist {
+  *HistorialId : int <<PK, IDENTITY, NOT NULL>>
+  --
+  UsuarioId : int <<FK -> Usuarios.Id, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>  ' snapshot igualmente hasheado
+  ..otras columnas de estado..
+}
+
+Usuarios ||--o{ Hist
+
+note bottom of Usuarios
+  Dato sensible: PasswordHash guarda el hash salteado
+  PBKDF2 (nunca la contrasena en claro).
+  El mismo criterio aplica a los snapshots de
+  UsuarioHistorial.PasswordHash (T06b).
+end note
 
 @enduml

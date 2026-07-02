@@ -52,6 +52,13 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
 - El escenario principal describe solo el flujo de exito; errores y variantes van en flujos
   alternativos. Las reglas de negocio se integran en precondiciones, pasos de validacion o
   flujos alternativos (no hay campo propio).
+- **Actor Secundario = entidad externa, nunca clases internas.** Un actor (RUP/UML) es un rol
+  externo al limite del sistema. El actor secundario interviene de forma reactiva (otro
+  sistema/servicio, hardware o persona de soporte). Las clases/componentes internos (BLL,
+  REPOSITORIO, DAL, SERVICIOS, Forms, `AccesoDatosSqlServer`, singletons como `Sesion`) **no**
+  son actores: su colaboracion se muestra en el diagrama de secuencia, no en este campo. En
+  este proyecto de escritorio con SQL Server local la mayoria de los CU llevan `actor_secundario: "-"`.
+  Detalle en [references/use-case-spec-format.md](references/use-case-spec-format.md).
 - Los casos de uso deben mantenerse balanceados contra el codigo real y contra los diagramas
   de la skill [tp-uml-y-casos-de-uso](../tp-uml-y-casos-de-uso/SKILL.md); si el comportamiento
   cambia, actualizar el JSON y regenerar.

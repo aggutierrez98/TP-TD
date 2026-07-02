@@ -1,0 +1,56 @@
+@startuml
+title T04 - CU02 Asignar perfil(es) a usuario - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionUsuarios" as Form
+participant "PermisoBLL" as PBLL
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioRepositorio" as URepo
+participant "IUsuarioPermisoRepositorio" as UPRepo
+participant "IUsuarioEstadoBLL" as EstadoBLL
+participant "IBitacoraBLL" as Bita
+participant "IAutorizacion" as Autz
+
+== Cargar permisos del usuario seleccionado ==
+Admin -> Form : selecciona usuario en la grilla
+activate Form
+Form -> PBLL : ObtenerCatalogo()
+PBLL --> Form : catalogo
+Form -> PBLL : ObtenerPermisoIdsDeUsuario(idSeleccionado)
+PBLL -> UPRepo : ObtenerPermisoIdsPorUsuario(usuarioId)
+UPRepo --> PBLL : permisoIds
+PBLL --> Form : permisoIds asignados
+Form --> Admin : arbol con checkboxes marcados
+
+== Guardar asignacion ==
+Admin -> Form : marca/desmarca y btnGuardarPermisosUsuario_Click()
+Form -> PBLL : GuardarPermisosUsuario(idSeleccionado, permisosSeleccionados)
+activate PBLL
+PBLL -> UoWF : Crear()
+UoWF --> PBLL : unidad
+activate UoW
+PBLL -> UoW : Usuarios.ObtenerPorId(usuarioId)
+UoW -> URepo : ObtenerPorId(usuarioId)
+URepo --> PBLL : usuario
+alt usuario == null
+  PBLL --> Form : throw ExcepcionNegocio("Error.Permission.UserNotFound")
+else usuario existe
+  PBLL -> UoW : UsuarioPermisos.ReemplazarPermisosUsuario(usuarioId, permisosId.Distinct())
+  PBLL -> EstadoBLL : GuardarVersionActualInterno(usuarioId, "...PermissionsUpdate", "...", unidad)
+  PBLL -> Bita : RegistrarOperacionInterno("...UserPermissionsUpdate", "...", "PermisoBLL", unidad)
+  PBLL -> UoW : Save()
+end
+deactivate UoW
+alt usuarioId == sesion actual
+  PBLL -> PBLL : ObtenerPermisosDirectosUsuario(usuarioId)
+  PBLL -> Autz : ActualizarPermisosUsuarioActual(permisos)
+end
+deactivate PBLL
+Form --> Admin : Info "UserPermissionsSaved"
+deactivate Form
+
+@enduml

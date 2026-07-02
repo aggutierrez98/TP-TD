@@ -1,0 +1,76 @@
+@startuml
+title T01 - Arquitectura Base - Diagrama de Componentes
+
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam component {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam artifact {
+  BackgroundColor white
+  BorderColor black
+}
+
+' ==== Capas (assemblies .NET) ====
+component "UI (TpIDS)\n<<WinForms>>" as UI
+component "BLL\n<<Reglas de negocio>>" as BLL
+component "REPOSITORIO\n<<Persistencia / Unit of Work>>" as REPO
+component "DAL\n<<Acceso a datos SQL>>" as DAL
+component "BE\n<<Entidades de negocio>>" as BE
+component "SERVICIOS\n<<Servicios concretos reusables>>" as SERV
+component "ABSTRACCIONES\n<<Contratos / interfaces>>" as ABS
+
+' Composicion / inyeccion
+artifact "CompositionRoot\n(en BLL)" as CR
+' Recursos externos
+artifact "App.config\n(connection strings)" as CFG
+database "SQL Server\nTpCatedraIDS" as DB
+
+' ==== Dependencias de compilacion (matriz obligatoria) ====
+UI --> BLL
+UI --> BE
+UI --> SERV
+UI ..> ABS
+
+BLL --> REPO
+BLL --> BE
+BLL --> SERV
+BLL ..> ABS
+
+REPO --> DAL
+REPO --> BE
+REPO --> SERV
+REPO ..> ABS
+
+DAL --> BE
+DAL --> SERV
+DAL ..> ABS
+
+BE ..> ABS
+SERV ..> ABS
+
+' ==== Composicion e infraestructura ====
+UI ..> CR : Inicializar()
+CR ..> BLL : construye e inyecta BLLs\ny repositorios (DIP)
+DAL --> DB : ADO.NET / transacciones
+UI ..> CFG : lee cadenas
+DAL ..> CFG : ConfigurationManager
+
+note bottom of ABS
+  ABSTRACCIONES no depende de nada.
+  Todas las capas la referencian para
+  consumir servicios por interfaz (DIP).
+end note
+
+note right of CR
+  Unico punto de wiring:
+  nada de "new XxxBLL()" fuera del root.
+end note
+
+@enduml
