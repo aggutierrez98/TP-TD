@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Suite Verification"
+  short_description: "Run the test suite before handoff"
+  default_prompt: "Use $test-suite-verification to run tests/tools/run-tests.ps1 -IncludeIntegration before handoff, report explicit TRX-backed results, and follow the UI-suite confirmation and -UiFilter protocols."

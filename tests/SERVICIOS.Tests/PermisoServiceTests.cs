@@ -80,6 +80,51 @@ namespace SERVICIOS.Tests
         }
 
         [TestMethod]
+        public void ValidarSinCiclos_CyclicGraphWithUnsavedNodes_ThrowsExcepcionNegocio()
+        {
+            IPermiso first = Grupo(0, "first");
+            IPermiso second = Grupo(0, "second");
+            first.Agregar(second);
+            second.Agregar(first);
+
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => _service.ValidarSinCiclos(new[] { first }));
+        }
+
+        [TestMethod]
+        public void ValidarSinCiclos_SharedFamilyInTwoBranches_DoesNotThrow()
+        {
+            IPermiso shared = Grupo(10, "shared");
+            shared.Agregar(Simple(11, "usuarios.ver"));
+            IPermiso root = Grupo(1, "root");
+            IPermiso branch = Grupo(2, "branch");
+            root.Agregar(shared);
+            root.Agregar(branch);
+            branch.Agregar(shared);
+
+            _service.ValidarSinCiclos(new[] { root });
+        }
+
+        [TestMethod]
+        public void GeneraCiclo_ParentReachableFromCandidateChild_ReturnsTrue()
+        {
+            IPermiso first = Grupo(0, "first");
+            IPermiso second = Grupo(0, "second");
+            second.Agregar(first);
+
+            Assert.IsTrue(_service.GeneraCiclo(first, second));
+        }
+
+        [TestMethod]
+        public void GeneraCiclo_UnrelatedFamilies_ReturnsFalse()
+        {
+            IPermiso first = Grupo(1, "first");
+            IPermiso second = Grupo(2, "second");
+            second.Agregar(Simple(3, "usuarios.ver"));
+
+            Assert.IsFalse(_service.GeneraCiclo(first, second));
+        }
+
+        [TestMethod]
         [DataRow(null)]
         [DataRow("")]
         [DataRow("   ")]

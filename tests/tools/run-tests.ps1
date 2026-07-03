@@ -2,6 +2,12 @@
 param(
     [string]$Configuration = "Debug",
     [switch]$IncludeIntegration,
+    [switch]$IncludeUi,
+    # Prefijos de casos a correr en la suite UI (ej: T04 o T04,T05 o N01).
+    # Filtra por nombre de test, asi que sirve para cualquier convencion
+    # futura mientras las clases/metodos arranquen con ese prefijo.
+    # Implica -IncludeUi. Los unit tests siempre corren completos (tardan ~1s).
+    [string[]]$UiFilter,
     [string]$SqlServer = ".\SQLEXPRESS",
     [string]$DatabaseName = "TpCatedraIDS_Test"
 )
@@ -9,6 +15,10 @@ param(
 $ErrorActionPreference = "Stop"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $ResultsRoot = Join-Path $RepoRoot "TestResults"
+
+if ($UiFilter) {
+    $IncludeUi = $true
+}
 
 function Resolve-FirstExistingPath {
     param([string[]]$Candidates)
@@ -103,7 +113,9 @@ try {
     $msbuild = Resolve-MSBuild
     $vstest = Resolve-VSTest
 
-    & $msbuild TpIDS.sln /restore /t:Build /p:Configuration=$Configuration /m
+    # TpIDS.sln queda solo con proyectos productivos (sin NuGet) para que compile
+    # offline en otras maquinas; los tests viven en tests\TpIDS.Tests.sln.
+    & $msbuild "tests\TpIDS.Tests.sln" /restore /t:Build /p:Configuration=$Configuration /m
     if ($LASTEXITCODE -ne 0) {
         throw "MSBuild finalizo con codigo $LASTEXITCODE."
     }
@@ -121,9 +133,11 @@ try {
     $unitExitCode = $LASTEXITCODE
     Assert-TestRunSucceeded -TrxPath $unitTrx -ExitCode $unitExitCode -Name "Unit tests"
 
-    if ($IncludeIntegration) {
+    if ($IncludeIntegration -or $IncludeUi) {
         & (Join-Path $PSScriptRoot "prepare-test-database.ps1") -SqlServer $SqlServer -DatabaseName $DatabaseName -RepoRoot $RepoRoot
+    }
 
+    if ($IncludeIntegration) {
         $integrationTrx = Join-Path $ResultsRoot "integration-tests.trx"
         if (Test-Path -LiteralPath $integrationTrx) {
             Remove-Item -LiteralPath $integrationTrx -Force
@@ -137,6 +151,42 @@ try {
             /Logger:"trx;LogFileName=integration-tests.trx"
         $integrationExitCode = $LASTEXITCODE
         Assert-TestRunSucceeded -TrxPath $integrationTrx -ExitCode $integrationExitCode -Name "Integration tests"
+    }
+
+    if ($IncludeUi) {
+        # Los tests UI lanzan TpIDS.exe con FlaUI: requieren sesion de escritorio
+        # interactiva desbloqueada y SQL Server local con la BD de test preparada.
+        $uiTrx = Join-Path $ResultsRoot "ui-tests.trx"
+        if (Test-Path -LiteralPath $uiTrx) {
+            Remove-Item -LiteralPath $uiTrx -Force
+        }
+
+        $env:TPIDS_UITEST_SQLSERVER = $SqlServer
+        $env:TPIDS_UITEST_DATABASE = $DatabaseName
+        $env:TPIDS_UITEST_CONFIGURATION = $Configuration
+
+        $uiTestCaseFilter = "TestCategory=UI"
+        if ($UiFilter) {
+            # Cada valor matchea contra el FullyQualifiedName; el "." previo
+            # ancla al inicio de la clase (TpIDS.UiTests.T04_...) para no
+            # enganchar coincidencias en el medio de un nombre.
+            $clauses = ($UiFilter |
+                ForEach-Object { $_.Split(',') } |
+                ForEach-Object { $_.Trim() } |
+                Where-Object { $_ } |
+                ForEach-Object { "FullyQualifiedName~.$_" }) -join "|"
+            $uiTestCaseFilter = "TestCategory=UI&($clauses)"
+            Write-Host "Filtro UI activo: $uiTestCaseFilter"
+        }
+
+        & $vstest `
+            "tests\TpIDS.UiTests\bin\$Configuration\net472\TpIDS.UiTests.dll" `
+            /TestCaseFilter:$uiTestCaseFilter `
+            /InIsolation `
+            /ResultsDirectory:$ResultsRoot `
+            /Logger:"trx;LogFileName=ui-tests.trx"
+        $uiExitCode = $LASTEXITCODE
+        Assert-TestRunSucceeded -TrxPath $uiTrx -ExitCode $uiExitCode -Name "UI tests"
     }
 }
 finally {
