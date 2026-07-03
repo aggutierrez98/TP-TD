@@ -144,8 +144,25 @@ namespace SERVICIOS
         {
             foreach (IPermiso raiz in raices)
             {
-                ValidarSinCiclos(raiz, new HashSet<int>());
+                ValidarSinCiclos(raiz, new List<IPermiso>());
             }
+        }
+
+        /// <summary>
+        /// Metodo para determinar si agregar un hijo a un padre generaria un ciclo.
+        /// Existe ciclo cuando el padre es alcanzable desde el hijo candidato.
+        /// </summary>
+        /// <param name="padre">El permiso que recibiria al nuevo hijo.</param>
+        /// <param name="hijo">El permiso candidato a agregar como hijo.</param>
+        /// <returns>True si la relacion padre-hijo generaria un ciclo.</returns>
+        public bool GeneraCiclo(IPermiso padre, IPermiso hijo)
+        {
+            if (padre == null || hijo == null)
+            {
+                return false;
+            }
+
+            return EsAlcanzable(hijo, padre, new List<IPermiso>());
         }
 
         /// <summary>
@@ -182,28 +199,49 @@ namespace SERVICIOS
             return relaciones;
         }
 
-        private void ValidarSinCiclos(IPermiso nodo, ISet<int> visitados)
+        // La rama se compara por referencia ademas de por Id para detectar ciclos
+        // entre nodos todavia no persistidos (Id = 0).
+        private void ValidarSinCiclos(IPermiso nodo, IList<IPermiso> ramaActual)
         {
             if (nodo == null)
             {
                 return;
             }
 
-            if (nodo.Id > 0 && visitados.Contains(nodo.Id))
+            if (ramaActual.Any(item => EsMismoPermiso(item, nodo)))
             {
                 throw new ExcepcionNegocio("Error.Permission.CycleDetected");
             }
 
-            HashSet<int> ramaActual = new HashSet<int>(visitados);
-            if (nodo.Id > 0)
-            {
-                ramaActual.Add(nodo.Id);
-            }
-
+            ramaActual.Add(nodo);
             foreach (IPermiso hijo in nodo.Hijos)
             {
                 ValidarSinCiclos(hijo, ramaActual);
             }
+
+            ramaActual.RemoveAt(ramaActual.Count - 1);
+        }
+
+        private bool EsAlcanzable(IPermiso desde, IPermiso objetivo, ICollection<IPermiso> visitados)
+        {
+            if (desde == null || visitados.Any(item => ReferenceEquals(item, desde)))
+            {
+                return false;
+            }
+
+            if (EsMismoPermiso(desde, objetivo))
+            {
+                return true;
+            }
+
+            visitados.Add(desde);
+            return desde.Hijos.Any(hijo => EsAlcanzable(hijo, objetivo, visitados));
+        }
+
+        private static bool EsMismoPermiso(IPermiso primero, IPermiso segundo)
+        {
+            return ReferenceEquals(primero, segundo)
+                || (primero.Id > 0 && primero.Id == segundo.Id);
         }
 
         private void Aplanar(IPermiso nodo, ICollection<IPermiso> resultado)

@@ -116,6 +116,21 @@ namespace TpIDS
             lstbPatentesDisponibles.EndUpdate();
         }
 
+        // Lee la seleccion por indice contra Items en vez de SelectedItem: tras
+        // reconstruir la lista (Clear + Add en RefrescarListas) WinForms deja una
+        // SelectedObjectCollection cacheada e inconsistente, y SelectedItem lanza
+        // IndexOutOfRangeException. SelectedIndex + Items evita ese camino.
+        private static IPermiso ObtenerSeleccion(ListBox lista)
+        {
+            int indice = lista.SelectedIndex;
+            if (indice < 0 || indice >= lista.Items.Count)
+            {
+                return null;
+            }
+
+            return lista.Items[indice] as IPermiso;
+        }
+
         private void RefrescarPreview()
         {
             tvwPreviewFamilia.Nodes.Clear();
@@ -241,10 +256,18 @@ namespace TpIDS
                 return;
             }
 
-            IPermiso familia = lstbFamiliasDisponibles.SelectedItem as IPermiso;
+            IPermiso familia = ObtenerSeleccion(lstbFamiliasDisponibles);
             if (familia == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyFromList");
+                return;
+            }
+
+            // CU01 6a: un ciclo en memoria rompe los recorridos recursivos del arbol,
+            // asi que se rechaza aca y no recien al guardar.
+            if (permisoService.GeneraCiclo(familiaActiva, familia))
+            {
+                UiDialogHelper.MostrarWarning("Error.Permission.CycleDetected");
                 return;
             }
 
@@ -260,7 +283,7 @@ namespace TpIDS
                 return;
             }
 
-            IPermiso patente = lstbPatentesDisponibles.SelectedItem as IPermiso;
+            IPermiso patente = ObtenerSeleccion(lstbPatentesDisponibles);
             if (patente == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPatentFromList");
