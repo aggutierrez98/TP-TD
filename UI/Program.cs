@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
 using BLL;
+using SERVICIOS;
 
 namespace TpIDS
 {
@@ -18,6 +19,28 @@ namespace TpIDS
             BootstrapAplicacionBLL.Inicializar();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+
+            try
+            {
+                // Se carga el idioma antes de validar para que la contingencia se muestre traducida.
+                new IdiomaBLL().InicializarAplicacion();
+
+                // T07: verificacion de integridad obligatoria antes de habilitar el login.
+                new IntegridadBLL().ValidarIntegridadGlobal();
+            }
+            catch (ExcepcionIntegridad ex)
+            {
+                ManejadorExcepcionesBLL.RegistrarExcepcionTecnica(ex, "Verificacion de integridad", "Program");
+                Application.Run(new FormContingenciaIntegridad(ex));
+                return;
+            }
+            catch (Exception ex)
+            {
+                ManejadorExcepcionesBLL.RegistrarExcepcionTecnica(ex, "Arranque de la aplicacion", "Program");
+                UiDialogHelper.MostrarError("Error.Technical.Unexpected");
+                return;
+            }
+
             Application.Run(new FormLogin());
         }
 
