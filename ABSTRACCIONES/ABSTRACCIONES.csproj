@@ -41,6 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DigitoVerificadorAttribute.cs" />
+    <Compile Include="IIntegrable.cs" />
     <Compile Include="IEventoBitacora.cs" />
     <Compile Include="IFiltroBitacora.cs" />
     <Compile Include="IIdioma.cs" />

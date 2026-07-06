@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BE;
 using BLL;
 using SERVICIOS;
@@ -267,10 +268,10 @@ namespace TpIDS
 
             try
             {
-                List<object> catalogo = permisoBLL.ObtenerCatalogo();
+                List<IPermiso> catalogo = permisoBLL.ObtenerCatalogo();
                 HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
 
-                foreach (object raiz in catalogo)
+                foreach (IPermiso raiz in catalogo)
                 {
                     tvwPermisosUsuario.Nodes.Add(CrearNodoPermiso(raiz, permisosAsignados));
                 }
@@ -283,17 +284,15 @@ namespace TpIDS
             }
         }
 
-        private TreeNode CrearNodoPermiso(object permiso, ISet<int> permisosAsignados)
+        private TreeNode CrearNodoPermiso(IPermiso permiso, ISet<int> permisosAsignados)
         {
-            dynamic permisoActual = permiso;
-
-            TreeNode nodo = new TreeNode((string)permisoActual.Nombre)
+            TreeNode nodo = new TreeNode(permiso.Nombre)
             {
                 Tag = permiso,
-                Checked = permisosAsignados.Contains((int)permisoActual.Id)
+                Checked = permisosAsignados.Contains(permiso.Id)
             };
 
-            foreach (object hijo in permisoActual.Hijos)
+            foreach (IPermiso hijo in permiso.Hijos)
             {
                 nodo.Nodes.Add(CrearNodoPermiso(hijo, permisosAsignados));
             }
@@ -334,10 +333,10 @@ namespace TpIDS
             List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
-                object permiso = nodo.Tag;
+                IPermiso permiso = nodo.Tag as IPermiso;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add((int)((dynamic)permiso).Id);
+                    ids.Add(permiso.Id);
                 }
 
                 ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));

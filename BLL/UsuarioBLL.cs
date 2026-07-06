@@ -9,11 +9,14 @@ namespace BLL
 {
     public class UsuarioBLL
     {
+        private const string TablaUsuarios = "Usuarios";
+
         private readonly UsuarioDAL _usuarioDAL;
         private readonly PasswordHasher _passwordHasher;
         private readonly IdiomaBLL _idiomaBLL;
         private readonly PermisoBLL _permisoBLL;
         private readonly UsuarioEstadoBLL _usuarioEstadoBLL;
+        private readonly IntegridadBLL _integridadBLL;
 
         public UsuarioBLL()
         {
@@ -23,6 +26,7 @@ namespace BLL
             _idiomaBLL = new IdiomaBLL();
             _permisoBLL = new PermisoBLL();
             _usuarioEstadoBLL = new UsuarioEstadoBLL();
+            _integridadBLL = new IntegridadBLL();
         }
 
         public Usuario Login(string username, string passwordRaw)
@@ -97,10 +101,18 @@ namespace BLL
                         Activo = true
                     };
 
+                    // El Id participa del DVH, por lo que la firma recien puede
+                    // calcularse despues del INSERT, cuando el Id real ya existe.
                     nuevoUsuario.Id = _usuarioDAL.InsertarYObtenerId(nuevoUsuario, accesoDatos);
+                    nuevoUsuario.DVH = _integridadBLL.CalcularDVH(nuevoUsuario);
+                    _usuarioDAL.ActualizarDVH(nuevoUsuario.Id, nuevoUsuario.DVH, accesoDatos);
                     _permisoBLL.AsignarPerfilBasico(nuevoUsuario.Id, accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(nuevoUsuario.Id, "FormUserHistory.Value.Action.Creation", "FormUserHistory.Value.Obs.InitialCreation", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserCreation", "FormAuditLog.Value.Info.UserCreation", "UsuarioBLL", accesoDatos);
+
+                    // Alta: no hay DVH anterior. Se suma el DVH del usuario
+                    // nuevo al DVV persistido sin escanear Usuarios.
+                    _integridadBLL.ActualizarDVV(TablaUsuarios, null, nuevoUsuario.DVH, accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -158,6 +170,10 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.User.UsernameExists");
                     }
 
+                    // Guardar el DVH antes de modificar la entidad es obligatorio:
+                    // el DVV incremental necesita restar la firma vieja y sumar
+                    // la firma nueva calculada mas abajo.
+                    string dvhAnterior = usuario.DVH;
                     bool usuarioEstabaActivo = usuario.Activo;
                     string usernameAnterior = usuario.Username;
                     bool actualizaPassword = !string.IsNullOrWhiteSpace(passwordNormalizada);
@@ -167,6 +183,7 @@ namespace BLL
                         usuario.PasswordHash = _passwordHasher.HashPassword(passwordNormalizada);
                     }
                     usuario.Activo = activo;
+                    usuario.DVH = _integridadBLL.CalcularDVH(usuario);
                     bool actualizado = _usuarioDAL.Actualizar(usuario, accesoDatos);
                     if (!actualizado)
                     {
@@ -203,6 +220,10 @@ namespace BLL
 
                     _usuarioEstadoBLL.GuardarVersionActual(id, accionHistorial, observacionesHistorial, accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion(actividadBitacora, informacionBitacora, "UsuarioBLL", accesoDatos);
+
+                    // Modificacion: reemplaza la contribucion anterior por la
+                    // nueva dentro de la misma transaccion de usuario/historial.
+                    _integridadBLL.ActualizarDVV(TablaUsuarios, dvhAnterior, usuario.DVH, accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -246,6 +267,9 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
 
+                    // Baja fisica: capturar la firma antes del DELETE permite
+                    // restarla del DVV luego de eliminar la fila.
+                    string dvhAnterior = usuario.DVH;
                     bool eliminado = _usuarioDAL.EliminarFisicamente(id, accesoDatos);
                     if (!eliminado)
                     {
@@ -253,6 +277,10 @@ namespace BLL
                     }
 
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserHardDelete", "FormAuditLog.Value.Info.UserHardDelete", "UsuarioBLL", accesoDatos);
+
+                    // Baja: el DVH nuevo es null porque la fila ya no participa
+                    // del conjunto controlado por DVV.
+                    _integridadBLL.ActualizarDVV(TablaUsuarios, dvhAnterior, null, accesoDatos);
                     accesoDatos.CommitTransactionScope();
                     return true;
                 }
@@ -322,9 +350,20 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.User.HistoryUserNotFound");
                     }
 
+                    // Restauracion: el snapshot reescribe datos de usuario. Por
+                    // eso se conserva la firma previa y luego se calcula la firma
+                    // del estado restaurado.
+                    string dvhAnterior = usuario.DVH;
                     _usuarioEstadoBLL.AplicarSnapshot(snapshot, accesoDatos);
+                    Usuario usuarioRestaurado = _usuarioDAL.ObtenerPorId(snapshot.UsuarioId, accesoDatos);
+                    string dvhNuevo = _integridadBLL.CalcularDVH(usuarioRestaurado);
+                    _usuarioDAL.ActualizarDVH(snapshot.UsuarioId, dvhNuevo, accesoDatos);
                     _usuarioEstadoBLL.GuardarVersionActual(snapshot.UsuarioId, "FormUserHistory.Value.Action.Restoration", "FormUserHistory.Value.Obs.Restoration", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserRestoration", "FormAuditLog.Value.Info.UserRestoration", "UsuarioBLL", accesoDatos);
+
+                    // Restauracion: se reemplaza la contribucion del estado
+                    // anterior por la del estado restaurado.
+                    _integridadBLL.ActualizarDVV(TablaUsuarios, dvhAnterior, dvhNuevo, accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)

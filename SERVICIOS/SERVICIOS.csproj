@@ -45,6 +45,7 @@
     <Compile Include="AutorizacionService.cs" />
     <Compile Include="BitacoraService.cs" />
     <Compile Include="EventoBitacora.cs" />
+    <Compile Include="ExcepcionIntegridad.cs" />
     <Compile Include="ExcepcionNegocio.cs" />
     <Compile Include="ExcepcionTecnica.cs" />
     <Compile Include="FiltroBitacora.cs" />
@@ -52,6 +53,7 @@
     <Compile Include="Idioma.cs" />
     <Compile Include="IdiomaCatalogoService.cs" />
     <Compile Include="IdiomaService.cs" />
+    <Compile Include="IntegridadService.cs" />
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
     <Compile Include="PermisoGrupo.cs" />

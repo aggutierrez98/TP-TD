@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <IsTestProject>true</IsTestProject>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MSTest.TestFramework" Version="4.2.3" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.2.3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageReference Include="FlaUI.Core" Version="4.0.0" />
+    <PackageReference Include="FlaUI.UIA3" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Solo SERVICIOS (PasswordHasher para sembrar credenciales conocidas en la BD de test).
+         La app bajo test se lanza como proceso: no se referencia UI ni BLL. -->
+    <ProjectReference Include="..\..\SERVICIOS\SERVICIOS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Data" />
+  </ItemGroup>
+</Project>

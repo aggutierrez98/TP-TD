@@ -13,9 +13,9 @@ $allowedDependencies = [ordered]@{
     "ABSTRACCIONES" = @()
     "BE" = @("ABSTRACCIONES")
     "SERVICIOS" = @("ABSTRACCIONES")
-    "DAL" = @("BE", "SERVICIOS")
-    "BLL" = @("BE", "DAL", "SERVICIOS")
-    "UI" = @("BE", "BLL", "SERVICIOS")
+    "DAL" = @("ABSTRACCIONES", "BE", "SERVICIOS")
+    "BLL" = @("ABSTRACCIONES", "BE", "DAL", "SERVICIOS")
+    "UI" = @("ABSTRACCIONES", "BE", "BLL", "SERVICIOS")
 }
 
 function Get-ProjectFilePath {

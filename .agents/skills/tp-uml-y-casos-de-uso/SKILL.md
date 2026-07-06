@@ -45,11 +45,12 @@ las subskills aportan el *como* (sintaxis PlantUML, toolchain, formato de la esp
 
 ## Modelo del catalogo
 
-Cada requisito tiene cero o mas **casos de uso**; cada CU exige **1 especificacion + 1 diagrama
-de secuencia**. Ademas cada modulo tiene **diagramas generales** (segun el requisito: clases,
-DER, secuencia general, componentes, mapa de navegacion). El catalogo completo, con la lista
-exacta de CU y artefactos por requisito, esta en
-[references/catalogo-requisitos.md](references/catalogo-requisitos.md).
+Cada requisito tiene cero o mas **casos de uso**. La **especificacion** de todos los CU de un
+requisito vive en **un unico JSON por requisito** (`<requisito>-casos-de-uso.json`); cada CU
+exige ademas **1 diagrama de secuencia** propio (`-CUNN-<cu-slug>-secuencia.puml`). Ademas cada
+modulo tiene **diagramas generales** (segun el requisito: clases, DER, secuencia general,
+componentes, mapa de navegacion). El catalogo completo, con la lista exacta de CU y artefactos
+por requisito, esta en [references/catalogo-requisitos.md](references/catalogo-requisitos.md).
 
 Familias de requisitos:
 
@@ -68,9 +69,13 @@ Familias de requisitos:
   - Diagramas generales: `<requisito>-clases.puml`, `<requisito>-datos.puml` (DER),
     `<requisito>-secuencia.puml` (secuencia general), `<requisito>-componentes.puml`,
     `<requisito>-navegacion.puml`.
-  - Por caso de uso: `<requisito>-CUNN-<cu-slug>-secuencia.puml` para la secuencia y
-    `<requisito>-CUNN-<cu-slug>-caso-de-uso.json` (+ `.docx`/`.md` generados) para la
-    especificacion. **Un archivo por CU.**
+  - Especificaciones: **un JSON por requisito** `<requisito>-casos-de-uso.json` (con todos sus
+    CU en la lista `casos_de_uso`; + `.docx`/`.md` generados). No un archivo por CU.
+  - Diagramas de secuencia: **uno por CU** `<requisito>-CUNN-<cu-slug>-secuencia.puml`.
+  - Documento consolidado de todas las especificaciones (un solo `.docx`, separadas por titulo de
+    requisito, con CU renumerados de forma global): `diagramas/TP-especificaciones-casos-de-uso.docx`
+    (+ `.md`), generado con la subskill `tp-use-case-spec`. La numeracion local (por requisito) es
+    la que coincide con los `.puml` de secuencia; la global solo aplica al consolidado.
 
 ## Reglas de los diagramas de secuencia por CU
 
@@ -92,12 +97,16 @@ diagramar/especificar.
    exige (generales + CU).
 2. Revisar el codigo real para que diagramas y especificaciones reflejen el comportamiento
    vigente (no inventar pasos ni metodos).
-3. Para cada CU: escribir/actualizar el JSON y generar la especificacion con la subskill
-   `tp-use-case-spec`, y crear/actualizar su diagrama de secuencia con la subskill PlantUML.
+3. Escribir/actualizar el **unico JSON del requisito** (`<requisito>-casos-de-uso.json`, con todos
+   sus CU) y generar la especificacion con la subskill `tp-use-case-spec`; crear/actualizar el
+   diagrama de secuencia **por CU** con la subskill PlantUML. Para dar de alta un requisito nuevo
+   sin regenerar el resto, generar solo su JSON en modo puntual (`--input <ese JSON>`).
 4. Crear/actualizar los diagramas generales del modulo (clases, DER, secuencia general, y para
    T01 componentes + navegacion) con la subskill PlantUML. Para los DER, inspeccionar primero la
    base real en SQL Server (ver [references/der-desde-mssql.md](references/der-desde-mssql.md)).
 5. Guardar todo bajo `diagramas/<requisito>/` con la nomenclatura del catalogo.
+6a. Regenerar el documento consolidado de especificaciones cuando corresponda (comando aparte y
+   opcional): subskill `tp-use-case-spec` con `--input diagramas`.
 6. Recien despues copiar/exportar las imagenes al Google Doc (ver `docs-sync-sources.md`).
 7. Compilar la solucion al final para asegurar que lo documentado coincide con un build valido.
 8. Correr el checklist de validacion.
@@ -145,8 +154,10 @@ Antes de cerrar una tarea de diagramado/especificacion, validar contra
 - [ ] requisito identificado y carpeta `diagramas/<requisito>/` correcta segun el catalogo
 - [ ] diagramas generales que exige el requisito creados (clases, DER, secuencia general; T01: componentes + navegacion)
 - [ ] DER construido inspeccionando la base real en SQL Server y cruzado contra `script_bd.sql`
-- [ ] por cada CU del requisito: existe su especificacion (`-caso-de-uso.json` + `.md`/`.docx`)
+- [ ] existe el JSON unico del requisito (`<requisito>-casos-de-uso.json`) con todos sus CU (+ `.docx`/`.md` generados)
 - [ ] por cada CU del requisito: existe su diagrama de secuencia (`-CUNN-<cu-slug>-secuencia.puml`)
+- [ ] numeracion local de CU en el JSON coincide con la de los `.puml` de secuencia del requisito
+- [ ] si corresponde, documento consolidado regenerado (`TP-especificaciones-casos-de-uso.docx`) con `--input diagramas`
 - [ ] usuario <-> Form de cada secuencia alineado con el escenario del CU
 - [ ] Form <-> resto del sistema balanceado con clases, metodos y parametros reales
 - [ ] nomenclatura segun catalogo en todos los archivos

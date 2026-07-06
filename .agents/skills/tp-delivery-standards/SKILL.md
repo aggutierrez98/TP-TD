@@ -1,6 +1,6 @@
 ---
 name: tp-delivery-standards
-description: Apply the TP delivery constraints for this WinForms .NET Framework system, including the documented stack, 7-layer architecture, plan de entregas, documentation parity, and PlantUML-only UML policy. Use when implementing features, bugfixes, architecture changes, persistence, auth, audit, DV, i18n, installers, reports, or project documentation.
+description: Apply the TP delivery constraints for this WinForms .NET Framework system, including the documented stack, 6-layer architecture, plan de entregas, documentation parity, and PlantUML-only UML policy. Use when implementing features, bugfixes, architecture changes, persistence, auth, audit, DV, i18n, installers, reports, or project documentation.
 ---
 
 # TP Delivery Standards
@@ -23,7 +23,7 @@ Si la tarea consiste en crear, editar o validar diagramas UML o especificaciones
 
 1. Respetar .NET Framework 4.7.2 y WinForms.
 2. No introducir tecnologias incompatibles con el stack.
-3. Respetar la arquitectura de 7 capas y la matriz obligatoria de dependencias UI/BLL/DAL/BE/SERVICIOS/ABSTRACCIONES.
+3. Respetar la arquitectura de 6 capas y la matriz obligatoria de dependencias UI/BLL/DAL/BE/SERVICIOS/ABSTRACCIONES.
 4. Mantener coherencia entre implementacion y artefactos de analisis/diseno.
 5. Compilar la solucion antes de cerrar la tarea.
 

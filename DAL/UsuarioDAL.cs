@@ -14,14 +14,15 @@ namespace DAL
                 Id = (int)row["Id"],
                 Username = row["Username"].ToString(),
                 PasswordHash = row["PasswordHash"].ToString(),
-                Activo = (bool)row["Activo"]
+                Activo = (bool)row["Activo"],
+                DVH = row.IsNull("DVH") ? null : row["DVH"].ToString()
             };
         }
 
         public Usuario ObtenerPorId(int id, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo
+                SELECT Id, Username, PasswordHash, Activo, DVH
                 FROM Usuarios
                 WHERE Id = @Id";
 
@@ -50,7 +51,7 @@ namespace DAL
         public Usuario ObtenerPorUsername(string username, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo
+                SELECT Id, Username, PasswordHash, Activo, DVH
                 FROM Usuarios
                 WHERE Username = @Username";
 
@@ -79,9 +80,9 @@ namespace DAL
         public int InsertarYObtenerId(Usuario usuario, AccesoDatos accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Usuarios (Username, PasswordHash, Activo)
+                INSERT INTO Usuarios (Username, PasswordHash, Activo, DVH)
                 OUTPUT INSERTED.Id
-                VALUES (@Username, @PasswordHash, @Activo)";
+                VALUES (@Username, @PasswordHash, @Activo, @DVH)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
@@ -92,7 +93,8 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
-                    accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo)
+                    accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo),
+                    accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, usuario.DVH)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);
@@ -114,7 +116,7 @@ namespace DAL
         public List<Usuario> ObtenerTodos()
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo
+                SELECT Id, Username, PasswordHash, Activo, DVH
                 FROM Usuarios
                 ORDER BY Activo DESC, Username";
 
@@ -132,13 +134,48 @@ namespace DAL
             }
         }
 
+        // Sobrecarga ordenada por Id para el control de integridad: el DVV depende del
+        // orden de los DVH, por lo que debe ser deterministico y reutilizable dentro
+        // de la transaccion de escritura en curso.
+        public List<Usuario> ObtenerTodos(AccesoDatos accesoDatos)
+        {
+            const string query = @"
+                SELECT Id, Username, PasswordHash, Activo, DVH
+                FROM Usuarios
+                ORDER BY Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                DataTable dataTable = accesoDatos.Read(query);
+                List<Usuario> usuarios = new List<Usuario>();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    usuarios.Add(Map(row));
+                }
+
+                return usuarios;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
         public bool Actualizar(Usuario usuario, AccesoDatos accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
                 SET Username = @Username,
                     PasswordHash = @PasswordHash,
-                    Activo = @Activo
+                    Activo = @Activo,
+                    DVH = @DVH
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -151,6 +188,7 @@ namespace DAL
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
                     accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo),
+                    accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, usuario.DVH),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
@@ -185,6 +223,37 @@ namespace DAL
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
                     accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        // Actualiza unicamente el DVH de una fila. Se usa al inicializar las firmas o
+        // tras restaurar un estado historico, sin reescribir el resto de las columnas.
+        public bool ActualizarDVH(int id, string dvh, AccesoDatos accesoDatos = null)
+        {
+            const string query = @"
+                UPDATE Usuarios
+                SET DVH = @DVH
+                WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatos();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, dvh),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

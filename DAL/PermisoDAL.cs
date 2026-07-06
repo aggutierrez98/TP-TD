@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using ABSTRACCIONES;
 using SERVICIOS;
 
 namespace DAL
 {
     public class PermisoDAL
     {
-        public List<object> ObtenerNodos(AccesoDatos accesoDatos = null)
+        public List<IPermiso> ObtenerNodos(AccesoDatos accesoDatos = null)
         {
             const string query = @"
                 SELECT p.Id,
@@ -65,16 +66,16 @@ namespace DAL
             }
         }
 
-        public int Guardar(object permiso, AccesoDatos accesoDatos = null)
+        public int Guardar(IPermiso permiso, AccesoDatos accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatos();
 
             try
             {
-                int permisoId = ObtenerId(permiso);
-                string permisoNombre = ObtenerNombre(permiso);
-                bool esGrupo = EsGrupo(permiso);
+                int permisoId = permiso.Id;
+                string permisoNombre = permiso.Nombre;
+                bool esGrupo = permiso.EsGrupo;
 
                 if (permisoId <= 0)
                 {
@@ -209,68 +210,13 @@ namespace DAL
             }
         }
 
-        private static object MapNodo(DataRow row)
+        private static IPermiso MapNodo(DataRow row)
         {
             bool esGrupo = row["EsGrupo"] != DBNull.Value && Convert.ToBoolean(row["EsGrupo"]);
-            object nodo = esGrupo ? (object) new PermisoGrupo() : new PermisoSimple();
-
-            if (nodo is PermisoGrupo grupo)
-            {
-                grupo.Id = (int)row["Id"];
-                grupo.Nombre = row["Nombre"].ToString();
-            }
-            else if (nodo is PermisoSimple simple)
-            {
-                simple.Id = (int)row["Id"];
-                simple.Nombre = row["Nombre"].ToString();
-            }
-
+            IPermiso nodo = esGrupo ? (IPermiso)new PermisoGrupo() : new PermisoSimple();
+            nodo.Id = (int)row["Id"];
+            nodo.Nombre = row["Nombre"].ToString();
             return nodo;
-        }
-
-        private static int ObtenerId(object permiso)
-        {
-            if (permiso is PermisoGrupo grupo)
-            {
-                return grupo.Id;
-            }
-
-            if (permiso is PermisoSimple simple)
-            {
-                return simple.Id;
-            }
-
-            throw new InvalidOperationException("Tipo de permiso no soportado.");
-        }
-
-        private static string ObtenerNombre(object permiso)
-        {
-            if (permiso is PermisoGrupo grupo)
-            {
-                return grupo.Nombre;
-            }
-
-            if (permiso is PermisoSimple simple)
-            {
-                return simple.Nombre;
-            }
-
-            throw new InvalidOperationException("Tipo de permiso no soportado.");
-        }
-
-        private static bool EsGrupo(object permiso)
-        {
-            if (permiso is PermisoGrupo)
-            {
-                return true;
-            }
-
-            if (permiso is PermisoSimple)
-            {
-                return false;
-            }
-
-            throw new InvalidOperationException("Tipo de permiso no soportado.");
         }
 
         private static string CrearWhereIn(AccesoDatos accesoDatos, string prefijo, IList<int> ids, ICollection<SqlParameter> parametros)

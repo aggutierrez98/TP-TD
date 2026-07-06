@@ -41,7 +41,30 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
 
    Por defecto produce `diagramas/<requisito>/<requisito>-casos-de-uso.docx` y `.md`.
    Overrides disponibles: `--output-docx`, `--output-md`, `--no-md`, `--no-docx`.
-4. Revisar el `.md` espejo en el diff antes de incorporar el `.docx` a la entrega formal.
+4. **Documento consolidado (todas las especificaciones en un solo `.docx`)**: pasar varios
+   JSON o un directorio a `--input`. El script arma un unico documento con todas las
+   especificaciones, un cuadro abajo de otro, separadas por el titulo del requisito (T0X).
+
+   ```
+   # Todos los CU bajo diagramas/ (ordenados por ruta: T02, T03, ... T07)
+   python .agents/skills/tp-use-case-spec/scripts/build-use-case-spec.py --input diagramas
+   ```
+
+   Salida por defecto: `diagramas/TP-especificaciones-casos-de-uso.docx` (y `.md`). Flags:
+   `--consolidar` (fuerza el modo con un solo JSON), `--doc-title` (titulo general),
+   `--page-break-por-requisito` (cada T0X en pagina nueva; por defecto van seguidos).
+   Regenerar este consolidado cada vez que se agrega o edita un CU, para mantenerlo al dia.
+
+   **Numeracion de CU**: en el consolidado los CU se **renumeran global y correlativamente**
+   (CU01, CU02, ... de corrido segun el orden de los requisitos), para que no se repitan los
+   codigos entre requisitos. Los documentos puntuales por requisito conservan la numeracion
+   **local** (CU01, CU02, ... dentro del requisito), que es la que coincide con los `.puml` de
+   secuencia por CU. Flags: `--sin-renumerar` (respeta el codigo de cada JSON en el
+   consolidado), `--renumerar-global` (fuerza el renumerado tambien en puntual), `--inicio N`
+   (numero inicial). El orden de los requisitos en el consolidado surge del orden de `--input`
+   (o del orden alfabetico de rutas al pasar un directorio); para un orden distinto, pasar los
+   JSON explicitamente en el orden deseado.
+5. Revisar el `.md` espejo en el diff antes de incorporar el `.docx` a la entrega formal.
 
 ## Reglas
 
@@ -52,6 +75,13 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
 - El escenario principal describe solo el flujo de exito; errores y variantes van en flujos
   alternativos. Las reglas de negocio se integran en precondiciones, pasos de validacion o
   flujos alternativos (no hay campo propio).
+- **Actor Secundario = entidad externa, nunca clases internas.** Un actor (RUP/UML) es un rol
+  externo al limite del sistema. El actor secundario interviene de forma reactiva (otro
+  sistema/servicio, hardware o persona de soporte). Las clases/componentes internos (BLL,
+  DAL, SERVICIOS, Forms, `AccesoDatos`, singletons como `Sesion`) **no**
+  son actores: su colaboracion se muestra en el diagrama de secuencia, no en este campo. En
+  este proyecto de escritorio con SQL Server local la mayoria de los CU llevan `actor_secundario: "-"`.
+  Detalle en [references/use-case-spec-format.md](references/use-case-spec-format.md).
 - Los casos de uso deben mantenerse balanceados contra el codigo real y contra los diagramas
   de la skill [tp-uml-y-casos-de-uso](../tp-uml-y-casos-de-uso/SKILL.md); si el comportamiento
   cambia, actualizar el JSON y regenerar.

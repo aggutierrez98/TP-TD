@@ -1,0 +1,63 @@
+@startuml
+title T07 - CU01 Verificar integridad de datos - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+participant "Program.Main" as Prog
+participant "IntegridadBLL" as IBLL
+participant "UsuarioDAL" as UDAL
+participant "IntegridadDAL" as IDAL
+participant "IntegridadService" as ISvc
+participant "BitacoraService" as Bita
+participant "FormContingenciaIntegridad" as Cont
+
+Prog -> IBLL : ValidarIntegridadGlobal()
+activate IBLL
+IBLL -> UDAL : ObtenerTodos(accesoDatos)
+UDAL --> IBLL : usuarios
+IBLL -> IDAL : ObtenerDVV("Usuarios", accesoDatos)
+IDAL --> IBLL : dvvAlmacenado
+
+alt tabla sin inicializar (dvv null y todos los DVH vacios)
+  IBLL -> IBLL : BeginTransactionScope()
+  loop por cada usuario
+    IBLL -> ISvc : CalcularDVH(usuario)
+    ISvc --> IBLL : dvh
+    IBLL -> UDAL : ActualizarDVH(usuario.Id, dvh, accesoDatos)
+  end
+  IBLL -> ISvc : CalcularDVV(listaDVH)
+  ISvc --> IBLL : dvv
+  IBLL -> IDAL : GuardarDVV("Usuarios", dvv, accesoDatos)
+  IBLL -> Bita : RegistrarOperacion("...IntegritySignaturesInitialized", "...", "IntegridadBLL", accesoDatos)
+  IBLL -> IBLL : CommitTransactionScope()
+else firmas ya inicializadas -> verificar
+  group Verificacion horizontal (DVH por fila)
+    loop por cada usuario
+      IBLL -> ISvc : CalcularDVH(usuario)
+      ISvc --> IBLL : dvhCalculado
+      alt dvhCalculado != usuario.DVH
+        IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...HorizontalCorruption", "IntegridadBLL")
+        IBLL -> Prog : throw ExcepcionIntegridad(Horizontal, "Usuarios", usuario.Id)
+      end
+    end
+  end
+  group Verificacion vertical (DVV de la tabla)
+    IBLL -> ISvc : CalcularDVV(usuarios.DVH)
+    ISvc --> IBLL : dvvCalculado
+    alt dvvCalculado != dvvAlmacenado
+      IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...VerticalCorruption", "IntegridadBLL")
+      IBLL -> Prog : throw ExcepcionIntegridad(Vertical, "Usuarios", null)
+    end
+  end
+end
+deactivate IBLL
+
+alt arranque sin fallas
+  Prog -> Prog : Application.Run(new FormLogin())
+else ExcepcionIntegridad
+  Prog -> Bita : RegistrarExcepcionTecnica(ex, "Verificacion de integridad", "Program")
+  Prog -> Cont : Application.Run(new FormContingenciaIntegridad(ex))
+end
+
+@enduml

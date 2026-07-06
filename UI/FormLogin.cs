@@ -21,6 +21,7 @@ namespace TpIDS
         {
             if (string.IsNullOrWhiteSpace(txtbNickname.Text) || string.IsNullOrWhiteSpace(txtbPassword.Text))
             {
+                BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginEmptyFields", "UsuarioBLL");
                 UiDialogHelper.MostrarWarning("FormLogin.Warning.CompleteFields");
                 return;
             }

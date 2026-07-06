@@ -24,20 +24,33 @@ Diagramas generales del modulo:
 | Diagrama de componentes (T01) | `<requisito>-componentes.puml` |
 | Mapa de navegacion (T01) | `<requisito>-navegacion.puml` |
 
-Por caso de uso (`NN` correlativo dentro del requisito, `<cu-slug>` descriptivo):
+Especificaciones de casos de uso (una por requisito, con todos sus CU adentro):
 
 | Artefacto | Patron |
 | --- | --- |
-| Especificacion (fuente) | `<requisito>-CUNN-<cu-slug>-caso-de-uso.json` |
-| Especificacion (generados) | `<requisito>-CUNN-<cu-slug>-caso-de-uso.docx` y `.md` |
+| Especificacion (fuente) | `<requisito>-casos-de-uso.json` (un JSON por requisito, lista `casos_de_uso`) |
+| Especificacion (generados) | `<requisito>-casos-de-uso.docx` y `.md` |
+
+Diagramas de secuencia (uno por CU, `NN` correlativo dentro del requisito, `<cu-slug>` descriptivo):
+
+| Artefacto | Patron |
+| --- | --- |
 | Diagrama de secuencia | `<requisito>-CUNN-<cu-slug>-secuencia.puml` |
 
-Regla: **un archivo por CU** (un JSON, un `.docx`/`.md`, un `.puml` de secuencia por cada CU).
+Reglas:
+- **Especificaciones: un JSON por requisito** (con todos sus CU), no un archivo por CU. Cada CU
+  se numera localmente dentro del requisito (`CU01`, `CU02`, ...) y esa numeracion local es la
+  que coincide con los `.puml` de secuencia.
+- **Diagramas de secuencia: uno por CU** (un `.puml` por cada caso de uso).
+- El documento **consolidado** (todas las especificaciones en un solo `.docx`, separadas por el
+  titulo del requisito) se arma con la subskill `tp-use-case-spec` (ver su `SKILL.md`) y ahi los
+  CU se **renumeran de forma global y correlativa** (CU01, CU02, ... de corrido). Ubicacion:
+  `diagramas/TP-especificaciones-casos-de-uso.docx` (+ `.md`).
 
 Ejemplos:
-- `diagramas/T02-login-logout/T02-login-logout-CU01-login-secuencia.puml`
-- `diagramas/T02-login-logout/T02-login-logout-CU01-login-caso-de-uso.json`
-- `diagramas/T05-multidioma/T05-multidioma-CU04-importar-json-secuencia.puml`
+- `diagramas/T02-login-logout/T02-login-logout-casos-de-uso.json` (especificacion del requisito, 3 CU)
+- `diagramas/T02-login-logout/T02-login-logout-CU01-login-secuencia.puml` (secuencia del CU01)
+- `diagramas/T05-multidioma/T05-multidioma-CU04-importar-json-secuencia.puml` (secuencia del CU04)
 
 ## Catalogo por requisito
 
@@ -95,6 +108,16 @@ Carpeta: `diagramas/G07-modelo-datos-integrado/`
 
 ## Requisitos de negocio (N0X)
 
-Mismo patron que los T0X: carpeta `diagramas/N0X-<slug>/`, diagramas generales segun aplique y
-un par especificacion + secuencia por cada CU. El set concreto de requisitos N0X se completa a
-medida que se definen (confirmar con el usuario antes de crearlos).
+Mismo patron que los T0X: carpeta `diagramas/N0X-<slug>/`, diagramas generales segun aplique,
+**un JSON de especificacion por requisito** (`<requisito>-casos-de-uso.json` con todos sus CU) y
+**un `.puml` de secuencia por cada CU**. El set concreto de requisitos N0X se completa a medida
+que se definen (confirmar con el usuario antes de crearlos).
+
+Alta de un requisito nuevo (T0X o N0X) sin regenerar el resto:
+
+1. Crear la carpeta `diagramas/<requisito>/` y su `<requisito>-casos-de-uso.json`.
+2. Crear los `.puml` de secuencia por CU (subskill PlantUML) y los diagramas generales que aplique.
+3. Generar **solo** ese requisito con la subskill `tp-use-case-spec` (modo puntual):
+   `--input diagramas/<requisito>/<requisito>-casos-de-uso.json`. No toca los demas.
+4. Regenerar el documento consolidado cuando se quiera (comando aparte y opcional):
+   `--input diagramas` (autodescubre el nuevo requisito y renumera los CU de forma global).

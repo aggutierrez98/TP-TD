@@ -2,7 +2,7 @@
 
 ## Restricciones generales
 
-- Mantener al menos 4 capas; este repo ya exige 7 capas y esa restriccion prevalece.
+- Mantener al menos 4 capas; este repo ya exige 6 capas y esa restriccion prevalece.
 - Balancear implementacion con diagramas de clases, DER/modelo de datos, casos de uso y diagramas de secuencia.
 - Mantener calidad OO: cohesion, acoplamiento controlado, reuso, separacion tecnica/negocio.
 - Mantener UI WinForms usable y consistente.

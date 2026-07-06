@@ -5,6 +5,7 @@
 - `TextBox` -> `txtb`
 - `DataGridView` -> `dgv`
 - `Label` -> `lbl`
+- `ListBox` -> `lstb`
 - `Button` -> `btn`
 - `PictureBox` -> `pb`
 - `ComboBox` -> `cmb`

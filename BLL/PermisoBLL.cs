@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using ABSTRACCIONES;
 using BE;
 using DAL;
 using SERVICIOS;
@@ -26,14 +27,14 @@ namespace BLL
             _usuarioEstadoBLL = new UsuarioEstadoBLL();
         }
 
-        public List<object> ObtenerCatalogo()
+        public List<IPermiso> ObtenerCatalogo()
         {
-            List<object> nodos = _permisoDAL.ObtenerNodos();
+            List<IPermiso> nodos = _permisoDAL.ObtenerNodos();
             List<Tuple<int, int>> relaciones = _permisoDAL.ObtenerRelaciones();
             return _permisoService.ConstruirArbol(nodos, relaciones).ToList();
         }
 
-        public void GuardarCatalogo(List<object> raices)
+        public void GuardarCatalogo(List<IPermiso> raices)
         {
             if (raices == null || raices.Count == 0)
             {
@@ -43,8 +44,8 @@ namespace BLL
 
             _permisoService.ValidarSinCiclos(raices);
 
-            List<object> nodos = _permisoService.Aplanar(raices).ToList();
-            foreach (dynamic nodo in nodos)
+            List<IPermiso> nodos = _permisoService.Aplanar(raices).ToList();
+            foreach (IPermiso nodo in nodos)
             {
                 _permisoService.ValidarNombre(nodo.Nombre);
                 nodo.Nombre = _permisoService.NormalizarNombre(nodo.Nombre);
@@ -53,23 +54,23 @@ namespace BLL
             _permisoService.ValidarNombresUnicos(raices);
             _permisoService.ValidarGruposNoVacios(nodos);
 
-            List<object> existentes = _permisoDAL.ObtenerNodos();
+            List<IPermiso> existentes = _permisoDAL.ObtenerNodos();
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
                 accesoDatos.BeginTransactionScope();
 
                 try
                 {
-                    foreach (dynamic nodo in nodos)
+                    foreach (IPermiso nodo in nodos)
                     {
                         nodo.Id = _permisoDAL.Guardar(nodo, accesoDatos);
                     }
 
                     _permisoDAL.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList(), accesoDatos);
 
-                    List<int> idsActuales = nodos.Select(item => (int)((dynamic)item).Id).Distinct().ToList();
+                    List<int> idsActuales = nodos.Select(item => item.Id).Distinct().ToList();
                     List<int> idsEliminados = existentes
-                        .Select(item => (int)((dynamic)item).Id)
+                        .Select(item => item.Id)
                         .Where(id => !idsActuales.Contains(id))
                         .ToList();
 
@@ -137,12 +138,12 @@ namespace BLL
             }
         }
 
-        public List<object> ObtenerPermisosDirectosUsuario(int usuarioId)
+        public List<IPermiso> ObtenerPermisosDirectosUsuario(int usuarioId)
         {
             List<int> permisosId = ObtenerPermisoIdsDeUsuario(usuarioId);
-            List<object> catalogo = ObtenerCatalogo();
-            Dictionary<int, object> indice = _permisoService.Aplanar(catalogo)
-                .ToDictionary(item => (int)((dynamic)item).Id, item => item);
+            List<IPermiso> catalogo = ObtenerCatalogo();
+            Dictionary<int, IPermiso> indice = _permisoService.Aplanar(catalogo)
+                .ToDictionary(item => item.Id, item => item);
 
             return permisosId
                 .Where(indice.ContainsKey)
@@ -165,7 +166,7 @@ namespace BLL
 
             permisos.Clear();
 
-            foreach (object permiso in ObtenerPermisosDirectosUsuario(usuario.Id))
+            foreach (IPermiso permiso in ObtenerPermisosDirectosUsuario(usuario.Id))
             {
                 permisos.Add(permiso);
             }
