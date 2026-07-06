@@ -111,8 +111,14 @@ namespace BLL
                         Activo = true
                     };
 
-                    nuevoUsuario.DVH = _integridadBLL.CalcularDVH(nuevoUsuario);
+                    // El DVH depende del Id (esta marcado con [DigitoVerificador]),
+                    // por lo que hay que insertar primero para conocer el Id real y
+                    // recien entonces calcular y persistir la firma. Calcularla con
+                    // Id=0 dejaria un DVH desfasado respecto al recalculo global y
+                    // dispararia un falso positivo de corrupcion horizontal.
                     nuevoUsuario.Id = unidad.Usuarios.InsertarYObtenerId(nuevoUsuario);
+                    nuevoUsuario.DVH = _integridadBLL.CalcularDVH(nuevoUsuario);
+                    unidad.Usuarios.ActualizarDVH(nuevoUsuario.Id, nuevoUsuario.DVH);
                     _permisoBLL.AsignarPerfilBasicoInterno(nuevoUsuario.Id, unidad);
                     _usuarioEstadoBLL.GuardarVersionActualInterno(nuevoUsuario.Id, "FormUserHistory.Value.Action.Creation", "FormUserHistory.Value.Obs.InitialCreation", unidad);
                     _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserCreation", "FormAuditLog.Value.Info.UserCreation", "UsuarioBLL", unidad);
