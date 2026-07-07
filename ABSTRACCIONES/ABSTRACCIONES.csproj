@@ -45,7 +45,6 @@
     <Compile Include="IIntegrable.cs" />
     <Compile Include="IEventoBitacora.cs" />
     <Compile Include="IFiltroBitacora.cs" />
-    <Compile Include="IIntegrable.cs" />
     <Compile Include="IIdioma.cs" />
     <Compile Include="IPasswordHasher.cs" />
     <Compile Include="IPalabra.cs" />

@@ -27,9 +27,6 @@ namespace BE
             get { return Permisos as IList; }
         }
 
-        // Digito verificador horizontal (DVH) de la fila. Lo calcula IntegridadService.
-        public string DVH { get; set; }
-
         public Usuario()
         {
             Activo = true;

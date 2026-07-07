@@ -267,37 +267,6 @@ namespace DAL
             }
         }
 
-        // Actualiza unicamente el DVH de una fila. Se usa al inicializar las firmas o
-        // tras restaurar un estado historico, sin reescribir el resto de las columnas.
-        public bool ActualizarDVH(int id, string dvh, AccesoDatos accesoDatos = null)
-        {
-            const string query = @"
-                UPDATE Usuarios
-                SET DVH = @DVH
-                WHERE Id = @Id";
-
-            bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
-
-            try
-            {
-                List<SqlParameter> parametros = new List<SqlParameter>
-                {
-                    accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, dvh),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
-                };
-
-                return accesoDatos.Write(query, parametros) > 0;
-            }
-            finally
-            {
-                if (dispose)
-                {
-                    accesoDatos.Dispose();
-                }
-            }
-        }
-
         public bool Desactivar(int id, AccesoDatos accesoDatos = null)
         {
             const string query = @"

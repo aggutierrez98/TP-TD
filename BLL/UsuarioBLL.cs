@@ -18,9 +18,6 @@ namespace BLL
         private readonly UsuarioEstadoBLL _usuarioEstadoBLL;
         private readonly IntegridadBLL _integridadBLL;
 
-        // Tabla bajo control de integridad (debe coincidir con la usada en la verificacion).
-        private const string TablaUsuarios = "Usuarios";
-
         public UsuarioBLL()
         {
             BootstrapAplicacionBLL.Inicializar();
@@ -402,15 +399,6 @@ namespace BLL
             Sesion.GetInstance().ActualizarUsuarioActualNombre(usuario.Username);
             AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
-        }
-
-        // Recalcula y persiste el DVV de la tabla de usuarios tras una operacion de escritura.
-        // Lee las filas ordenadas por Id (sobrecarga transaccional) para que el DVV resulte
-        // consistente con el que valida el arranque.
-        private void SincronizarDvvUsuarios(AccesoDatos accesoDatos)
-        {
-            List<Usuario> filas = _usuarioDAL.ObtenerTodos(accesoDatos);
-            _integridadBLL.RecalcularDVV(TablaUsuarios, filas.Select(usuario => usuario.DVH), accesoDatos);
         }
     }
 }

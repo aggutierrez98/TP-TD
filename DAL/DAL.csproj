@@ -46,7 +46,6 @@
     <Compile Include="BitacoraDAL.cs" />
     <Compile Include="IntegridadDAL.cs" />
     <Compile Include="IdiomaDAL.cs" />
-    <Compile Include="IntegridadDAL.cs" />
     <Compile Include="PermisoDAL.cs" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>

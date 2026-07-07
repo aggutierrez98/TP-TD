@@ -55,7 +55,6 @@
     <Compile Include="Idioma.cs" />
     <Compile Include="IdiomaCatalogoService.cs" />
     <Compile Include="IdiomaService.cs" />
-    <Compile Include="IntegridadService.cs" />
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
     <Compile Include="PermisoGrupo.cs" />

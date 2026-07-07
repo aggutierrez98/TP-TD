@@ -48,7 +48,6 @@
     <Compile Include="IntegridadBLL.cs" />
     <Compile Include="InicializacionBitacoraBLL.cs" />
     <Compile Include="InicializacionHistorialBLL.cs" />
-    <Compile Include="IntegridadBLL.cs" />
     <Compile Include="ManejadorExcepcionesBLL.cs" />
     <Compile Include="PermisoBLL.cs" />
     <Compile Include="UsuarioEstadoBLL.cs" />
