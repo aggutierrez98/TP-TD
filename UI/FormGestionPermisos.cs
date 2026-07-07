@@ -231,6 +231,10 @@ namespace TpIDS
             {
                 tvwCatalogoPermisos.SelectedNode.Text = txtbNombreFamilia.Text;
             }
+
+            RefrescarListas();
+            RefrescarPreview();
+            ActualizarEstadoControles();
         }
 
         private void btnCrearFamilia_Click(object sender, EventArgs e)

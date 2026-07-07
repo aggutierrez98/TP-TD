@@ -8,10 +8,10 @@ namespace TpIDS
     static class Program
     {
         /// <summary>
-        /// Punto de entrada principal para la aplicaciÃ³n.
+        /// Punto de entrada principal para la aplicacion.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main()  
         {
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += Application_ThreadException;

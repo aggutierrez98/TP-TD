@@ -85,7 +85,7 @@ namespace SERVICIOS
             foreach (string dvh in listaDVH)
             {
                 Sumar(acumulador, ObtenerContribucionDVH(dvh));
-            }
+        }
 
             return Convert.ToBase64String(acumulador);
         }

@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -50,6 +50,12 @@
   <ItemGroup>
     <Compile Include="FormConfiguracionUsuario.cs">
       <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormContingenciaIntegridad.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormContingenciaIntegridad.Designer.cs">
+      <DependentUpon>FormContingenciaIntegridad.cs</DependentUpon>
     </Compile>
     <Compile Include="FormBitacora.cs">
       <SubType>Form</SubType>
