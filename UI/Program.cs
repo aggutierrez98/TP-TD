@@ -16,14 +16,12 @@ namespace TpIDS
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += Application_ThreadException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-            BootstrapAplicacionBLL.Inicializar();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
             try
             {
-                // Verificacion de integridad por digitos verificadores (T07).
-                new IntegridadBLL().ValidarIntegridadGlobal();
+                BootstrapAplicacionBLL.Inicializar();
             }
             catch (ExcepcionIntegridad ex)
             {
