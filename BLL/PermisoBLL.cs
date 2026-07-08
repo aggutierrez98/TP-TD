@@ -42,17 +42,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Permission.CatalogEmpty");
             }
 
-            _permisoService.ValidarSinCiclos(raices);
-
-            List<IPermiso> nodos = _permisoService.Aplanar(raices).ToList();
-            foreach (IPermiso nodo in nodos)
-            {
-                _permisoService.ValidarNombre(nodo.Nombre);
-                nodo.Nombre = _permisoService.NormalizarNombre(nodo.Nombre);
-            }
-
-            _permisoService.ValidarNombresUnicos(raices);
-            _permisoService.ValidarGruposNoVacios(nodos);
+            List<IPermiso> nodos = ValidarYNormalizarCatalogo(raices);
 
             List<IPermiso> existentes = _permisoDAL.ObtenerNodos();
             using (AccesoDatos accesoDatos = new AccesoDatos())
@@ -61,20 +51,9 @@ namespace BLL
 
                 try
                 {
-                    foreach (IPermiso nodo in nodos)
-                    {
-                        nodo.Id = _permisoDAL.Guardar(nodo, accesoDatos);
-                    }
-
-                    _permisoDAL.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList(), accesoDatos);
-
-                    List<int> idsActuales = nodos.Select(item => item.Id).Distinct().ToList();
-                    List<int> idsEliminados = existentes
-                        .Select(item => item.Id)
-                        .Where(id => !idsActuales.Contains(id))
-                        .ToList();
-
-                    _permisoDAL.EliminarPermisos(idsEliminados, accesoDatos);
+                    PersistirNodos(nodos, accesoDatos);
+                    PersistirRelaciones(raices, accesoDatos);
+                    EliminarPermisosObsoletos(existentes, nodos, accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.PermissionCatalogUpdate", "FormAuditLog.Value.Info.PermissionCatalogUpdate", "PermisoBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
@@ -134,7 +113,7 @@ namespace BLL
             int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == usuarioId)
             {
-                AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
+                RefrescarPermisosSesionActual(usuarioId);
             }
         }
 
@@ -181,6 +160,51 @@ namespace BLL
             }
 
             _usuarioPermisoDAL.ReemplazarPermisosUsuario(usuarioId, new List<int> { perfilBasicoId }, accesoDatos);
+        }
+
+        private List<IPermiso> ValidarYNormalizarCatalogo(IEnumerable<IPermiso> raices)
+        {
+            _permisoService.ValidarSinCiclos(raices);
+
+            List<IPermiso> nodos = _permisoService.Aplanar(raices).ToList();
+            foreach (IPermiso nodo in nodos)
+            {
+                _permisoService.ValidarNombre(nodo.Nombre);
+                nodo.Nombre = _permisoService.NormalizarNombre(nodo.Nombre);
+            }
+
+            _permisoService.ValidarNombresUnicos(raices);
+            _permisoService.ValidarGruposNoVacios(nodos);
+            return nodos;
+        }
+
+        private void PersistirNodos(IEnumerable<IPermiso> nodos, AccesoDatos accesoDatos)
+        {
+            foreach (IPermiso nodo in nodos)
+            {
+                nodo.Id = _permisoDAL.Guardar(nodo, accesoDatos);
+            }
+        }
+
+        private void PersistirRelaciones(IEnumerable<IPermiso> raices, AccesoDatos accesoDatos)
+        {
+            _permisoDAL.ReemplazarRelaciones(_permisoService.ObtenerRelaciones(raices).ToList(), accesoDatos);
+        }
+
+        private void EliminarPermisosObsoletos(IEnumerable<IPermiso> existentes, IEnumerable<IPermiso> actuales, AccesoDatos accesoDatos)
+        {
+            List<int> idsActuales = actuales.Select(item => item.Id).Distinct().ToList();
+            List<int> idsEliminados = existentes
+                .Select(item => item.Id)
+                .Where(id => !idsActuales.Contains(id))
+                .ToList();
+
+            _permisoDAL.EliminarPermisos(idsEliminados, accesoDatos);
+        }
+
+        private void RefrescarPermisosSesionActual(int usuarioId)
+        {
+            AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(ObtenerPermisosDirectosUsuario(usuarioId));
         }
     }
 }

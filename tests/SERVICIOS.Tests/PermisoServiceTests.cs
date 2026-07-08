@@ -44,7 +44,7 @@ namespace SERVICIOS.Tests
         }
 
         [TestMethod]
-        public void Aplanar_ReusedFamily_DoesNotDuplicateById()
+        public void Aplanar_ReusedGroup_DoesNotDuplicateById()
         {
             IPermiso shared = Grupo(10, "shared");
             IPermiso firstRoot = Grupo(1, "first");
@@ -91,7 +91,7 @@ namespace SERVICIOS.Tests
         }
 
         [TestMethod]
-        public void ValidarSinCiclos_SharedFamilyInTwoBranches_DoesNotThrow()
+        public void ValidarSinCiclos_SharedGroupInTwoBranches_DoesNotThrow()
         {
             IPermiso shared = Grupo(10, "shared");
             shared.Agregar(Simple(11, "usuarios.ver"));
@@ -115,7 +115,7 @@ namespace SERVICIOS.Tests
         }
 
         [TestMethod]
-        public void GeneraCiclo_UnrelatedFamilies_ReturnsFalse()
+        public void GeneraCiclo_UnrelatedGroups_ReturnsFalse()
         {
             IPermiso first = Grupo(1, "first");
             IPermiso second = Grupo(2, "second");
@@ -155,14 +155,14 @@ namespace SERVICIOS.Tests
         }
 
         [TestMethod]
-        public void ValidarNombresUnicos_SameNameInDifferentBranches_Allows()
+        public void ValidarNombresUnicos_SameNameInDifferentBranches_ThrowsExcepcionNegocio()
         {
             IPermiso firstRoot = Grupo(1, "first");
             IPermiso secondRoot = Grupo(2, "second");
             firstRoot.Agregar(Simple(3, "ver"));
             secondRoot.Agregar(Simple(4, "ver"));
 
-            _service.ValidarNombresUnicos(new[] { firstRoot, secondRoot });
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => _service.ValidarNombresUnicos(new[] { firstRoot, secondRoot }));
         }
 
         [TestMethod]

@@ -28,7 +28,6 @@ alt usuario modificado es sesion actual
   PermisoBLL -> PermisoBLL : ObtenerPermisosDirectosUsuario(usuarioId)
   PermisoBLL --> PermisoBLL : permisosDirectos
   PermisoBLL -> AutorizacionService : ActualizarPermisosUsuarioActual(permisosDirectos)
-  AutorizacionService -> PermisoService : ObtenerPermisosEfectivos(permisosDirectos)
 end
 
 PermisoBLL --> FormGestionUsuarios : void

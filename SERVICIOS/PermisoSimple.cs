@@ -22,8 +22,8 @@ namespace SERVICIOS
         public IList<IPermiso> Hijos { get; private set; }
 
         /// <summary>
-        /// Metodo sin efecto para mantener el contrato Composite en una patente.
-        /// Las patentes no admiten permisos hijos.
+        /// Metodo sin efecto para mantener el contrato Composite en un permiso hoja.
+        /// Los permisos hoja no admiten permisos hijos.
         /// </summary>
         /// <param name="permiso">El permiso recibido por compatibilidad con el contrato.</param>
         public void Agregar(IPermiso permiso)
@@ -31,8 +31,8 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo sin efecto para mantener el contrato Composite en una patente.
-        /// Las patentes no tienen permisos hijos que quitar.
+        /// Metodo sin efecto para mantener el contrato Composite en un permiso hoja.
+        /// Los permisos hoja no tienen permisos hijos que quitar.
         /// </summary>
         /// <param name="permiso">El permiso recibido por compatibilidad con el contrato.</param>
         public void Quitar(IPermiso permiso)
@@ -40,7 +40,7 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para indicar si la patente coincide con un identificador.
+        /// Metodo para indicar si el permiso hoja coincide con un identificador.
         /// </summary>
         /// <param name="id">El identificador del permiso buscado.</param>
         /// <returns><see langword="true" /> si el identificador coincide; en caso contrario, <see langword="false" />.</returns>
@@ -50,10 +50,10 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para obtener los permisos hoja de una patente.
-        /// Una patente se devuelve a si misma porque ya es un permiso hoja.
+        /// Metodo para obtener los permisos hoja de un permiso hoja.
+        /// El permiso hoja se devuelve a si mismo porque ya es un permiso hoja.
         /// </summary>
-        /// <returns>Una lista con la patente actual.</returns>
+        /// <returns>Una lista con el permiso hoja actual.</returns>
         public IList<IPermiso> ObtenerPermisosHoja()
         {
             return new List<IPermiso> { this };

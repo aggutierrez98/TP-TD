@@ -11,7 +11,7 @@ namespace SERVICIOS
     {
         /// <summary>
         /// Metodo para construir un arbol de permisos a partir de nodos y relaciones padre-hijo.
-        /// Limpia los hijos de las familias y devuelve solo las raices ordenadas por nombre.
+        /// Limpia los hijos de los grupos y devuelve solo las raices ordenadas por nombre.
         /// </summary>
         /// <param name="nodos">La coleccion completa de permisos disponibles.</param>
         /// <param name="relaciones">La coleccion de relaciones entre permiso padre e hijo.</param>
@@ -43,8 +43,8 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para obtener las patentes efectivas a partir de los permisos asignados.
-        /// Expande las familias y elimina duplicados por identificador o nombre normalizado.
+        /// Metodo para obtener los permisos hoja efectivos a partir de los permisos asignados.
+        /// Expande los grupos y elimina duplicados por identificador o nombre normalizado.
         /// </summary>
         /// <param name="permisosAsignados">La coleccion de permisos asignados al usuario o perfil.</param>
         /// <returns>La lista de permisos hoja efectivos.</returns>
@@ -56,23 +56,23 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para filtrar solo las familias dentro de un conjunto de permisos.
-        /// Aplana previamente el arbol para incluir familias en cualquier nivel.
+        /// Metodo para filtrar solo los grupos dentro de un conjunto de permisos.
+        /// Aplana previamente el arbol para incluir grupos en cualquier nivel.
         /// </summary>
         /// <param name="nodos">La coleccion de permisos raiz o parciales.</param>
         /// <returns>La lista de permisos que representan grupos.</returns>
-        public List<IPermiso> FiltrarFamilias(IEnumerable<IPermiso> nodos)
+        public List<IPermiso> FiltrarGrupos(IEnumerable<IPermiso> nodos)
         {
             return Aplanar(nodos).Where(item => item.EsGrupo).ToList();
         }
 
         /// <summary>
-        /// Metodo para filtrar solo las patentes dentro de un conjunto de permisos.
-        /// Aplana previamente el arbol para incluir patentes en cualquier nivel.
+        /// Metodo para filtrar solo los permisos hoja dentro de un conjunto de permisos.
+        /// Aplana previamente el arbol para incluir permisos hoja en cualquier nivel.
         /// </summary>
         /// <param name="nodos">La coleccion de permisos raiz o parciales.</param>
         /// <returns>La lista de permisos que no representan grupos.</returns>
-        public List<IPermiso> FiltrarPatentes(IEnumerable<IPermiso> nodos)
+        public List<IPermiso> FiltrarPermisos(IEnumerable<IPermiso> nodos)
         {
             return Aplanar(nodos).Where(item => !item.EsGrupo).ToList();
         }
@@ -110,22 +110,32 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para validar que no existan nombres duplicados entre permisos hermanos.
-        /// La validacion se aplica recursivamente por cada nivel del arbol.
+        /// Metodo para validar que no existan nombres duplicados dentro del catalogo.
+        /// La validacion es global porque la persistencia actual exige nombre unico.
         /// </summary>
         /// <param name="raices">La coleccion de permisos raiz a validar.</param>
-        /// <exception cref="ExcepcionNegocio">Existen permisos hermanos con nombres duplicados.</exception>
+        /// <exception cref="ExcepcionNegocio">Existen permisos con nombres duplicados.</exception>
         public void ValidarNombresUnicos(IEnumerable<IPermiso> raices)
         {
-            ValidarNombresUnicosPorNivel(raices);
+            List<string> duplicados = Aplanar(raices)
+                .GroupBy(item => NormalizarNombre(item.Nombre), StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1)
+                .Select(group => group.Key)
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .ToList();
+
+            if (duplicados.Count > 0)
+            {
+                throw new ExcepcionNegocio("Error.Permission.DuplicateNames");
+            }
         }
 
         /// <summary>
-        /// Metodo para validar que todas las familias tengan al menos un hijo.
+        /// Metodo para validar que todos los grupos tengan al menos un hijo.
         /// Usado para evitar perfiles o grupos vacios.
         /// </summary>
         /// <param name="nodos">La coleccion de permisos a validar.</param>
-        /// <exception cref="ExcepcionNegocio">Existe una familia sin permisos hijos.</exception>
+        /// <exception cref="ExcepcionNegocio">Existe un grupo sin permisos hijos.</exception>
         public void ValidarGruposNoVacios(IEnumerable<IPermiso> nodos)
         {
             if (nodos.Any(item => item.EsGrupo && item.Hijos.Count == 0))
@@ -277,30 +287,6 @@ namespace SERVICIOS
                 }
 
                 ObtenerRelaciones(hijo, relaciones);
-            }
-        }
-
-        private void ValidarNombresUnicosPorNivel(IEnumerable<IPermiso> hermanos)
-        {
-            List<IPermiso> lista = hermanos == null
-                ? new List<IPermiso>()
-                : hermanos.ToList();
-
-            List<string> duplicados = lista
-                .GroupBy(item => NormalizarNombre(item.Nombre), StringComparer.OrdinalIgnoreCase)
-                .Where(group => group.Count() > 1)
-                .Select(group => group.Key)
-                .Where(item => !string.IsNullOrWhiteSpace(item))
-                .ToList();
-
-            if (duplicados.Count > 0)
-            {
-                throw new ExcepcionNegocio("Error.Permission.DuplicateNames");
-            }
-
-            foreach (IPermiso nodo in lista.Where(item => item.EsGrupo))
-            {
-                ValidarNombresUnicosPorNivel(nodo.Hijos);
             }
         }
 

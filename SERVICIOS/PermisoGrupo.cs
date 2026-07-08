@@ -24,7 +24,7 @@ namespace SERVICIOS
         public IList<IPermiso> Hijos { get; private set; }
 
         /// <summary>
-        /// Metodo para agregar un permiso hijo a la familia.
+        /// Metodo para agregar un permiso hijo al grupo.
         /// Ignora valores nulos, referencias repetidas y duplicados por identificador o nombre.
         /// </summary>
         /// <param name="permiso">El permiso que se quiere agregar como hijo.</param>
@@ -58,7 +58,7 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para quitar un permiso hijo de la familia.
+        /// Metodo para quitar un permiso hijo del grupo.
         /// Busca por referencia o por identificador del permiso recibido.
         /// </summary>
         /// <param name="permiso">El permiso que se quiere quitar.</param>
@@ -77,7 +77,7 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para indicar si la familia contiene un permiso por identificador.
+        /// Metodo para indicar si el grupo contiene un permiso por identificador.
         /// Recorre recursivamente todos los hijos del grupo.
         /// </summary>
         /// <param name="id">El identificador del permiso buscado.</param>
@@ -93,10 +93,10 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para obtener todas las patentes contenidas por la familia.
-        /// Expande recursivamente las familias hijas y evita duplicados por identificador.
+        /// Metodo para obtener todos los permisos hoja contenidos por el grupo.
+        /// Expande recursivamente los grupos hijos y evita duplicados por identificador.
         /// </summary>
-        /// <returns>La lista de permisos hoja contenidos por la familia.</returns>
+        /// <returns>La lista de permisos hoja contenidos por el grupo.</returns>
         public IList<IPermiso> ObtenerPermisosHoja()
         {
             List<IPermiso> resultado = new List<IPermiso>();

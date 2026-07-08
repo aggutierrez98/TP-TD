@@ -1,5 +1,4 @@
 using ABSTRACCIONES;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,18 +27,11 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        private void ActualizarPermisosUsuarioActual(IList<IPermiso> permisos)
+        public void ActualizarPermisosUsuarioActual(IEnumerable<IPermiso> permisos)
         {
             _permisosUsuarioActual = permisos == null
                 ? new List<IPermiso>()
                 : permisos.ToList();
-        }
-
-        public void ActualizarPermisosUsuarioActual(IEnumerable permisos)
-        {
-            _permisosUsuarioActual = permisos == null
-                ? new List<IPermiso>()
-                : permisos.Cast<object>().OfType<IPermiso>().ToList();
         }
 
         public void Limpiar()
