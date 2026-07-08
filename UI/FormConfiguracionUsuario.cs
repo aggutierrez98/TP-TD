@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -25,8 +26,8 @@ namespace TpIDS
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
         {
-            int? usuarioId = Sesion.GetInstance().GetUsuarioActualId();
-            if (!usuarioId.HasValue)
+            IUsuarioAutenticado usuarioActual = Sesion.GetInstance().GetUsuarioActual();
+            if (usuarioActual == null)
             {
                 UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
                 Close();
@@ -41,7 +42,7 @@ namespace TpIDS
 
             try
             {
-                bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
+                bool guardado = idiomaBLL.GuardarPreferencia(usuarioActual, idioma);
                 if (guardado)
                 {
                     UiDialogHelper.MostrarInfo("FormUserSettings.Success.SettingsSaved");

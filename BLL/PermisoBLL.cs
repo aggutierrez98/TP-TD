@@ -75,24 +75,27 @@ namespace BLL
             return _usuarioPermisoDAL.ObtenerPermisoIdsPorUsuario(usuarioId);
         }
 
-        public void GuardarPermisosUsuario(int usuarioId, List<int> permisosId)
+        public void GuardarPermisosUsuario(Usuario usuario, List<IPermiso> permisos)
         {
+            int usuarioId = usuario.Id;
+            List<int> permisosId = (permisos ?? new List<IPermiso>())
+                .Select(item => item.Id)
+                .Distinct()
+                .ToList();
+
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
                 accesoDatos.BeginTransactionScope();
 
                 try
                 {
-                    Usuario usuario = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
-                    if (usuario == null)
+                    Usuario usuarioDesdeDB = _usuarioDAL.ObtenerPorId(usuarioId, accesoDatos);
+                    if (usuarioDesdeDB == null)
                     {
                         throw new ExcepcionNegocio("Error.Permission.UserNotFound");
                     }
 
-                    _usuarioPermisoDAL.ReemplazarPermisosUsuario(
-                        usuarioId,
-                        permisosId == null ? new List<int>() : permisosId.Distinct().ToList(),
-                        accesoDatos);
+                    _usuarioPermisoDAL.ReemplazarPermisosUsuario(usuarioId, permisosId, accesoDatos);
 
                     _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.UserPermissionsUpdate", "FormAuditLog.Value.Info.UserPermissionsUpdate", "PermisoBLL", accesoDatos);

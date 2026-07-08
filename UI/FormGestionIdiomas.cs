@@ -36,7 +36,7 @@ namespace TpIDS
         {
             try
             {
-                int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text);
+                int idiomaId = idiomaBLL.CrearIdioma(new Idioma { Nombre = txtbNombreIdioma.Text });
                 CargarIdiomas(idiomaId);
                 RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
                 UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageCreated");
@@ -57,7 +57,8 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = idiomaBLL.ActualizarIdioma(idioma.Id, txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
+                idioma.Nombre = txtbNombreIdioma.Text;
+                bool actualizado = idiomaBLL.ActualizarIdioma(idioma);
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);
@@ -92,7 +93,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = idiomaBLL.EliminarIdioma(idioma.Id);
+                bool eliminado = idiomaBLL.EliminarIdioma(idioma);
                 if (eliminado)
                 {
                     CargarIdiomas(null);
@@ -126,7 +127,7 @@ namespace TpIDS
 
                 try
                 {
-                    idiomaBLL.ImportarJson(idioma.Id, openFileDialog.FileName);
+                    idiomaBLL.ImportarJson(idioma, openFileDialog.FileName);
                     RecargarIdiomaSeleccionado(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                     UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationsImported");
@@ -173,7 +174,7 @@ namespace TpIDS
 
                 try
                 {
-                    idiomaBLL.ExportarJson(idioma.Id, saveFileDialog.FileName);
+                    idiomaBLL.ExportarJson(idioma, saveFileDialog.FileName);
                     UiDialogHelper.MostrarInfo(
                         "FormLanguageManagement.ExportSuccessMessage",
                         new object[] { Path.GetFileName(saveFileDialog.FileName) });
@@ -196,7 +197,7 @@ namespace TpIDS
             try
             {
                 string keySeleccionada = txtbKeyManual.Text;
-                idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
+                idiomaBLL.GuardarTraduccion(idioma, keySeleccionada, txtbValorManual.Text);
                 RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
                 RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                 UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationSaved");
@@ -223,7 +224,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = idiomaBLL.EliminarTraduccion(idioma.Id, item.PalabraId);
+                bool eliminado = idiomaBLL.EliminarTraduccion(idioma, item.PalabraId);
                 if (eliminado)
                 {
                     LimpiarEdicionManual();
@@ -428,7 +429,7 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = idiomaBLL.HacerIdiomaDefault(idioma.Id);
+                bool actualizado = idiomaBLL.HacerIdiomaDefault(idioma);
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);

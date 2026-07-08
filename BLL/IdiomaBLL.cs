@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web.Script.Serialization;
+using ABSTRACCIONES;
 using DAL;
 using SERVICIOS;
 
@@ -55,9 +56,9 @@ namespace BLL
             return idiomaDefault;
         }
 
-        public void AplicarIdiomaSesionUsuario(int usuarioId)
+        public void AplicarIdiomaSesionUsuario(IUsuarioAutenticado usuario)
         {
-            Idioma idioma = ObtenerIdiomaParaUsuario(usuarioId);
+            Idioma idioma = ObtenerIdiomaParaUsuario(usuario.Id);
             if (idioma == null)
             {
                 throw new ExcepcionNegocio("Error.Language.DefaultNotFound");
@@ -66,10 +67,10 @@ namespace BLL
             IdiomaService.GetInstance().CambiarIdioma(idioma);
         }
 
-        public bool GuardarPreferencia(int usuarioId, int idiomaId)
+        public bool GuardarPreferencia(IUsuarioAutenticado usuario, Idioma idioma)
         {
-            Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
-            _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
+            Idioma idiomaDesdeDB = _idiomaDAL.ObtenerIdiomaCompleto(idioma.Id);
+            _idiomaCatalogoService.ValidarIdiomaSeleccionable(idiomaDesdeDB);
 
             using (AccesoDatos accesoDatos = new AccesoDatos())
             {
@@ -77,13 +78,13 @@ namespace BLL
 
                 try
                 {
-                    bool guardado = _usuarioPreferenciaDAL.Guardar(usuarioId, idiomaId, accesoDatos);
+                    bool guardado = _usuarioPreferenciaDAL.Guardar(usuario.Id, idioma.Id, accesoDatos);
                     if (!guardado)
                     {
                         throw new ExcepcionTecnica("Error.Language.PreferenceSaveFailed");
                     }
 
-                    _usuarioEstadoBLL.GuardarVersionActual(usuarioId, "FormUserHistory.Value.Action.PreferredLanguageUpdate", "FormUserHistory.Value.Obs.LanguagePreferenceUpdate", accesoDatos);
+                    _usuarioEstadoBLL.GuardarVersionActual(usuario.Id, "FormUserHistory.Value.Action.PreferredLanguageUpdate", "FormUserHistory.Value.Obs.LanguagePreferenceUpdate", accesoDatos);
                     BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguagePreferenceUpdate", "FormAuditLog.Value.Info.LanguagePreferenceUpdate", "IdiomaBLL", accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
@@ -99,31 +100,28 @@ namespace BLL
                 }
             }
 
-            AplicarIdiomaSesion(idiomaId);
+            AplicarIdiomaSesion(idiomaDesdeDB);
             return true;
         }
 
-        public int CrearIdioma(string nombre)
+        public int CrearIdioma(Idioma idioma)
         {
-            string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
-            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, null);
+            idioma.Nombre = _idiomaCatalogoService.NormalizarNombre(idioma.Nombre);
 
-            int idiomaId = _idiomaDAL.InsertarIdioma(new Idioma
-            {
-                Nombre = nombreNormalizado,
-                Default = false
-            });
+            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), idioma.Nombre, null);
+
+            int idiomaId = _idiomaDAL.InsertarIdioma(idioma);
 
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.LanguageCreation", "FormAuditLog.Value.Info.LanguageCreation", "IdiomaBLL");
             return idiomaId;
         }
 
-        public bool HacerIdiomaDefault(int idiomaId)
+        public bool HacerIdiomaDefault(Idioma idioma)
         {
             try {
                 Idioma idiomaDefault = _idiomaDAL.ObtenerIdiomaDefault();
                 _idiomaDAL.SwitchearIdiomaDefault(idiomaDefault.Id);
-                _idiomaDAL.SwitchearIdiomaDefault(idiomaId);
+                _idiomaDAL.SwitchearIdiomaDefault(idioma.Id);
             }
             catch (InvalidOperationException ex)
             {
@@ -133,15 +131,15 @@ namespace BLL
 
             return true;
         }
-             
-        public bool ActualizarIdioma(int idiomaId, string nombre, bool idiomaDefault)
+
+        public bool ActualizarIdioma(Idioma idioma)
         {
-            string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(nombre);
-            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, idiomaId);
+            string nombreNormalizado = _idiomaCatalogoService.NormalizarNombre(idioma.Nombre);
+            _idiomaCatalogoService.ValidarNombreDuplicado(_idiomaDAL.ObtenerIdiomas(), nombreNormalizado, idioma.Id);
 
             bool actualizado = _idiomaDAL.ActualizarIdioma(new Idioma
             {
-                Id = idiomaId,
+                Id = idioma.Id,
                 Nombre = nombreNormalizado
             });
 
@@ -154,21 +152,21 @@ namespace BLL
             return true;
         }
 
-        public bool EliminarIdioma(int idiomaId)
+        public bool EliminarIdioma(Idioma idioma)
         {
             List<Idioma> idiomas = _idiomaDAL.ObtenerIdiomas();
-            Idioma idioma = idiomas.FirstOrDefault(item => item.Id == idiomaId);
-            if (idioma == null)
+            Idioma idiomaDesdeDB = idiomas.FirstOrDefault(item => item.Id == idioma.Id);
+            if (idiomaDesdeDB == null)
             {
                 return false;
             }
 
-            if (idioma.Default)
+            if (idiomaDesdeDB.Default)
             {
                 throw new ExcepcionNegocio("Error.Language.CannotDeleteDefaultLanguage");
             }
 
-            bool eliminado = _idiomaDAL.EliminarIdioma(idiomaId);
+            bool eliminado = _idiomaDAL.EliminarIdioma(idioma.Id);
             if (!eliminado)
             {
                 return false;
@@ -178,7 +176,7 @@ namespace BLL
             return true;
         }
 
-        public void GuardarTraduccion(int idiomaId, string key, string valor)
+        public void GuardarTraduccion(Idioma idioma, string key, string valor)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -196,19 +194,19 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.KeyNotFound");
             }
 
-            _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor.Trim());
+            _idiomaDAL.GuardarTraduccion(idioma.Id, palabraId, valor.Trim());
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationUpdate", "FormAuditLog.Value.Info.TranslationUpdate", "IdiomaBLL");
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(Idioma idioma, int palabraId)
         {
-            Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
-            if (idioma == null)
+            Idioma idiomaDesdeDB = _idiomaDAL.ObtenerIdiomaCompleto(idioma.Id);
+            if (idiomaDesdeDB == null)
             {
                 throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
-            Traduccion traduccion = idioma.Traducciones
+            Traduccion traduccion = idiomaDesdeDB.Traducciones
                 .OfType<Traduccion>()
                 .FirstOrDefault(item => item.PalabraId == palabraId);
 
@@ -218,7 +216,7 @@ namespace BLL
             }
 
             // Las keys base tambien se pueden borrar: al hacerlo, su traduccion queda vacia
-            bool eliminado = _idiomaDAL.EliminarTraduccion(idiomaId, palabraId);
+            bool eliminado = _idiomaDAL.EliminarTraduccion(idioma.Id, palabraId);
             if (eliminado)
             {
                 BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationDeletion", "FormAuditLog.Value.Info.TranslationDeletion", "IdiomaBLL");
@@ -227,7 +225,7 @@ namespace BLL
             return eliminado;
         }
 
-        public void ImportarJson(int idiomaId, string rutaArchivo)
+        public void ImportarJson(Idioma idioma, string rutaArchivo)
         {
             if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
             {
@@ -254,26 +252,26 @@ namespace BLL
 
             foreach (KeyValuePair<string, string> item in traducciones)
             {
-                GuardarTraduccion(idiomaId, item.Key, item.Value);
+                GuardarTraduccion(idioma, item.Key, item.Value);
             }
 
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsImport", "FormAuditLog.Value.Info.TranslationsImport", "IdiomaBLL");
         }
 
-        public void ExportarJson(int idiomaId, string rutaArchivo)
+        public void ExportarJson(Idioma idioma, string rutaArchivo)
         {
             if (string.IsNullOrWhiteSpace(rutaArchivo))
             {
                 throw new ExcepcionNegocio("Error.Language.ExportPathRequired");
             }
 
-            Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
-            if (idioma == null)
+            Idioma idiomaDesdeDB = _idiomaDAL.ObtenerIdiomaCompleto(idioma.Id);
+            if (idiomaDesdeDB == null)
             {
                 throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
-            Dictionary<string, string> traducciones = idioma.Traducciones
+            Dictionary<string, string> traducciones = idiomaDesdeDB.Traducciones
                 .Where(item => item.Palabra != null && !string.IsNullOrWhiteSpace(item.Palabra.Key))
                 .OrderBy(item => item.Palabra.Key)
                 .ToDictionary(
@@ -288,14 +286,8 @@ namespace BLL
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.TranslationsExport", "FormAuditLog.Value.Info.TranslationsExport", "IdiomaBLL");
         }
 
-        public bool EstaCompleto(int idiomaId)
+        private void AplicarIdiomaSesion(Idioma idioma)
         {
-            return _idiomaCatalogoService.EstaCompleto(_idiomaDAL.ObtenerIdiomaCompleto(idiomaId));
-        }
-
-        public void AplicarIdiomaSesion(int idiomaId)
-        {
-            Idioma idioma = _idiomaDAL.ObtenerIdiomaCompleto(idiomaId);
             _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
             IdiomaService.GetInstance().CambiarIdioma(idioma);
         }

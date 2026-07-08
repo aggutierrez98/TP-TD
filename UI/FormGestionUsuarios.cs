@@ -20,7 +20,7 @@ namespace TpIDS
 
         private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
         private readonly PermisoBLL permisoBLL = new PermisoBLL();
-        private int _idSeleccionado = -1;
+        private Usuario _usuarioSeleccionado;
         private bool _cargandoGrillaUsuarios;
 
         public FormGestionUsuarios()
@@ -38,7 +38,7 @@ namespace TpIDS
 
         private void RefrescarDatos()
         {
-            int idAnterior = _idSeleccionado;
+            int idAnterior = _usuarioSeleccionado?.Id ?? -1;
             _cargandoGrillaUsuarios = true;
 
             try
@@ -61,7 +61,7 @@ namespace TpIDS
 
         private void LimpiarSeleccion()
         {
-            _idSeleccionado = -1;
+            _usuarioSeleccionado = null;
             txtbNombreUsuario.Clear();
             txtbPasswordUsuario.Clear();
             chkbUsuarioActivo.Checked = true;
@@ -152,7 +152,7 @@ namespace TpIDS
                 return;
             }
 
-            if (_idSeleccionado == -1)
+            if (_usuarioSeleccionado == null)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
                     "FormUserManagement.Warning.NoUserSelectedEdit",
@@ -172,7 +172,7 @@ namespace TpIDS
 
             try
             {
-                bool usuarioEstabaActivo = ObtenerEstadoActivoSeleccionado();
+                bool usuarioEstabaActivo = _usuarioSeleccionado.Activo;
                 bool usuarioActivo = chkbUsuarioActivo.Checked;
 
                 if (usuarioEstabaActivo && !usuarioActivo)
@@ -188,7 +188,14 @@ namespace TpIDS
                     }
                 }
 
-                if (usuarioBLL.Actualizar(_idSeleccionado, nuevoUsername, nuevaPassword, usuarioActivo))
+                Usuario usuarioEditado = new Usuario
+                {
+                    Id = _usuarioSeleccionado.Id,
+                    Username = nuevoUsername,
+                    Activo = usuarioActivo
+                };
+
+                if (usuarioBLL.Actualizar(usuarioEditado, nuevaPassword))
                 {
                     ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
                     string successKey = !usuarioEstabaActivo && usuarioActivo
@@ -214,7 +221,7 @@ namespace TpIDS
                 return;
             }
 
-            if (_idSeleccionado == -1)
+            if (_usuarioSeleccionado == null)
             {
                 UiDialogHelper.MostrarWarningConTitulo(
                     "FormUserManagement.Warning.NoUserSelectedDelete",
@@ -234,7 +241,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Eliminar(_idSeleccionado))
+                if (usuarioBLL.Eliminar(_usuarioSeleccionado))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserDeleted");
                     LimpiarSeleccion();
@@ -247,21 +254,10 @@ namespace TpIDS
             }
         }
 
-        private bool ObtenerEstadoActivoSeleccionado()
-        {
-            if (dgvUsuarios.SelectedRows.Count == 0 || !dgvUsuarios.Columns.Contains("Active"))
-            {
-                return true;
-            }
-
-            object valorActivo = dgvUsuarios.SelectedRows[0].Cells["Active"].Value;
-            return valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
-        }
-
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
-            if (_idSeleccionado == -1 || !AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios))
+            if (_usuarioSeleccionado == null || !AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios))
             {
                 return;
             }
@@ -269,7 +265,7 @@ namespace TpIDS
             try
             {
                 List<IPermiso> catalogo = permisoBLL.ObtenerCatalogo();
-                HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_idSeleccionado));
+                HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_usuarioSeleccionado.Id));
 
                 foreach (IPermiso raiz in catalogo)
                 {
@@ -307,7 +303,7 @@ namespace TpIDS
                 return;
             }
 
-            if (_idSeleccionado == -1)
+            if (_usuarioSeleccionado == null)
             {
                 UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserPermissions");
                 return;
@@ -315,11 +311,11 @@ namespace TpIDS
 
             try
             {
-                List<int> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
+                List<IPermiso> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
                     .Distinct()
                     .ToList();
 
-                permisoBLL.GuardarPermisosUsuario(_idSeleccionado, permisosSeleccionados);
+                permisoBLL.GuardarPermisosUsuario(_usuarioSeleccionado, permisosSeleccionados);
                 UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserPermissionsSaved");
             }
             catch (Exception ex)
@@ -328,31 +324,28 @@ namespace TpIDS
             }
         }
 
-        private List<int> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
+        private List<IPermiso> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
         {
-            List<int> ids = new List<int>();
+            List<IPermiso> permisos = new List<IPermiso>();
             foreach (TreeNode nodo in nodos)
             {
                 IPermiso permiso = nodo.Tag as IPermiso;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add(permiso.Id);
+                    permisos.Add(permiso);
                 }
 
-                ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
+                permisos.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
             }
 
-            return ids;
+            return permisos;
         }
 
         private void AplicarSeleccionActualDesdeGrilla()
         {
-            if (dgvUsuarios.SelectedRows.Count == 0 ||
-                !dgvUsuarios.Columns.Contains("Id") ||
-                !dgvUsuarios.Columns.Contains("Username") ||
-                !dgvUsuarios.Columns.Contains("Active"))
+            if (dgvUsuarios.SelectedRows.Count == 0 || !(dgvUsuarios.SelectedRows[0].DataBoundItem is Usuario usuario))
             {
-                _idSeleccionado = -1;
+                _usuarioSeleccionado = null;
                 txtbNombreUsuario.Clear();
                 txtbPasswordUsuario.Clear();
                 chkbUsuarioActivo.Checked = true;
@@ -360,12 +353,10 @@ namespace TpIDS
                 return;
             }
 
-            DataGridViewRow fila = dgvUsuarios.SelectedRows[0];
-            _idSeleccionado = Convert.ToInt32(fila.Cells["Id"].Value);
-            txtbNombreUsuario.Text = fila.Cells["Username"].Value == null ? string.Empty : fila.Cells["Username"].Value.ToString();
+            _usuarioSeleccionado = usuario;
+            txtbNombreUsuario.Text = usuario.Username ?? string.Empty;
             txtbPasswordUsuario.Clear();
-            object valorActivo = fila.Cells["Active"].Value;
-            chkbUsuarioActivo.Checked = valorActivo != null && valorActivo != DBNull.Value && Convert.ToBoolean(valorActivo);
+            chkbUsuarioActivo.Checked = usuario.Activo;
             CargarPermisosUsuario();
         }
 
@@ -447,13 +438,13 @@ namespace TpIDS
                 return;
             }
 
-            if (_idSeleccionado == -1)
+            if (_usuarioSeleccionado == null)
             {
                 UiDialogHelper.MostrarWarning("FormUserManagement.Warning.SelectUserHistory");
                 return;
             }
 
-            using (FormHistorialUsuario formHistorialUsuario = new FormHistorialUsuario(_idSeleccionado, txtbNombreUsuario.Text.Trim()))
+            using (FormHistorialUsuario formHistorialUsuario = new FormHistorialUsuario(_usuarioSeleccionado.Id, txtbNombreUsuario.Text.Trim()))
             {
                 formHistorialUsuario.ShowDialog(this);
             }

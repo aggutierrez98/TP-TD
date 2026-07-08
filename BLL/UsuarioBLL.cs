@@ -58,9 +58,9 @@ namespace BLL
             }
 
             _permisoBLL.CargarPermisosEnUsuario(usuario);
-            Sesion.GetInstance().IniciarSesion(usuario.Id, usuario.Username);
+            Sesion.GetInstance().IniciarSesion(usuario);
             AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuario.Id));
-            _idiomaBLL.AplicarIdiomaSesionUsuario(usuario.Id);
+            _idiomaBLL.AplicarIdiomaSesionUsuario(usuario);
             BitacoraService.GetInstance().RegistrarOperacion("FormAuditLog.Value.Activity.SuccessfulLogin", "FormAuditLog.Value.Info.SuccessfulLogin", "UsuarioBLL");
             return usuario;
         }
@@ -134,10 +134,12 @@ namespace BLL
             return _usuarioDAL.ObtenerTodos();
         }
 
-        public bool Actualizar(int id, string nuevoUsername, string nuevaPasswordRaw, bool activo)
+        public bool Actualizar(Usuario usuario, string nuevaPasswordRaw)
         {
-            string usernameNormalizado = (nuevoUsername ?? string.Empty).Trim();
+            int id = usuario.Id;
+            string usernameNormalizado = (usuario.Username ?? string.Empty).Trim();
             string passwordNormalizada = (nuevaPasswordRaw ?? string.Empty).Trim();
+            bool activo = usuario.Activo;
             if (string.IsNullOrWhiteSpace(usernameNormalizado))
             {
                 BitacoraService.GetInstance().RegistrarFalloNegocio("FormAuditLog.Value.Activity.RejectedUserUpdate", "FormAuditLog.Value.Info.UserUpdateEmptyUsername", "UsuarioBLL");
@@ -150,8 +152,8 @@ namespace BLL
 
                 try
                 {
-                    Usuario usuario = _usuarioDAL.ObtenerPorId(id, accesoDatos);
-                    if (usuario == null)
+                    Usuario usuarioDesdeDB = _usuarioDAL.ObtenerPorId(id, accesoDatos);
+                    if (usuarioDesdeDB == null)
                     {
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
@@ -173,18 +175,18 @@ namespace BLL
                     // Guardar el DVH antes de modificar la entidad es obligatorio:
                     // el DVV incremental necesita restar la firma vieja y sumar
                     // la firma nueva calculada mas abajo.
-                    string dvhAnterior = usuario.DVH;
-                    bool usuarioEstabaActivo = usuario.Activo;
-                    string usernameAnterior = usuario.Username;
+                    string dvhAnterior = usuarioDesdeDB.DVH;
+                    bool usuarioEstabaActivo = usuarioDesdeDB.Activo;
+                    string usernameAnterior = usuarioDesdeDB.Username;
                     bool actualizaPassword = !string.IsNullOrWhiteSpace(passwordNormalizada);
-                    usuario.Username = usernameNormalizado;
+                    usuarioDesdeDB.Username = usernameNormalizado;
                     if (actualizaPassword)
                     {
-                        usuario.PasswordHash = _passwordHasher.HashPassword(passwordNormalizada);
+                        usuarioDesdeDB.PasswordHash = _passwordHasher.HashPassword(passwordNormalizada);
                     }
-                    usuario.Activo = activo;
-                    usuario.DVH = _integridadBLL.CalcularDVH(usuario);
-                    bool actualizado = _usuarioDAL.Actualizar(usuario, accesoDatos);
+                    usuarioDesdeDB.Activo = activo;
+                    usuarioDesdeDB.DVH = _integridadBLL.CalcularDVH(usuarioDesdeDB);
+                    bool actualizado = _usuarioDAL.Actualizar(usuarioDesdeDB, accesoDatos);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.User.UpdateFailed");
@@ -223,7 +225,7 @@ namespace BLL
 
                     // Modificacion: reemplaza la contribucion anterior por la
                     // nueva dentro de la misma transaccion de usuario/historial.
-                    _integridadBLL.ActualizarDVV(TablaUsuarios, dvhAnterior, usuario.DVH, accesoDatos);
+                    _integridadBLL.ActualizarDVV(TablaUsuarios, dvhAnterior, usuarioDesdeDB.DVH, accesoDatos);
                     accesoDatos.CommitTransactionScope();
                 }
                 catch (ExcepcionNegocio)
@@ -246,8 +248,9 @@ namespace BLL
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Usuario usuario)
         {
+            int id = usuario.Id;
             int? usuarioActualId = Sesion.GetInstance().GetUsuarioActualId();
             if (usuarioActualId.HasValue && usuarioActualId.Value == id)
             {
@@ -261,15 +264,15 @@ namespace BLL
 
                 try
                 {
-                    Usuario usuario = _usuarioDAL.ObtenerPorId(id, accesoDatos);
-                    if (usuario == null)
+                    Usuario usuarioDesdeDB = _usuarioDAL.ObtenerPorId(id, accesoDatos);
+                    if (usuarioDesdeDB == null)
                     {
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
 
                     // Baja fisica: capturar la firma antes del DELETE permite
                     // restarla del DVV luego de eliminar la fila.
-                    string dvhAnterior = usuario.DVH;
+                    string dvhAnterior = usuarioDesdeDB.DVH;
                     bool eliminado = _usuarioDAL.EliminarFisicamente(id, accesoDatos);
                     if (!eliminado)
                     {
@@ -398,7 +401,7 @@ namespace BLL
 
             Sesion.GetInstance().ActualizarUsuarioActualNombre(usuario.Username);
             AutorizacionService.GetInstance().ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioId));
-            _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioId);
+            _idiomaBLL.AplicarIdiomaSesionUsuario(usuario);
         }
     }
 }
