@@ -236,7 +236,7 @@ GO
 -- SOURCE OF TRUTH: translation-seeds/base.es.json
 -- Si ejecuta desde SSMS en SQLCMD Mode, cambie RepoRoot por la ruta absoluta del repo en su maquina.
 -- Con setup-database.ps1 deje RepoRoot = . : el wrapper lo reemplaza solo.
-:setvar RepoRoot "."
+:setvar RepoRoot "D:\ian.local\Escritorio\TP-IDS-main"
 -- Formas soportadas de ejecutar este script: SSMS 19/22 en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.
 -- OJO: NO ejecutarlo directo con sqlcmd ODBC 15.x: al llegar a la linea !! corta en silencio (exit 0) y la BD queda sin traducciones.
 -- El helper prepara una copia publica del JSON para que OPENROWSET no dependa de permisos sobre el perfil del usuario.

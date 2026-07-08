@@ -56,7 +56,7 @@ reportar verde vacio.
   (FlaUI mueve ventanas reales) y la BD de test preparada
   (`run-tests.ps1 -IncludeUi` la prepara solo).
 - Datos seed de `script_bd.sql` que la suite asume: usuarios `admin` (grupo `admin`,
-  todas las patentes) y `user` (grupo `basico`), e idioma default `Español` con las
+  todos los permisos) y `user` (grupo `basico`), e idioma default `Español` con las
   traducciones de `translation-seeds/base.es.json` (los asserts de mensajes comparan
   contra la tabla `Traduccion` del idioma default, no contra textos hardcodeados).
 - En el primer arranque sobre BD virgen, la suite siembra passwords conocidas para
@@ -73,7 +73,7 @@ reportar verde vacio.
 | --- | --- | --- |
 | `SmokeTests.cs` | Harness + arranque | Inicializacion de firmas (T07 parcial) |
 | `T02_LoginLogoutTests.cs` | T02 | CU01 Login (+4 alternativos), CU02 Registro (+duplicado, +campos vacios), CU03 Logout (+cancelacion) |
-| `T04_UsuariosPermisosTests.cs` | T04 | CU01 Gestionar permisos (+familia vacia, nombre vacio/con punto, duplicada en raiz, patente sin seleccion, ciclo entre familias), CU02 Asignar perfiles (+acciones sin usuario seleccionado), CU03 Control de acceso (admin/basico), baja logica/reactivacion y borrado fisico (+cancelaciones, +alta sin password) |
+| `T04_UsuariosPermisosTests.cs` | T04 | CU01 Gestionar permisos (+grupo vacio, nombre vacio/con punto, duplicado en catalogo, permiso sin seleccion, ciclo entre grupos), CU02 Asignar perfiles (+acciones sin usuario seleccionado), CU03 Control de acceso (admin/basico), baja logica/reactivacion y borrado fisico (+cancelaciones, +alta sin password) |
 | `T05_MultidiomaTests.cs` | T05 | CU01/CU02 alta+rename (+duplicado, +rename a nombre existente), CU03 eliminar (+proteccion default, +cancelacion), CU06 editar traduccion (+valor vacio), CU07 preferencia (+idioma incompleto). CU04/CU05 (import/export con dialogos nativos) quedan sin cobertura automatizada en esta rama |
 | `T06_BitacoraHistorialTests.cs` | T06a/T06b | CU01 Consultar bitacora (filtros usuario/nivel vs SQL), historial de versiones y restauracion (+sin seleccion, +cancelacion) |
 | `T07_IntegridadTests.cs` | T07 | Corrupcion horizontal (DVH) y vertical (DVV) -> pantalla de contingencia; restauran las firmas al terminar |
@@ -81,5 +81,5 @@ reportar verde vacio.
 Flujos alternativos que quedan fuera de la UI a proposito: los "Xa: excepcion tecnica"
 (requieren tirar la infraestructura), los "sin seleccion" de combos con DataSource (auto-
 seleccionan siempre) y el re-chequeo de permiso con boton deshabilitado (rama defensiva).
-En esta rama el ciclo entre familias (T04 CU01 6a) se valida al guardar el catalogo
+En esta rama el ciclo entre grupos (T04 CU01 6a) se valida al guardar el catalogo
 (ValidarSinCiclos en PermisoService), no al agregar la relacion.

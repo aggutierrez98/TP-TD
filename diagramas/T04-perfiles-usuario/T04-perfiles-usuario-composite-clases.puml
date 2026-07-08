@@ -52,22 +52,25 @@ package "SERVICIOS" {
   }
 
   class PermisoService {
-    +ConstruirArbol(nodos : IList, relaciones : IList<Tuple<int,int>>) : List<object>
-    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable) : List<object>
+    +ConstruirArbol(nodos : IList<IPermiso>, relaciones : IList<Tuple<int,int>>) : List<IPermiso>
+    +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : List<IPermiso>
+    +FiltrarGrupos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
+    +FiltrarPermisos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
     +NormalizarNombre(nombre : string) : string
     +ValidarNombre(nombre : string) : void
-    +ValidarNombresUnicos(raices : IEnumerable) : void
-    +ValidarGruposNoVacios(nodos : IEnumerable) : void
-    +ValidarSinCiclos(raices : IEnumerable) : void
-    +Aplanar(raices : IEnumerable) : List<object>
-    +ObtenerRelaciones(raices : IEnumerable) : List<Tuple<int,int>>
+    +ValidarNombresUnicos(raices : IEnumerable<IPermiso>) : void
+    +ValidarGruposNoVacios(nodos : IEnumerable<IPermiso>) : void
+    +ValidarSinCiclos(raices : IEnumerable<IPermiso>) : void
+    +GeneraCiclo(padre : IPermiso, hijo : IPermiso) : bool
+    +Aplanar(raices : IEnumerable<IPermiso>) : List<IPermiso>
+    +ObtenerRelaciones(raices : IEnumerable<IPermiso>) : List<Tuple<int,int>>
   }
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable<IPermiso>) : void
     +Limpiar() : void
-    +TienePermiso(rutaPermiso : string) : bool
+    +TienePermiso(nombrePermiso : string) : bool
   }
 
   class BitacoraService <<singleton>> {
@@ -83,9 +86,9 @@ package "SERVICIOS" {
 
 package "DAL" {
   class PermisoDAL {
-    +ObtenerNodos(accesoDatos : AccesoDatos = null) : List<object>
+    +ObtenerNodos(accesoDatos : AccesoDatos = null) : List<IPermiso>
     +ObtenerRelaciones(accesoDatos : AccesoDatos = null) : List<Tuple<int,int>>
-    +Guardar(permiso : object, accesoDatos : AccesoDatos = null) : int
+    +Guardar(permiso : IPermiso, accesoDatos : AccesoDatos = null) : int
     +ReemplazarRelaciones(relaciones : List<Tuple<int,int>>, accesoDatos : AccesoDatos = null) : bool
     +EliminarPermisos(idsPermiso : List<int>, accesoDatos : AccesoDatos = null) : bool
     +ObtenerIdPorNombre(nombre : string, accesoDatos : AccesoDatos = null) : int
@@ -109,11 +112,11 @@ package "DAL" {
 
 package "BLL" {
   class PermisoBLL {
-    +ObtenerCatalogo() : List<object>
-    +GuardarCatalogo(raices : List<object>) : void
+    +ObtenerCatalogo() : List<IPermiso>
+    +GuardarCatalogo(raices : List<IPermiso>) : void
     +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
     +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
     +CargarPermisosEnUsuario(usuario : Usuario) : void
     +AsignarPerfilBasico(usuarioId : int, accesoDatos : AccesoDatos) : void
   }
@@ -148,6 +151,14 @@ UsuarioBLL --> PermisoBLL
 AutorizacionService --> PermisoService
 
 FormGestionPermisos --> PermisoBLL
+FormGestionPermisos --> PermisoService
 FormGestionUsuarios --> PermisoBLL
+
+note right of PermisoService
+Los nombres de permisos y grupos
+se normalizan en minusculas.
+La unicidad del catalogo es global,
+alineada con UQ_Permiso_Nombre.
+end note
 
 @enduml

@@ -17,20 +17,20 @@ namespace TpIDS.UiTests
     {
         [TestMethod]
         [TestCategory("UI")]
-        public void T04_CU01_CrearFamiliaConPatente_PersisteCatalogoYBitacora()
+        public void T04_CU01_CrearGrupoConPermiso_PersisteCatalogoYBitacora()
         {
-            string familia = NombreUnico("uitestfam");
+            string grupo = NombreUnico("uitestgrp");
             int catalogosPrevios = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.PermissionCatalogUpdate", null);
 
             Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
             UiFind.Click(gestion, "btnGestionPermisos");
             Window permisos = App.EsperarVentana("FormGestionPermisos");
 
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", familia);
-            UiFind.Click(permisos, "btnCrearFamilia");
-            UiFind.SeleccionarItemLista(permisos, "lstbPatentesDisponibles", "verbitacora");
-            UiFind.Click(permisos, "btnAgregarPatenteHija");
-            UiFind.Click(permisos, "btnGuardarFamilia");
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupo);
+            UiFind.Click(permisos, "btnCrearGrupo");
+            UiFind.SeleccionarItemLista(permisos, "lstbPermisosDisponibles", "verbitacora");
+            UiFind.Click(permisos, "btnAgregarPermisoHijo");
+            UiFind.Click(permisos, "btnGuardarGrupo");
 
             MessageBoxWindow confirmacion = App.EsperarMessageBox();
             StringAssert.Contains(
@@ -43,8 +43,8 @@ namespace TpIDS.UiTests
                 1,
                 TestDatabase.Contar(
                     "SELECT COUNT(*) FROM dbo.Permiso WHERE Nombre = @n AND EsGrupo = 1",
-                    new SqlParameter("@n", familia)),
-                "La familia nueva no quedo persistida como grupo.");
+                    new SqlParameter("@n", grupo)),
+                "El grupo nuevo no quedo persistido como grupo.");
 
             Assert.AreEqual(
                 1,
@@ -53,8 +53,8 @@ namespace TpIDS.UiTests
                     "JOIN dbo.Permiso padre ON padre.Id = pc.PermisoPadreId " +
                     "JOIN dbo.Permiso hijo ON hijo.Id = pc.PermisoHijoId " +
                     "WHERE padre.Nombre = @n AND hijo.Nombre = 'verbitacora'",
-                    new SqlParameter("@n", familia)),
-                "No quedo la relacion familia -> patente en el catalogo.");
+                    new SqlParameter("@n", grupo)),
+                "No quedo la relacion grupo -> permiso en el catalogo.");
 
             Assert.AreEqual(
                 catalogosPrevios + 1,
@@ -64,17 +64,17 @@ namespace TpIDS.UiTests
 
         [TestMethod]
         [TestCategory("UI")]
-        public void T04_CU01_FamiliaVacia_InformaErrorYNoPersiste()
+        public void T04_CU01_GrupoVacio_InformaErrorYNoPersiste()
         {
-            string familia = NombreUnico("uitestvacia");
+            string grupo = NombreUnico("uitestvacio");
 
             Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
             UiFind.Click(gestion, "btnGestionPermisos");
             Window permisos = App.EsperarVentana("FormGestionPermisos");
 
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", familia);
-            UiFind.Click(permisos, "btnCrearFamilia");
-            UiFind.Click(permisos, "btnGuardarFamilia");
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupo);
+            UiFind.Click(permisos, "btnCrearGrupo");
+            UiFind.Click(permisos, "btnGuardarGrupo");
 
             MessageBoxWindow aviso = App.EsperarMessageBox();
             StringAssert.Contains(
@@ -87,8 +87,8 @@ namespace TpIDS.UiTests
                 0,
                 TestDatabase.Contar(
                     "SELECT COUNT(*) FROM dbo.Permiso WHERE Nombre = @n",
-                    new SqlParameter("@n", familia)),
-                "La familia vacia no debe persistirse.");
+                    new SqlParameter("@n", grupo)),
+                "El grupo vacio no debe persistirse.");
         }
 
         [TestMethod]
@@ -353,87 +353,87 @@ namespace TpIDS.UiTests
             Window permisos = App.EsperarVentana("FormGestionPermisos");
 
             // CU01 7a: nombre vacio.
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", string.Empty);
-            UiFind.Click(permisos, "btnCrearFamilia");
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", string.Empty);
+            UiFind.Click(permisos, "btnCrearGrupo");
             EsperarAvisoYCerrar("FormPermissionManagement.Warning.NameRequired");
 
             // CU01 7a: nombre con punto.
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", "uitest.punto");
-            UiFind.Click(permisos, "btnCrearFamilia");
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", "uitest.punto");
+            UiFind.Click(permisos, "btnCrearGrupo");
             EsperarAvisoYCerrar("FormPermissionManagement.Warning.NameContainsDot");
 
-            // Agregar patente sin item elegido en la lista.
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", NombreUnico("uitestsel"));
-            UiFind.Click(permisos, "btnCrearFamilia");
-            UiFind.Click(permisos, "btnAgregarPatenteHija");
-            EsperarAvisoYCerrar("FormPermissionManagement.Warning.SelectPatentFromList");
+            // Agregar permiso sin item elegido en la lista.
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", NombreUnico("uitestsel"));
+            UiFind.Click(permisos, "btnCrearGrupo");
+            UiFind.Click(permisos, "btnAgregarPermisoHijo");
+            EsperarAvisoYCerrar("FormPermissionManagement.Warning.SelectPermissionFromList");
         }
 
         [TestMethod]
         [TestCategory("UI")]
-        public void T04_CU01_FamiliaDuplicadaEnRaiz_InformaError()
+        public void T04_CU01_GrupoDuplicadoEnRaiz_InformaError()
         {
             Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
             UiFind.Click(gestion, "btnGestionPermisos");
             Window permisos = App.EsperarVentana("FormGestionPermisos");
 
-            // CU01 7b: ya existe la familia 'admin' en la raiz del catalogo seed.
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", "admin");
-            UiFind.Click(permisos, "btnCrearFamilia");
-            UiFind.SeleccionarItemLista(permisos, "lstbPatentesDisponibles", "verbitacora");
-            UiFind.Click(permisos, "btnAgregarPatenteHija");
-            UiFind.Click(permisos, "btnGuardarFamilia");
+            // CU01 7b: ya existe el grupo 'admin' en la raiz del catalogo seed.
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", "admin");
+            UiFind.Click(permisos, "btnCrearGrupo");
+            UiFind.SeleccionarItemLista(permisos, "lstbPermisosDisponibles", "verbitacora");
+            UiFind.Click(permisos, "btnAgregarPermisoHijo");
+            UiFind.Click(permisos, "btnGuardarGrupo");
 
             EsperarAvisoYCerrar("Error.Permission.DuplicateNames");
 
             Assert.AreEqual(
                 1,
                 TestDatabase.Contar("SELECT COUNT(*) FROM dbo.Permiso WHERE Nombre = 'admin'"),
-                "No debe persistirse una familia duplicada en el mismo nivel.");
+                "No debe persistirse un grupo duplicado en el catalogo.");
         }
 
         [TestMethod]
         [TestCategory("UI")]
-        public void T04_CU01_CicloEntreFamilias_InformaError()
+        public void T04_CU01_CicloEntreGrupos_InformaError()
         {
-            string familiaA = NombreUnico("uitestcicloa");
-            string familiaB = NombreUnico("uitestciclob");
+            string grupoA = NombreUnico("uitestcicloa");
+            string grupoB = NombreUnico("uitestciclob");
 
             Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
             UiFind.Click(gestion, "btnGestionPermisos");
             Window permisos = App.EsperarVentana("FormGestionPermisos");
 
-            // Familia A en la raiz del catalogo.
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", familiaA);
-            UiFind.Click(permisos, "btnCrearFamilia");
+            // Grupo A en la raiz del catalogo.
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupoA);
+            UiFind.Click(permisos, "btnCrearGrupo");
 
-            // Volver al modo "nueva familia" (nodo Raiz) y crear B, tambien en la raiz.
+            // Volver al modo "nuevo grupo" (nodo Raiz) y crear B, tambien en la raiz.
             UiFind.SeleccionarNodoArbol(permisos, "tvwCatalogoPermisos", "Raiz");
-            UiFind.EscribirTexto(permisos, "txtbNombreFamilia", familiaB);
-            UiFind.Click(permisos, "btnCrearFamilia");
+            UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupoB);
+            UiFind.Click(permisos, "btnCrearGrupo");
 
-            // A pasa a ser hija de B.
-            UiFind.SeleccionarItemLista(permisos, "lstbFamiliasDisponibles", familiaA);
-            UiFind.Click(permisos, "btnAgregarFamiliaHija");
+            // A pasa a ser hijo de B.
+            UiFind.SeleccionarItemLista(permisos, "lstbGruposDisponibles", grupoA);
+            UiFind.Click(permisos, "btnAgregarGrupoHijo");
 
-            // CU01 6a: agregar B como hija de A cerraria el ciclo. Debe informarse el
+            // CU01 6a: agregar B como hijo de A cerraria el ciclo. Debe informarse el
             // error de negocio, no una excepcion tecnica no controlada.
-            UiFind.SeleccionarNodoArbol(permisos, "tvwCatalogoPermisos", familiaA);
-            UiFind.SeleccionarItemLista(permisos, "lstbFamiliasDisponibles", familiaB);
-            UiFind.Click(permisos, "btnAgregarFamiliaHija");
+            UiFind.SeleccionarNodoArbol(permisos, "tvwCatalogoPermisos", grupoA);
+            UiFind.SeleccionarItemLista(permisos, "lstbGruposDisponibles", grupoB);
+            UiFind.Click(permisos, "btnAgregarGrupoHijo");
 
             EsperarAvisoYCerrar("Error.Permission.CycleDetected");
 
             // El rechazo no debe dejar el formulario roto: el arbol sigue navegable.
-            UiFind.SeleccionarNodoArbol(permisos, "tvwCatalogoPermisos", familiaB);
+            UiFind.SeleccionarNodoArbol(permisos, "tvwCatalogoPermisos", grupoB);
 
             Assert.AreEqual(
                 0,
                 TestDatabase.Contar(
                     "SELECT COUNT(*) FROM dbo.Permiso WHERE Nombre IN (@a, @b)",
-                    new SqlParameter("@a", familiaA),
-                    new SqlParameter("@b", familiaB)),
-                "El intento de ciclo no debe persistir permisos.");
+                    new SqlParameter("@a", grupoA),
+                    new SqlParameter("@b", grupoB)),
+                "El intento de ciclo no debe persistir grupos.");
         }
 
         private void CrearUsuarioDesdeGestion(Window gestion, string username)
