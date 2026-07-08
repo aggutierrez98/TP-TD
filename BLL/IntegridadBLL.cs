@@ -22,7 +22,6 @@ namespace BLL
 
         public IntegridadBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
             _integridadService = new IntegridadService();
             _integridadDAL = new IntegridadDAL();
             _usuarioDAL = new UsuarioDAL();

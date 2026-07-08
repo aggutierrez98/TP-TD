@@ -19,7 +19,6 @@ namespace BLL
 
         public PermisoBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
             _permisoDAL = new PermisoDAL();
             _usuarioPermisoDAL = new UsuarioPermisoDAL();
             _permisoService = new PermisoService();

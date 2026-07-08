@@ -27,6 +27,9 @@ namespace TpIDS.UiTests
                 new SqlParameter("@u", TestConfig.BasicUsername)) as string;
             Assert.IsFalse(string.IsNullOrEmpty(dvhOriginal), "El DVH deberia estar inicializado antes de corromperlo.");
 
+            int fallosPrevios = TestDatabase.ContarBitacoraPorInformacion(
+                "FormAuditLog.Value.Activity.IntegrityCheckFailed", "FormAuditLog.Value.Info.IntegrityHorizontalCorruption");
+
             try
             {
                 TestDatabase.EjecutarSql(
@@ -34,10 +37,19 @@ namespace TpIDS.UiTests
                     new SqlParameter("@u", TestConfig.BasicUsername));
 
                 Window contingencia = App.EsperarVentana("FormContingenciaIntegridad", TimeSpan.FromSeconds(30));
+                string mensajeContingencia = UiFind.Elemento(contingencia, "lblMensaje").Name;
+                StringAssert.DoesNotMatch(
+                    mensajeContingencia,
+                    new System.Text.RegularExpressions.Regex("Usuarios"),
+                    "La contingencia no deberia exponer la tabla afectada al usuario.");
+                Assert.IsFalse(
+                    mensajeContingencia.StartsWith("FormContingencia."),
+                    "El mensaje de contingencia deberia mostrarse traducido, no como clave cruda.");
                 Assert.AreEqual(
-                    "Usuarios",
-                    UiFind.Elemento(contingencia, "lblTablaValor").Name,
-                    "La contingencia deberia informar la tabla afectada.");
+                    fallosPrevios + 1,
+                    TestDatabase.ContarBitacoraPorInformacion(
+                        "FormAuditLog.Value.Activity.IntegrityCheckFailed", "FormAuditLog.Value.Info.IntegrityHorizontalCorruption"),
+                    "El fallo de integridad horizontal no quedo registrado en la bitacora.");
             }
             finally
             {
@@ -65,16 +77,28 @@ namespace TpIDS.UiTests
             string dvvOriginal = TestDatabase.ObtenerDvv("Usuarios");
             Assert.IsFalse(string.IsNullOrEmpty(dvvOriginal), "El DVV deberia estar inicializado antes de corromperlo.");
 
+            int fallosPrevios = TestDatabase.ContarBitacoraPorInformacion(
+                "FormAuditLog.Value.Activity.IntegrityCheckFailed", "FormAuditLog.Value.Info.IntegrityVerticalCorruption");
+
             try
             {
                 TestDatabase.EjecutarSql(
                     "UPDATE dbo.DigitoVerificadorVertical SET Valor = 'UITEST-CORRUPTO' WHERE NombreTabla = 'Usuarios'");
 
                 Window contingencia = App.EsperarVentana("FormContingenciaIntegridad", TimeSpan.FromSeconds(30));
+                string mensajeContingencia = UiFind.Elemento(contingencia, "lblMensaje").Name;
+                StringAssert.DoesNotMatch(
+                    mensajeContingencia,
+                    new System.Text.RegularExpressions.Regex("Usuarios"),
+                    "La contingencia no deberia exponer la tabla afectada al usuario.");
+                Assert.IsFalse(
+                    mensajeContingencia.StartsWith("FormContingencia."),
+                    "El mensaje de contingencia deberia mostrarse traducido, no como clave cruda.");
                 Assert.AreEqual(
-                    "Usuarios",
-                    UiFind.Elemento(contingencia, "lblTablaValor").Name,
-                    "La contingencia deberia informar la tabla afectada.");
+                    fallosPrevios + 1,
+                    TestDatabase.ContarBitacoraPorInformacion(
+                        "FormAuditLog.Value.Activity.IntegrityCheckFailed", "FormAuditLog.Value.Info.IntegrityVerticalCorruption"),
+                    "El fallo de integridad vertical no quedo registrado en la bitacora.");
             }
             finally
             {

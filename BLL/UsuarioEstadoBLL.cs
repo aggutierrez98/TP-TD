@@ -15,7 +15,6 @@ namespace BLL
 
         public UsuarioEstadoBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
             _usuarioDAL = new UsuarioDAL();
             _usuarioPermisoDAL = new UsuarioPermisoDAL();
             _usuarioPreferenciaDAL = new UsuarioPreferenciaDAL();

@@ -1,0 +1,68 @@
+@startuml T01-arquitectura-base-componentes
+!theme plain
+title T01 - Arquitectura base: diagrama de componentes (6 capas)
+
+skinparam componentStyle rectangle
+
+package "UI / PRESENTACION\n(proyecto TpIDS)" as UI {
+  [UI] as CompUI
+}
+
+package "BLL" {
+  [BLL] as CompBLL
+}
+
+package "DAL" {
+  [DAL] as CompDAL
+}
+
+package "SERVICIOS" {
+  [SERVICIOS] as CompSERVICIOS
+}
+
+package "BE" {
+  [BE] as CompBE
+}
+
+package "ABSTRACCIONES" {
+  [ABSTRACCIONES] as CompABS
+}
+
+database "SQL Server\n(TpCatedraIDS)" as DB
+
+' -- Matriz obligatoria de dependencias (.agents/02-architecture-7-layers.md) --
+CompUI --> CompBLL : casos de uso / flujos de negocio
+CompUI --> CompBE : tipos de dominio
+CompUI --> CompSERVICIOS : servicios reusables
+CompUI --> CompABS : contratos (tipado, p. ej. IPermiso)
+
+CompBLL --> CompDAL : persistencia
+CompBLL --> CompBE : tipos de dominio
+CompBLL --> CompSERVICIOS : reglas reusables
+CompBLL --> CompABS : contratos
+
+CompDAL --> CompBE : tipos de dominio
+CompDAL --> CompSERVICIOS : servicios reusables
+CompDAL --> CompABS : contratos
+CompDAL ..> DB : ADO.NET / SqlClient
+
+CompBE --> CompABS : contratos
+
+CompSERVICIOS --> CompABS : contratos
+
+note bottom of CompABS
+  Solo interfaces/contratos.
+  Sin dependencias salientes.
+  Sin implementaciones concretas.
+end note
+
+note right of CompUI
+  UI conoce SERVICIOS y BE,
+  pero los flujos de negocio
+  entran siempre por BLL.
+  Sin capa REPOSITORIO,
+  sin Unit of Work,
+  sin Composition Root.
+end note
+
+@enduml

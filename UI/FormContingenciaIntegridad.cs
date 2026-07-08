@@ -6,7 +6,8 @@ namespace TpIDS
 {
     // Pantalla de contingencia que se muestra cuando la verificacion de integridad
     // (T07) detecta una alteracion de datos por fuera del sistema. Bloquea el acceso
-    // al login e informa al administrador la tabla afectada y el tipo de falla.
+    // al login con un mensaje generico; el detalle tecnico (tabla, registro) queda
+    // solo en bitacora, no se expone en esta pantalla pre-login.
     public partial class FormContingenciaIntegridad : FormTraducibleBase
     {
         private readonly ExcepcionIntegridad _falla;
@@ -21,8 +22,8 @@ namespace TpIDS
         public override void Actualizar(IdiomaService idiomaService)
         {
             base.Actualizar(idiomaService);
-            // El mensaje depende del tipo de falla y de la tabla, por lo que se reaplica
-            // luego de la traduccion automatica basada en Tag.
+            // El mensaje depende del tipo de falla, por lo que se reaplica luego de
+            // la traduccion automatica basada en Tag.
             AplicarDetalleFalla();
         }
 
@@ -33,13 +34,11 @@ namespace TpIDS
                 return;
             }
 
-            string tabla = _falla.Tabla ?? string.Empty;
             string mensajeKey = _falla.Tipo == TipoFalloIntegridad.Vertical
                 ? "FormContingencia.Message.Vertical"
                 : "FormContingencia.Message.Horizontal";
 
-            lblTablaValor.Text = tabla;
-            lblMensaje.Text = UiDialogHelper.Traducir(mensajeKey, tabla);
+            lblMensaje.Text = UiDialogHelper.Traducir(mensajeKey);
         }
 
         private void btnSalir_Click(object sender, EventArgs e)

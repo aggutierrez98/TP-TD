@@ -24,8 +24,6 @@ namespace BLL
 
         public static void RegistrarExcepcionTecnica(Exception exception, string actividad, string origen)
         {
-            BootstrapAplicacionBLL.Inicializar();
-
             try
             {
                 BitacoraService.GetInstance().RegistrarExcepcionTecnica(actividad, exception, origen);

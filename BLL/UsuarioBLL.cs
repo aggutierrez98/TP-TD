@@ -20,7 +20,6 @@ namespace BLL
 
         public UsuarioBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
             _usuarioDAL = new UsuarioDAL();
             _passwordHasher = new PasswordHasher();
             _idiomaBLL = new IdiomaBLL();

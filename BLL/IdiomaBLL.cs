@@ -19,7 +19,6 @@ namespace BLL
 
         public IdiomaBLL()
         {
-            BootstrapAplicacionBLL.Inicializar();
             _idiomaDAL = new IdiomaDAL();
             _usuarioPreferenciaDAL = new UsuarioPreferenciaDAL();
             _idiomaCatalogoService = new IdiomaCatalogoService();
