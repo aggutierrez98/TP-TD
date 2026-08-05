@@ -3,6 +3,9 @@ title T06a - Gestion de Bitacora - Clases
 
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam wrapWidth 200
+skinparam nodesep 15
+skinparam ranksep 45
 hide empty members
 
 package "ABSTRACCIONES" {
@@ -79,13 +82,15 @@ package "BE" {
     +Username : string
     +PasswordHash : string
     +Activo : bool
+    +DVH : string
+    +Permisos : IList<IPermiso>
   }
 }
 
 package "BLL" {
   class UsuarioBLL {
-    +Actualizar(id : int, nuevoUsername : string, nuevaPasswordRaw : string, activo : bool) : bool
-    +Eliminar(id : int) : bool
+    +Actualizar(usuario : Usuario, nuevaPasswordRaw : string) : bool
+    +Eliminar(usuario : Usuario) : bool
   }
 
   class UsuarioEstadoBLL {

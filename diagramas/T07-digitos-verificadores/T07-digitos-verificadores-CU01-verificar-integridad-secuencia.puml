@@ -4,60 +4,132 @@ title T07 - CU01 Verificar integridad de datos - Secuencia
 skinparam backgroundColor white
 skinparam shadowing false
 
-participant "Program.Main" as Prog
-participant "IntegridadBLL" as IBLL
+actor "Usuario" as Usuario
+boundary "Program.Main" as Prog
+control "BootstrapAplicacionBLL" as Boot
+control "IntegridadBLL" as IBLL
+database "AccesoDatos" as AD
 participant "UsuarioDAL" as UDAL
 participant "IntegridadDAL" as IDAL
 participant "IntegridadService" as ISvc
 participant "BitacoraService" as Bita
-participant "FormContingenciaIntegridad" as Cont
+control "ManejadorExcepcionesBLL" as Manejador
+boundary "UiDialogHelper" as Dialog
+boundary "FormLogin" as Login
+boundary "FormContingenciaIntegridad" as Cont
 
-Prog -> IBLL : ValidarIntegridadGlobal()
+Usuario -> Prog : inicia la aplicacion
+activate Prog
+
+Prog -> Boot : Inicializar()
+activate Boot
+Boot -> IBLL : ValidarIntegridadGlobal()
 activate IBLL
-IBLL -> UDAL : ObtenerTodos(accesoDatos)
-UDAL --> IBLL : usuarios
-IBLL -> IDAL : ObtenerDVV("Usuarios", accesoDatos)
-IDAL --> IBLL : dvvAlmacenado
 
-alt tabla sin inicializar (dvv null y todos los DVH vacios)
-  IBLL -> IBLL : BeginTransactionScope()
-  loop por cada usuario
+IBLL -> AD : BeginTransactionScope()
+IBLL -> UDAL : ObtenerTodos(accesoDatos)
+activate UDAL
+UDAL -> AD : Read("SELECT ... FROM Usuarios ORDER BY Id")
+AD --> UDAL : DataTable
+UDAL --> IBLL : List<Usuario>
+deactivate UDAL
+
+IBLL -> IDAL : ObtenerDVV("Usuarios", accesoDatos)
+activate IDAL
+IDAL -> AD : Read("SELECT Valor ... WHERE NombreTabla = @NombreTabla")
+AD --> IDAL : DataTable
+IDAL --> IBLL : dvvAlmacenado
+deactivate IDAL
+
+alt tabla sin inicializar (dvvAlmacenado == null y todos los DVH vacios)
+  IBLL -> IBLL : EstaSinInicializar(usuarios, dvvAlmacenado)
+  IBLL -> AD : BeginTransactionScope()
+  note right of AD
+    AccesoDatos no crea una segunda transaccion
+    si ya existe una transaccion activa.
+  end note
+
+  loop por cada Usuario
     IBLL -> ISvc : CalcularDVH(usuario)
+    activate ISvc
     ISvc --> IBLL : dvh
-    IBLL -> UDAL : ActualizarDVH(usuario.Id, dvh, accesoDatos)
+    deactivate ISvc
+    IBLL -> UDAL : ActualizarDVH(usuario.Id, usuario.DVH, accesoDatos)
+    activate UDAL
+    UDAL -> AD : Write("UPDATE Usuarios SET DVH = @DVH ...")
+    AD --> UDAL : filas afectadas
+    UDAL --> IBLL : bool
+    deactivate UDAL
   end
-  IBLL -> ISvc : CalcularDVV(listaDVH)
+
+  IBLL -> ISvc : CalcularDVV(usuarios.Select(usuario => usuario.DVH))
+  activate ISvc
   ISvc --> IBLL : dvv
+  deactivate ISvc
   IBLL -> IDAL : GuardarDVV("Usuarios", dvv, accesoDatos)
+  activate IDAL
+  IDAL -> AD : Write("UPDATE/INSERT DigitoVerificadorVertical ...")
+  IDAL --> IBLL : void
+  deactivate IDAL
   IBLL -> Bita : RegistrarOperacion("...IntegritySignaturesInitialized", "...", "IntegridadBLL", accesoDatos)
-  IBLL -> IBLL : CommitTransactionScope()
-else firmas ya inicializadas -> verificar
+  IBLL -> AD : CommitTransactionScope()
+  IBLL --> Boot : return
+
+else firmas ya inicializadas
   group Verificacion horizontal (DVH por fila)
-    loop por cada usuario
+    loop por cada Usuario
       IBLL -> ISvc : CalcularDVH(usuario)
+      activate ISvc
       ISvc --> IBLL : dvhCalculado
+      deactivate ISvc
+
       alt dvhCalculado != usuario.DVH
         IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...HorizontalCorruption", "IntegridadBLL")
-        IBLL -> Prog : throw ExcepcionIntegridad(Horizontal, "Usuarios", usuario.Id)
+        IBLL -> AD : RollbackTransactionScope()
+        IBLL --> Boot : throw ExcepcionIntegridad(Horizontal, "Usuarios", usuario.Id, "Error.Integridad.Horizontal")
       end
     end
   end
-  group Verificacion vertical (DVV de la tabla)
-    IBLL -> ISvc : CalcularDVV(usuarios.DVH)
+
+  group Verificacion vertical (DVV de Usuarios)
+    IBLL -> ISvc : CalcularDVV(usuarios.Select(usuario => usuario.DVH))
+    activate ISvc
     ISvc --> IBLL : dvvCalculado
+    deactivate ISvc
+
     alt dvvCalculado != dvvAlmacenado
       IBLL -> Bita : RegistrarFalloNegocio("...IntegrityCheckFailed", "...VerticalCorruption", "IntegridadBLL")
-      IBLL -> Prog : throw ExcepcionIntegridad(Vertical, "Usuarios", null)
+      IBLL -> AD : RollbackTransactionScope()
+      IBLL --> Boot : throw ExcepcionIntegridad(Vertical, "Usuarios", null, "Error.Integridad.Vertical")
+    else dvvCalculado == dvvAlmacenado
+      IBLL -> AD : CommitTransactionScope()
+      IBLL --> Boot : return
     end
   end
 end
+
 deactivate IBLL
 
-alt arranque sin fallas
-  Prog -> Prog : Application.Run(new FormLogin())
+alt integridad valida o firmas inicializadas
+  Boot --> Prog : return
+  deactivate Boot
+  create Login
+  Prog -> Login : Application.Run(new FormLogin())
 else ExcepcionIntegridad
-  Prog -> Bita : RegistrarExcepcionTecnica(ex, "Verificacion de integridad", "Program")
+  Boot --> Prog : throw ExcepcionIntegridad
+  deactivate Boot
+  Prog -> Manejador : RegistrarExcepcionTecnica(ex, "Verificacion de integridad", "Program")
+  Manejador -> Bita : RegistrarExcepcionTecnica("Verificacion de integridad", ex, "Program")
+  create Cont
   Prog -> Cont : Application.Run(new FormContingenciaIntegridad(ex))
+else Exception
+  Boot --> Prog : throw Exception
+  deactivate Boot
+  Prog -> Manejador : RegistrarExcepcionTecnica(ex, "Arranque de la aplicacion", "Program")
+  Manejador -> Bita : RegistrarExcepcionTecnica("Arranque de la aplicacion", ex, "Program")
+  Prog -> Dialog : MostrarError("Error.Technical.Unexpected")
 end
+
+deactivate Prog
 
 @enduml

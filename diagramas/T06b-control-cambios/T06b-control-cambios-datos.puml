@@ -10,7 +10,8 @@ entity "Usuarios" as Usuarios {
   --
   Username : varchar(50) <<UQ, NOT NULL>>
   PasswordHash : varchar(max) <<NOT NULL>>
-  Activo : bit <<NOT NULL>>
+  Activo : bit <<NOT NULL, DEFAULT 1>>
+  DVH : varchar(100) <<NULL>>
 }
 
 entity "UsuarioPreferencias" as UsuarioPreferencias {
@@ -51,8 +52,14 @@ Usuarios ||--o| UsuarioPreferencias : FK_UsuarioPreferencias_Usuario
 Usuarios ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Usuario
 
 note right of UsuarioHistorialPermiso
-  El script actual define PK compuesta y FK solo hacia UsuarioHistorial.
-  PermisoId no tiene FK declarada en la DDL.
+  PK compuesta (HistorialId, PermisoId) y FK solo hacia UsuarioHistorial.
+  PermisoId no tiene FK declarada en la DDL de esta tabla.
+end note
+
+note bottom of UsuarioPreferencias
+  UsuarioPreferencias.IdiomaId referencia dbo.Idioma (modulo T05) y
+  UsuarioPermiso.PermisoId referencia dbo.Permiso (modulo T04);
+  esas tablas quedan fuera del alcance de este DER.
 end note
 
 @enduml

@@ -10,7 +10,8 @@ entity "Usuarios" as Usuarios {
   --
   Username : varchar(50) <<UQ, NOT NULL>>
   PasswordHash : varchar(max) <<NOT NULL>>
-  Activo : bit <<NOT NULL>>
+  Activo : bit <<NOT NULL, DEFAULT 1>>
+  DVH : varchar(100) <<NULL>>
 }
 
 entity "Bitacora" as Bitacora {
@@ -23,9 +24,16 @@ entity "Bitacora" as Bitacora {
   Informacion : varchar(500) <<NULL>>
   Nivel : varchar(20) <<NOT NULL>>
   Origen : varchar(100) <<NOT NULL>>
-  EsTecnica : bit <<NOT NULL>>
+  EsTecnica : bit <<NOT NULL, DEFAULT 0>>
 }
 
 Usuarios ||--o{ Bitacora : FK_Bitacora_Usuario
+
+note bottom of Bitacora
+  Indices: IX_Bitacora_FechaHora (FechaHora DESC),
+  IX_Bitacora_UsuarioId_Actividad (UsuarioId, Actividad).
+  UsuarioId/UsernameSnapshot admiten NULL para eventos
+  sin sesion (p. ej. login fallido).
+end note
 
 @enduml

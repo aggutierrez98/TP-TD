@@ -1,11 +1,19 @@
 @startuml
 title T07 - Gestion de Digitos Verificadores - DER
 
-hide methods
-hide stereotypes
 skinparam backgroundColor white
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam linetype ortho
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL, DEFAULT 1>>
+  DVH : varchar(100) <<NULL>>
+}
 
 entity "DigitoVerificadorVertical" as DVV {
   *NombreTabla : varchar(100) <<PK, NOT NULL>>
@@ -14,21 +22,26 @@ entity "DigitoVerificadorVertical" as DVV {
   FechaActualizacion : datetime <<NOT NULL>>
 }
 
-entity "Usuarios" as Usuarios {
-  *Id : int <<PK, IDENTITY, NOT NULL>>
-  --
-  Username : varchar(50) <<UQ, NOT NULL>>
-  PasswordHash : varchar(max) <<NOT NULL>>
-  Activo : bit <<NOT NULL>>
-  DVH : varchar(100) <<NULL>>  ' digito verificador horizontal de la fila
-}
+DVV ..> Usuarios : NombreTabla = "Usuarios"\nrelacion logica, no FK fisica
 
-DVV ..> Usuarios : NombreTabla = "Usuarios"\n(agrega los DVH de la tabla)
+note right of Usuarios
+  Estructura observada en SQL Server TpCatedraIDS.
+  Constraints: PK_Usuarios(Id), UQ_Usuarios_Username(Username),
+  DF_Usuarios_Activo((1)).
+  DVH persiste el digito verificador horizontal de cada fila.
+end note
 
 note bottom of DVV
-  Una fila por tabla controlada (PK = NombreTabla).
-  Valor = DVV (suma modular de los DVH). No hay FK: la
-  relacion con Usuarios es logica (por nombre de tabla).
+  Estructura observada en SQL Server TpCatedraIDS.
+  Constraints: PK_DigitoVerificadorVertical(NombreTabla).
+  Valor almacena el DVV consolidado por tabla controlada.
+  El codigo usa la fila NombreTabla = "Usuarios".
+end note
+
+note bottom
+  SQL Server tambien reporta FKs entrantes hacia Usuarios desde Bitacora,
+  UsuarioHistorial, UsuarioPermiso y UsuarioPreferencias. Pertenecen a otros
+  modulos del TP y no guardan DVH/DVV, por eso no se expanden en el DER T07.
 end note
 
 @enduml

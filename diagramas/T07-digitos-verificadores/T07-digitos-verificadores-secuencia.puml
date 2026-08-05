@@ -1,0 +1,119 @@
+@startuml
+title T07 - Gestion de Digitos Verificadores - Secuencia general
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor "Usuario" as Usuario
+boundary "Program.Main" as Prog
+control "BootstrapAplicacionBLL" as Boot
+control "IntegridadBLL" as IBLL
+control "UsuarioBLL" as UBLL
+database "AccesoDatos" as AD
+participant "UsuarioDAL" as UDAL
+participant "IntegridadDAL" as IDAL
+participant "IntegridadService" as ISvc
+participant "BitacoraService" as Bita
+boundary "FormLogin" as Login
+
+group Arranque: verificacion global de integridad
+  Usuario -> Prog : inicia la aplicacion
+  Prog -> Boot : Inicializar()
+  Boot -> IBLL : ValidarIntegridadGlobal()
+  activate IBLL
+  IBLL -> AD : BeginTransactionScope()
+  IBLL -> UDAL : ObtenerTodos(accesoDatos)
+  UDAL -> AD : Read("SELECT ... FROM Usuarios ORDER BY Id")
+  UDAL --> IBLL : List<Usuario>
+  IBLL -> IDAL : ObtenerDVV("Usuarios", accesoDatos)
+  IDAL -> AD : Read("SELECT Valor ...")
+  IDAL --> IBLL : dvvAlmacenado
+
+  alt primera ejecucion sin firmas
+    loop por cada Usuario
+      IBLL -> ISvc : CalcularDVH(usuario)
+      ISvc --> IBLL : dvh
+      IBLL -> UDAL : ActualizarDVH(usuario.Id, usuario.DVH, accesoDatos)
+      UDAL -> AD : Write("UPDATE Usuarios SET DVH = @DVH ...")
+    end
+    IBLL -> ISvc : CalcularDVV(usuarios.Select(usuario => usuario.DVH))
+    ISvc --> IBLL : dvv
+    IBLL -> IDAL : GuardarDVV("Usuarios", dvv, accesoDatos)
+    IDAL -> AD : Write("UPDATE/INSERT DigitoVerificadorVertical ...")
+    IBLL -> Bita : RegistrarOperacion("...IntegritySignaturesInitialized", "...", "IntegridadBLL", accesoDatos)
+  else firmas existentes
+    IBLL -> IBLL : VerificarHorizontal(usuarios)
+    IBLL -> IBLL : VerificarVertical(usuarios, dvvAlmacenado)
+    note right of IBLL
+      Si alguna verificacion falla, IntegridadBLL registra el fallo,
+      hace RollbackTransactionScope y lanza ExcepcionIntegridad.
+      El detalle completo esta en el diagrama CU01.
+    end note
+  end
+
+  IBLL -> AD : CommitTransactionScope()
+  deactivate IBLL
+  Boot --> Prog : return
+  Prog -> Login : Application.Run(new FormLogin())
+end
+
+group Escrituras de usuario: mantenimiento incremental de DVV
+  Usuario -> UBLL : Registrar / Actualizar / Eliminar / RestaurarVersion
+  activate UBLL
+  UBLL -> AD : BeginTransactionScope()
+
+  alt Alta de usuario
+    UBLL -> UDAL : InsertarYObtenerId(nuevoUsuario, accesoDatos)
+    UDAL -> AD : WriteWithResult("INSERT Usuarios ... OUTPUT INSERTED.Id")
+    UDAL --> UBLL : id
+    UBLL -> IBLL : CalcularDVH(nuevoUsuario)
+    activate IBLL
+    IBLL -> ISvc : CalcularDVH(nuevoUsuario)
+    ISvc --> IBLL : dvhNuevo
+    IBLL --> UBLL : dvhNuevo
+    deactivate IBLL
+    UBLL -> UDAL : ActualizarDVH(nuevoUsuario.Id, nuevoUsuario.DVH, accesoDatos)
+    UDAL -> AD : Write("UPDATE Usuarios SET DVH = @DVH ...")
+    UBLL -> UBLL : dvhAnterior = null; dvhNuevo = nuevoUsuario.DVH
+
+  else Actualizacion o restauracion
+    UBLL -> UDAL : ObtenerPorId(id, accesoDatos)
+    UDAL --> UBLL : usuarioDesdeDB
+    UBLL -> UBLL : conservar dvhAnterior
+    UBLL -> IBLL : CalcularDVH(usuarioModificado)
+    activate IBLL
+    IBLL -> ISvc : CalcularDVH(usuarioModificado)
+    ISvc --> IBLL : dvhNuevo
+    IBLL --> UBLL : dvhNuevo
+    deactivate IBLL
+    UBLL -> UDAL : Actualizar(usuarioModificado, accesoDatos)\no ActualizarDVH(id, dvhNuevo, accesoDatos)
+    UDAL -> AD : Write("UPDATE Usuarios ...")
+    UBLL -> UBLL : dvhAnterior = usuarioDesdeDB.DVH
+
+  else Baja fisica
+    UBLL -> UDAL : ObtenerPorId(id, accesoDatos)
+    UDAL --> UBLL : usuarioDesdeDB
+    UBLL -> UBLL : conservar dvhAnterior
+    UBLL -> UDAL : EliminarFisicamente(id, accesoDatos)
+    UDAL -> AD : Write("DELETE/UPDATE dependencias y DELETE Usuarios")
+    UBLL -> UBLL : dvhNuevo = null
+  end
+
+  UBLL -> Bita : RegistrarOperacion(..., ..., "UsuarioBLL", accesoDatos)
+  UBLL -> IBLL : ActualizarDVV("Usuarios", dvhAnterior, dvhNuevo, accesoDatos)
+  activate IBLL
+  IBLL -> IDAL : ObtenerDVV("Usuarios", accesoDatos)
+  IDAL -> AD : Read("SELECT Valor ...")
+  IDAL --> IBLL : dvvActual
+  IBLL -> ISvc : CalcularDVVIncremental(dvvActual, dvhAnterior, dvhNuevo)
+  ISvc --> IBLL : dvv
+  IBLL -> IDAL : GuardarDVV("Usuarios", dvv, accesoDatos)
+  IDAL -> AD : Write("UPDATE/INSERT DigitoVerificadorVertical ...")
+  IBLL --> UBLL : void
+  deactivate IBLL
+
+  UBLL -> AD : CommitTransactionScope()
+  deactivate UBLL
+end
+
+@enduml

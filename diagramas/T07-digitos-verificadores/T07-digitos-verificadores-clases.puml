@@ -11,71 +11,50 @@ hide empty members
 
 package "UI" {
   class Program <<static>> {
-    +Main() : void
+    -Main() : void
   }
+
+  class FormLogin {
+    +FormLogin()
+  }
+
   class FormContingenciaIntegridad {
     -_falla : ExcepcionIntegridad
     +FormContingenciaIntegridad(falla : ExcepcionIntegridad)
+    -AplicarDetalleFalla() : void
+    -btnSalir_Click(sender : object, e : EventArgs) : void
+  }
+
+  class UiDialogHelper <<static>> {
+    +MostrarError(messageKey : string, args : object[]) : void
+    +Traducir(key : string, args : object[]) : string
   }
 }
 
 package "BLL" {
+  class BootstrapAplicacionBLL <<static>> {
+    +Inicializar() : void
+  }
+
   class IntegridadBLL {
     +CalcularDVH<T>(entidad : T) : string
     +ActualizarDVV(tabla : string, dvhAnterior : string, dvhNuevo : string, accesoDatos : AccesoDatos) : void
     +ValidarIntegridadGlobal() : void
+    -EstaSinInicializar(usuarios : IEnumerable<Usuario>, dvvAlmacenado : string) : bool
     -InicializarFirmas(usuarios : List<Usuario>, accesoDatos : AccesoDatos) : void
     -VerificarHorizontal(usuarios : IEnumerable<Usuario>) : void
     -VerificarVertical(usuarios : List<Usuario>, dvvAlmacenado : string) : void
   }
+
   class UsuarioBLL {
     +Registrar(username : string, passwordRaw : string) : bool
-    +Actualizar(id : int, nuevoUsername : string, nuevaPasswordRaw : string, activo : bool) : bool
-    +Eliminar(id : int) : bool
+    +Actualizar(usuario : Usuario, nuevaPasswordRaw : string) : bool
+    +Eliminar(usuario : Usuario) : bool
     +RestaurarVersion(historialId : int) : bool
   }
-}
 
-package "ABSTRACCIONES" {
-  interface IIntegrable {
-    +DVH : string
-  }
-  class DigitoVerificadorAttribute <<Attribute>> {
-    +Orden : int
-  }
-}
-
-package "SERVICIOS" {
-  class IntegridadService {
-    +CalcularDVH<T>(entidad : T) : string
-    +CalcularDVV(listaDVH : IEnumerable<string>) : string
-    +CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
-  }
-  class ExcepcionIntegridad {
-    +Tipo : TipoFalloIntegridad
-    +Tabla : string
-    +RegistroId : int?
-  }
-  enum TipoFalloIntegridad {
-    Horizontal
-    Vertical
-  }
-  class BitacoraService <<singleton>>
-}
-
-package "DAL" {
-  class IntegridadDAL {
-    +ObtenerDVV(nombreTabla : string, accesoDatos : AccesoDatos = null) : string
-    +GuardarDVV(nombreTabla : string, valor : string, accesoDatos : AccesoDatos = null) : void
-  }
-  class UsuarioDAL {
-    +ObtenerTodos(accesoDatos : AccesoDatos) : List<Usuario>
-    +ActualizarDVH(id : int, dvh : string, accesoDatos : AccesoDatos = null) : bool
-  }
-  class AccesoDatos {
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
+  class ManejadorExcepcionesBLL <<static>> {
+    +RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
   }
 }
 
@@ -89,34 +68,115 @@ package "BE" {
   }
 }
 
-Program ..> IntegridadBLL : ValidarIntegridadGlobal()
-Program ..> FormContingenciaIntegridad : <<creates>> ante ExcepcionIntegridad
+package "ABSTRACCIONES" {
+  interface IIntegrable {
+    +DVH : string
+  }
+
+  class DigitoVerificadorAttribute <<Attribute>> {
+    +DigitoVerificadorAttribute(orden : int)
+    +Orden : int
+  }
+}
+
+package "SERVICIOS" {
+  class IntegridadService {
+    +CalcularDVH<T>(entidad : T) : string
+    +CalcularDVV(listaDVH : IEnumerable<string>) : string
+    +CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
+  }
+
+  class BitacoraService <<singleton>> {
+    +GetInstance() : BitacoraService
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string, contextoPersistencia : object = null) : void
+  }
+
+  class ExcepcionTecnica {
+    +ExcepcionTecnica(messageKey : string)
+    +ExcepcionTecnica(messageKey : string, innerException : Exception)
+  }
+
+  class ExcepcionIntegridad {
+    +ExcepcionIntegridad(tipo : TipoFalloIntegridad, tabla : string, registroId : int?, messageKey : string)
+    +Tipo : TipoFalloIntegridad
+    +Tabla : string
+    +RegistroId : int?
+  }
+
+  enum TipoFalloIntegridad {
+    Horizontal
+    Vertical
+  }
+}
+
+package "DAL" {
+  class AccesoDatos {
+    +BeginTransactionScope() : void
+    +CommitTransactionScope() : void
+    +RollbackTransactionScope() : void
+    +Read(sql : string, parameters : List<SqlParameter> = null) : DataTable
+    +Write(sql : string, parameters : List<SqlParameter> = null) : int
+    +WriteWithResult(sql : string, parameters : List<SqlParameter> = null) : int
+  }
+
+  class IntegridadDAL {
+    +ObtenerDVV(nombreTabla : string, accesoDatos : AccesoDatos = null) : string
+    +GuardarDVV(nombreTabla : string, valor : string, accesoDatos : AccesoDatos = null) : void
+  }
+
+  class UsuarioDAL {
+    +ObtenerTodos(accesoDatos : AccesoDatos) : List<Usuario>
+    +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
+    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatos = null) : int
+    +Actualizar(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+    +ActualizarDVH(id : int, dvh : string, accesoDatos : AccesoDatos = null) : bool
+    +EliminarFisicamente(id : int, accesoDatos : AccesoDatos = null) : bool
+  }
+}
+
+Program ..> BootstrapAplicacionBLL : Inicializar()
+Program ..> ManejadorExcepcionesBLL : RegistrarExcepcionTecnica()
+Program ..> FormLogin : creates
+Program ..> FormContingenciaIntegridad : creates
+Program ..> UiDialogHelper : MostrarError()
+
+BootstrapAplicacionBLL ..> IntegridadBLL : ValidarIntegridadGlobal()
+
 FormContingenciaIntegridad --> ExcepcionIntegridad
+FormContingenciaIntegridad ..> TipoFalloIntegridad
+FormContingenciaIntegridad ..> UiDialogHelper : Traducir()
 
 IntegridadBLL --> IntegridadService
 IntegridadBLL --> IntegridadDAL
 IntegridadBLL --> UsuarioDAL
-IntegridadBLL ..> BitacoraService : GetInstance()
 IntegridadBLL ..> AccesoDatos : transaccion manual
+IntegridadBLL ..> BitacoraService : GetInstance()
 IntegridadBLL ..> ExcepcionIntegridad : throw
 
-UsuarioBLL ..> IntegridadBLL : DVH/DVV en cada escritura
+UsuarioBLL --> IntegridadBLL : CalcularDVH()/ActualizarDVV()
+UsuarioBLL --> UsuarioDAL
+UsuarioBLL ..> AccesoDatos : transaccion de escritura
 
-IntegridadService ..> DigitoVerificadorAttribute : reflexion (Orden)
+Usuario ..|> IIntegrable
+Usuario ..> DigitoVerificadorAttribute : marca propiedades
+
+IntegridadService ..> DigitoVerificadorAttribute : reflexion por Orden
+IntegridadService ..> Usuario : lee propiedades verificables
+
+ExcepcionIntegridad --|> ExcepcionTecnica
 ExcepcionIntegridad --> TipoFalloIntegridad
+ManejadorExcepcionesBLL ..> BitacoraService : RegistrarExcepcionTecnica()
 
 IntegridadDAL ..> AccesoDatos
 UsuarioDAL ..> AccesoDatos
 
-Usuario ..|> IIntegrable
-Usuario ..> DigitoVerificadorAttribute : marca propiedades
-IntegridadService ..> Usuario : lee propiedades marcadas
-
 note bottom of IntegridadService
-  Motor generico: descubre por reflexion las propiedades con
-  DigitoVerificadorAttribute (ordenadas por Orden), arma la cadena
-  canonica y calcula DVH = Base64(SHA-256). El DVV es suma modular
-  2^256 de los DVH (permite recomputo total o incremental O(1)).
+  CalcularDVH descubre propiedades marcadas con DigitoVerificadorAttribute,
+  arma una cadena canonica estable y devuelve Base64(SHA-256).
+  CalcularDVV suma los DVH modulo 2^256; CalcularDVVIncremental
+  reemplaza la contribucion anterior por la nueva sin escanear la tabla.
 end note
 
 @enduml

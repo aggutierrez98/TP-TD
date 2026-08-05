@@ -3,6 +3,9 @@ title T06b - Gestion de Control de Cambios - Clases
 
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam wrapWidth 200
+skinparam nodesep 15
+skinparam ranksep 45
 hide empty members
 
 package "ABSTRACCIONES" {
@@ -40,6 +43,8 @@ package "BE" {
     +Username : string
     +PasswordHash : string
     +Activo : bool
+    +DVH : string
+    +Permisos : IList<IPermiso>
   }
 }
 
@@ -54,12 +59,13 @@ package "SERVICIOS" {
   class Sesion <<singleton>> {
     +GetInstance() : Sesion
     +GetUsuarioActualId() : int?
+    +GetUsuarioActualNombre() : string
     +ActualizarUsuarioActualNombre(username : string) : void
   }
 
   class AutorizacionService <<singleton>> {
     +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable<IPermiso>) : void
   }
 
   class BitacoraService <<singleton>> {
@@ -116,11 +122,16 @@ package "BLL" {
   }
 
   class IdiomaBLL {
-    +AplicarIdiomaSesionUsuario(usuarioId : int) : void
+    +AplicarIdiomaSesionUsuario(usuario : IUsuarioAutenticado) : void
   }
 
   class PermisoBLL {
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
+  }
+
+  class IntegridadBLL {
+    +CalcularDVH<T>(entidad : T) : string
+    +ActualizarDVV(tabla : string, dvhAnterior : string, dvhNuevo : string, accesoDatos : AccesoDatos) : void
   }
 
   class BootstrapAplicacionBLL {
@@ -136,6 +147,7 @@ package "DAL" {
   class UsuarioDAL {
     +ObtenerPorId(id : int, accesoDatos : AccesoDatos = null) : Usuario
     +GuardarEstadoCompleto(usuario : Usuario, accesoDatos : AccesoDatos = null) : bool
+    +ActualizarDVH(id : int, dvh : string, accesoDatos : AccesoDatos = null) : bool
   }
 
   class UsuarioPermisoDAL {
@@ -182,6 +194,9 @@ UsuarioBLL --> IdiomaBLL
 UsuarioBLL --> Sesion
 UsuarioBLL --> AutorizacionService
 UsuarioBLL --> BitacoraService
+UsuarioBLL --> IntegridadBLL
+UsuarioBLL --> UsuarioDAL
+IntegridadBLL --> UsuarioDAL
 UsuarioEstadoBLL --> UsuarioDAL
 UsuarioEstadoBLL --> UsuarioPermisoDAL
 UsuarioEstadoBLL --> UsuarioPreferenciaDAL

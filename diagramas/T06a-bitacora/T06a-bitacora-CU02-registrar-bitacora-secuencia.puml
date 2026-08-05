@@ -1,0 +1,54 @@
+@startuml
+title T06a - CU02 Registrar en bitacora - Secuencia
+
+participant "OperacionBLL\n(p. ej. UsuarioBLL)" as OperacionBLL
+participant "BitacoraService" as BitacoraService
+participant "Sesion" as Sesion
+participant "BitacoraDAL" as BitacoraDAL
+participant "AccesoDatos" as AccesoDatos
+
+note over OperacionBLL
+  Disparado por una operacion auditable
+  (Login, Registro, Edicion, Baja, Restauracion, ...).
+end note
+
+alt registro de operacion exitosa
+  OperacionBLL -> BitacoraService : RegistrarOperacion(actividad, informacion, origen, contextoPersistencia)
+else registro de fallo de negocio
+  OperacionBLL -> BitacoraService : RegistrarFalloNegocio(actividad, informacion, origen, contextoPersistencia)
+else registro de excepcion tecnica
+  OperacionBLL -> BitacoraService : RegistrarExcepcionTecnica(actividad, exception, origen, contextoPersistencia)
+end
+
+activate BitacoraService
+BitacoraService -> BitacoraService : RegistrarEventoBitacora(actividad, informacion, nivel, origen, esTecnica, contextoPersistencia)
+activate BitacoraService
+
+alt bitacora no configurada
+  BitacoraService --> OperacionBLL : throw InvalidOperationException
+else bitacora configurada
+  BitacoraService -> Sesion : GetUsuarioActualId()
+  activate Sesion
+  Sesion --> BitacoraService : usuarioId?
+  deactivate Sesion
+  BitacoraService -> Sesion : GetUsuarioActualNombre()
+  activate Sesion
+  Sesion --> BitacoraService : username
+  deactivate Sesion
+
+  BitacoraService -> BitacoraService : construir EventoBitacora\n(FechaHora, UsuarioId, UsernameSnapshot,\nActividad, Informacion, Nivel, Origen, EsTecnica)
+
+  BitacoraService -> BitacoraDAL : Guardar(evento, contextoPersistencia as AccesoDatos)
+  activate BitacoraDAL
+  BitacoraDAL -> AccesoDatos : WriteWithResult(insert, parametros)
+  activate AccesoDatos
+  AccesoDatos --> BitacoraDAL : Id
+  deactivate AccesoDatos
+  BitacoraDAL --> BitacoraService : Id
+  deactivate BitacoraDAL
+end
+deactivate BitacoraService
+BitacoraService --> OperacionBLL : void
+deactivate BitacoraService
+
+@enduml

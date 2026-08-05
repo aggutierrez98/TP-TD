@@ -1,0 +1,74 @@
+@startuml
+title T06b - CU03 Consultar historial de usuario - Secuencia
+
+actor Administrador
+participant "FormHistorialUsuario" as FormHistorialUsuario
+participant "UsuarioBLL" as UsuarioBLL
+participant "UsuarioEstadoBLL" as UsuarioEstadoBLL
+participant "HistorialEstadosService" as HistorialEstadosService
+participant "UsuarioHistorialDAL" as UsuarioHistorialDAL
+
+Administrador -> FormHistorialUsuario : abrir historial / btnRefrescarHistorial_Click()
+activate FormHistorialUsuario
+FormHistorialUsuario -> FormHistorialUsuario : RefrescarDatos()
+FormHistorialUsuario -> UsuarioBLL : ObtenerHistorialEstados(usuarioId)
+activate UsuarioBLL
+UsuarioBLL -> UsuarioEstadoBLL : ObtenerHistorial(usuarioId)
+activate UsuarioEstadoBLL
+UsuarioEstadoBLL -> HistorialEstadosService : ObtenerVersionesUsuario(usuarioId)
+activate HistorialEstadosService
+
+note right of HistorialEstadosService
+  Delegado configurado por
+  InicializacionHistorialBLL hacia
+  UsuarioHistorialDAL.ObtenerVersiones.
+end note
+
+HistorialEstadosService -> UsuarioHistorialDAL : ObtenerVersiones(usuarioId)
+activate UsuarioHistorialDAL
+UsuarioHistorialDAL --> HistorialEstadosService : List<UsuarioHistorialSnapshot>
+deactivate UsuarioHistorialDAL
+HistorialEstadosService --> UsuarioEstadoBLL : IList<UsuarioHistorialSnapshot>
+deactivate HistorialEstadosService
+UsuarioEstadoBLL -> UsuarioEstadoBLL : ordenar por FechaHora / HistorialId desc
+UsuarioEstadoBLL --> UsuarioBLL : List<UsuarioHistorialSnapshot>
+deactivate UsuarioEstadoBLL
+UsuarioBLL --> FormHistorialUsuario : List<UsuarioHistorialSnapshot>
+deactivate UsuarioBLL
+FormHistorialUsuario -> FormHistorialUsuario : dgvHistorialUsuario.DataSource = historial
+deactivate FormHistorialUsuario
+
+Administrador -> FormHistorialUsuario : dgvHistorialUsuario_SelectionChanged (selecciona version)
+activate FormHistorialUsuario
+alt hay version seleccionada
+  FormHistorialUsuario -> UsuarioBLL : ObtenerDiferenciasConVersionAnterior(historialId)
+  activate UsuarioBLL
+  UsuarioBLL -> UsuarioEstadoBLL : ObtenerVersion(historialId)
+  activate UsuarioEstadoBLL
+  UsuarioEstadoBLL -> HistorialEstadosService : ObtenerVersionUsuario(historialId)
+  activate HistorialEstadosService
+  HistorialEstadosService -> UsuarioHistorialDAL : ObtenerVersion(historialId)
+  activate UsuarioHistorialDAL
+  UsuarioHistorialDAL --> HistorialEstadosService : snapshot (version actual)
+  deactivate UsuarioHistorialDAL
+  HistorialEstadosService --> UsuarioEstadoBLL : snapshot
+  deactivate HistorialEstadosService
+  UsuarioEstadoBLL --> UsuarioBLL : versionActual
+  deactivate UsuarioEstadoBLL
+  UsuarioBLL -> UsuarioEstadoBLL : ObtenerHistorial(versionActual.UsuarioId)
+  activate UsuarioEstadoBLL
+  UsuarioEstadoBLL --> UsuarioBLL : historial (para hallar versionAnterior)
+  deactivate UsuarioEstadoBLL
+  UsuarioBLL -> UsuarioEstadoBLL : CompararVersiones(versionActual, versionAnterior)
+  activate UsuarioEstadoBLL
+  UsuarioEstadoBLL --> UsuarioBLL : List<ResultadoComparacionEstado>
+  deactivate UsuarioEstadoBLL
+  UsuarioBLL --> FormHistorialUsuario : List<ResultadoComparacionEstado>
+  deactivate UsuarioBLL
+  FormHistorialUsuario -> FormHistorialUsuario : dgvCambiosEstado.DataSource = diferencias
+else sin version seleccionada
+  FormHistorialUsuario -> FormHistorialUsuario : dgvCambiosEstado.DataSource = null
+end
+deactivate FormHistorialUsuario
+
+@enduml
