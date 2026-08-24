@@ -24,8 +24,8 @@ namespace BLL
 
         public static void RegistrarExcepcionTecnica(Exception exception, string actividad, string origen)
         {
-            CompositionRoot.Inicializar();
-
+            // Sin Inicializar() explicito: el getter CompositionRoot.Bitacora ya compone,
+            // y dentro del try un fallo de composicion no tumba al manejador de excepciones.
             try
             {
                 CompositionRoot.Bitacora.RegistrarExcepcionTecnica(actividad, exception, origen);

@@ -11,6 +11,7 @@ namespace BLL
         private readonly IUsuarioRepositorio _usuarioRepositorio;
         private readonly IUsuarioPermisoRepositorio _usuarioPermisoRepositorio;
         private readonly IUsuarioPreferenciaRepositorio _usuarioPreferenciaRepositorio;
+        private readonly IPermisoRepositorio _permisoRepositorio;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly ISesion _sesion;
 
@@ -18,12 +19,14 @@ namespace BLL
             IUsuarioRepositorio usuarioRepositorio,
             IUsuarioPermisoRepositorio usuarioPermisoRepositorio,
             IUsuarioPreferenciaRepositorio usuarioPreferenciaRepositorio,
+            IPermisoRepositorio permisoRepositorio,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
             ISesion sesion)
         {
             _usuarioRepositorio = usuarioRepositorio;
             _usuarioPermisoRepositorio = usuarioPermisoRepositorio;
             _usuarioPreferenciaRepositorio = usuarioPreferenciaRepositorio;
+            _permisoRepositorio = permisoRepositorio;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
             _sesion = sesion;
         }
@@ -199,8 +202,21 @@ namespace BLL
                 return "-";
             }
 
-            List<int> ordenados = permisosIds.OrderBy(id => id).ToList();
-            return ordenados.Count == 0 ? "-" : string.Join(", ", ordenados);
+            List<int> ordenados = permisosIds.Distinct().OrderBy(id => id).ToList();
+            if (ordenados.Count == 0)
+            {
+                return "-";
+            }
+
+            Dictionary<int, string> indice = _permisoRepositorio.ObtenerNodos()
+                .GroupBy(item => item.Id)
+                .ToDictionary(group => group.Key, group => group.First().Nombre);
+
+            List<string> nombres = ordenados
+                .Select(item => indice.ContainsKey(item) ? indice[item] : "Permiso #" + item)
+                .ToList();
+
+            return string.Join(", ", nombres);
         }
     }
 }

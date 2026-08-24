@@ -590,22 +590,18 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeAutorizacion : IAutorizacion
     {
-        public IList ActualizarPermisosArgument { get; private set; }
+        public IList<IPermiso> ActualizarPermisosArgument { get; private set; }
 
         public int ActualizarPermisosCallCount { get; private set; }
 
         public bool LimpiarCalled { get; private set; }
 
-        public void ActualizarPermisosUsuarioActual(IEnumerable permisos)
+        public void ActualizarPermisosUsuarioActual(IEnumerable<IPermiso> permisos)
         {
             ActualizarPermisosCallCount++;
-            if (permisos == null)
-            {
-                ActualizarPermisosArgument = new ArrayList();
-                return;
-            }
-
-            ActualizarPermisosArgument = permisos.Cast<object>().ToList();
+            ActualizarPermisosArgument = permisos == null
+                ? new List<IPermiso>()
+                : permisos.ToList();
         }
 
         public void Limpiar()
@@ -679,16 +675,9 @@ namespace BLL.Tests.TestDoubles
     {
         public int? AplicarIdiomaSesionUsuarioId { get; private set; }
 
-        public int? AplicarIdiomaSesionId { get; private set; }
-
         public void AplicarIdiomaSesionUsuario(int usuarioId)
         {
             AplicarIdiomaSesionUsuarioId = usuarioId;
-        }
-
-        public void AplicarIdiomaSesion(int idiomaId)
-        {
-            AplicarIdiomaSesionId = idiomaId;
         }
     }
 

@@ -111,7 +111,7 @@ namespace BLL
                 }
             }
 
-            AplicarIdiomaSesion(idiomaId);
+            AplicarIdiomaSesion(idioma);
             return true;
         }
 
@@ -319,14 +319,8 @@ namespace BLL
             }
         }
 
-        public bool EstaCompleto(int idiomaId)
+        private void AplicarIdiomaSesion(Idioma idioma)
         {
-            return _idiomaCatalogoService.EstaCompleto(_idiomaRepositorio.ObtenerIdiomaCompleto(idiomaId));
-        }
-
-        public void AplicarIdiomaSesion(int idiomaId)
-        {
-            Idioma idioma = _idiomaRepositorio.ObtenerIdiomaCompleto(idiomaId);
             _idiomaCatalogoService.ValidarIdiomaSeleccionable(idioma);
             _servicioIdioma.CambiarIdioma(idioma);
         }

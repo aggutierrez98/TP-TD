@@ -102,6 +102,7 @@ namespace BLL.Tests
             public readonly FakeUsuarioRepositorio UsuarioRepo = new FakeUsuarioRepositorio();
             public readonly FakeUsuarioPermisoRepositorio UsuarioPermisoRepo = new FakeUsuarioPermisoRepositorio();
             public readonly FakeUsuarioPreferenciaRepositorio UsuarioPreferenciaRepo = new FakeUsuarioPreferenciaRepositorio();
+            public readonly FakePermisoRepositorio PermisoRepo = new FakePermisoRepositorio();
             public readonly FakeUnidadDeTrabajo Unidad = new FakeUnidadDeTrabajo();
             public readonly FakeSesion Sesion = new FakeSesion();
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
@@ -113,7 +114,7 @@ namespace BLL.Tests
 
             public UsuarioEstadoBLL CreateSut()
             {
-                return new UsuarioEstadoBLL(UsuarioRepo, UsuarioPermisoRepo, UsuarioPreferenciaRepo, UnidadFactory, Sesion);
+                return new UsuarioEstadoBLL(UsuarioRepo, UsuarioPermisoRepo, UsuarioPreferenciaRepo, PermisoRepo, UnidadFactory, Sesion);
             }
         }
     }

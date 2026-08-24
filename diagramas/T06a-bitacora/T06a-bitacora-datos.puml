@@ -3,33 +3,37 @@ title T06a - Gestion de Bitacora - DER
 
 hide methods
 hide stereotypes
-skinparam backgroundColor white
 skinparam classAttributeIconSize 0
-skinparam shadowing false
+
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL, DEFAULT 1>>
+  DVH : varchar(100) <<NULL>>
+}
 
 entity "Bitacora" as Bitacora {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
   FechaHora : datetime <<NOT NULL>>
-  UsuarioId : int <<FK -> Usuarios.Id, NULL>>
+  UsuarioId : int <<FK, NULL>>
   UsernameSnapshot : varchar(50) <<NULL>>
   Actividad : varchar(100) <<NOT NULL>>
   Informacion : varchar(500) <<NULL>>
   Nivel : varchar(20) <<NOT NULL>>
   Origen : varchar(100) <<NOT NULL>>
-  EsTecnica : bit <<NOT NULL>>
+  EsTecnica : bit <<NOT NULL, DEFAULT 0>>
 }
 
-entity "Usuarios" as Usuarios {
-  *Id : int <<PK, IDENTITY, NOT NULL>>
-}
-
-Usuarios ||--o{ Bitacora
+Usuarios ||--o{ Bitacora : FK_Bitacora_Usuario
 
 note bottom of Bitacora
-  UsuarioId es NULL-able: la FK se conserva pero se guarda
-  ademas UsernameSnapshot para no perder el autor si el
-  usuario se elimina. Nivel in {Informacion, Advertencia, Error}.
+  Indices: IX_Bitacora_FechaHora (FechaHora DESC),
+  IX_Bitacora_UsuarioId_Actividad (UsuarioId, Actividad).
+  UsuarioId/UsernameSnapshot admiten NULL para eventos
+  sin sesion (p. ej. login fallido).
 end note
 
 @enduml

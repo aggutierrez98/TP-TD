@@ -58,7 +58,8 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = idiomaBLL.ActualizarIdioma(idioma.Id, txtbNombreIdioma.Text, chkbIdiomaDefault.Checked);
+                idioma.Nombre = txtbNombreIdioma.Text;
+                bool actualizado = idiomaBLL.ActualizarIdioma(idioma.Id, idioma.Nombre, idioma.Default);
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);

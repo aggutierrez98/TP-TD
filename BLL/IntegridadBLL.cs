@@ -8,6 +8,10 @@ using SERVICIOS;
 
 namespace BLL
 {
+    // Orquesta el control de integridad por digitos verificadores (T07).
+    // La verificacion global corre al arranque de la aplicacion; las escrituras
+    // de usuarios mantienen el DVV al dia via ActualizarDVVInterno dentro de la
+    // misma unidad de trabajo que la operacion de negocio.
     public class IntegridadBLL : IIntegridadBLL
     {
         private const string TablaUsuarios = "Usuarios";

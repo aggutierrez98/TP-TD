@@ -2,48 +2,56 @@
   "requisito": "T06a-bitacora",
   "titulo": "T06a. Gestion de Bitacora",
   "subtitulo": "Especificaciones de casos de uso",
-  "introduccion": "Casos de uso de la bitacora del sistema: consulta de los eventos auditados y registro de operaciones, fallos de negocio y excepciones tecnicas, segun la implementacion vigente en BitacoraBLL y FormBitacora.",
+  "introduccion": "A continuacion se especifican los casos de uso de la bitacora del sistema segun la implementacion vigente: la consulta filtrada de eventos y el registro centralizado de operaciones, fallos de negocio y excepciones tecnicas.",
   "casos_de_uso": [
     {
       "id_nombre": "CU01 Consultar bitacora",
       "estado": "Implementado",
-      "descripcion": "Permite al administrador consultar los eventos registrados en la bitacora aplicando filtros por fecha, usuario, nivel, tipo y actividad.",
+      "descripcion": "Permite al administrador consultar los eventos registrados en la bitacora aplicando criterios de filtrado por fecha, usuario, actividad, nivel y tipo tecnico.",
       "actor_principal": "Administrador",
       "actor_secundario": "-",
-      "precondiciones": "El administrador tiene una sesion iniciada con el permiso de ver bitacora.",
+      "precondiciones": "La aplicacion se encuentra iniciada, hay una sesion activa y la pantalla de bitacora es accesible desde la gestion de usuarios.",
       "puntos_extension": "No aplica.",
-      "condicion": "El administrador necesita revisar las operaciones y fallos registrados por el sistema.",
+      "condicion": "El administrador necesita auditar las operaciones y errores registrados por el sistema.",
       "escenario_principal": [
-        "1. El administrador abre la pantalla de bitacora.",
-        "2. El administrador define los filtros (rango de fechas, usuario, nivel y solo tecnicas) y presiona buscar.",
-        "3. El sistema arma el filtro y busca los eventos de bitacora que cumplen los criterios.",
-        "4. El sistema aplica ademas el filtro por el texto de actividad ingresado.",
-        "5. El sistema muestra los eventos en la grilla, traduciendo actividad, informacion y nivel al idioma actual."
+        "1. El administrador abre la pantalla de bitacora desde la gestion de usuarios.",
+        "2. El sistema carga los niveles de severidad disponibles y muestra los registros existentes ordenados por fecha descendente.",
+        "3. El administrador define los criterios de filtro: rango de fechas, usuario, actividad, nivel y si son solo eventos tecnicos.",
+        "4. El administrador presiona el boton de busqueda.",
+        "5. El sistema arma el filtro con los criterios seleccionados.",
+        "6. El sistema consulta los eventos de bitacora que cumplen el filtro.",
+        "7. El sistema aplica el filtro adicional por actividad sobre el texto traducido.",
+        "8. El sistema muestra los eventos resultantes en la grilla, traduciendo actividad, informacion y nivel."
       ],
       "flujos_alternativos": [
-        "5a. Si ocurre una excepcion durante la consulta, el sistema informa el error y finaliza el caso de uso."
+        "6a. Si ocurre una excepcion durante la consulta, el sistema muestra el error mediante el manejador de excepciones y finaliza el caso de uso.",
+        "8a. Si ningun evento cumple el filtro, la grilla se muestra vacia."
       ],
-      "postcondiciones": "Se muestra el listado de eventos de bitacora que cumplen los filtros. El caso de uso no modifica datos."
+      "postcondiciones": "La grilla presenta los eventos de bitacora que cumplen los criterios seleccionados. El caso de uso es de solo lectura y no modifica el estado del sistema."
     },
     {
       "id_nombre": "CU02 Registrar en bitacora",
       "estado": "Implementado",
-      "descripcion": "El sistema deja constancia de una operacion, un fallo de negocio o una excepcion tecnica, generando un evento en la bitacora.",
-      "actor_principal": "Usuario",
+      "descripcion": "Registra de forma centralizada un evento en la bitacora, clasificado como operacion exitosa, fallo de negocio o excepcion tecnica, generado por las operaciones auditables del sistema.",
+      "actor_principal": "Sistema",
       "actor_secundario": "-",
-      "precondiciones": "Hay un caso de uso en ejecucion que necesita auditarse.",
-      "puntos_extension": "Caso de uso incluido (<<include>>) por los demas casos de uso del sistema que registran auditoria (login, registro, gestion de permisos, gestion de idiomas, verificacion de integridad, etc.).",
-      "condicion": "Un caso de uso en ejecucion necesita dejar constancia de una operacion, un fallo de negocio o una excepcion tecnica.",
+      "precondiciones": "La bitacora fue configurada durante el arranque con la fabrica de unidades de trabajo y los proveedores de identidad de la sesion.",
+      "puntos_extension": "Incluido por los casos de uso que ejecutan operaciones auditables (Login, Registro, Alta/Edicion/Baja de usuario, Restauracion de version, entre otros).",
+      "condicion": "Una operacion de negocio auditable finaliza con exito, con un fallo de negocio o con una excepcion tecnica y debe dejar traza.",
       "escenario_principal": [
-        "1. Un caso de uso en ejecucion solicita registrar un evento (operacion, fallo de negocio o excepcion tecnica).",
-        "2. El sistema construye el evento con fecha y hora, el usuario actual de la sesion, la actividad, la informacion, el nivel y el origen.",
-        "3. El sistema persiste el evento en la bitacora.",
-        "4. Si el registro forma parte de una operacion transaccional, se confirma junto con esa operacion; si es autonomo, se confirma en su propia unidad de trabajo."
+        "1. Una operacion de la capa de negocio invoca el registro de un evento indicando actividad, informacion y origen.",
+        "2. El sistema determina el nivel del evento segun el tipo de registro: operacion, fallo de negocio o excepcion tecnica.",
+        "3. El sistema obtiene el identificador y el nombre del usuario de la sesion actual.",
+        "4. El sistema construye el evento de bitacora con fecha y hora actual, identidad, actividad, informacion, nivel, origen y marca tecnica.",
+        "5. El sistema persiste el evento, participando de la unidad de trabajo de la operacion cuando se proporciona una; si no, usa su propia unidad de trabajo.",
+        "6. El sistema devuelve el identificador del evento registrado."
       ],
       "flujos_alternativos": [
-        "2a. Si no hay una sesion activa (por ejemplo, un login fallido o el arranque del sistema), el evento se registra con usuario nulo, conservando el resto de los datos."
+        "1a. Si la bitacora no fue configurada, el sistema lanza una excepcion de operacion invalida.",
+        "3a. Si no hay sesion iniciada, la identidad del usuario queda nula y el evento se registra igual.",
+        "5a. Si el registro corresponde a una excepcion tecnica, la informacion se compone con el tipo y el mensaje de la excepcion y el nivel es Error."
       ],
-      "postcondiciones": "El evento queda persistido en la bitacora con su nivel (Informacion, Advertencia o Error)."
+      "postcondiciones": "El evento queda persistido en la tabla Bitacora, disponible para su consulta posterior."
     }
   ]
 }

@@ -18,8 +18,6 @@ namespace TpIDS
         {
             this.lblEncabezado = new System.Windows.Forms.Label();
             this.lblMensaje = new System.Windows.Forms.Label();
-            this.lblTablaAfectada = new System.Windows.Forms.Label();
-            this.lblTablaValor = new System.Windows.Forms.Label();
             this.btnSalir = new System.Windows.Forms.Button();
             this.SuspendLayout();
             //
@@ -42,31 +40,12 @@ namespace TpIDS
             this.lblMensaje.Size = new System.Drawing.Size(446, 86);
             this.lblMensaje.TabIndex = 1;
             //
-            // lblTablaAfectada
-            //
-            this.lblTablaAfectada.AutoSize = true;
-            this.lblTablaAfectada.Location = new System.Drawing.Point(24, 158);
-            this.lblTablaAfectada.Name = "lblTablaAfectada";
-            this.lblTablaAfectada.Size = new System.Drawing.Size(78, 13);
-            this.lblTablaAfectada.TabIndex = 2;
-            this.lblTablaAfectada.Tag = "FormContingencia.Label.TablaAfectada";
-            this.lblTablaAfectada.Text = "Tabla afectada:";
-            //
-            // lblTablaValor
-            //
-            this.lblTablaValor.AutoSize = true;
-            this.lblTablaValor.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
-            this.lblTablaValor.Location = new System.Drawing.Point(108, 158);
-            this.lblTablaValor.Name = "lblTablaValor";
-            this.lblTablaValor.Size = new System.Drawing.Size(0, 13);
-            this.lblTablaValor.TabIndex = 3;
-            //
             // btnSalir
             //
-            this.btnSalir.Location = new System.Drawing.Point(184, 196);
+            this.btnSalir.Location = new System.Drawing.Point(184, 158);
             this.btnSalir.Name = "btnSalir";
             this.btnSalir.Size = new System.Drawing.Size(126, 38);
-            this.btnSalir.TabIndex = 4;
+            this.btnSalir.TabIndex = 2;
             this.btnSalir.Tag = "FormContingencia.Button.Salir";
             this.btnSalir.Text = "Salir";
             this.btnSalir.UseVisualStyleBackColor = true;
@@ -76,10 +55,8 @@ namespace TpIDS
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(494, 261);
+            this.ClientSize = new System.Drawing.Size(494, 220);
             this.Controls.Add(this.btnSalir);
-            this.Controls.Add(this.lblTablaValor);
-            this.Controls.Add(this.lblTablaAfectada);
             this.Controls.Add(this.lblMensaje);
             this.Controls.Add(this.lblEncabezado);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
@@ -95,8 +72,6 @@ namespace TpIDS
 
         private System.Windows.Forms.Label lblEncabezado;
         private System.Windows.Forms.Label lblMensaje;
-        private System.Windows.Forms.Label lblTablaAfectada;
-        private System.Windows.Forms.Label lblTablaValor;
         private System.Windows.Forms.Button btnSalir;
     }
 }

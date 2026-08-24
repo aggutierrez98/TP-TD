@@ -8,13 +8,11 @@ namespace TpIDS
     public partial class FormLogin : FormTraducibleBase
     {
         private readonly BitacoraBLL gestorBitacora = CompositionRoot.GestorBitacora;
-        private readonly IdiomaBLL gestorIdioma = CompositionRoot.Idioma;
         private readonly UsuarioBLL gestorUsuario = CompositionRoot.Usuario;
 
         public FormLogin()
         {
             InitializeComponent();
-            Load += FormLogin_Load;
         }
 
         private void btnIngreso_Click(object sender, EventArgs e)
@@ -61,19 +59,6 @@ namespace TpIDS
         private void btnRegistro_Click(object sender, EventArgs e)
         {
             new FormRegistro().ShowDialog();
-        }
-
-        private void FormLogin_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                gestorIdioma.InicializarAplicacion();
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Inicializacion de idiomas");
-                Close();
-            }
         }
     }
 }

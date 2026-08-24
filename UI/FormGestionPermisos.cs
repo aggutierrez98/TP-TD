@@ -14,7 +14,7 @@ namespace TpIDS
         private readonly PermisoService permisoService = new PermisoService();
 
         private List<IPermiso> catalogoRaiz;
-        private IPermiso familiaActiva;
+        private IPermiso grupoActivo;
 
         public FormGestionPermisos()
         {
@@ -35,8 +35,8 @@ namespace TpIDS
                 .Select(item => ClonarNodo(item, cache))
                 .ToList();
 
-            familiaActiva = null;
-            txtbNombreFamilia.Clear();
+            grupoActivo = null;
+            txtbNombreGrupo.Clear();
             Refrescar();
         }
 
@@ -80,40 +80,40 @@ namespace TpIDS
 
             tvwCatalogoPermisos.Nodes.Clear();
             TreeNode raiz = new TreeNode("Raiz") { Tag = null };
-            foreach (IPermiso familia in catalogoRaiz)
+            foreach (IPermiso grupo in catalogoRaiz)
             {
-                raiz.Nodes.Add(CrearNodoTreeView(familia));
+                raiz.Nodes.Add(CrearNodoTreeView(grupo));
             }
 
             tvwCatalogoPermisos.Nodes.Add(raiz);
             tvwCatalogoPermisos.ExpandAll();
-            SeleccionarNodoFamiliaActiva(tvwCatalogoPermisos.Nodes);
+            SeleccionarNodoGrupoActivo(tvwCatalogoPermisos.Nodes);
 
             tvwCatalogoPermisos.AfterSelect += tvwCatalogoPermisos_AfterSelect;
         }
 
         private void RefrescarListas()
         {
-            lstbFamiliasDisponibles.BeginUpdate();
-            lstbFamiliasDisponibles.Items.Clear();
-            foreach (IPermiso familia in permisoService.FiltrarFamilias(catalogoRaiz))
+            lstbGruposDisponibles.BeginUpdate();
+            lstbGruposDisponibles.Items.Clear();
+            foreach (IPermiso grupo in permisoService.FiltrarGrupos(catalogoRaiz))
             {
-                if (!ReferenceEquals(familia, familiaActiva))
+                if (!ReferenceEquals(grupo, grupoActivo))
                 {
-                    lstbFamiliasDisponibles.Items.Add(familia);
+                    lstbGruposDisponibles.Items.Add(grupo);
                 }
             }
 
-            lstbFamiliasDisponibles.EndUpdate();
+            lstbGruposDisponibles.EndUpdate();
 
-            lstbPatentesDisponibles.BeginUpdate();
-            lstbPatentesDisponibles.Items.Clear();
-            foreach (IPermiso patente in permisoService.FiltrarPatentes(catalogoRaiz))
+            lstbPermisosDisponibles.BeginUpdate();
+            lstbPermisosDisponibles.Items.Clear();
+            foreach (IPermiso permiso in permisoService.FiltrarPermisos(catalogoRaiz))
             {
-                lstbPatentesDisponibles.Items.Add(patente);
+                lstbPermisosDisponibles.Items.Add(permiso);
             }
 
-            lstbPatentesDisponibles.EndUpdate();
+            lstbPermisosDisponibles.EndUpdate();
         }
 
         // Lee la seleccion por indice contra Items en vez de SelectedItem: tras
@@ -133,28 +133,28 @@ namespace TpIDS
 
         private void RefrescarPreview()
         {
-            tvwPreviewFamilia.Nodes.Clear();
-            if (familiaActiva == null)
+            tvwPreviewGrupo.Nodes.Clear();
+            if (grupoActivo == null)
             {
                 return;
             }
 
-            tvwPreviewFamilia.Nodes.Add(CrearNodoTreeView(familiaActiva));
-            tvwPreviewFamilia.ExpandAll();
+            tvwPreviewGrupo.Nodes.Add(CrearNodoTreeView(grupoActivo));
+            tvwPreviewGrupo.ExpandAll();
         }
 
         private void ActualizarEstadoControles()
         {
-            bool hayFamiliaActiva = familiaActiva != null;
+            bool hayGrupoActivo = grupoActivo != null;
 
-            btnCrearFamilia.Enabled = !hayFamiliaActiva;
-            btnAgregarFamiliaHija.Enabled = hayFamiliaActiva;
-            btnAgregarPatenteHija.Enabled = hayFamiliaActiva;
-            btnEliminarSeleccionado.Enabled = hayFamiliaActiva;
-            btnGuardarFamilia.Enabled = hayFamiliaActiva;
+            btnCrearGrupo.Enabled = !hayGrupoActivo;
+            btnAgregarGrupoHijo.Enabled = hayGrupoActivo;
+            btnAgregarPermisoHijo.Enabled = hayGrupoActivo;
+            btnEliminarSeleccionado.Enabled = hayGrupoActivo;
+            btnGuardarGrupo.Enabled = hayGrupoActivo;
 
             IPermiso seleccionCatalogo = tvwCatalogoPermisos.SelectedNode?.Tag as IPermiso;
-            btnEliminarFamilia.Enabled = seleccionCatalogo != null && seleccionCatalogo.EsGrupo;
+            btnEliminarGrupo.Enabled = seleccionCatalogo != null && seleccionCatalogo.EsGrupo;
         }
 
         private TreeNode CrearNodoTreeView(IPermiso permiso)
@@ -172,22 +172,22 @@ namespace TpIDS
             return nodo;
         }
 
-        private void SeleccionarNodoFamiliaActiva(TreeNodeCollection nodos)
+        private void SeleccionarNodoGrupoActivo(TreeNodeCollection nodos)
         {
-            if (familiaActiva == null)
+            if (grupoActivo == null)
             {
                 return;
             }
 
             foreach (TreeNode nodo in nodos)
             {
-                if (ReferenceEquals(nodo.Tag, familiaActiva))
+                if (ReferenceEquals(nodo.Tag, grupoActivo))
                 {
                     tvwCatalogoPermisos.SelectedNode = nodo;
                     return;
                 }
 
-                SeleccionarNodoFamiliaActiva(nodo.Nodes);
+                SeleccionarNodoGrupoActivo(nodo.Nodes);
             }
         }
 
@@ -197,14 +197,14 @@ namespace TpIDS
 
             if (permiso != null && permiso.EsGrupo)
             {
-                familiaActiva = permiso;
-                txtbNombreFamilia.Text = permiso.Nombre;
+                grupoActivo = permiso;
+                txtbNombreGrupo.Text = permiso.Nombre;
             }
             else
             {
-                // Nodo Raiz o patente: no se edita. Vuelve al modo "nueva familia".
-                familiaActiva = null;
-                txtbNombreFamilia.Clear();
+                // Nodo Raiz o permiso hoja: no se edita. Vuelve al modo "nuevo grupo".
+                grupoActivo = null;
+                txtbNombreGrupo.Clear();
             }
 
             RefrescarListas();
@@ -212,92 +212,96 @@ namespace TpIDS
             ActualizarEstadoControles();
         }
 
-        private void txtbNombreFamilia_TextChanged(object sender, EventArgs e)
+        private void txtbNombreGrupo_TextChanged(object sender, EventArgs e)
         {
-            if (familiaActiva == null)
+            if (grupoActivo == null)
             {
                 return;
             }
 
-            familiaActiva.Nombre = txtbNombreFamilia.Text;
+            grupoActivo.Nombre = txtbNombreGrupo.Text;
 
-            if (tvwPreviewFamilia.Nodes.Count > 0)
+            if (tvwPreviewGrupo.Nodes.Count > 0)
             {
-                tvwPreviewFamilia.Nodes[0].Text = txtbNombreFamilia.Text;
+                tvwPreviewGrupo.Nodes[0].Text = txtbNombreGrupo.Text;
             }
 
             if (tvwCatalogoPermisos.SelectedNode != null &&
-                ReferenceEquals(tvwCatalogoPermisos.SelectedNode.Tag, familiaActiva))
+                ReferenceEquals(tvwCatalogoPermisos.SelectedNode.Tag, grupoActivo))
             {
-                tvwCatalogoPermisos.SelectedNode.Text = txtbNombreFamilia.Text;
+                tvwCatalogoPermisos.SelectedNode.Text = txtbNombreGrupo.Text;
             }
+
+            RefrescarListas();
+            RefrescarPreview();
+            ActualizarEstadoControles();
         }
 
-        private void btnCrearFamilia_Click(object sender, EventArgs e)
+        private void btnCrearGrupo_Click(object sender, EventArgs e)
         {
-            string nombre = txtbNombreFamilia.Text.Trim();
-            if (!ValidarNombreFamilia(nombre))
+            string nombre = txtbNombreGrupo.Text.Trim();
+            if (!ValidarNombreGrupo(nombre))
             {
                 return;
             }
 
-            PermisoGrupo nuevaFamilia = new PermisoGrupo { Nombre = nombre };
-            catalogoRaiz.Add(nuevaFamilia);
-            familiaActiva = nuevaFamilia;
+            PermisoGrupo nuevoGrupo = new PermisoGrupo { Nombre = nombre };
+            catalogoRaiz.Add(nuevoGrupo);
+            grupoActivo = nuevoGrupo;
 
             Refrescar();
         }
 
-        private void btnAgregarFamiliaHija_Click(object sender, EventArgs e)
+        private void btnAgregarGrupoHijo_Click(object sender, EventArgs e)
         {
-            if (familiaActiva == null)
+            if (grupoActivo == null)
             {
-                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyToEdit");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectGroupToEdit");
                 return;
             }
 
-            IPermiso familia = ObtenerSeleccion(lstbFamiliasDisponibles);
-            if (familia == null)
+            IPermiso grupo = ObtenerSeleccion(lstbGruposDisponibles);
+            if (grupo == null)
             {
-                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyFromList");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectGroupFromList");
                 return;
             }
 
             // CU01 6a: un ciclo en memoria rompe los recorridos recursivos del arbol,
             // asi que se rechaza aca y no recien al guardar.
-            if (permisoService.GeneraCiclo(familiaActiva, familia))
+            if (permisoService.GeneraCiclo(grupoActivo, grupo))
             {
                 UiDialogHelper.MostrarWarning("Error.Permission.CycleDetected");
                 return;
             }
 
-            familiaActiva.Agregar(familia);
+            grupoActivo.Agregar(grupo);
             Refrescar();
         }
 
-        private void btnAgregarPatenteHija_Click(object sender, EventArgs e)
+        private void btnAgregarPermisoHijo_Click(object sender, EventArgs e)
         {
-            if (familiaActiva == null)
+            if (grupoActivo == null)
             {
-                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyToEdit");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectGroupToEdit");
                 return;
             }
 
-            IPermiso patente = ObtenerSeleccion(lstbPatentesDisponibles);
-            if (patente == null)
+            IPermiso permiso = ObtenerSeleccion(lstbPermisosDisponibles);
+            if (permiso == null)
             {
-                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPatentFromList");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectPermissionFromList");
                 return;
             }
 
-            familiaActiva.Agregar(patente);
+            grupoActivo.Agregar(permiso);
             Refrescar();
         }
 
         private void btnEliminarSeleccionado_Click(object sender, EventArgs e)
         {
-            TreeNode seleccionado = tvwPreviewFamilia.SelectedNode;
-            if (familiaActiva == null || seleccionado == null || seleccionado.Parent == null)
+            TreeNode seleccionado = tvwPreviewGrupo.SelectedNode;
+            if (grupoActivo == null || seleccionado == null || seleccionado.Parent == null)
             {
                 UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectChildToRemove");
                 return;
@@ -314,18 +318,18 @@ namespace TpIDS
             Refrescar();
         }
 
-        private void btnEliminarFamilia_Click(object sender, EventArgs e)
+        private void btnEliminarGrupo_Click(object sender, EventArgs e)
         {
             IPermiso permiso = tvwCatalogoPermisos.SelectedNode?.Tag as IPermiso;
             if (permiso == null || !permiso.EsGrupo)
             {
-                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectFamilyToDelete");
+                UiDialogHelper.MostrarWarning("FormPermissionManagement.Warning.SelectGroupToDelete");
                 return;
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormPermissionManagement.Confirm.DeleteFamilyMessage",
-                "FormPermissionManagement.Confirm.DeleteFamilyTitle",
+                "FormPermissionManagement.Confirm.DeleteGroupMessage",
+                "FormPermissionManagement.Confirm.DeleteGroupTitle",
                 MessageBoxIcon.Warning);
 
             if (confirmacion != DialogResult.Yes)
@@ -344,10 +348,10 @@ namespace TpIDS
                 }
             }
 
-            if (ReferenceEquals(permiso, familiaActiva))
+            if (ReferenceEquals(permiso, grupoActivo))
             {
-                familiaActiva = null;
-                txtbNombreFamilia.Clear();
+                grupoActivo = null;
+                txtbNombreGrupo.Clear();
             }
 
             Refrescar();
@@ -372,7 +376,7 @@ namespace TpIDS
             return false;
         }
 
-        private void btnGuardarFamilia_Click(object sender, EventArgs e)
+        private void btnGuardarGrupo_Click(object sender, EventArgs e)
         {
             try
             {
@@ -382,11 +386,11 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                UiExceptionHandler.Mostrar(ex, "Guardado de familia de permisos");
+                UiExceptionHandler.Mostrar(ex, "Guardado de grupos y permisos");
             }
         }
 
-        private bool ValidarNombreFamilia(string nombre)
+        private bool ValidarNombreGrupo(string nombre)
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {

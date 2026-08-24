@@ -57,6 +57,7 @@ namespace BLL
                     new UsuarioRepositorio(),
                     new UsuarioPermisoRepositorio(),
                     new UsuarioPreferenciaRepositorio(),
+                    new PermisoRepositorio(),
                     uow,
                     _sesion);
 

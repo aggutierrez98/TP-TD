@@ -95,9 +95,10 @@ package "DAL" {
 
 package "BE" {
   class Usuario {
-    +Username : string <<DigitoVerificador(1)>>
-    +PasswordHash : string <<DigitoVerificador(2)>>
-    +Activo : bool <<DigitoVerificador(3)>>
+    +Id : int <<DigitoVerificador(1)>>
+    +Username : string <<DigitoVerificador(2)>>
+    +PasswordHash : string <<DigitoVerificador(3)>>
+    +Activo : bool <<DigitoVerificador(4)>>
     +DVH : string
   }
 }

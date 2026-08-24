@@ -22,8 +22,6 @@ namespace BLL
     internal interface IIdiomaBLL
     {
         void AplicarIdiomaSesionUsuario(int usuarioId);
-
-        void AplicarIdiomaSesion(int idiomaId);
     }
 
     internal interface IPermisoBLL

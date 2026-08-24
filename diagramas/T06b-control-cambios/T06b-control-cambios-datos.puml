@@ -3,16 +3,34 @@ title T06b - Gestion de Control de Cambios - DER
 
 hide methods
 hide stereotypes
-skinparam backgroundColor white
 skinparam classAttributeIconSize 0
-skinparam shadowing false
 
-entity "UsuarioHistorial" as Hist {
+entity "Usuarios" as Usuarios {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  Username : varchar(50) <<UQ, NOT NULL>>
+  PasswordHash : varchar(max) <<NOT NULL>>
+  Activo : bit <<NOT NULL, DEFAULT 1>>
+  DVH : varchar(100) <<NULL>>
+}
+
+entity "UsuarioPreferencias" as UsuarioPreferencias {
+  *UsuarioId : int <<PK, FK, NOT NULL>>
+  --
+  IdiomaId : int <<FK, NOT NULL>>
+}
+
+entity "UsuarioPermiso" as UsuarioPermiso {
+  *UsuarioId : int <<PK, FK, NOT NULL>>
+  *PermisoId : int <<PK, FK, NOT NULL>>
+}
+
+entity "UsuarioHistorial" as UsuarioHistorial {
   *HistorialId : int <<PK, IDENTITY, NOT NULL>>
   --
-  UsuarioId : int <<FK -> Usuarios.Id, NOT NULL>>
+  UsuarioId : int <<FK, NOT NULL>>
   FechaHora : datetime <<NOT NULL>>
-  ActorUsuarioId : int <<FK -> Usuarios.Id, NULL>>
+  ActorUsuarioId : int <<FK, NULL>>
   ActorUsernameSnapshot : varchar(50) <<NULL>>
   Accion : varchar(100) <<NOT NULL>>
   Observaciones : varchar(500) <<NULL>>
@@ -22,24 +40,26 @@ entity "UsuarioHistorial" as Hist {
   IdiomaId : int <<NULL>>
 }
 
-entity "UsuarioHistorialPermiso" as HistPerm {
-  *HistorialId : int <<PK, FK -> UsuarioHistorial.HistorialId, NOT NULL>>
+entity "UsuarioHistorialPermiso" as UsuarioHistorialPermiso {
+  *HistorialId : int <<PK, FK, NOT NULL>>
   *PermisoId : int <<PK, NOT NULL>>
 }
 
-entity "Usuarios" as Usuarios {
-  *Id : int <<PK, IDENTITY, NOT NULL>>
-}
+Usuarios ||--o{ UsuarioHistorial : FK_UsuarioHistorial_Usuario
+Usuarios ||--o{ UsuarioHistorial : FK_UsuarioHistorial_ActorUsuario
+UsuarioHistorial ||--o{ UsuarioHistorialPermiso : FK_UsuarioHistorialPermiso_Historial
+Usuarios ||--o| UsuarioPreferencias : FK_UsuarioPreferencias_Usuario
+Usuarios ||--o{ UsuarioPermiso : FK_UsuarioPermiso_Usuario
 
-Usuarios ||--o{ Hist : UsuarioId
-Usuarios ||--o{ Hist : ActorUsuarioId
-Hist ||--o{ HistPerm
+note right of UsuarioHistorialPermiso
+  PK compuesta (HistorialId, PermisoId) y FK solo hacia UsuarioHistorial.
+  PermisoId no tiene FK declarada en la DDL de esta tabla.
+end note
 
-note bottom of Hist
-  Cada fila es un snapshot completo del estado del usuario
-  (datos + password hash + activo + idioma). Los permisos
-  del snapshot se guardan en UsuarioHistorialPermiso.
-  IdiomaId y PermisoId no tienen FK declarada en la base.
+note bottom of UsuarioPreferencias
+  UsuarioPreferencias.IdiomaId referencia dbo.Idioma (modulo T05) y
+  UsuarioPermiso.PermisoId referencia dbo.Permiso (modulo T04);
+  esas tablas quedan fuera del alcance de este DER.
 end note
 
 @enduml

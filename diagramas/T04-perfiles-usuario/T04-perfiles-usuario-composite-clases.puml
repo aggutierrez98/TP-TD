@@ -21,7 +21,7 @@ package "ABSTRACCIONES" {
     +ObtenerPermisosHoja() : IList<IPermiso>
   }
   interface IAutorizacion {
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable<IPermiso>) : void
     +Limpiar() : void
     +TienePermiso(rutaPermiso : string) : bool
   }
@@ -42,11 +42,15 @@ package "SERVICIOS" {
   class PermisoService {
     +ConstruirArbol(nodos : IList<IPermiso>, relaciones : IList<Tuple<int,int>>) : List<IPermiso>
     +ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : List<IPermiso>
+    +FiltrarGrupos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
+    +FiltrarPermisos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
     +Aplanar(raices : IEnumerable<IPermiso>) : List<IPermiso>
     +ObtenerRelaciones(raices : IEnumerable<IPermiso>) : List<Tuple<int,int>>
     +ValidarSinCiclos(raices : IEnumerable<IPermiso>) : void
+    +GeneraCiclo(padre : IPermiso, hijo : IPermiso) : bool
     +ValidarGruposNoVacios(nodos : IEnumerable<IPermiso>) : void
     +ValidarNombresUnicos(raices : IEnumerable<IPermiso>) : void
+    +ValidarNombre(nombre : string) : void
     +NormalizarNombre(nombre : string) : string
   }
   class AutorizacionService <<singleton>> {

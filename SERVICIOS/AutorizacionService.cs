@@ -1,5 +1,4 @@
 using ABSTRACCIONES;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,23 +32,16 @@ namespace SERVICIOS
             return _instancia;
         }
 
-        private void ActualizarPermisosUsuarioActual(IList<IPermiso> permisos)
-        {
-            _permisosUsuarioActual = permisos == null
-                ? new List<IPermiso>()
-                : permisos.ToList();
-        }
-
         /// <summary>
         /// Metodo para reemplazar los permisos asociados al usuario actual.
         /// Usado despues del login o cuando cambian los permisos disponibles en sesion.
         /// </summary>
-        /// <param name="permisos">La coleccion de permisos tipados como <see cref="IPermiso" />.</param>
-        public void ActualizarPermisosUsuarioActual(IEnumerable permisos)
+        /// <param name="permisos">La coleccion de permisos del usuario autenticado.</param>
+        public void ActualizarPermisosUsuarioActual(IEnumerable<IPermiso> permisos)
         {
             _permisosUsuarioActual = permisos == null
                 ? new List<IPermiso>()
-                : permisos.Cast<object>().OfType<IPermiso>().ToList();
+                : permisos.ToList();
         }
 
         /// <summary>
@@ -63,7 +55,7 @@ namespace SERVICIOS
 
         /// <summary>
         /// Metodo para verificar si el usuario actual tiene un permiso determinado.
-        /// Compara contra las patentes efectivas resultantes del arbol de permisos.
+        /// Compara contra los permisos hoja efectivos resultantes del arbol de permisos.
         /// </summary>
         /// <param name="rutaPermiso">La ruta o nombre normalizado del permiso requerido.</param>
         /// <returns><see langword="true" /> si el permiso esta disponible; en caso contrario, <see langword="false" />.</returns>
