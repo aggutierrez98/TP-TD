@@ -8,11 +8,18 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+    # GetFullPath y no (Resolve-Path ...).Path: Resolve-Path no normaliza los
+    # saltos ".." y, sobre rutas UNC (repo abierto desde \\wsl.localhost\... o un
+    # share de red), devuelve la forma calificada por proveedor
+    # ("Microsoft.PowerShell.Core\FileSystem::\\host\..."), que herramientas como
+    # vstest.console rechazan.
+    $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 }
 else {
-    $RepoRoot = (Resolve-Path $RepoRoot).Path
+    $RepoRoot = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $RepoRoot).ProviderPath)
 }
+
+$RepoRoot = $RepoRoot.TrimEnd('\')
 
 if ([string]::Equals($DatabaseName, "TpCatedraIDS", [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "La base productiva/de desarrollo TpCatedraIDS no puede usarse para tests."

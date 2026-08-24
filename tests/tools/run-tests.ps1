@@ -13,7 +13,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+# GetFullPath y no (Resolve-Path ...).Path: Resolve-Path no normaliza los
+# saltos ".." y, sobre rutas UNC (repo abierto desde \\wsl.localhost\... o un
+# share de red), devuelve la forma calificada por proveedor
+# ("Microsoft.PowerShell.Core\FileSystem::\\host\..."), que herramientas como
+# vstest.console rechazan.
+$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..")).TrimEnd('\')
 $ResultsRoot = Join-Path $RepoRoot "TestResults"
 
 if ($UiFilter) {
