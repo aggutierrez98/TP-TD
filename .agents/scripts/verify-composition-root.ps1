@@ -6,8 +6,16 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\\..")).Path
+    # GetFullPath y no Resolve-Path: Resolve-Path NO normaliza los saltos ".."
+    # y, sobre rutas UNC (el repo abierto desde \\wsl.localhost\... o un share
+    # de red), ademas devuelve la forma calificada por proveedor
+    # ("Microsoft.PowerShell.Core\FileSystem::\\host\..."). Cualquiera de las dos
+    # cosas rompe el calculo de rutas relativas contra el FullName de los
+    # archivos. GetFullPath devuelve siempre la ruta nativa ya normalizada.
+    $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 }
+
+$RepoRoot = $RepoRoot.TrimEnd('\')
 
 # Unico archivo autorizado a construir BLLs con 'new'.
 $composerRelPath = "BLL\CompositionRoot.cs"
@@ -24,7 +32,13 @@ $serviceLocatorAllowList = @(
 
 function Get-RelativePath {
     param([string]$FullPath)
-    return $FullPath.Substring($RepoRoot.Length).TrimStart('\')
+    if ($FullPath.StartsWith($RepoRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return $FullPath.Substring($RepoRoot.Length).TrimStart('\')
+    }
+
+    # Defensivo: si la ruta no cuelga de RepoRoot no recortamos a ciegas
+    # (un Substring fuera de rango aca daba un error ilegible en el build).
+    return $FullPath
 }
 
 $sourceFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter *.cs -File |
