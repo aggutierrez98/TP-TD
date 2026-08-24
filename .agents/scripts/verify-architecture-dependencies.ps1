@@ -6,15 +6,24 @@ param(
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($RepoRoot)) {
-    $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\\..")).Path
+    # GetFullPath y no Resolve-Path: Resolve-Path NO normaliza los saltos ".."
+    # y, sobre rutas UNC (el repo abierto desde \\wsl.localhost\... o un share
+    # de red), ademas devuelve la forma calificada por proveedor
+    # ("Microsoft.PowerShell.Core\FileSystem::\\host\..."). Cualquiera de las dos
+    # cosas rompe el calculo de rutas relativas contra el FullName de los
+    # archivos. GetFullPath devuelve siempre la ruta nativa ya normalizada.
+    $RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\.."))
 }
+
+$RepoRoot = $RepoRoot.TrimEnd('\')
 
 $allowedDependencies = [ordered]@{
     "ABSTRACCIONES" = @()
     "BE" = @("ABSTRACCIONES")
     "SERVICIOS" = @("ABSTRACCIONES")
     "DAL" = @("ABSTRACCIONES", "BE", "SERVICIOS")
-    "BLL" = @("ABSTRACCIONES", "BE", "DAL", "SERVICIOS")
+    "REPOSITORIO" = @("ABSTRACCIONES", "BE", "DAL", "SERVICIOS")
+    "BLL" = @("ABSTRACCIONES", "BE", "REPOSITORIO", "SERVICIOS")
     "UI" = @("ABSTRACCIONES", "BE", "BLL", "SERVICIOS")
 }
 

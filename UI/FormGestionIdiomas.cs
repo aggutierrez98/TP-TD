@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BLL;
 using SERVICIOS;
 
@@ -10,7 +11,7 @@ namespace TpIDS
 {
     public partial class FormGestionIdiomas : FormTraducibleBase
     {
-        private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly IdiomaBLL idiomaBLL = CompositionRoot.Idioma;
         private bool cargandoIdiomas;
 
         public FormGestionIdiomas()
@@ -36,7 +37,7 @@ namespace TpIDS
         {
             try
             {
-                int idiomaId = idiomaBLL.CrearIdioma(new Idioma { Nombre = txtbNombreIdioma.Text });
+                int idiomaId = idiomaBLL.CrearIdioma(txtbNombreIdioma.Text);
                 CargarIdiomas(idiomaId);
                 RefrescarIdiomaRuntimeSiCorresponde(idiomaId);
                 UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.LanguageCreated");
@@ -58,7 +59,7 @@ namespace TpIDS
             try
             {
                 idioma.Nombre = txtbNombreIdioma.Text;
-                bool actualizado = idiomaBLL.ActualizarIdioma(idioma);
+                bool actualizado = idiomaBLL.ActualizarIdioma(idioma.Id, idioma.Nombre, idioma.Default);
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);
@@ -93,7 +94,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = idiomaBLL.EliminarIdioma(idioma);
+                bool eliminado = idiomaBLL.EliminarIdioma(idioma.Id);
                 if (eliminado)
                 {
                     CargarIdiomas(null);
@@ -127,7 +128,7 @@ namespace TpIDS
 
                 try
                 {
-                    idiomaBLL.ImportarJson(idioma, openFileDialog.FileName);
+                    idiomaBLL.ImportarJson(idioma.Id, openFileDialog.FileName);
                     RecargarIdiomaSeleccionado(idioma.Id);
                     RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                     UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationsImported");
@@ -174,7 +175,7 @@ namespace TpIDS
 
                 try
                 {
-                    idiomaBLL.ExportarJson(idioma, saveFileDialog.FileName);
+                    idiomaBLL.ExportarJson(idioma.Id, saveFileDialog.FileName);
                     UiDialogHelper.MostrarInfo(
                         "FormLanguageManagement.ExportSuccessMessage",
                         new object[] { Path.GetFileName(saveFileDialog.FileName) });
@@ -197,7 +198,7 @@ namespace TpIDS
             try
             {
                 string keySeleccionada = txtbKeyManual.Text;
-                idiomaBLL.GuardarTraduccion(idioma, keySeleccionada, txtbValorManual.Text);
+                idiomaBLL.GuardarTraduccion(idioma.Id, keySeleccionada, txtbValorManual.Text);
                 RecargarIdiomaSeleccionado(idioma.Id, keySeleccionada);
                 RefrescarIdiomaRuntimeSiCorresponde(idioma.Id);
                 UiDialogHelper.MostrarInfo("FormLanguageManagement.Success.TranslationSaved");
@@ -224,7 +225,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = idiomaBLL.EliminarTraduccion(idioma, item.PalabraId);
+                bool eliminado = idiomaBLL.EliminarTraduccion(idioma.Id, item.PalabraId);
                 if (eliminado)
                 {
                     LimpiarEdicionManual();
@@ -319,7 +320,7 @@ namespace TpIDS
 
         private void RefrescarIdiomaRuntimeSiCorresponde(int idiomaIdAfectado)
         {
-            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
             Idioma idiomaDefault = idiomaBLL.ObtenerIdiomaDefault();
 
             if (idiomaActual != null && idiomaActual.Id == idiomaIdAfectado)
@@ -392,7 +393,7 @@ namespace TpIDS
         }
         private string ObtenerTextoActual(string key)
         {
-            Idioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idioma = IdiomaService.GetInstance().IdiomaActual;
             return idioma == null ? key : idioma.ObtenerTraduccion(key);
         }
 
@@ -429,7 +430,7 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = idiomaBLL.HacerIdiomaDefault(idioma);
+                bool actualizado = idiomaBLL.HacerIdiomaDefault(idioma.Id);
                 if (actualizado)
                 {
                     CargarIdiomas(idioma.Id);

@@ -11,7 +11,7 @@ namespace DAL
 {
     public class PermisoDAL
     {
-        public List<IPermiso> ObtenerNodos(AccesoDatos accesoDatos = null)
+        public List<IPermiso> ObtenerNodos(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT p.Id,
@@ -21,7 +21,7 @@ namespace DAL
                 ORDER BY p.Nombre, p.Id";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -39,7 +39,7 @@ namespace DAL
             }
         }
 
-        public List<Tuple<int, int>> ObtenerRelaciones(AccesoDatos accesoDatos = null)
+        public List<Tuple<int, int>> ObtenerRelaciones(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT PermisoPadreId,
@@ -48,7 +48,7 @@ namespace DAL
                 ORDER BY PermisoPadreId, PermisoHijoId";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -66,10 +66,10 @@ namespace DAL
             }
         }
 
-        public int Guardar(IPermiso permiso, AccesoDatos accesoDatos = null)
+        public int Guardar(IPermiso permiso, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -118,10 +118,10 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones, AccesoDatos accesoDatos = null)
+        public bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -149,7 +149,7 @@ namespace DAL
             }
         }
 
-        public bool EliminarPermisos(List<int> idsPermiso, AccesoDatos accesoDatos = null)
+        public bool EliminarPermisos(List<int> idsPermiso, AccesoDatosSqlServer accesoDatos = null)
         {
             if (idsPermiso == null || idsPermiso.Count == 0)
             {
@@ -157,7 +157,7 @@ namespace DAL
             }
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -179,7 +179,7 @@ namespace DAL
             }
         }
 
-        public int ObtenerIdPorNombre(string nombre, AccesoDatos accesoDatos = null)
+        public int ObtenerIdPorNombre(string nombre, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT TOP 1 Id
@@ -187,7 +187,7 @@ namespace DAL
                 WHERE Nombre = @Nombre";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -219,7 +219,7 @@ namespace DAL
             return nodo;
         }
 
-        private static string CrearWhereIn(AccesoDatos accesoDatos, string prefijo, IList<int> ids, ICollection<SqlParameter> parametros)
+        private static string CrearWhereIn(AccesoDatosSqlServer accesoDatos, string prefijo, IList<int> ids, ICollection<SqlParameter> parametros)
         {
             List<string> nombres = new List<string>();
             for (int i = 0; i < ids.Count; i++)

@@ -1,39 +1,50 @@
-@startuml T01-arquitectura-base-navegacion
-!theme plain
-title T01 - Arquitectura base: mapa de navegacion de pantallas (UI)
+@startuml
+title T01 - Arquitectura Base - Mapa de Navegacion de Pantallas
 
-hide empty description
-
-[*] --> FormContingenciaIntegridad : falla ExcepcionIntegridad\nen BootstrapAplicacionBLL.Inicializar()
-[*] --> FormLogin : arranque normal (Program.Main)
-
-FormContingenciaIntegridad --> [*] : cerrar aplicacion
-
-FormLogin --> FormRegistro : btnRegistro_Click\n(ShowDialog, modal)
-FormRegistro --> FormLogin : cerrar dialogo
-
-FormLogin --> FormGestionUsuarios : btnIngreso_Click\nlogin valido (Show, no modal)
-
-state FormGestionUsuarios {
-  FormGestionUsuarios --> FormConfiguracionUsuario : btnConfiguracion_Click\n(ShowDialog, modal)
-  FormGestionUsuarios --> FormGestionIdiomas : btnGestionIdiomas_Click\n(Show)
-  FormGestionUsuarios --> FormGestionPermisos : btnGestionPermisos_Click\n(ShowDialog, modal)
-  FormGestionUsuarios --> FormHistorialUsuario : btnHistorialUsuario_Click\n(ShowDialog, modal)
-  FormGestionUsuarios --> FormBitacora : btnBitacora_Click\n(ShowDialog, modal)
-
-  FormConfiguracionUsuario --> FormGestionUsuarios : cerrar dialogo
-  FormGestionIdiomas --> FormGestionUsuarios : cerrar ventana
-  FormGestionPermisos --> FormGestionUsuarios : cerrar dialogo
-  FormHistorialUsuario --> FormGestionUsuarios : cerrar dialogo
-  FormBitacora --> FormGestionUsuarios : cerrar dialogo
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
 }
+skinparam ArrowColor black
 
-FormGestionUsuarios --> [*] : btnLogout_Click\nCerrarSesionActual() + Close()
+[*] --> Arranque
 
-note right of FormGestionUsuarios
-  Pantalla hub post-login:
-  gestion de usuarios, permisos,
-  idiomas, historial y bitacora.
+state "Arranque\n(Program.Main)" as Arranque
+state "FormContingenciaIntegridad" as Cont
+state "FormLogin" as Login
+state "FormRegistro\n<<modal>>" as Registro
+state "FormGestionUsuarios\n<<hub principal>>" as Hub
+state "FormConfiguracionUsuario\n<<modal>>" as Config
+state "FormGestionIdiomas" as Idiomas
+state "FormGestionPermisos\n<<modal>>" as Permisos
+state "FormHistorialUsuario\n<<modal>>" as Historial
+state "FormBitacora\n<<modal>>" as Bitacora
+
+Arranque --> Cont : integridad invalida (T07)
+Arranque --> Login : integridad OK
+
+Login --> Registro : "Registrarse"
+Registro --> Login : cerrar
+Login --> Hub : login correcto
+Hub --> Login : Logout / cerrar
+
+Hub --> Config : Configuracion\n[perm]
+Hub --> Idiomas : Gestion Idiomas\n[perm]
+Hub --> Permisos : Gestion Permisos\n[perm]
+Hub --> Historial : Historial Usuario\n[perm + usuario sel.]
+Hub --> Bitacora : Bitacora\n[perm]
+
+Config --> Hub : cerrar
+Idiomas --> Hub : cerrar
+Permisos --> Hub : cerrar
+Historial --> Hub : cerrar
+Bitacora --> Hub : cerrar
+
+note right of Hub
+  Cada accion valida un IPermiso (T04)
+  antes de abrir la pantalla destino.
 end note
 
 @enduml

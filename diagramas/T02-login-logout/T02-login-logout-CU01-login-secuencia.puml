@@ -1,0 +1,74 @@
+@startuml
+title T02 - CU01 Login - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormLogin" as Login
+participant "UsuarioBLL" as UBLL
+participant "IUsuarioRepositorio" as Repo
+participant "UsuarioDAL" as DAL
+participant "PasswordHashService" as PHS
+participant "PasswordHasher" as PH
+participant "ISesion" as Sesion
+participant "IPermisoBLL" as PermBLL
+participant "IAutorizacion" as Autz
+participant "IIdiomaBLL" as IdBLL
+participant "IBitacoraBLL" as Bita
+participant "FormGestionUsuarios" as Hub
+
+Usuario -> Login : ingresa usuario y contrasena
+Usuario -> Login : btnIngreso_Click()
+activate Login
+alt campos vacios
+  Login -> Bita : RegistrarFalloNegocio("...FailedLogin", "...LoginEmptyFields", "UsuarioBLL")
+  Login --> Usuario : Warning "CompleteFields"
+else datos completos
+  Login -> UBLL : Login(usuario, passwordRaw)
+  activate UBLL
+  UBLL -> Repo : ObtenerPorUsername(username.Trim())
+  activate Repo
+  Repo -> DAL : ObtenerPorUsername(username, null)
+  DAL --> Repo : usuarioBD
+  Repo --> UBLL : usuarioBD
+  deactivate Repo
+
+  alt usuarioBD == null
+    UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...UnknownUserLogin", "UsuarioBLL")
+    UBLL --> Login : null
+  else usuarioBD.Activo == false
+    UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...InactiveUserLogin", "UsuarioBLL")
+    UBLL --> Login : null
+  else usuario existe y activo
+    UBLL -> PHS : VerifyPassword(passwordRaw, usuarioBD.PasswordHash)
+    activate PHS
+    PHS -> PH : VerifyPassword(passwordRaw, storedHash)
+    PH --> PHS : esValido
+    PHS --> UBLL : esValido
+    deactivate PHS
+    alt password invalida
+      UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...LoginInvalidCredentials", "UsuarioBLL")
+      UBLL --> Login : null
+    else password valida
+      UBLL -> Sesion : IniciarSesion(usuarioBD)
+      UBLL -> PermBLL : ObtenerPermisosDirectosUsuario(usuarioBD.Id)
+      PermBLL --> UBLL : permisos
+      UBLL -> Autz : ActualizarPermisosUsuarioActual(permisos)
+      UBLL -> IdBLL : AplicarIdiomaSesionUsuario(usuarioBD.Id)
+      UBLL -> Bita : RegistrarOperacion("...SuccessfulLogin", "...", "UsuarioBLL")
+      UBLL --> Login : usuarioBD
+    end
+  end
+  deactivate UBLL
+
+  alt usuarioEncontrado == null
+    Login --> Usuario : Error "InvalidCredentials"
+  else login correcto
+    Login -> Hub : new FormGestionUsuarios().Show()
+    Login --> Usuario : abre pantalla principal
+  end
+end
+deactivate Login
+
+@enduml

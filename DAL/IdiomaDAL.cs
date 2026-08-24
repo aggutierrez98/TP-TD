@@ -9,20 +9,20 @@ namespace DAL
 {
     public class IdiomaDAL
     {
-        public List<Idioma> ObtenerIdiomas()
+        public List<Idioma> ObtenerIdiomas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = "SELECT Id, Nombre, [Default] FROM Idioma ORDER BY Nombre";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
-                DataTable dataTable = accesoDatos.Read(query);
+                DataTable dataTable = contexto.Read(query);
                 return dataTable.Rows.Cast<DataRow>()
                     .Select(MapIdiomaSimple)
                     .ToList();
-            }
+            });
         }
 
-        public Idioma ObtenerIdiomaCompleto(int idiomaId)
+        public Idioma ObtenerIdiomaCompleto(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], t.Valor
@@ -32,18 +32,18 @@ namespace DAL
                 WHERE i.Id = @IdiomaId
                 ORDER BY [Key]";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
                 };
 
-                DataTable dataTable = accesoDatos.Read(query, parametros);
+                DataTable dataTable = contexto.Read(query, parametros);
                 if (dataTable.Rows.Count == 0)
                 {
                     const string queryIdioma = "SELECT Id, Nombre, [Default] FROM Idioma WHERE Id = @IdiomaId";
-                    DataTable dataTableIdioma = accesoDatos.Read(queryIdioma, parametros);
+                    DataTable dataTableIdioma = contexto.Read(queryIdioma, parametros);
                     if (dataTableIdioma.Rows.Count == 0)
                     {
                         return null;
@@ -87,80 +87,80 @@ namespace DAL
                 }
 
                 return idioma;
-            }
+            });
         }
 
-        public Idioma ObtenerIdiomaDefault()
+        public Idioma ObtenerIdiomaDefault(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = "SELECT TOP 1 Id FROM Idioma WHERE [Default] = 1 ORDER BY Id";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
-                DataTable dataTable = accesoDatos.Read(query);
+                DataTable dataTable = contexto.Read(query);
                 if (dataTable.Rows.Count == 0)
                 {
                     return null;
                 }
 
                 int idiomaId = Convert.ToInt32(dataTable.Rows[0]["Id"]);
-                return ObtenerIdiomaCompleto(idiomaId);
-            }
+                return ObtenerIdiomaCompleto(idiomaId, contexto);
+            });
         }
 
-        public int InsertarIdioma(Idioma idioma)
+        public int InsertarIdioma(Idioma idioma, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 INSERT INTO Idioma (Nombre, [Default])
                 OUTPUT INSERTED.Id
                 VALUES (@Nombre, @Default)";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, idioma.Nombre),
-                    accesoDatos.CreateParameter("@Default", SqlDbType.Bit, idioma.Default)
+                    contexto.CreateParameter("@Nombre", SqlDbType.VarChar, idioma.Nombre),
+                    contexto.CreateParameter("@Default", SqlDbType.Bit, idioma.Default)
                 };
 
-                return accesoDatos.WriteWithResult(query, parametros);
-            }
+                return contexto.WriteWithResult(query, parametros);
+            });
         }
 
-        public bool ActualizarIdioma(Idioma idioma)
+        public bool ActualizarIdioma(Idioma idioma, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = "UPDATE Idioma SET Nombre = @Nombre WHERE Id = @Id";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, idioma.Id),
-                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, idioma.Nombre)
+                    contexto.CreateParameter("@Id", SqlDbType.Int, idioma.Id),
+                    contexto.CreateParameter("@Nombre", SqlDbType.VarChar, idioma.Nombre)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
-            }
+                return contexto.Write(query, parametros) > 0;
+            });
         }
 
-        public bool EliminarIdioma(int idiomaId)
+        public bool EliminarIdioma(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM UsuarioPreferencias WHERE IdiomaId = @IdiomaId;
                 DELETE FROM Traduccion WHERE IdiomaId = @IdiomaId;
                 DELETE FROM Idioma WHERE Id = @IdiomaId;";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
-            }
+                return contexto.Write(query, parametros) > 0;
+            });
         }
 
-        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
+        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE UsuarioPreferencias
@@ -183,36 +183,35 @@ namespace DAL
                 DELETE FROM Idioma
                 WHERE Id = @IdiomaOrigenId;";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaOrigenId", SqlDbType.Int, idiomaOrigenId),
-                    accesoDatos.CreateParameter("@IdiomaDestinoId", SqlDbType.Int, idiomaDestinoId)
+                    contexto.CreateParameter("@IdiomaOrigenId", SqlDbType.Int, idiomaOrigenId),
+                    contexto.CreateParameter("@IdiomaDestinoId", SqlDbType.Int, idiomaDestinoId)
                 };
 
-                return accesoDatos.Write(query, parametros) >= 0;
-            }
+                return contexto.Write(query, parametros) >= 0;
+            });
         }
 
-        // Devuelve el Id de la key existente, o 0 si no existe
-        public int ObtenerPalabraIdPorKey(string key)
+        public int ObtenerPalabraIdPorKey(string key, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = "SELECT Id FROM Palabra WHERE [Key] = @Key";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Key", SqlDbType.VarChar, key)
+                    contexto.CreateParameter("@Key", SqlDbType.VarChar, key)
                 };
 
-                DataTable dataTable = accesoDatos.Read(query, parametros);
+                DataTable dataTable = contexto.Read(query, parametros);
                 return dataTable.Rows.Count == 0 ? 0 : Convert.ToInt32(dataTable.Rows[0]["Id"]);
-            }
+            });
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
+        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 IF EXISTS (
@@ -232,39 +231,39 @@ namespace DAL
                     VALUES (@IdiomaId, @PalabraId, @Valor);
                 END";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
-                    accesoDatos.CreateParameter("@PalabraId", SqlDbType.Int, palabraId),
-                    accesoDatos.CreateParameter("@Valor", SqlDbType.VarChar, valor)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
+                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, palabraId),
+                    contexto.CreateParameter("@Valor", SqlDbType.VarChar, valor)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
-            }
+                return contexto.Write(query, parametros) > 0;
+            });
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(int idiomaId, int palabraId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Traduccion
                 WHERE IdiomaId = @IdiomaId
                   AND PalabraId = @PalabraId";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
-                    accesoDatos.CreateParameter("@PalabraId", SqlDbType.Int, palabraId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
+                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, palabraId)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
-            }
+                return contexto.Write(query, parametros) > 0;
+            });
         }
 
-        public bool SwitchearIdiomaDefault(int idiomaId)
+        public bool SwitchearIdiomaDefault(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Idioma
@@ -274,14 +273,32 @@ namespace DAL
                 END;
             ";
 
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            return Ejecutar(accesoDatos, contexto =>
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
                 };
 
-                return accesoDatos.Write(query, parametros) > 0;
+                return contexto.Write(query, parametros) > 0;
+            });
+        }
+
+        private static T Ejecutar<T>(AccesoDatosSqlServer accesoDatos, Func<AccesoDatosSqlServer, T> operacion)
+        {
+            bool dispose = accesoDatos == null;
+            AccesoDatosSqlServer contexto = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                return operacion(contexto);
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    contexto.Dispose();
+                }
             }
         }
 

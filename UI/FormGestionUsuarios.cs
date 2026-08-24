@@ -18,20 +18,29 @@ namespace TpIDS
         private const string PermisoGestionUsuarios = "gestionusuarios";
         private const string PermisoHistorialUsuarios = "historialusuarios";
 
-        private readonly UsuarioBLL usuarioBLL = new UsuarioBLL();
-        private readonly PermisoBLL permisoBLL = new PermisoBLL();
+        private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
+        private readonly PermisoBLL permisoBLL = CompositionRoot.Permiso;
         private Usuario _usuarioSeleccionado;
         private bool _cargandoGrillaUsuarios;
+        private readonly IAutorizacion _autorizacion;
+        private readonly ISesion _sesion;
 
         public FormGestionUsuarios()
+            : this(CompositionRoot.Autorizacion, CompositionRoot.Sesion)
         {
+        }
+
+        public FormGestionUsuarios(IAutorizacion autorizacion, ISesion sesion)
+        {
+            _autorizacion = autorizacion;
+            _sesion = sesion;
             InitializeComponent();
         }
 
         private void FormGestionUsuarios_Load(object sender, EventArgs e)
         {
             chkbUsuarioActivo.Checked = true;
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+            ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
             AplicarPermisosPantalla();
             RefrescarDatos();
         }
@@ -71,12 +80,12 @@ namespace TpIDS
 
         private void AplicarPermisosPantalla()
         {
-            bool puedeGestionarUsuarios = AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios);
-            bool puedeGestionarPermisos = AutorizacionService.GetInstance().TienePermiso(PermisoGestionPermisos);
-            bool puedeVerHistorial = AutorizacionService.GetInstance().TienePermiso(PermisoHistorialUsuarios);
-            bool puedeVerBitacora = AutorizacionService.GetInstance().TienePermiso(PermisoBitacora);
-            bool puedeConfigurarUsuario = AutorizacionService.GetInstance().TienePermiso(PermisoConfiguracion);
-            bool puedeGestionarIdiomas = AutorizacionService.GetInstance().TienePermiso(PermisoGestionIdiomas);
+            bool puedeGestionarUsuarios = _autorizacion.TienePermiso(PermisoGestionUsuarios);
+            bool puedeGestionarPermisos = _autorizacion.TienePermiso(PermisoGestionPermisos);
+            bool puedeVerHistorial = _autorizacion.TienePermiso(PermisoHistorialUsuarios);
+            bool puedeVerBitacora = _autorizacion.TienePermiso(PermisoBitacora);
+            bool puedeConfigurarUsuario = _autorizacion.TienePermiso(PermisoConfiguracion);
+            bool puedeGestionarIdiomas = _autorizacion.TienePermiso(PermisoGestionIdiomas);
 
             btnAgregarUsuario.Enabled = puedeGestionarUsuarios;
             btnEditarUsuario.Enabled = puedeGestionarUsuarios;
@@ -92,7 +101,7 @@ namespace TpIDS
 
         private bool ValidarPermiso(string permiso)
         {
-            if (AutorizacionService.GetInstance().TienePermiso(permiso))
+            if (_autorizacion.TienePermiso(permiso))
             {
                 return true;
             }
@@ -132,7 +141,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Registrar(username, password))
+                if (usuarioBLL.Registrar(new Usuario(username), password))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserCreated");
                     LimpiarSeleccion();
@@ -188,16 +197,9 @@ namespace TpIDS
                     }
                 }
 
-                Usuario usuarioEditado = new Usuario
+                if (usuarioBLL.Actualizar(_usuarioSeleccionado.Id, nuevoUsername, nuevaPassword, usuarioActivo))
                 {
-                    Id = _usuarioSeleccionado.Id,
-                    Username = nuevoUsername,
-                    Activo = usuarioActivo
-                };
-
-                if (usuarioBLL.Actualizar(usuarioEditado, nuevaPassword))
-                {
-                    ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+                    ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
                     string successKey = !usuarioEstabaActivo && usuarioActivo
                         ? "FormUserManagement.Success.UserActivated"
                         : usuarioEstabaActivo && !usuarioActivo
@@ -241,7 +243,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Eliminar(_usuarioSeleccionado))
+                if (usuarioBLL.Eliminar(_usuarioSeleccionado.Id))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserDeleted");
                     LimpiarSeleccion();
@@ -257,7 +259,7 @@ namespace TpIDS
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
-            if (_usuarioSeleccionado == null || !AutorizacionService.GetInstance().TienePermiso(PermisoGestionUsuarios))
+            if (_usuarioSeleccionado == null || !_autorizacion.TienePermiso(PermisoGestionUsuarios))
             {
                 return;
             }
@@ -311,11 +313,11 @@ namespace TpIDS
 
             try
             {
-                List<IPermiso> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
+                List<int> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
                     .Distinct()
                     .ToList();
 
-                permisoBLL.GuardarPermisosUsuario(_usuarioSeleccionado, permisosSeleccionados);
+                permisoBLL.GuardarPermisosUsuario(_usuarioSeleccionado.Id, permisosSeleccionados);
                 UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserPermissionsSaved");
             }
             catch (Exception ex)
@@ -324,21 +326,21 @@ namespace TpIDS
             }
         }
 
-        private List<IPermiso> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
+        private List<int> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
         {
-            List<IPermiso> permisos = new List<IPermiso>();
+            List<int> ids = new List<int>();
             foreach (TreeNode nodo in nodos)
             {
                 IPermiso permiso = nodo.Tag as IPermiso;
                 if (nodo.Checked && permiso != null)
                 {
-                    permisos.Add(permiso);
+                    ids.Add(permiso.Id);
                 }
 
-                permisos.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
+                ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
             }
 
-            return permisos;
+            return ids;
         }
 
         private void AplicarSeleccionActualDesdeGrilla()
@@ -451,7 +453,7 @@ namespace TpIDS
 
             RefrescarDatos();
             CargarPermisosUsuario();
-            ActualizarSesionActualLabel(Sesion.GetInstance().GetUsuarioActualNombre());
+            ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
         }
 
         private void btnBitacora_Click(object sender, EventArgs e)

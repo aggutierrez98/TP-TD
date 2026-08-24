@@ -2,7 +2,7 @@
 
 ## Dos soluciones, a proposito
 
-- **`TpIDS.sln` (raiz)**: solo los 6 proyectos productivos. No usa ningun paquete NuGet,
+- **`TpIDS.sln` (raiz)**: solo los 7 proyectos productivos. No usa ningun paquete NuGet,
   por lo que compila y corre en cualquier maquina copiando el repo, sin internet ni
   pasos extra en Visual Studio.
 - **`tests/TpIDS.Tests.sln`**: productivos + proyectos de test. Los tests usan NuGet
@@ -15,11 +15,9 @@
 | Proyecto | Que prueba | BD |
 | --- | --- | --- |
 | `SERVICIOS.Tests` | Logica transversal pura (hash, DVH/DVV, permisos, idioma, sesion) | No |
+| `BLL.Tests` | Reglas de negocio con fakes (`InternalsVisibleTo`) | No |
+| `TpIDS.IntegrationTests` | Smoke de `CompositionRoot` | `TpCatedraIDS_Test` |
 | `TpIDS.UiTests` | Casos de uso reales end-to-end (FlaUI + SQL) | `TpCatedraIDS_Test` |
-
-> En esta rama no hay `BLL.Tests` ni `TpIDS.IntegrationTests`: la arquitectura simple
-> (BLL con `new` directo, sin inyeccion ni CompositionRoot) no es unit-testeable y esa
-> simplicidad se preserva a proposito. La cobertura de BLL/DAL llega end-to-end via UI.
 
 ## Como correr
 
@@ -74,12 +72,12 @@ reportar verde vacio.
 | `SmokeTests.cs` | Harness + arranque | Inicializacion de firmas (T07 parcial) |
 | `T02_LoginLogoutTests.cs` | T02 | CU01 Login (+4 alternativos), CU02 Registro (+duplicado, +campos vacios), CU03 Logout (+cancelacion) |
 | `T04_UsuariosPermisosTests.cs` | T04 | CU01 Gestionar permisos (+grupo vacio, nombre vacio/con punto, duplicado en catalogo, permiso sin seleccion, ciclo entre grupos), CU02 Asignar perfiles (+acciones sin usuario seleccionado), CU03 Control de acceso (admin/basico), baja logica/reactivacion y borrado fisico (+cancelaciones, +alta sin password) |
-| `T05_MultidiomaTests.cs` | T05 | CU01/CU02 alta+rename (+duplicado, +rename a nombre existente), CU03 eliminar (+proteccion default, +cancelacion), CU06 editar traduccion (+valor vacio), CU07 preferencia (+idioma incompleto). CU04/CU05 (import/export con dialogos nativos) quedan sin cobertura automatizada en esta rama |
+| `T05_MultidiomaTests.cs` | T05 | CU01/CU02 alta+rename (+duplicado, +rename a nombre existente), CU03 eliminar (+proteccion default, +cancelacion), CU06 editar traduccion (+valor vacio), CU07 preferencia (+idioma incompleto). CU04/CU05 (import/export con dialogos nativos) quedan cubiertos en BLL.Tests |
 | `T06_BitacoraHistorialTests.cs` | T06a/T06b | CU01 Consultar bitacora (filtros usuario/nivel vs SQL), historial de versiones y restauracion (+sin seleccion, +cancelacion) |
 | `T07_IntegridadTests.cs` | T07 | Corrupcion horizontal (DVH) y vertical (DVV) -> pantalla de contingencia; restauran las firmas al terminar |
 
 Flujos alternativos que quedan fuera de la UI a proposito: los "Xa: excepcion tecnica"
 (requieren tirar la infraestructura), los "sin seleccion" de combos con DataSource (auto-
 seleccionan siempre) y el re-chequeo de permiso con boton deshabilitado (rama defensiva).
-En esta rama el ciclo entre grupos (T04 CU01 6a) se valida al guardar el catalogo
-(ValidarSinCiclos en PermisoService), no al agregar la relacion.
+T04 CU01 6a (ciclo entre grupos) se valida al agregar la relacion (GeneraCiclo
+en PermisoService), con test UI y unitarios.

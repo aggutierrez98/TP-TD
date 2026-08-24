@@ -7,8 +7,13 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$resolvedRepoRoot = (Resolve-Path $RepoRoot).Path
-$resolvedJsonPath = (Resolve-Path (Join-Path $resolvedRepoRoot $RelativeJsonPath)).Path
+# GetFullPath y no (Resolve-Path ...).Path: Resolve-Path no normaliza los
+# saltos ".." y, sobre rutas UNC (repo abierto desde \\wsl.localhost\... o un
+# share de red), devuelve la forma calificada por proveedor
+# ("Microsoft.PowerShell.Core\FileSystem::\\host\..."), que herramientas como
+# vstest.console rechazan.
+$resolvedRepoRoot = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $RepoRoot).ProviderPath).TrimEnd('\')
+$resolvedJsonPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath (Join-Path $resolvedRepoRoot $RelativeJsonPath)).ProviderPath)
 $outputDirectory = Split-Path -Parent $OutputFile
 $stagingDirectory = Join-Path $env:PUBLIC "Documents\TpIDS\SqlSeed"
 $stagingJsonPath = Join-Path $stagingDirectory "base.es.json"

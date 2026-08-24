@@ -1,0 +1,45 @@
+@startuml
+title T05 - CU01 Agregar idioma - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "IdiomaBLL" as BLL
+participant "IdiomaCatalogoService" as Cat
+participant "IIdiomaRepositorio" as Repo
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IBitacoraBLL" as Bita
+participant "IdiomaService\n(IObservado)" as Obs
+
+Admin -> Form : escribe nombre + btnAgregarIdioma_Click()
+activate Form
+Form -> BLL : CrearIdioma(nombre)
+activate BLL
+BLL -> Cat : NormalizarNombre(nombre)
+Cat --> BLL : nombreNormalizado
+BLL -> Repo : ObtenerIdiomas()
+Repo --> BLL : idiomas
+BLL -> Cat : ValidarNombreDuplicado(idiomas, nombreNormalizado, null)
+BLL -> UoWF : Crear()
+UoWF --> BLL : unidad
+activate UoW
+BLL -> UoW : Idiomas.InsertarIdioma({Nombre, Default=false})
+UoW --> BLL : idiomaId
+BLL -> Bita : RegistrarOperacionInterno("...LanguageCreation", "...", "IdiomaBLL", unidad)
+BLL -> UoW : Save()
+deactivate UoW
+BLL --> Form : idiomaId
+deactivate BLL
+Form -> Form : CargarIdiomas(idiomaId)
+Form -> Form : RefrescarIdiomaRuntimeSiCorresponde(idiomaId)
+opt idioma afectado == idioma actual
+  Form -> Obs : CambiarIdioma(idiomaRecargado)
+  Obs -> Form : Actualizar(this)  // Observer: re-traduce UI
+end
+Form --> Admin : Info "LanguageCreated"
+deactivate Form
+
+@enduml

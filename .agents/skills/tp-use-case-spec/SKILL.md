@@ -78,7 +78,7 @@ Flujos Alternativos, Postcondiciones**. La definicion de cada campo esta en
 - **Actor Secundario = entidad externa, nunca clases internas.** Un actor (RUP/UML) es un rol
   externo al limite del sistema. El actor secundario interviene de forma reactiva (otro
   sistema/servicio, hardware o persona de soporte). Las clases/componentes internos (BLL,
-  DAL, SERVICIOS, Forms, `AccesoDatos`, singletons como `Sesion`) **no**
+  REPOSITORIO, DAL, SERVICIOS, Forms, `AccesoDatosSqlServer`, singletons como `Sesion`) **no**
   son actores: su colaboracion se muestra en el diagrama de secuencia, no en este campo. En
   este proyecto de escritorio con SQL Server local la mayoria de los CU llevan `actor_secundario: "-"`.
   Detalle en [references/use-case-spec-format.md](references/use-case-spec-format.md).

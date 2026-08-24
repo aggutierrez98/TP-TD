@@ -1,13 +1,48 @@
 @startuml
 title T03 - Gestion de Encriptado - Clases
 
-left to right direction
 skinparam backgroundColor white
 skinparam classBackgroundColor white
 skinparam classBorderColor black
 skinparam packageStyle rectangle
 skinparam classAttributeIconSize 0
 skinparam shadowing false
+
+package "UI" {
+  class FormLogin
+  class FormRegistro
+}
+
+package "BLL" {
+  class UsuarioBLL {
+    +Login(usuarioEntidad : Usuario, passwordRaw : string) : Usuario
+    +Registrar(usuario : Usuario, passwordRaw : string) : bool
+  }
+
+  interface IPasswordHashService <<internal>> {
+    +HashPassword(passwordRaw : string) : string
+    +VerifyPassword(passwordRaw : string, passwordHash : string) : bool
+  }
+
+  class PasswordHashService <<internal>> {
+    +HashPassword(passwordRaw : string) : string
+    +VerifyPassword(passwordRaw : string, passwordHash : string) : bool
+  }
+
+  class CompositionRoot <<static>> {
+    +PasswordHasher : IPasswordHasher
+  }
+}
+
+package "SERVICIOS" {
+  class PasswordHasher {
+    -SaltSize : int = 16
+    -HashSize : int = 32
+    -Iterations : int = 20000
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+}
 
 package "ABSTRACCIONES" {
   interface IPasswordHasher {
@@ -16,52 +51,32 @@ package "ABSTRACCIONES" {
   }
 }
 
-package "SERVICIOS" {
-  class PasswordHasher {
-    -SaltSize : int
-    -HashSize : int
-    -Iterations : int
-    +HashPassword(password : string) : string
-    +VerifyPassword(password : string, storedHash : string) : bool
-  }
-}
-
-package "BLL" {
-  class UsuarioBLL {
-    +Login(username : string, passwordRaw : string) : Usuario
-    +Registrar(username : string, passwordRaw : string) : bool
-  }
-}
-
-package "UI" {
-  class FormLogin
-  class FormRegistro
-}
-
-package "DAL" {
-  class UsuarioDAL {
-    +ObtenerPorUsername(username : string, accesoDatos : AccesoDatos = null) : Usuario
-    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatos = null) : int
-  }
-
-  class AccesoDatos
-}
-
 package "BE" {
   class Usuario {
-    +Id : int
-    +Username : string
     +PasswordHash : string
-    +Activo : bool
   }
 }
 
-PasswordHasher ..|> IPasswordHasher
+package ".NET Cryptography" <<Frame>> {
+  class Rfc2898DeriveBytes <<PBKDF2>>
+  class RNGCryptoServiceProvider
+}
+
 FormLogin --> UsuarioBLL
 FormRegistro --> UsuarioBLL
-UsuarioBLL --> PasswordHasher
-UsuarioBLL --> UsuarioDAL
-UsuarioDAL --> AccesoDatos
-UsuarioDAL --> Usuario
+UsuarioBLL --> IPasswordHashService
+PasswordHashService ..|> IPasswordHashService
+PasswordHashService --> PasswordHasher
+PasswordHasher ..|> IPasswordHasher
+CompositionRoot ..> PasswordHasher : <<creates>>
+PasswordHasher ..> Rfc2898DeriveBytes : deriva hash (salt + iteraciones)
+PasswordHasher ..> RNGCryptoServiceProvider : genera salt (16 bytes)
+UsuarioBLL ..> Usuario : PasswordHash = Base64(salt + hash)
+
+note bottom of PasswordHasher
+  Hash = Base64( salt[16] + PBKDF2(password, salt, 20000)[32] ).
+  VerifyPassword re-deriva con el salt embebido y compara byte a byte.
+  Nunca se persiste la contrasena en claro.
+end note
 
 @enduml

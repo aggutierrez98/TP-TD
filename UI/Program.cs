@@ -16,12 +16,14 @@ namespace TpIDS
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
             Application.ThreadException += Application_ThreadException;
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+            CompositionRoot.Inicializar();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
             try
             {
-                BootstrapAplicacionBLL.Inicializar();
+                // Arranque funcional (carga de idioma T05 + verificacion de integridad T07).
+                InicializadorAplicacionBLL.Inicializar();
             }
             catch (ExcepcionIntegridad ex)
             {

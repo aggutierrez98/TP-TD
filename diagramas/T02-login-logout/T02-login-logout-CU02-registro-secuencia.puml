@@ -1,0 +1,59 @@
+@startuml
+title T02 - CU02 Registro de usuario - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormRegistro" as Reg
+participant "UsuarioBLL" as UBLL
+participant "PasswordHashService" as PHS
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioRepositorio" as Repo
+participant "IIntegridadBLL" as Integ
+participant "IPermisoBLL" as PermBLL
+participant "IUsuarioEstadoBLL" as EstadoBLL
+participant "IBitacoraBLL" as Bita
+
+Usuario -> Reg : completa usuario y contrasena
+Usuario -> Reg : btnRegistro_Click()
+activate Reg
+alt campos vacios
+  Reg --> Usuario : Warning "CompleteFields"
+else datos completos
+  Reg -> UBLL : Registrar(usuario, passwordRaw)
+  activate UBLL
+  UBLL -> PHS : HashPassword(passwordNormalizada)
+  PHS --> UBLL : passwordHash
+  UBLL -> UoWF : Crear()
+  UoWF --> UBLL : unidad
+  activate UoW
+  UBLL -> UoW : Usuarios.ObtenerPorUsername(usernameNormalizado)
+  UoW -> Repo : ObtenerPorUsername(usernameNormalizado)
+  Repo --> UBLL : existente
+  alt existente != null
+    UBLL -> Bita : RegistrarFalloNegocioInterno("...RejectedUserCreation", "...UsernameAlreadyExists", "UsuarioBLL", unidad)
+    UBLL --> Reg : throw ExcepcionNegocio("Error.User.UsernameExists")
+  else username disponible
+    UBLL -> Integ : CalcularDVH(nuevoUsuario)
+    Integ --> UBLL : dvh
+    UBLL -> UoW : Usuarios.InsertarYObtenerId(nuevoUsuario)
+    UoW -> Repo : InsertarYObtenerId(nuevoUsuario)
+    Repo --> UBLL : nuevoId
+    UBLL -> PermBLL : AsignarPerfilBasicoInterno(nuevoId, unidad)
+    UBLL -> EstadoBLL : GuardarVersionActualInterno(nuevoId, "...Creation", "...InitialCreation", unidad)
+    UBLL -> Bita : RegistrarOperacionInterno("...UserCreation", "...", "UsuarioBLL", unidad)
+    UBLL -> Integ : ActualizarDVVInterno("Usuarios", null, dvh, unidad)
+    UBLL -> UoW : Save()
+    UBLL --> Reg : true
+  end
+  deactivate UoW
+  deactivate UBLL
+  alt success
+    Reg --> Usuario : Info "UserRegistered" + Close()
+  end
+end
+deactivate Reg
+
+@enduml

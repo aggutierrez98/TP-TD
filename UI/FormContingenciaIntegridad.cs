@@ -1,5 +1,6 @@
 using System;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using SERVICIOS;
 
 namespace TpIDS
@@ -19,9 +20,9 @@ namespace TpIDS
             AplicarDetalleFalla();
         }
 
-        public override void Actualizar(IdiomaService idiomaService)
+        public override void Actualizar(IObservado observado)
         {
-            base.Actualizar(idiomaService);
+            base.Actualizar(observado);
             // El mensaje depende del tipo de falla, por lo que se reaplica luego de
             // la traduccion automatica basada en Tag.
             AplicarDetalleFalla();

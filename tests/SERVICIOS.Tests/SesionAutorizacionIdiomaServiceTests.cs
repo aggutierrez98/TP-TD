@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ABSTRACCIONES;
 using SERVICIOS;
 
@@ -123,7 +123,7 @@ namespace SERVICIOS.Tests
         {
             public int UpdateCount { get; private set; }
 
-            public void Actualizar(IdiomaService idiomaService)
+            public void Actualizar(IObservado observado)
             {
                 UpdateCount++;
             }

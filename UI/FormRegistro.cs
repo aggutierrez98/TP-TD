@@ -7,7 +7,7 @@ namespace TpIDS
 {
     public partial class FormRegistro : FormTraducibleBase
     {
-        private readonly UsuarioBLL gestorJugador = new UsuarioBLL();
+        private readonly UsuarioBLL gestorJugador = CompositionRoot.Usuario;
 
         public FormRegistro()
         {
@@ -24,7 +24,14 @@ namespace TpIDS
 
             try
             {
-                bool success = gestorJugador.Registrar(txtbNickname.Text, txtbPassword.Text);
+                
+
+                BE.Usuario usuario = new BE.Usuario()
+                {
+                    Username = txtbNickname.Text
+                };
+
+                bool success = gestorJugador.Registrar(usuario, txtbPassword.Text);
 
                 if (success)
                 {

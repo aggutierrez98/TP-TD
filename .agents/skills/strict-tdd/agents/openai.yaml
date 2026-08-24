@@ -1,4 +1,4 @@
 interface:
   display_name: "Strict TDD"
-  short_description: "Red-green TDD for behavior changes in SERVICIOS"
+  short_description: "Red-green TDD for behavior changes in SERVICIOS/BLL/REPOSITORIO/DAL"
   default_prompt: "Use $strict-tdd to drive behavior changes with a strict red-green cycle: verify a green baseline, write the failing test first, watch it fail with run-tests.ps1, implement, watch it pass."

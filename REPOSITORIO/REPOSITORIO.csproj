@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{B6E1F6B4-8C5D-4C6F-9E4B-A7C6E9F23412}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>REPOSITORIO</RootNamespace>
+    <AssemblyName>REPOSITORIO</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BitacoraRepositorio.cs" />
+    <Compile Include="IBitacoraRepositorio.cs" />
+    <Compile Include="IdiomaRepositorio.cs" />
+    <Compile Include="IIdiomaRepositorio.cs" />
+    <Compile Include="IntegridadRepositorio.cs" />
+    <Compile Include="IIntegridadRepositorio.cs" />
+    <Compile Include="IUnidadDeTrabajo.cs" />
+    <Compile Include="IUnidadDeTrabajoFactory.cs" />
+    <Compile Include="IPermisoRepositorio.cs" />
+    <Compile Include="ITraduccionRepositorio.cs" />
+    <Compile Include="IUsuarioHistorialRepositorio.cs" />
+    <Compile Include="IUsuarioPermisoRepositorio.cs" />
+    <Compile Include="IUsuarioPreferenciaRepositorio.cs" />
+    <Compile Include="IUsuarioRepositorio.cs" />
+    <Compile Include="PermisoRepositorio.cs" />
+    <Compile Include="TraduccionRepositorio.cs" />
+    <Compile Include="UnidadDeTrabajoSqlServer.cs" />
+    <Compile Include="UnidadDeTrabajoFactory.cs" />
+    <Compile Include="UsuarioHistorialRepositorio.cs" />
+    <Compile Include="UsuarioPermisoRepositorio.cs" />
+    <Compile Include="UsuarioPreferenciaRepositorio.cs" />
+    <Compile Include="UsuarioRepositorio.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ABSTRACCIONES\ABSTRACCIONES.csproj">
+      <Project>{a189ef4f-9396-463b-8987-2cd21717610c}</Project>
+      <Name>ABSTRACCIONES</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BE\BE.csproj">
+      <Project>{faea6c55-0705-4f3b-8e31-6adeecb20d6f}</Project>
+      <Name>BE</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DAL\DAL.csproj">
+      <Project>{707854bb-8fac-4561-aa0f-864933cdd3a0}</Project>
+      <Name>DAL</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SERVICIOS\SERVICIOS.csproj">
+      <Project>{1424234b-6cac-47f9-a5f5-a1d83c778dc2}</Project>
+      <Name>SERVICIOS</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

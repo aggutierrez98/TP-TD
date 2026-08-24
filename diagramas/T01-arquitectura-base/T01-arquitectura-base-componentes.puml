@@ -1,68 +1,76 @@
-@startuml T01-arquitectura-base-componentes
-!theme plain
-title T01 - Arquitectura base: diagrama de componentes (6 capas)
+@startuml
+title T01 - Arquitectura Base - Diagrama de Componentes
 
+skinparam backgroundColor white
 skinparam componentStyle rectangle
-
-package "UI / PRESENTACION\n(proyecto TpIDS)" as UI {
-  [UI] as CompUI
+skinparam shadowing false
+skinparam component {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam artifact {
+  BackgroundColor white
+  BorderColor black
 }
 
-package "BLL" {
-  [BLL] as CompBLL
-}
+' ==== Capas (assemblies .NET) ====
+component "UI (TpIDS)\n<<WinForms>>" as UI
+component "BLL\n<<Reglas de negocio>>" as BLL
+component "REPOSITORIO\n<<Persistencia / Unit of Work>>" as REPO
+component "DAL\n<<Acceso a datos SQL>>" as DAL
+component "BE\n<<Entidades de negocio>>" as BE
+component "SERVICIOS\n<<Servicios concretos reusables>>" as SERV
+component "ABSTRACCIONES\n<<Contratos / interfaces>>" as ABS
 
-package "DAL" {
-  [DAL] as CompDAL
-}
+' Composicion / inyeccion
+artifact "CompositionRoot\n(en BLL)" as CR
+' Recursos externos
+artifact "App.config\n(connection strings)" as CFG
+database "SQL Server\nTpCatedraIDS" as DB
 
-package "SERVICIOS" {
-  [SERVICIOS] as CompSERVICIOS
-}
+' ==== Dependencias de compilacion (matriz obligatoria) ====
+UI --> BLL
+UI --> BE
+UI --> SERV
+UI ..> ABS
 
-package "BE" {
-  [BE] as CompBE
-}
+BLL --> REPO
+BLL --> BE
+BLL --> SERV
+BLL ..> ABS
 
-package "ABSTRACCIONES" {
-  [ABSTRACCIONES] as CompABS
-}
+REPO --> DAL
+REPO --> BE
+REPO --> SERV
+REPO ..> ABS
 
-database "SQL Server\n(TpCatedraIDS)" as DB
+DAL --> BE
+DAL --> SERV
+DAL ..> ABS
 
-' -- Matriz obligatoria de dependencias (.agents/02-architecture-7-layers.md) --
-CompUI --> CompBLL : casos de uso / flujos de negocio
-CompUI --> CompBE : tipos de dominio
-CompUI --> CompSERVICIOS : servicios reusables
-CompUI --> CompABS : contratos (tipado, p. ej. IPermiso)
+BE ..> ABS
+SERV ..> ABS
 
-CompBLL --> CompDAL : persistencia
-CompBLL --> CompBE : tipos de dominio
-CompBLL --> CompSERVICIOS : reglas reusables
-CompBLL --> CompABS : contratos
+' ==== Composicion e infraestructura ====
+UI ..> CR : Inicializar()
+CR ..> BLL : construye e inyecta BLLs\ny repositorios (DIP)
+DAL --> DB : ADO.NET / transacciones
+UI ..> CFG : lee cadenas
+DAL ..> CFG : ConfigurationManager
 
-CompDAL --> CompBE : tipos de dominio
-CompDAL --> CompSERVICIOS : servicios reusables
-CompDAL --> CompABS : contratos
-CompDAL ..> DB : ADO.NET / SqlClient
-
-CompBE --> CompABS : contratos
-
-CompSERVICIOS --> CompABS : contratos
-
-note bottom of CompABS
-  Solo interfaces/contratos.
-  Sin dependencias salientes.
-  Sin implementaciones concretas.
+note bottom of ABS
+  ABSTRACCIONES no depende de nada.
+  Todas las capas la referencian para
+  consumir servicios por interfaz (DIP).
 end note
 
-note right of CompUI
-  UI conoce SERVICIOS y BE,
-  pero los flujos de negocio
-  entran siempre por BLL.
-  Sin capa REPOSITORIO,
-  sin Unit of Work,
-  sin Composition Root.
+note right of CR
+  Unico punto de wiring:
+  nada de "new XxxBLL()" fuera del root.
 end note
 
 @enduml

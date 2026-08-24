@@ -1,4 +1,4 @@
-using DAL;
+using REPOSITORIO;
 using SERVICIOS;
 
 namespace BLL
@@ -22,11 +22,10 @@ namespace BLL
                     return;
                 }
 
-                UsuarioHistorialDAL usuarioHistorialDAL = new UsuarioHistorialDAL();
+                UsuarioHistorialRepositorio usuarioHistorialRepositorio = new UsuarioHistorialRepositorio();
                 HistorialEstadosService.GetInstance().Configurar(
-                    (snapshot, contexto) => usuarioHistorialDAL.GuardarVersion(snapshot, contexto as AccesoDatos),
-                    usuarioId => usuarioHistorialDAL.ObtenerVersiones(usuarioId),
-                    historialId => usuarioHistorialDAL.ObtenerVersion(historialId));
+                    usuarioId => usuarioHistorialRepositorio.ObtenerVersiones(usuarioId),
+                    historialId => usuarioHistorialRepositorio.ObtenerVersion(historialId));
 
                 _inicializado = true;
             }

@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using ABSTRACCIONES;
 
 namespace BE
@@ -18,19 +16,12 @@ namespace BE
         [DigitoVerificador(4)]
         public bool Activo { get; set; }
 
-        // Digito verificador horizontal (T07): firma de la fila persistida.
+        // Digito verificador horizontal (DVH) de la fila. Lo calcula IntegridadService.
         public string DVH { get; set; }
-
-        public IList<IPermiso> Permisos { get; set; }
-        public IList PermisosNoTipados
-        {
-            get { return Permisos as IList; }
-        }
 
         public Usuario()
         {
             Activo = true;
-            Permisos = new List<IPermiso>();
         }
 
         public Usuario(string username)

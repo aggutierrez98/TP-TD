@@ -2,10 +2,16 @@
 
 ## Comando canonico (usar siempre para rojo y verde)
 
-Unit (SERVICIOS.Tests, siempre corre completo):
+Unit (SERVICIOS.Tests + BLL.Tests, siempre corren completos):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1
+```
+
+Integracion (agrega TpIDS.IntegrationTests; prepara la BD `TpCatedraIDS_Test`):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -IncludeIntegration
 ```
 
 El runner compila `tests/TpIDS.Tests.sln`, valida contra el TRX que se ejecuto al menos 1 test y que no hubo fallos, y devuelve exit code 0 solo si todo esta en verde.
@@ -17,8 +23,11 @@ Solo para iterar rapido sobre un unico test. Requiere haber compilado antes `tes
 ```powershell
 & "<ruta a vstest.console.exe>" `
     "tests\SERVICIOS.Tests\bin\Debug\net472\SERVICIOS.Tests.dll" `
+    "tests\BLL.Tests\bin\Debug\net472\BLL.Tests.dll" `
     /TestCaseFilter:"FullyQualifiedName~<Clase>.<Metodo>"
 ```
+
+Para integracion, apuntar a `tests\TpIDS.IntegrationTests\bin\Debug\net472\TpIDS.IntegrationTests.dll`.
 
 Advertencias:
 

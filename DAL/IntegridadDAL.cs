@@ -8,7 +8,7 @@ namespace DAL
     public class IntegridadDAL
     {
         // Obtiene el DVV almacenado para una tabla, o null si nunca fue inicializado.
-        public string ObtenerDVV(string nombreTabla, AccesoDatos accesoDatos = null)
+        public string ObtenerDVV(string nombreTabla, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Valor
@@ -16,7 +16,7 @@ namespace DAL
                 WHERE NombreTabla = @NombreTabla";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -38,7 +38,7 @@ namespace DAL
         }
 
         // Inserta o actualiza (UPSERT) el DVV de una tabla, registrando la fecha.
-        public void GuardarDVV(string nombreTabla, string valor, AccesoDatos accesoDatos = null)
+        public void GuardarDVV(string nombreTabla, string valor, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE DigitoVerificadorVertical
@@ -51,7 +51,7 @@ namespace DAL
                     VALUES (@NombreTabla, @Valor, GETDATE());";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {

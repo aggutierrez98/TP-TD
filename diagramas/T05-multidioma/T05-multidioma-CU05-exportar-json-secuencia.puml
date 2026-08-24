@@ -1,0 +1,45 @@
+@startuml
+title T05 - CU05 Exportar JSON de traducciones - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormGestionIdiomas" as Form
+participant "UiDialogHelper" as Dlg
+participant "SaveFileDialog" as Sfd
+participant "IdiomaBLL" as BLL
+participant "IIdiomaRepositorio" as Repo
+participant "JavaScriptSerializer" as Json
+participant "File" as File
+participant "IUnidadDeTrabajo" as UoW
+participant "IBitacoraBLL" as Bita
+
+Admin -> Form : selecciona idioma + btnExportarJson_Click()
+activate Form
+Form -> Dlg : Confirmar("...ExportConfirmMessage", idioma.Nombre)
+Dlg --> Form : confirmacion
+alt confirmacion != Yes
+  Form --> Admin : cancela
+else confirmacion == Yes
+  Form -> Sfd : ShowDialog()
+  Sfd --> Form : ruta destino
+  Form -> BLL : ExportarJson(idioma.Id, rutaArchivo)
+  activate BLL
+  BLL -> Repo : ObtenerIdiomaCompleto(idiomaId)
+  Repo --> BLL : idioma (con Traducciones)
+  alt idioma == null
+    BLL --> Form : throw ExcepcionNegocio("Error.Language.NotFound")
+  else idioma valido
+    BLL -> BLL : construir Dictionary<key, valor> ordenado
+    BLL -> Json : Serialize(traducciones)
+    Json --> BLL : contenido
+    BLL -> File : WriteAllText(rutaArchivo, contenido, UTF8)
+    BLL -> UoW : (nueva unidad) RegistrarOperacionInterno("...TranslationsExport", ...) + Save()
+  end
+  deactivate BLL
+  Form --> Admin : Info "ExportSuccess"
+end
+deactivate Form
+
+@enduml

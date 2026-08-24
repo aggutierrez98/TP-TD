@@ -10,7 +10,7 @@
 
 - `TpIDS`: muestra mensajes, consulta bitacora y administra restauraciones desde formularios.
 - `BLL`: orquesta transacciones, mapea `Usuario <-> UsuarioHistorialSnapshot` y decide cuando registrar.
-- `DAL`: persiste estado actual, bitacora e historiales usando `AccesoDatos`.
+- `DAL`: persiste estado actual, bitacora e historiales usando `AccesoDatosSqlServer`.
 - `SERVICIOS`: expone `Sesion` como fachada de bitacora y `HistorialEstadosService` como servicio de recuperacion.
 - `ABSTRACCIONES`: define contratos, sin dependencias hacia capas superiores.
 

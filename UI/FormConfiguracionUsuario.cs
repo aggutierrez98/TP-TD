@@ -10,10 +10,19 @@ namespace TpIDS
 {
     public partial class FormConfiguracionUsuario : FormTraducibleBase
     {
-        private readonly IdiomaBLL idiomaBLL = new IdiomaBLL();
+        private readonly IdiomaBLL idiomaBLL = CompositionRoot.Idioma;
+        private readonly ISesion _sesion;
+        private readonly IObservado _servicioIdioma;
 
         public FormConfiguracionUsuario()
+            : this(CompositionRoot.Sesion, CompositionRoot.ServicioIdioma)
         {
+        }
+
+        public FormConfiguracionUsuario(ISesion sesion, IObservado servicioIdioma)
+        {
+            _sesion = sesion;
+            _servicioIdioma = servicioIdioma;
             InitializeComponent();
             Load += FormConfiguracionUsuario_Load;
         }
@@ -26,8 +35,8 @@ namespace TpIDS
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
         {
-            IUsuarioAutenticado usuarioActual = Sesion.GetInstance().GetUsuarioActual();
-            if (usuarioActual == null)
+            int? usuarioId = _sesion.GetUsuarioActualId();
+            if (!usuarioId.HasValue)
             {
                 UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
                 Close();
@@ -42,7 +51,7 @@ namespace TpIDS
 
             try
             {
-                bool guardado = idiomaBLL.GuardarPreferencia(usuarioActual, idioma);
+                bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
                 if (guardado)
                 {
                     UiDialogHelper.MostrarInfo("FormUserSettings.Success.SettingsSaved");
@@ -58,7 +67,7 @@ namespace TpIDS
         // y aca solo seteamos el dato.
         private void CargarUsuarioActual()
         {
-            string username = Sesion.GetInstance().GetUsuarioActualNombre();
+            string username = _sesion.GetUsuarioActualNombre();
             lblUsuarioActualNombre.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
@@ -70,7 +79,7 @@ namespace TpIDS
             cmbIdiomas.ValueMember = "Id";
             cmbIdiomas.DataSource = idiomas;
 
-            Idioma idiomaActual = IdiomaService.GetInstance().IdiomaActual;
+            IIdioma idiomaActual = _servicioIdioma.IdiomaActual;
             if (idiomaActual != null)
             {
                 Idioma idiomaSeleccionado = idiomas.FirstOrDefault(item => item.Id == idiomaActual.Id);

@@ -1,0 +1,54 @@
+@startuml
+title T05 - CU07 Configurar idioma preferido - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormConfiguracionUsuario" as Form
+participant "ISesion" as Sesion
+participant "IdiomaBLL" as BLL
+participant "IIdiomaRepositorio" as Repo
+participant "IdiomaCatalogoService" as Cat
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioEstadoBLL" as Estado
+participant "IBitacoraBLL" as Bita
+participant "IdiomaService\n(IObservado)" as Obs
+
+Usuario -> Form : elige idioma + btnGuardarConfiguracion_Click()
+activate Form
+Form -> Sesion : GetUsuarioActualId()
+Sesion --> Form : usuarioId
+alt sin sesion activa
+  Form --> Usuario : Error "NoActiveSession" + Close()
+else con sesion
+  Form -> BLL : GuardarPreferencia(usuarioId, idioma.Id)
+  activate BLL
+  BLL -> Repo : ObtenerIdiomaCompleto(idiomaId)
+  Repo --> BLL : idioma
+  BLL -> Cat : ValidarIdiomaSeleccionable(idioma)
+  BLL -> UoWF : Crear()
+  UoWF --> BLL : unidad
+  activate UoW
+  BLL -> UoW : UsuarioPreferencias.Guardar(usuarioId, idiomaId)
+  BLL -> Estado : GuardarVersionActualInterno(usuarioId, "...PreferredLanguageUpdate", "...", unidad)
+  BLL -> Bita : RegistrarOperacionInterno("...LanguagePreferenceUpdate", "...", "IdiomaBLL", unidad)
+  BLL -> UoW : Save()
+  deactivate UoW
+  BLL -> BLL : AplicarIdiomaSesion(idiomaId)
+  BLL -> Repo : ObtenerIdiomaCompleto(idiomaId)
+  Repo --> BLL : idioma
+  BLL -> Cat : ValidarIdiomaSeleccionable(idioma)
+  BLL -> Obs : CambiarIdioma(idioma)
+  activate Obs
+  Obs -> Obs : Notificar()
+  Obs -> Form : Actualizar(this)  // Observer: re-traduce todos los Forms abiertos
+  deactivate Obs
+  BLL --> Form : true
+  deactivate BLL
+  Form --> Usuario : Info "SettingsSaved"
+end
+deactivate Form
+
+@enduml

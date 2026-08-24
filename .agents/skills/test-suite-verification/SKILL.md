@@ -1,6 +1,6 @@
 ---
 name: test-suite-verification
-description: Enforce end-of-task test suite verification for TpIDS. Use when closing any feature, bugfix, refactor, or test-harness change so the agent runs tests/tools/run-tests.ps1 before handoff, reports explicit TRX-backed results, asks for user confirmation before running the desktop-locking FlaUI UI suite, and never uses -UiFilter without an explicit user request.
+description: Enforce end-of-task test suite verification for TpIDS. Use when closing any feature, bugfix, refactor, or test-harness change so the agent runs tests/tools/run-tests.ps1 -IncludeIntegration before handoff, reports explicit TRX-backed results, asks for user confirmation before running the desktop-locking FlaUI UI suite, and never uses -UiFilter without an explicit user request.
 ---
 
 # Test Suite Verification
@@ -9,8 +9,8 @@ Aplicar esta skill al cierre de cualquier cambio sobre codigo productivo o de te
 
 ## Required workflow
 
-1. Terminar la implementacion (con la skill `strict-tdd` si el cambio era de comportamiento en la logica pura de SERVICIOS).
-2. Correr el gate por defecto: `powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1` (unit, no requiere BD; la BD `TpCatedraIDS_Test` solo se prepara para la suite UI, nunca la productiva). Verde = exit code 0.
+1. Terminar la implementacion (con la skill `strict-tdd` si el cambio era de comportamiento en SERVICIOS/BLL/REPOSITORIO/DAL).
+2. Correr el gate por defecto: `powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -IncludeIntegration` (unit + integracion; el script prepara solo la BD `TpCatedraIDS_Test`, nunca la productiva). Verde = exit code 0.
 3. Compilar tambien `TpIDS.sln` segun `winforms-build-verification`. Los dos gates son obligatorios e independientes: el runner compila `tests/TpIDS.Tests.sln` (incluye los productivos pero usa NuGet), lo cual NO acredita que `TpIDS.sln` compile offline sin NuGet, que es la restriccion dura de portabilidad. Orden recomendado: primero el test gate (funcional), y el build de `TpIDS.sln` como ultimo paso antes de responder.
 4. Si algo falla: corregir y volver a correr. Nunca cerrar la tarea con tests en rojo.
 
@@ -35,9 +35,9 @@ Si el usuario no confirma o no esta disponible, cerrar informando explicitamente
 
 ## Environment limitations
 
-El runner necesita MSBuild (VS 2022 o superior), VSTest y NuGet o su cache local para restaurar y compilar `tests/TpIDS.Tests.sln`. La suite UI requiere ademas SQL Server local (default `.\SQLEXPRESS`, configurable con `-SqlServer`, autenticacion integrada) y `sqlcmd` en PATH.
+El runner necesita MSBuild (VS 2022 o superior), VSTest y NuGet o su cache local para restaurar y compilar `tests/TpIDS.Tests.sln`. La integracion y la UI requieren ademas SQL Server local (default `.\SQLEXPRESS`, configurable con `-SqlServer`, autenticacion integrada) y `sqlcmd` en PATH.
 
-Si SQL Server no esta disponible: correr al menos los unit tests (runner sin flags, no requieren BD) e informar explicitamente que la suite UI no se pudo ejecutar y por que. Nunca fingir exito ni reportar "deberia funcionar".
+Si SQL Server no esta disponible: correr al menos los unit tests (runner sin flags, no requieren BD) e informar explicitamente que integracion/UI no se pudieron ejecutar y por que. Nunca fingir exito ni reportar "deberia funcionar".
 
 Comandos y requisitos completos en [references/test-gate-commands.md](references/test-gate-commands.md).
 

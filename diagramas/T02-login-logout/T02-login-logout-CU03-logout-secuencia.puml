@@ -1,0 +1,36 @@
+@startuml
+title T02 - CU03 Logout - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Usuario
+participant "FormGestionUsuarios" as Hub
+participant "UiDialogHelper" as Dlg
+participant "UsuarioBLL" as UBLL
+participant "IAutorizacion" as Autz
+participant "ISesion" as Sesion
+participant "FormLogin" as Login
+
+Usuario -> Hub : btnLogout_Click()
+activate Hub
+Hub -> Dlg : Confirmar("...LogoutMessage", Warning)
+Dlg --> Hub : confirmacion
+alt confirmacion != Yes
+  Hub --> Usuario : permanece en la pantalla
+else confirmacion == Yes
+  Hub -> UBLL : CerrarSesionActual()
+  activate UBLL
+  UBLL -> Autz : Limpiar()
+  UBLL -> Sesion : CerrarSesion()
+  deactivate UBLL
+  Hub -> Hub : Close()
+  note over Hub, Login
+    FormClosed (registrado por FormLogin) vuelve a
+    invocar UsuarioBLL.CerrarSesionActual() por seguridad.
+  end note
+  Hub --> Login : control vuelve a FormLogin
+end
+deactivate Hub
+
+@enduml

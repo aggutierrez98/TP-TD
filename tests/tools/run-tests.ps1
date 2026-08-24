@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Debug",
+    [switch]$IncludeIntegration,
     [switch]$IncludeUi,
     # Prefijos de casos a correr en la suite UI (ej: T04 o T04,T05 o N01).
     # Filtra por nombre de test, asi que sirve para cualquier convencion
@@ -12,7 +13,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+# GetFullPath y no (Resolve-Path ...).Path: Resolve-Path no normaliza los
+# saltos ".." y, sobre rutas UNC (repo abierto desde \\wsl.localhost\... o un
+# share de red), devuelve la forma calificada por proveedor
+# ("Microsoft.PowerShell.Core\FileSystem::\\host\..."), que herramientas como
+# vstest.console rechazan.
+$RepoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..")).TrimEnd('\')
 $ResultsRoot = Join-Path $RepoRoot "TestResults"
 
 if ($UiFilter) {
@@ -126,14 +132,33 @@ try {
 
     & $vstest `
         "tests\SERVICIOS.Tests\bin\$Configuration\net472\SERVICIOS.Tests.dll" `
+        "tests\BLL.Tests\bin\$Configuration\net472\BLL.Tests.dll" `
         /ResultsDirectory:$ResultsRoot `
         /Logger:"trx;LogFileName=unit-tests.trx"
     $unitExitCode = $LASTEXITCODE
     Assert-TestRunSucceeded -TrxPath $unitTrx -ExitCode $unitExitCode -Name "Unit tests"
 
-    if ($IncludeUi) {
+    if ($IncludeIntegration -or $IncludeUi) {
         & (Join-Path $PSScriptRoot "prepare-test-database.ps1") -SqlServer $SqlServer -DatabaseName $DatabaseName -RepoRoot $RepoRoot
+    }
 
+    if ($IncludeIntegration) {
+        $integrationTrx = Join-Path $ResultsRoot "integration-tests.trx"
+        if (Test-Path -LiteralPath $integrationTrx) {
+            Remove-Item -LiteralPath $integrationTrx -Force
+        }
+
+        & $vstest `
+            "tests\TpIDS.IntegrationTests\bin\$Configuration\net472\TpIDS.IntegrationTests.dll" `
+            /TestCaseFilter:"TestCategory=Integration" `
+            /InIsolation `
+            /ResultsDirectory:$ResultsRoot `
+            /Logger:"trx;LogFileName=integration-tests.trx"
+        $integrationExitCode = $LASTEXITCODE
+        Assert-TestRunSucceeded -TrxPath $integrationTrx -ExitCode $integrationExitCode -Name "Integration tests"
+    }
+
+    if ($IncludeUi) {
         # Los tests UI lanzan TpIDS.exe con FlaUI: requieren sesion de escritorio
         # interactiva desbloqueada y SQL Server local con la BD de test preparada.
         $uiTrx = Join-Path $ResultsRoot "ui-tests.trx"

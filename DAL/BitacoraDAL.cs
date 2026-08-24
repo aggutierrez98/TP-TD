@@ -9,7 +9,7 @@ namespace DAL
 {
     public class BitacoraDAL
     {
-        public int Guardar(EventoBitacora evento, AccesoDatos accesoDatos = null)
+        public int Guardar(EventoBitacora evento, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 INSERT INTO Bitacora
@@ -37,7 +37,7 @@ namespace DAL
                 )";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -67,7 +67,7 @@ namespace DAL
         public List<EventoBitacora> Buscar(FiltroBitacora filtro)
         {
             filtro = filtro ?? new FiltroBitacora();
-            using (AccesoDatos accesoDatos = new AccesoDatos())
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 List<SqlParameter> parametros = new List<SqlParameter>();
                 string query = @"

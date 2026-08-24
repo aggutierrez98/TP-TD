@@ -1,7 +1,6 @@
 @startuml
 title T02 - Gestion de Log In / Log Out - Clases
 
-left to right direction
 skinparam backgroundColor white
 skinparam classBackgroundColor white
 skinparam classBorderColor black
@@ -10,93 +9,121 @@ skinparam classAttributeIconSize 0
 skinparam shadowing false
 
 package "UI" {
-  class FormTraducibleBase {
-    #OnIdiomaActualizado(idioma : Idioma) : void
+  abstract class FormTraducibleBase
+
+  class FormLogin {
+    -gestorUsuario : UsuarioBLL
+    -gestorBitacora : BitacoraBLL
+    -gestorIdioma : IdiomaBLL
+    +btnIngreso_Click() : void
+    +btnRegistro_Click() : void
   }
 
-  class FormLogin
-  class FormRegistro
+  class FormRegistro {
+    -gestorJugador : UsuarioBLL
+    +btnRegistro_Click() : void
+  }
 
   class FormGestionUsuarios {
-    #OnIdiomaActualizado(idioma : Idioma) : void
+    -usuarioBLL : UsuarioBLL
+    +btnLogout_Click() : void
   }
 }
 
 package "BLL" {
+  class CompositionRoot <<static>> {
+    +Usuario : UsuarioBLL
+    +Idioma : IdiomaBLL
+    +GestorBitacora : BitacoraBLL
+    +Inicializar() : void
+  }
+
   class UsuarioBLL {
-    +Login(username : string, passwordRaw : string) : Usuario
+    +Login(usuarioEntidad : Usuario, passwordRaw : string) : Usuario
     +CerrarSesionActual() : void
-    +Registrar(username : string, passwordRaw : string) : bool
+    +Registrar(usuario : Usuario, passwordRaw : string) : bool
   }
 
-  class PermisoBLL {
-    +CargarPermisosEnUsuario(usuario : Usuario) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<object>
+  class PasswordHashService <<internal>> {
+    +HashPassword(passwordRaw : string) : string
+    +VerifyPassword(passwordRaw : string, passwordHash : string) : bool
   }
 
-  class IdiomaBLL {
+  interface IPasswordHashService <<internal>>
+  interface IPermisoBLL <<internal>> {
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
+    +AsignarPerfilBasicoInterno(usuarioId : int, unidad : IUnidadDeTrabajo) : void
+  }
+  interface IIdiomaBLL <<internal>> {
     +AplicarIdiomaSesionUsuario(usuarioId : int) : void
   }
+  interface IBitacoraBLL <<internal>> {
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+  }
+  interface IIntegridadBLL <<internal>> {
+    +CalcularDVH<T>(entidad : T) : string
+    +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) : void
+  }
+  interface IUsuarioEstadoBLL <<internal>> {
+    +GuardarVersionActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : void
+  }
+}
+
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
+  }
+  interface IUnidadDeTrabajo {
+    +Usuarios : IUsuarioRepositorio
+    +Save() : void
+  }
+  interface IUsuarioRepositorio {
+    +ObtenerPorUsername(username : string) : Usuario
+    +ObtenerPorId(id : int) : Usuario
+    +InsertarYObtenerId(usuario : Usuario) : int
+    +ObtenerTodos() : List<Usuario>
+  }
+  class UsuarioRepositorio
 }
 
 package "DAL" {
   class UsuarioDAL {
-    +ObtenerPorUsername(username : string, accesoDatos : AccesoDatos = null) : Usuario
-    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatos = null) : int
+    +ObtenerPorUsername(username : string, accesoDatos : AccesoDatosSqlServer = null) : Usuario
+    +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatosSqlServer = null) : int
   }
-
-  class AccesoDatos
+  class AccesoDatosSqlServer
 }
 
 package "SERVICIOS" {
+  class Sesion <<singleton>> {
+    +GetInstance() : Sesion
+  }
+  class AutorizacionService <<singleton>> {
+    +GetInstance() : AutorizacionService
+  }
   class PasswordHasher {
     +HashPassword(password : string) : string
     +VerifyPassword(password : string, storedHash : string) : bool
   }
-
-  class Sesion <<singleton>> {
-    +GetInstance() : Sesion
-    +IniciarSesion(usuarioId : int, username : string) : void
-    +CerrarSesion() : void
-    +GetUsuarioActual() : IUsuarioAutenticado
-    +GetUsuarioActualId() : int?
-    +GetUsuarioActualNombre() : string
-    +ActualizarUsuarioActualNombre(username : string) : void
-    +HaySesionActiva() : bool
-  }
-
-  class AutorizacionService <<singleton>> {
-    +GetInstance() : AutorizacionService
-    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
-    +Limpiar() : void
-  }
-
-  class BitacoraService <<singleton>> {
-    +GetInstance() : BitacoraService
-    +RegistrarOperacion(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string, contextoPersistencia : object = null) : void
-  }
-
-  class Idioma
-  class UsuarioAutenticadoSesion
 }
 
 package "ABSTRACCIONES" {
+  interface ISesion {
+    +IniciarSesion(usuario : IUsuarioAutenticado) : void
+    +CerrarSesion() : void
+    +GetUsuarioActualId() : int?
+    +HaySesionActiva() : bool
+  }
+  interface IAutorizacion {
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable) : void
+    +Limpiar() : void
+    +TienePermiso(rutaPermiso : string) : bool
+  }
   interface IPasswordHasher {
     +HashPassword(password : string) : string
     +VerifyPassword(password : string, storedHash : string) : bool
   }
-
-  interface ISesion {
-    +IniciarSesion(usuario : IUsuarioAutenticado) : void
-    +CerrarSesion() : void
-    +GetUsuarioActual() : IUsuarioAutenticado
-    +GetUsuarioActualId() : int?
-    +GetUsuarioActualNombre() : string
-    +ActualizarUsuarioActualNombre(username : string) : void
-    +HaySesionActiva() : bool
-  }
-
   interface IUsuarioAutenticado {
     +Id : int
     +Username : string
@@ -109,31 +136,45 @@ package "BE" {
     +Username : string
     +PasswordHash : string
     +Activo : bool
+    +DVH : string
   }
 }
 
 FormTraducibleBase <|-- FormLogin
 FormTraducibleBase <|-- FormRegistro
 FormTraducibleBase <|-- FormGestionUsuarios
-FormLogin ..> FormRegistro : <<creates>>
-FormLogin ..> FormGestionUsuarios : <<creates>>
-FormLogin --> UsuarioBLL : gestorUsuario
-FormRegistro --> UsuarioBLL : gestorJugador
-FormGestionUsuarios --> UsuarioBLL : usuarioBLL
 
-UsuarioBLL --> UsuarioDAL
-UsuarioBLL --> PasswordHasher
-UsuarioBLL --> PermisoBLL
-UsuarioBLL --> IdiomaBLL
-UsuarioBLL --> Sesion
-UsuarioBLL --> AutorizacionService
-UsuarioBLL --> BitacoraService
-UsuarioDAL --> AccesoDatos
-UsuarioDAL --> Usuario
+FormLogin ..> CompositionRoot : CompositionRoot.Usuario
+FormLogin --> UsuarioBLL
+FormRegistro --> UsuarioBLL
+FormGestionUsuarios --> UsuarioBLL
+CompositionRoot ..> UsuarioBLL : <<creates>>
 
-PasswordHasher ..|> IPasswordHasher
+UsuarioBLL --> IUsuarioRepositorio
+UsuarioBLL --> IPasswordHashService
+UsuarioBLL --> IUnidadDeTrabajoFactory
+UsuarioBLL --> ISesion
+UsuarioBLL --> IAutorizacion
+UsuarioBLL ..> IPermisoBLL
+UsuarioBLL ..> IIdiomaBLL
+UsuarioBLL ..> IBitacoraBLL
+UsuarioBLL ..> IIntegridadBLL
+UsuarioBLL ..> IUsuarioEstadoBLL
+
+PasswordHashService ..|> IPasswordHashService
+PasswordHashService --> PasswordHasher
+
+IUnidadDeTrabajo --> IUsuarioRepositorio : Usuarios
+IUnidadDeTrabajoFactory ..> IUnidadDeTrabajo : <<creates>>
+UsuarioRepositorio ..|> IUsuarioRepositorio
+UsuarioRepositorio --> UsuarioDAL
+UsuarioDAL --> AccesoDatosSqlServer
+UsuarioDAL ..> Usuario
+
 Sesion ..|> ISesion
-UsuarioAutenticadoSesion ..|> IUsuarioAutenticado
+AutorizacionService ..|> IAutorizacion
+PasswordHasher ..|> IPasswordHasher
+
 Usuario ..|> IUsuarioAutenticado
 Sesion --> IUsuarioAutenticado : _usuarioActual
 

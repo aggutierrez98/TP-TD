@@ -38,7 +38,7 @@ A continuacion se especifican los casos de uso de la bitacora del sistema segun 
 **Descripcion:** Registra de forma centralizada un evento en la bitacora, clasificado como operacion exitosa, fallo de negocio o excepcion tecnica, generado por las operaciones auditables del sistema.  
 **Actor Principal:** Sistema  
 **Actor Secundario:** -  
-**Precondiciones:** La bitacora fue configurada durante el arranque con el registrador de persistencia y los proveedores de identidad de la sesion.  
+**Precondiciones:** La bitacora fue configurada durante el arranque con la fabrica de unidades de trabajo y los proveedores de identidad de la sesion.  
 **Puntos de Extension:** Incluido por los casos de uso que ejecutan operaciones auditables (Login, Registro, Alta/Edicion/Baja de usuario, Restauracion de version, entre otros).  
 **Condicion:** Una operacion de negocio auditable finaliza con exito, con un fallo de negocio o con una excepcion tecnica y debe dejar traza.  
 
@@ -47,7 +47,7 @@ A continuacion se especifican los casos de uso de la bitacora del sistema segun 
 2. El sistema determina el nivel del evento segun el tipo de registro: operacion, fallo de negocio o excepcion tecnica.
 3. El sistema obtiene el identificador y el nombre del usuario de la sesion actual.
 4. El sistema construye el evento de bitacora con fecha y hora actual, identidad, actividad, informacion, nivel, origen y marca tecnica.
-5. El sistema persiste el evento, participando de la transaccion de la operacion cuando se proporciona un contexto de persistencia.
+5. El sistema persiste el evento, participando de la unidad de trabajo de la operacion cuando se proporciona una; si no, usa su propia unidad de trabajo.
 6. El sistema devuelve el identificador del evento registrado.
 
 **Flujos Alternativos:**

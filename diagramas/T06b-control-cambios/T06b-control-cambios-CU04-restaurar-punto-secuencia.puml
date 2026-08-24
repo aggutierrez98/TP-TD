@@ -1,0 +1,63 @@
+@startuml
+title T06b - CU04 Restaurar punto del historial - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormHistorialUsuario" as Form
+participant "UiDialogHelper" as Dlg
+participant "UsuarioBLL" as UBLL
+participant "UsuarioEstadoBLL" as EBLL
+participant "IIntegridadBLL" as Integ
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioRepositorio" as URepo
+participant "IBitacoraBLL" as Bita
+
+Admin -> Form : selecciona version + btnRestaurarVersion_Click()
+activate Form
+Form -> Dlg : Confirmar("...RestoreVersionMessage")
+Dlg --> Form : confirmacion
+alt confirmacion != Yes
+  Form --> Admin : cancela
+else confirmacion == Yes
+  Form -> UBLL : RestaurarVersion(historialId)
+  activate UBLL
+  UBLL -> EBLL : ObtenerVersion(historialId)
+  EBLL --> UBLL : snapshot
+  alt snapshot == null / restauracion invalida (sesion activa inactivada)
+    UBLL --> Form : throw ExcepcionNegocio(...)
+  else restauracion valida
+    UBLL -> UoWF : Crear()
+    UoWF --> UBLL : unidad
+    activate UoW
+    UBLL -> UoW : Usuarios.ObtenerPorId(snapshot.UsuarioId)
+    UoW -> URepo : ObtenerPorId(usuarioId)
+    URepo --> UBLL : usuario (dvhAnterior = usuario.DVH)
+    UBLL -> EBLL : AplicarSnapshotInterno(snapshot, unidad)
+    note right of EBLL
+      GuardarEstadoCompleto(usuario) +
+      ReemplazarPermisosUsuario(...) +
+      UsuarioPreferencias.Guardar(...)
+    end note
+    UBLL -> UoW : Usuarios.ObtenerPorId(snapshot.UsuarioId)
+    UoW --> UBLL : usuarioRestaurado
+    UBLL -> Integ : CalcularDVH(usuarioRestaurado)
+    Integ --> UBLL : dvhNuevo
+    UBLL -> UoW : Usuarios.ActualizarDVH(usuarioId, dvhNuevo)
+    UBLL -> EBLL : GuardarVersionActualInterno(usuarioId, "...Restoration", "...", unidad)
+    UBLL -> Bita : RegistrarOperacionInterno("...UserRestoration", "...", "UsuarioBLL", unidad)
+    UBLL -> Integ : ActualizarDVVInterno("Usuarios", dvhAnterior, dvhNuevo, unidad)
+    UBLL -> UoW : Save()
+    deactivate UoW
+    UBLL -> UBLL : RefrescarSesionSiCorresponde(usuarioId)
+    UBLL --> Form : true
+  end
+  deactivate UBLL
+  Form -> Form : RefrescarDatos()
+  Form --> Admin : Info "VersionRestored"
+end
+deactivate Form
+
+@enduml

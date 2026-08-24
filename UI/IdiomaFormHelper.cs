@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using System.Windows.Forms;
-using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace TpIDS
 {
@@ -9,7 +9,7 @@ namespace TpIDS
     {
 
         // Aplica traducciones sobre formulario y sus controles
-        public static void Aplicar(Form form, Idioma idioma)
+        public static void Aplicar(Form form, IIdioma idioma)
         {
             if (form == null || idioma == null)
             {
@@ -25,7 +25,7 @@ namespace TpIDS
         }
 
         // Aplica traducciones sobre un control y sus hijos
-        public static void Aplicar(Control control, Idioma idioma)
+        public static void Aplicar(Control control, IIdioma idioma)
         {
             if (control == null || idioma == null)
             {
@@ -61,7 +61,7 @@ namespace TpIDS
             }
         }
 
-        public static void AplicarDataGridView(DataGridView grilla, Idioma idioma)
+        public static void AplicarDataGridView(DataGridView grilla, IIdioma idioma)
         {
             if (grilla == null || idioma == null || grilla.Columns.Count == 0)
             {
@@ -93,7 +93,7 @@ namespace TpIDS
             return combo.Items.Count > 0 && combo.Items[0] is OpcionTraducible;
         }
 
-        private static void AplicarComboBox(ComboBox combo, Idioma idioma)
+        private static void AplicarComboBox(ComboBox combo, IIdioma idioma)
         {
             int seleccion = combo.SelectedIndex;
             object[] items = combo.Items.Cast<object>().ToArray();

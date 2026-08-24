@@ -13,7 +13,7 @@ namespace SERVICIOS
     // Motor generico de calculo de digitos verificadores.
     // Usa reflexion para descubrir las propiedades marcadas con DigitoVerificadorAttribute,
     // por lo que es aplicable a cualquier entidad sin modificar el motor.
-    public class IntegridadService
+    public class IntegridadService : IIntegridadService
     {
         // Separador entre atributos dentro de la cadena canonica.
         private const string SeparadorAtributo = "//";
@@ -85,7 +85,7 @@ namespace SERVICIOS
             foreach (string dvh in listaDVH)
             {
                 Sumar(acumulador, ObtenerContribucionDVH(dvh));
-        }
+            }
 
             return Convert.ToBase64String(acumulador);
         }

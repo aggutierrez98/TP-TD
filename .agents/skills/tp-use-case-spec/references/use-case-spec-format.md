@@ -12,7 +12,7 @@ en una tabla de una sola columna por CU (Word) mas un espejo Markdown.
 | `estado` | Estado | Si | texto | Madurez del CU: `Implementado`, `Definido` o `Propuesto`. Otros valores generan un aviso, no un error. |
 | `descripcion` | Descripcion | Si | texto | Meta del actor en 1-2 frases (que logra, no como). |
 | `actor_principal` | Actor Principal | Si | texto | Quien inicia/dispara el CU (rol o usuario). |
-| `actor_secundario` | Actor Secundario | Si | texto | Entidad **externa** al limite del sistema (otro sistema/servicio, dispositivo de hardware o persona) que interviene de forma **reactiva** para dar soporte, datos o servicios necesarios al CU. **Nunca** clases o componentes internos (BLL, DAL, SERVICIOS, Forms). Usar `-` si no hay. Ver la regla ampliada en "Convenciones de contenido". |
+| `actor_secundario` | Actor Secundario | Si | texto | Entidad **externa** al limite del sistema (otro sistema/servicio, dispositivo de hardware o persona) que interviene de forma **reactiva** para dar soporte, datos o servicios necesarios al CU. **Nunca** clases o componentes internos (BLL, REPOSITORIO, DAL, SERVICIOS, Forms). Usar `-` si no hay. Ver la regla ampliada en "Convenciones de contenido". |
 | `precondiciones` | Precondiciones | Si | texto | Lo que debe cumplirse o existir antes de iniciar el CU. |
 | `puntos_extension` | Puntos de Extension | Si | texto | Relacion con otros CU (include/extend) o condicion que dispara un flujo extendido/refresco. Usar `No aplica.` si no hay. |
 | `condicion` | Condicion | Si | texto | El disparador (trigger): evento o motivacion que inicia el CU. |
@@ -42,8 +42,8 @@ en una tabla de una sola columna por CU (Word) mas un espejo Markdown.
     impresora, sensor) o una persona que interviene de forma reactiva (ej. un supervisor que
     aprueba manualmente).
   - **Nunca puede ser** una clase o componente **interno** del sistema que estamos construyendo
-    (`UsuarioBLL`, `PermisoBLL`, `UsuarioDAL`, `PasswordHasher`,
-    `Sesion`, `IdiomaService`, cualquier `Form`, `AccesoDatos`, etc.). Esas viven
+    (`UsuarioBLL`, `PermisoBLL`, `IUsuarioRepositorio`, `UsuarioDAL`, `PasswordHasher`,
+    `Sesion`, `IdiomaService`, cualquier `Form`, `AccesoDatosSqlServer`, etc.). Esas viven
     **dentro** de la caja negra: son diseno/implementacion, no actores. Su colaboracion se
     modela en el **diagrama de secuencia**, no en este campo.
   - Prueba rapida: "¿lo programo yo dentro del codigo?" → si la respuesta es si, **no** es un

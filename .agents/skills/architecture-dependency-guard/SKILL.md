@@ -27,9 +27,15 @@ Leer siempre:
 
 - agregar una referencia `SERVICIOS -> BE`, `SERVICIOS -> DAL` o `SERVICIOS -> BLL`
 - agregar una referencia `BE -> SERVICIOS`, `BE -> DAL`, `BE -> BLL` o `BE -> UI`
+- agregar una referencia `BLL -> DAL`
 - invocar `DAL` directamente desde `UI`
+- invocar `DAL` directamente desde `BLL`
 - usar `ABSTRACCIONES` para alojar implementaciones concretas
 - crear bypasses a `BLL` para resolver casos de uso desde `UI`
+
+## Related
+
+- Esta skill vela por la matriz de referencias entre `.csproj`. La disciplina de COMO se construyen e inyectan las instancias dentro de esas capas (Composition Root, sin `new` de BLL fuera del root, sin Service Locator escondido) la cubre [composition-root-guard](../composition-root-guard/SKILL.md). Aplicar ambas cuando se agregan BLLs o servicios.
 
 ## Response rule
 

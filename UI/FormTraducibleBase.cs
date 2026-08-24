@@ -1,6 +1,7 @@
 using System;
 using System.Windows.Forms;
-using SERVICIOS;
+using ABSTRACCIONES;
+using BLL;
 
 namespace TpIDS
 {
@@ -18,19 +19,19 @@ namespace TpIDS
             base.OnFormClosed(e);
         }
 
-        public virtual void Actualizar(IdiomaService idiomaService)
+        public virtual void Actualizar(IObservado observado)
         {
-            IdiomaFormHelper.Aplicar(this, idiomaService.IdiomaActual);
+            IdiomaFormHelper.Aplicar(this, observado.IdiomaActual);
         }
 
         private void RegistrarObservadorIdioma()
         {
-            IdiomaService.GetInstance().RegistrarObservador(this);
+            CompositionRoot.ServicioIdioma.RegistrarObservador(this);
         }
 
         private void DesregistrarObservadorIdioma()
         {
-            IdiomaService.GetInstance().DesregistrarObservador(this);
+            CompositionRoot.ServicioIdioma.DesregistrarObservador(this);
         }
     }
 }

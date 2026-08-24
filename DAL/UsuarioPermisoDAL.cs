@@ -7,7 +7,7 @@ namespace DAL
 {
     public class UsuarioPermisoDAL
     {
-        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId, AccesoDatos accesoDatos = null)
+        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT PermisoId
@@ -16,7 +16,7 @@ namespace DAL
                 ORDER BY PermisoId";
 
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
@@ -39,10 +39,10 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId, AccesoDatos accesoDatos = null)
+        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
-            accesoDatos = accesoDatos ?? new AccesoDatos();
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {

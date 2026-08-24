@@ -3,14 +3,26 @@ title T02 - Gestion de Log In / Log Out - DER
 
 hide methods
 hide stereotypes
+skinparam backgroundColor white
 skinparam classAttributeIconSize 0
+skinparam shadowing false
 
 entity "Usuarios" as Usuarios {
   *Id : int <<PK, IDENTITY, NOT NULL>>
   --
-  Username : varchar(50) <<UQ, NOT NULL>>
+  Username : varchar(50) <<UQ (UQ_Usuarios_Username), NOT NULL>>
   PasswordHash : varchar(max) <<NOT NULL>>
   Activo : bit <<NOT NULL>>
+  DVH : varchar(100) <<NULL>>
 }
+
+note bottom of Usuarios
+  Tabla nucleo de login/logout/registro.
+  DVH = digito verificador horizontal (T07).
+  El detalle de tablas relacionadas
+  (Bitacora, UsuarioPermiso, UsuarioHistorial,
+  DigitoVerificadorVertical) vive en sus modulos
+  y en el DER integrado G07.
+end note
 
 @enduml

@@ -1,52 +1,32 @@
 @startuml
 title T06a - CU01 Consultar bitacora - Secuencia
 
-actor Administrador
-participant "FormBitacora" as FormBitacora
-participant "BitacoraBLL" as BitacoraBLL
-participant "BitacoraService" as BitacoraService
-participant "BitacoraDAL" as BitacoraDAL
-participant "AccesoDatos" as AccesoDatos
+skinparam backgroundColor white
+skinparam shadowing false
 
-Administrador -> FormBitacora : abrir pantalla / btnBuscarBitacora_Click()
-activate FormBitacora
-FormBitacora -> FormBitacora : RefrescarDatos()
-activate FormBitacora
-FormBitacora -> FormBitacora : construir FiltroBitacora\n(FechaDesde, FechaHasta, Usuario, Nivel, EsTecnica)
+actor Usuario
+participant "FormBitacora" as Form
+participant "BitacoraBLL" as BLL
+participant "IBitacoraRepositorio" as Repo
+participant "BitacoraDAL" as DAL
 
-FormBitacora -> BitacoraBLL : Buscar(filtro)
-activate BitacoraBLL
-BitacoraBLL -> BitacoraService : ConsultarBitacora(filtro)
-activate BitacoraService
-
-note right of BitacoraService
-  Delegado _consultor configurado
-  por InicializacionBitacoraBLL
-  hacia BitacoraDAL.Buscar.
-end note
-
-BitacoraService -> BitacoraDAL : Buscar(filtro)
-activate BitacoraDAL
-BitacoraDAL -> AccesoDatos : Read(query, parametros)
-activate AccesoDatos
-AccesoDatos --> BitacoraDAL : DataTable
-deactivate AccesoDatos
-BitacoraDAL --> BitacoraService : List<EventoBitacora>
-deactivate BitacoraDAL
-BitacoraService --> BitacoraBLL : IList<EventoBitacora>
-deactivate BitacoraService
-BitacoraBLL --> FormBitacora : List<EventoBitacora>
-deactivate BitacoraBLL
-
-FormBitacora -> FormBitacora : filtrar por Actividad (texto traducido)
-FormBitacora -> FormBitacora : dgvBitacora.DataSource = filtrados
-deactivate FormBitacora
-
-alt ocurre una excepcion durante la consulta
-  FormBitacora -> FormBitacora : UiExceptionHandler.Mostrar(ex, "Consulta de bitacora")
-end
-
-FormBitacora --> Administrador : grilla con eventos filtrados
-deactivate FormBitacora
+Usuario -> Form : define filtros + btnBuscarBitacora_Click()
+activate Form
+Form -> Form : RefrescarDatos()
+Form -> Form : construir FiltroBitacora\n(FechaDesde/Hasta, Usuario, Nivel, EsTecnica)
+Form -> BLL : Buscar(filtro)
+activate BLL
+BLL -> Repo : Buscar(filtro ?? new FiltroBitacora())
+activate Repo
+Repo -> DAL : Buscar(filtro)
+DAL --> Repo : List<EventoBitacora>
+Repo --> BLL : registros
+deactivate Repo
+BLL --> Form : registros
+deactivate BLL
+Form -> Form : filtrar por Actividad (texto traducido) y bind a dgvBitacora
+Form -> Form : dgvBitacora_CellFormatting -> traduce Actividad/Informacion/Nivel
+Form --> Usuario : muestra eventos filtrados
+deactivate Form
 
 @enduml

@@ -2,7 +2,13 @@
 
 ## Comandos
 
-Gate por defecto al cierre de un desarrollo (unit, no requiere BD):
+Gate por defecto al cierre de un desarrollo (unit + integracion):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -IncludeIntegration
+```
+
+Fallback solo-unit (no requiere BD; usar cuando SQL Server no esta disponible, informando la limitacion):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1
@@ -11,7 +17,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1
 Suite UI completa (solo tras avisar al usuario y recibir confirmacion; toma el escritorio unos 5 minutos):
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -IncludeUi
+powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -IncludeIntegration -IncludeUi
 ```
 
 Corrida UI filtrada (solo a pedido explicito del usuario, advirtiendo el riesgo; implica -IncludeUi):
@@ -27,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tests\tools\run-tests.ps1 -U
 - MSBuild de VS 2022 o superior (el runner lo resuelve con fallback de rutas conocidas).
 - VSTest (`vstest.console.exe`, resuelto por el runner).
 - NuGet o cache local de paquetes para restaurar `tests/TpIDS.Tests.sln`.
-- Para la suite UI: SQL Server local (default `.\SQLEXPRESS`, configurable con `-SqlServer`, autenticacion integrada) y `sqlcmd` en PATH.
+- Para integracion y UI: SQL Server local (default `.\SQLEXPRESS`, configurable con `-SqlServer`, autenticacion integrada) y `sqlcmd` en PATH.
 - Para UI: sesion interactiva desbloqueada y escritorio libre durante toda la corrida.
 
 ## Exit codes y guards
