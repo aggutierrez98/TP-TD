@@ -7,42 +7,69 @@ Todo el conocimiento de contexto se ubica dentro del subdirectorio `.agents/`. L
 - [Stack .NET y WinForms](.agents/01-stack-dotnet-winforms.md): restricciones del stack, version de framework y alcance tecnico.
 - [Arquitectura por Capas](.agents/02-architecture-7-layers.md): restricciones arquitectonicas del proyecto.
 
+## Auto-invocar skills
+
+Al realizar estas acciones, invocar SIEMPRE la skill correspondiente ANTES de empezar. No es opcional ni depende de que la tarea parezca chica.
+
+| Accion | Skill |
+|--------|-------|
+| Cerrar cualquier cambio de codigo, formularios, recursos o `.csproj` | `winforms-build-verification` |
+| Cambiar comportamiento en `SERVICIOS`, `BLL`, `REPOSITORIO` o `DAL` | `strict-tdd` |
+| Cerrar un cambio funcional, o tocar tests o el harness de tests | `test-suite-verification` |
+| Mover clases entre capas o tocar referencias entre proyectos | `architecture-dependency-guard` |
+| Dar de alta o modificar un BLL o servicio transversal | `composition-root-guard` |
+| Agregar o renombrar controles visuales y handlers WinForms | `winforms-ui-control-naming` |
+| Tocar textos traducibles, tags `Form...`, encabezados de grilla o keys de idioma | `translation-base-seed-sync` |
+| Escribir o modificar acceso SQL Server en la capa DAL | `dal-sql-access-patterns` |
+| Crear o modificar diagramas UML o especificaciones de casos de uso | `tp-uml-y-casos-de-uso` |
+| Trabajar data binding, `ErrorProvider`, async o thread safety en formularios | `winforms` |
+| Diagnosticar errores de compilacion o builds lentos | `dotnet-msbuild` |
+| Diagnosticar lentitud, memory leaks o hangs en la UI | `dotnet-diag` |
+
 ## Skills del repositorio
 
-- [Architecture Dependency Guard](.agents/skills/architecture-dependency-guard/SKILL.md): obliga a respetar la matriz exacta de dependencias entre UI, BLL, REPOSITORIO, DAL, BE, SERVICIOS y ABSTRACCIONES; ademas se valida automaticamente durante el build.
-- [Composition Root Guard](.agents/skills/composition-root-guard/SKILL.md): obliga a la disciplina de composicion/inyeccion dentro de esas capas: los BLL se construyen solo desde `CompositionRoot` (nada de `new XxxBLL()` fuera del root ni ctores por defecto), ninguno actua como Service Locator, y define como dar de alta un BLL o servicio en el grafo de dependencias. Se valida automaticamente durante el build. Complementa a `architecture-dependency-guard`.
-- [WinForms Build Verification](.agents/skills/winforms-build-verification/SKILL.md): obliga a compilar `TpIDS.sln` con MSBuild antes de dar una tarea por terminada.
-- [Strict TDD](.agents/skills/strict-tdd/SKILL.md): obliga al ciclo red-green estricto para todo cambio de comportamiento en SERVICIOS, BLL, REPOSITORIO o DAL: verificar baseline en verde, escribir primero el test (unit en `SERVICIOS.Tests`/`BLL.Tests`, integracion en `TpIDS.IntegrationTests` para REPOSITORIO/DAL), verlo fallar con `tests/tools/run-tests.ps1`, implementar y verlo pasar. Los tests UI FlaUI se escriben o actualizan despues del desarrollo, nunca dentro del ciclo.
-- [Test Suite Verification](.agents/skills/test-suite-verification/SKILL.md): obliga a cerrar todo cambio funcional con la suite de tests en verde via `tests/tools/run-tests.ps1 -IncludeIntegration`, reportando contadores reales del TRX; define el protocolo de la suite UI FlaUI (avisar que toma el escritorio ~5 minutos y esperar confirmacion del usuario) y de las corridas filtradas con `-UiFilter` (solo a pedido explicito del usuario y advirtiendo el riesgo de regresiones no cubiertas). Complementa a `winforms-build-verification`, no lo reemplaza.
-- [WinForms UI Control Naming](.agents/skills/winforms-ui-control-naming/SKILL.md): define la nomenclatura obligatoria para controles visuales y handlers WinForms.
-- [TP Delivery Standards](.agents/skills/tp-delivery-standards/SKILL.md): aplica restricciones tecnicas, criterios de entrega, balanceo documentacion-codigo y exigencias del TP.
-- [TP UML y Casos de Uso](.agents/skills/tp-uml-y-casos-de-uso/SKILL.md): punto central de diagramas UML y especificaciones de casos de uso del TP. Define que artefactos exige cada requisito (T0X/G0X/N0X), su ubicacion bajo `diagramas/<requisito>/` y su nomenclatura; orquesta las subskills de PlantUML y de especificacion de casos de uso; sincroniza con la documentacion formal y valida los artefactos. Se ejecuta a demanda, con desarrollo completo y preguntando primero al usuario. Es el punto de entrada para diagramar o especificar.
-- [PlantUML Embebido en TP Delivery Standards](.agents/skills/tp-delivery-standards/embedded-skills/plantuml/SKILL.md): subskill (orquestada por `tp-uml-y-casos-de-uso`) para crear, editar, convertir o validar diagramas UML con PlantUML. Cargar solo cuando la tarea realmente requiera diagramacion PlantUML.
-- [TP Use Case Spec](.agents/skills/tp-use-case-spec/SKILL.md): subskill (orquestada por `tp-uml-y-casos-de-uso`) que genera especificaciones de casos de uso con el formato estandar del TP (.docx + .md espejo) a partir de un JSON. Cargar cuando haya que documentar, crear o actualizar casos de uso.
-- [DAL SQL Access Patterns](.agents/skills/dal-sql-access-patterns/SKILL.md): centraliza acceso SQL Server, `ConfigurationManager` y el uso obligatorio de transacciones en la capa DAL.
-- [Translation Base Seed Sync](.agents/skills/translation-base-seed-sync/SKILL.md): sincroniza el catalogo base de traducciones de la UI con el bloque auto-generado de `script_bd.sql`.
+Viven en el repo bajo `.agents/skills/`. Las validadas en build fallan la compilacion de `TpIDS.sln` si se violan.
 
-## Skills .NET generales (dotnet/skills — cargar solo la relevante a la tarea)
+| Skill | Que resuelve | Cuando cargarla | Ruta |
+|-------|--------------|-----------------|------|
+| `architecture-dependency-guard` | Matriz exacta de dependencias entre UI, BLL, REPOSITORIO, DAL, BE, SERVICIOS y ABSTRACCIONES. Validada en build | Al mover clases entre capas o tocar referencias entre proyectos | [SKILL.md](.agents/skills/architecture-dependency-guard/SKILL.md) |
+| `composition-root-guard` | Disciplina de composicion/inyeccion: los BLL se construyen solo desde `CompositionRoot`, sin `new XxxBLL()` fuera del root ni ctores por defecto, y ninguno actua como Service Locator. Validada en build. Complementa a `architecture-dependency-guard` | Al dar de alta o modificar un BLL o servicio transversal | [SKILL.md](.agents/skills/composition-root-guard/SKILL.md) |
+| `winforms-build-verification` | Obliga a compilar `TpIDS.sln` con MSBuild antes de dar una tarea por terminada | Al cerrar cualquier cambio de codigo | [SKILL.md](.agents/skills/winforms-build-verification/SKILL.md) |
+| `strict-tdd` | Ciclo red-green estricto: baseline en verde, test primero (unit en `SERVICIOS.Tests`/`BLL.Tests`, integracion en `TpIDS.IntegrationTests` para REPOSITORIO/DAL), verlo fallar, implementar, verlo pasar. Los tests UI FlaUI van despues del desarrollo, nunca dentro del ciclo | Ante todo cambio de comportamiento en SERVICIOS, BLL, REPOSITORIO o DAL | [SKILL.md](.agents/skills/strict-tdd/SKILL.md) |
+| `test-suite-verification` | Cierre con la suite en verde via `tests/tools/run-tests.ps1 -IncludeIntegration`, reportando contadores reales del TRX. Define el protocolo de la suite UI FlaUI (avisar que toma el escritorio ~5 minutos y esperar confirmacion) y de las corridas con `-UiFilter`. Complementa a `winforms-build-verification`, no lo reemplaza | Al cerrar un cambio funcional o tocar el harness de tests | [SKILL.md](.agents/skills/test-suite-verification/SKILL.md) |
+| `winforms-ui-control-naming` | Nomenclatura obligatoria de controles visuales y handlers WinForms | Al agregar o renombrar controles | [SKILL.md](.agents/skills/winforms-ui-control-naming/SKILL.md) |
+| `tp-delivery-standards` | Restricciones tecnicas, criterios de entrega, balanceo documentacion-codigo y exigencias del TP | Al preparar o revisar material de entrega | [SKILL.md](.agents/skills/tp-delivery-standards/SKILL.md) |
+| `tp-uml-y-casos-de-uso` | Punto de entrada para diagramar o especificar: que artefactos exige cada requisito (T0X/G0X/N0X), su ubicacion bajo `diagramas/<requisito>/` y su nomenclatura. Orquesta las subskills de PlantUML y de casos de uso, sincroniza con la documentacion formal y valida los artefactos. Se ejecuta a demanda y preguntando primero al usuario | Al crear o modificar diagramas UML o especificaciones de casos de uso | [SKILL.md](.agents/skills/tp-uml-y-casos-de-uso/SKILL.md) |
+| `plantuml` (subskill) | Crear, editar, convertir o validar diagramas UML con PlantUML. Orquestada por `tp-uml-y-casos-de-uso` | Solo cuando la tarea realmente requiera diagramacion PlantUML | [SKILL.md](.agents/skills/tp-delivery-standards/embedded-skills/plantuml/SKILL.md) |
+| `tp-use-case-spec` (subskill) | Genera especificaciones de casos de uso con el formato estandar del TP (`.docx` + `.md` espejo) a partir de un JSON. Orquestada por `tp-uml-y-casos-de-uso` | Al documentar, crear o actualizar casos de uso | [SKILL.md](.agents/skills/tp-use-case-spec/SKILL.md) |
+| `dal-sql-access-patterns` | Acceso SQL Server, `ConfigurationManager` y uso obligatorio de transacciones en la capa DAL | Al escribir o modificar acceso a datos | [SKILL.md](.agents/skills/dal-sql-access-patterns/SKILL.md) |
+| `translation-base-seed-sync` | Sincroniza el catalogo base de traducciones de la UI con el bloque auto-generado de `script_bd.sql` | Al tocar textos traducibles, tags `Form...`, encabezados de grilla o keys de idioma | [SKILL.md](.agents/skills/translation-base-seed-sync/SKILL.md) |
+
+## Skills .NET generales
 
 Skills de la coleccion publica [dotnet/skills](https://github.com/dotnet/skills), almacenadas en el repo bajo `.agents/skills/`. Cargar unicamente la que corresponda al trabajo actual.
 
-- [dotnet-msbuild](.agents/skills/dotnet-msbuild/SKILL.md): diagnostico de fallas de build, optimizacion de MSBuild, anti-patrones en `.csproj` y referencias entre proyectos. Usar ante errores de compilacion, builds lentos o problemas de configuracion en `TpIDS.sln`.
-- [dotnet-diag](.agents/skills/dotnet-diag/SKILL.md): diagnostico de performance y debugging de aplicaciones .NET desktop (scan de anti-patrones, trazas, dumps, microbenchmarks). Usar ante lentitud, memory leaks o hangs en la UI WinForms.
-- [dotnet-test](.agents/skills/dotnet-test/SKILL.md): generacion de tests, auditoria de calidad y analisis de cobertura con MSTest. Complementa `strict-tdd` y `test-suite-verification`; cargar cuando haya que generar, revisar o auditar la suite de tests.
-- [WinForms Patterns](.agents/skills/winforms/SKILL.md): data binding con `BindingSource`, validacion con `ErrorProvider`, async/await en UI y thread safety. **Leer primero las restricciones del skill**: MVP esta prohibido; DI aplica solo via `CompositionRoot` manual (no `IServiceCollection`); patrones .NET 6+ no aplican.
+| Skill | Que resuelve | Cuando cargarla | Ruta |
+|-------|--------------|-----------------|------|
+| `dotnet-msbuild` | Diagnostico de fallas de build, optimizacion de MSBuild, anti-patrones en `.csproj` y referencias entre proyectos | Ante errores de compilacion, builds lentos o problemas de configuracion en `TpIDS.sln` | [SKILL.md](.agents/skills/dotnet-msbuild/SKILL.md) |
+| `dotnet-diag` | Performance y debugging de apps .NET desktop: scan de anti-patrones, trazas, dumps, microbenchmarks | Ante lentitud, memory leaks o hangs en la UI WinForms | [SKILL.md](.agents/skills/dotnet-diag/SKILL.md) |
+| `dotnet-test` | Generacion de tests, auditoria de calidad y analisis de cobertura con MSTest. Complementa `strict-tdd` y `test-suite-verification` | Al generar, revisar o auditar la suite de tests | [SKILL.md](.agents/skills/dotnet-test/SKILL.md) |
+| `winforms` | Data binding con `BindingSource`, validacion con `ErrorProvider`, async/await en UI y thread safety. **Leer primero sus restricciones**: MVP prohibido; DI solo via `CompositionRoot` manual (no `IServiceCollection`); patrones .NET 6+ no aplican | Al trabajar con controles, binding o validacion de formularios | [SKILL.md](.agents/skills/winforms/SKILL.md) |
 
-## Skills de buenas practicas C# (cargar solo la relevante a la tarea)
+## Skills de buenas practicas C#
 
-Skills de referencia generica de C#. Cargar unicamente la que corresponda al trabajo actual; no leerlas todas.
+Referencia generica de C#. Cargar unicamente la que corresponda al trabajo actual; no leerlas todas.
 
-- [C# Async](.agents/skills/csharp-async/SKILL.md): buenas practicas de programacion asincronica en C# (sufijo `Async`, `async/await`, manejo de `Task`). Usar al escribir o revisar codigo asincrono.
-- [C# Docs](.agents/skills/csharp-docs/SKILL.md): documentacion de tipos con comentarios XML y buenas practicas de documentacion. Usar al documentar APIs publicas/internas.
-- [C# XUnit](.agents/skills/csharp-xunit/SKILL.md): buenas practicas de testing unitario con XUnit, incluyendo tests data-driven.
-- [C# NUnit](.agents/skills/csharp-nunit/SKILL.md): buenas practicas de testing unitario con NUnit, incluyendo tests data-driven.
-- [C# MSTest](.agents/skills/csharp-mstest/SKILL.md): buenas practicas de testing unitario con MSTest 3.x/4.x y APIs de assertion modernas.
-- [C# TUnit](.agents/skills/csharp-tunit/SKILL.md): buenas practicas de testing unitario con TUnit, incluyendo tests data-driven.
+| Skill | Que resuelve | Cuando cargarla | Ruta |
+|-------|--------------|-----------------|------|
+| `csharp-async` | Sufijo `Async`, `async/await`, manejo de `Task` | Al escribir o revisar codigo asincrono | [SKILL.md](.agents/skills/csharp-async/SKILL.md) |
+| `csharp-docs` | Documentacion de tipos con comentarios XML y buenas practicas de documentacion | Al documentar APIs publicas/internas | [SKILL.md](.agents/skills/csharp-docs/SKILL.md) |
+| `csharp-mstest` | Testing unitario con MSTest 3.x/4.x y APIs de assertion modernas | **Es el framework del proyecto**: usar esta y no las otras tres | [SKILL.md](.agents/skills/csharp-mstest/SKILL.md) |
+| `csharp-xunit` | Testing unitario con XUnit, incluyendo tests data-driven | Solo si el proyecto migrara a XUnit | [SKILL.md](.agents/skills/csharp-xunit/SKILL.md) |
+| `csharp-nunit` | Testing unitario con NUnit, incluyendo tests data-driven | Solo si el proyecto migrara a NUnit | [SKILL.md](.agents/skills/csharp-nunit/SKILL.md) |
+| `csharp-tunit` | Testing unitario con TUnit, incluyendo tests data-driven | Solo si el proyecto migrara a TUnit | [SKILL.md](.agents/skills/csharp-tunit/SKILL.md) |
 
-> Para tests, cargar solo la skill del framework efectivamente usado en el proyecto; las demas de testing son alternativas mutuamente excluyentes.
+> Las cuatro skills de testing son alternativas mutuamente excluyentes. El proyecto usa MSTest.
 
 ## Skills externas instaladas y recomendadas
 
