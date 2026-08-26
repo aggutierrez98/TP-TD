@@ -231,6 +231,8 @@
     "FormUserHistory.Value.Action.Reactivation":  "Reactivacion",
     "FormUserHistory.Value.Action.Restoration":  "Restauracion",
     "FormUserHistory.Value.Action.Update":  "Edicion",
+    "FormUserHistory.Value.Boolean.No":  "No",
+    "FormUserHistory.Value.Boolean.Yes":  "Si",
     "FormUserHistory.Value.Field.Active":  "Activo",
     "FormUserHistory.Value.Field.LanguageId":  "Idioma",
     "FormUserHistory.Value.Field.NoChanges":  "Sin cambios",

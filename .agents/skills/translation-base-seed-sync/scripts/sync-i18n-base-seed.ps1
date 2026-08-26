@@ -127,7 +127,11 @@ $codeFiles = foreach ($path in $codeSearchPaths) {
 foreach ($codeFile in $codeFiles) {
     $content = Get-Content -Raw -Path $codeFile.FullName
 
-        foreach ($match in [regex]::Matches($content, '"(?<key>(?:Form|Dialog|Error)\.[^"]+)"')) {
+        # (?:Form|Dialog|Error)[A-Za-z0-9_]*\. y no (?:Form|Dialog|Error)\.: las keys
+        # reales son del tipo "FormUserHistory.Value...", con el nombre del form
+        # pegado al prefijo. Exigir el punto inmediato dejaba fuera del scan a
+        # toda key emitida como literal suelto desde BLL/SERVICIOS.
+        foreach ($match in [regex]::Matches($content, '"(?<key>(?:Form|Dialog|Error)[A-Za-z0-9_]*(?:\.[A-Za-z0-9_]+)+)"')) {
             $null = $allKeys.Add($match.Groups["key"].Value)
         }
 

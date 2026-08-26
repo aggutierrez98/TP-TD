@@ -2,7 +2,6 @@ namespace BLL
 {
     public static class InicializadorAplicacionBLL
     {
-        private static readonly object Sync = new object();
         private static bool _inicializado;
 
         /** Punto unico de arranque: compone los servicios y BLL via CompositionRoot,
@@ -16,20 +15,12 @@ namespace BLL
                 return;
             }
 
-            lock (Sync)
-            {
-                if (_inicializado)
-                {
-                    return;
-                }
+            // Se carga el idioma ANTES de validar la integridad, para que si hay
+            // ExcepcionIntegridad la pantalla de contingencia se muestre ya traducida.
+            CompositionRoot.Idioma.InicializarAplicacion();
+            CompositionRoot.Integridad.ValidarIntegridadGlobal();
 
-                // Se carga el idioma ANTES de validar la integridad, para que si hay
-                // ExcepcionIntegridad la pantalla de contingencia se muestre ya traducida.
-                CompositionRoot.Idioma.InicializarAplicacion();
-                CompositionRoot.Integridad.ValidarIntegridadGlobal();
-
-                _inicializado = true;
-            }
+            _inicializado = true;
         }
     }
 }

@@ -7,36 +7,40 @@ description: WinForms UI patterns for data binding, async operations, validation
 
 Skill de patrones UI para aplicaciones Windows Forms. Cubre data binding, operaciones asincronicas, validacion de formularios y thread safety.
 
-## CONFLICTOS CON ESTE PROYECTO — LEER ANTES DE APLICAR
+## CONFLICTOS Y RESTRICCIONES — LEER ANTES DE APLICAR
 
-Este skill proviene de un contexto generico y promueve tres patrones que estan **explicitamente prohibidos** en esta arquitectura. Ignorar esas secciones por completo:
+Este skill proviene de un contexto generico. Algunos de sus patrones aplican directamente, otros aplican con matices y uno sigue sin aplicar.
 
 ### 1. MVP / Passive View / MVVM — PROHIBIDO
 
 El skill recomienda que cada `Form` implemente una interfaz `IView` y delegue toda logica a una clase `Presenter`. En este proyecto eso no aplica:
 
-- La capa UI habla directamente con BLL. No hay Presenter.
-- Agregar un Presenter significaria crear una capa nueva (violacion de la arquitectura de 6 capas) o meterlo en UI (violacion de responsabilidad de UI).
-- Ver reglas transversales en `AGENTS.md`: "sin Unit of Work y sin Composition Root; esa simplicidad es una decision de diseno".
+- La capa UI habla directamente con BLL (a traves de instancias resueltas por `CompositionRoot`). No existe capa Presenter.
+- Agregar un Presenter significaria crear una octava capa o meterlo en UI, ambas violaciones de la matriz de dependencias documentada en `AGENTS.md`.
 
 **No sugerir, no implementar, no mencionar MVP ni Presenter en este proyecto.**
 
-### 2. Inyeccion de Dependencias (DI) — PROHIBIDO
+### 2. Inyeccion de Dependencias (DI) — APLICA PARCIALMENTE
 
-El skill recomienda wiring de servicios via `IServiceCollection` desde `Program.cs`. En este proyecto:
+Este punto cambio respecto a la arquitectura anterior. El proyecto ahora SI tiene inyeccion de dependencias, pero a traves de un **`CompositionRoot` manual**, no de `IServiceCollection`:
 
-- Las BLLs construyen sus dependencias con `new` directo en el bootstrap de la aplicacion.
-- No hay `IServiceCollection`, ni `IServiceProvider`, ni ningun contenedor DI.
-- Ver skill `architecture-dependency-guard` y reglas transversales: "sin Composition Root".
+- Los BLLs se construyen **solo desde `CompositionRoot`**. Ningun Form ni BLL hace `new XxxBLL()` directamente.
+- Las dependencias se inyectan por constructor `internal` (ver skill `composition-root-guard`).
+- La UI recibe instancias ya resueltas; no las instancia.
 
-**No sugerir DI, contenedores IoC ni constructor injection en BLL/DAL.**
+Lo que el skill describe conceptualmente (no instanciar dependencias en el consumidor, resolver desde un punto central) **coincide con la arquitectura actual**. Lo que NO aplica es la implementacion especifica que propone el skill:
+- `IServiceCollection` / `IServiceProvider` — no existe en este proyecto.
+- `IHostBuilder`, `CreateDefaultBuilder` — patrones de .NET 6+, no aplican.
+- Contenedores IoC de terceros (Autofac, Castle, etc.) — no aplican.
+
+Al leer las secciones de DI del skill, traducir mentalmente "contenedor DI" → "`CompositionRoot`" y "registrar en el contenedor" → "agregar al grafo en `CompositionRoot`".
 
 ### 3. Patrones .NET 6+ — NO APLICAN
 
-Varias guias del skill asumen .NET 6+ (`Program.cs` con top-level statements, button commands, stock icons de .NET 8). Este proyecto corre en **.NET Framework 4.7.2**. Ignorar cualquier referencia a:
+El proyecto corre en **.NET Framework 4.7.2**. Ignorar cualquier referencia a:
 - `Microsoft.Extensions.DependencyInjection`
-- `IHostBuilder`, `CreateDefaultBuilder`
-- Button commands (.NET 8+)
+- `IHostBuilder`, `CreateDefaultBuilder`, top-level statements en `Program.cs`
+- Button commands y stock icons (.NET 8+)
 
 ---
 

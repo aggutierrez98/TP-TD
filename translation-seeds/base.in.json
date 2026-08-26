@@ -1,4 +1,4 @@
-{
+﻿{
     "Dialog.Title.Confirmation":  "Confirmation",
     "Dialog.Title.Error":  "Error",
     "Dialog.Title.Success":  "Success",
@@ -231,6 +231,8 @@
     "FormUserHistory.Value.Action.Reactivation":  "Reactivation",
     "FormUserHistory.Value.Action.Restoration":  "Restoration",
     "FormUserHistory.Value.Action.Update":  "Edit",
+    "FormUserHistory.Value.Boolean.No":  "No",
+    "FormUserHistory.Value.Boolean.Yes":  "Yes",
     "FormUserHistory.Value.Field.Active":  "Active",
     "FormUserHistory.Value.Field.LanguageId":  "Language",
     "FormUserHistory.Value.Field.NoChanges":  "No changes",

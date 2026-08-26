@@ -22,6 +22,15 @@ Todo el conocimiento de contexto se ubica dentro del subdirectorio `.agents/`. L
 - [DAL SQL Access Patterns](.agents/skills/dal-sql-access-patterns/SKILL.md): centraliza acceso SQL Server, `ConfigurationManager` y el uso obligatorio de transacciones en la capa DAL.
 - [Translation Base Seed Sync](.agents/skills/translation-base-seed-sync/SKILL.md): sincroniza el catalogo base de traducciones de la UI con el bloque auto-generado de `script_bd.sql`.
 
+## Skills .NET generales (dotnet/skills — cargar solo la relevante a la tarea)
+
+Skills de la coleccion publica [dotnet/skills](https://github.com/dotnet/skills), almacenadas en el repo bajo `.agents/skills/`. Cargar unicamente la que corresponda al trabajo actual.
+
+- [dotnet-msbuild](.agents/skills/dotnet-msbuild/SKILL.md): diagnostico de fallas de build, optimizacion de MSBuild, anti-patrones en `.csproj` y referencias entre proyectos. Usar ante errores de compilacion, builds lentos o problemas de configuracion en `TpIDS.sln`.
+- [dotnet-diag](.agents/skills/dotnet-diag/SKILL.md): diagnostico de performance y debugging de aplicaciones .NET desktop (scan de anti-patrones, trazas, dumps, microbenchmarks). Usar ante lentitud, memory leaks o hangs en la UI WinForms.
+- [dotnet-test](.agents/skills/dotnet-test/SKILL.md): generacion de tests, auditoria de calidad y analisis de cobertura con MSTest. Complementa `strict-tdd` y `test-suite-verification`; cargar cuando haya que generar, revisar o auditar la suite de tests.
+- [WinForms Patterns](.agents/skills/winforms/SKILL.md): data binding con `BindingSource`, validacion con `ErrorProvider`, async/await en UI y thread safety. **Leer primero las restricciones del skill**: MVP esta prohibido; DI aplica solo via `CompositionRoot` manual (no `IServiceCollection`); patrones .NET 6+ no aplican.
+
 ## Skills de buenas practicas C# (cargar solo la relevante a la tarea)
 
 Skills de referencia generica de C#. Cargar unicamente la que corresponda al trabajo actual; no leerlas todas.
@@ -39,8 +48,7 @@ Skills de referencia generica de C#. Cargar unicamente la que corresponda al tra
 
 Estas skills viven fuera del repo (no se clonan con el). Instalarlas bajo el home del usuario (`~/.codex/skills/`); las rutas se expresan relativas al home para que sean validas en cualquier maquina.
 
-- `pdf` en `~/.codex/skills/pdf`: util para el entregable de generacion/exportacion PDF y revision de artefactos PDF.
-- `security-best-practices` en `~/.codex/skills/security-best-practices`: util para login, hashing, auditoria, integridad y endurecimiento basico.
+> Actualmente no hay skills externas instaladas.
 
 ## Reglas transversales
 

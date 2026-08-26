@@ -41,7 +41,18 @@ function Get-RelativePath {
     return $FullPath
 }
 
-$sourceFiles = Get-ChildItem -Path $RepoRoot -Recurse -Filter *.cs -File |
+# El recorrido excluye '.git': ahi no hay fuentes y sus rutas internas
+# (refs de checkpoints anidados) superan MAX_PATH cuando el repo se abre por
+# UNC (\\wsl.localhost\...), lo que abortaba la enumeracion entera.
+$scanRoots = Get-ChildItem -LiteralPath $RepoRoot -Directory |
+    Where-Object { $_.Name -ne '.git' }
+
+$sourceFiles = @(Get-ChildItem -LiteralPath $RepoRoot -Filter *.cs -File)
+foreach ($scanRoot in $scanRoots) {
+    $sourceFiles += Get-ChildItem -LiteralPath $scanRoot.FullName -Recurse -Filter *.cs -File
+}
+
+$sourceFiles = $sourceFiles |
     Where-Object {
         $_.FullName -notmatch '\\(bin|obj)\\' -and
         (Get-RelativePath -FullPath $_.FullName) -notlike 'tests\*'

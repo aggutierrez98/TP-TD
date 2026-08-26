@@ -7,7 +7,6 @@ namespace BLL
     // Uso previsto: obtener instancias ya compuestas (getters), no como localizador en metodos.
     public static class CompositionRoot
     {
-        private static readonly object Sync = new object();
         private static bool _inicializado;
 
         private static ISesion _sesion;
@@ -31,78 +30,70 @@ namespace BLL
                 return;
             }
 
-            lock (Sync)
-            {
-                if (_inicializado)
-                {
-                    return;
-                }
+            // Servicios con estado: una sola instancia (la del singleton) = fuente unica de verdad.
+            _sesion = SERVICIOS.Sesion.GetInstance();
+            _autorizacion = SERVICIOS.AutorizacionService.GetInstance();
 
-                // Servicios con estado: una sola instancia (la del singleton) = fuente unica de verdad.
-                _sesion = SERVICIOS.Sesion.GetInstance();
-                _autorizacion = SERVICIOS.AutorizacionService.GetInstance();
+            InicializacionHistorialBLL.Inicializar();
 
-                InicializacionHistorialBLL.Inicializar();
+            // Servicios sin estado.
+            _passwordHasher = new SERVICIOS.PasswordHasher();
+            _integridadService = new SERVICIOS.IntegridadService();
+            _servicioIdioma = SERVICIOS.IdiomaService.GetInstance();
 
-                // Servicios sin estado.
-                _passwordHasher = new SERVICIOS.PasswordHasher();
-                _integridadService = new SERVICIOS.IntegridadService();
-                _servicioIdioma = SERVICIOS.IdiomaService.GetInstance();
+            UnidadDeTrabajoFactory uow = new UnidadDeTrabajoFactory();
 
-                UnidadDeTrabajoFactory uow = new UnidadDeTrabajoFactory();
+            _bitacoraBLL = new BitacoraBLL(new BitacoraRepositorio(), uow, _sesion);
 
-                _bitacoraBLL = new BitacoraBLL(new BitacoraRepositorio(), uow, _sesion);
+            _usuarioEstadoBLL = new UsuarioEstadoBLL(
+                new UsuarioRepositorio(),
+                new UsuarioPermisoRepositorio(),
+                new UsuarioPreferenciaRepositorio(),
+                new PermisoRepositorio(),
+                uow,
+                _sesion);
 
-                _usuarioEstadoBLL = new UsuarioEstadoBLL(
-                    new UsuarioRepositorio(),
-                    new UsuarioPermisoRepositorio(),
-                    new UsuarioPreferenciaRepositorio(),
-                    new PermisoRepositorio(),
-                    uow,
-                    _sesion);
+            _integridadBLL = new IntegridadBLL(
+                _integridadService,
+                new IntegridadRepositorio(),
+                new UsuarioRepositorio(),
+                _bitacoraBLL,
+                uow);
 
-                _integridadBLL = new IntegridadBLL(
-                    _integridadService,
-                    new IntegridadRepositorio(),
-                    new UsuarioRepositorio(),
-                    _bitacoraBLL,
-                    uow);
+            _idiomaBLL = new IdiomaBLL(
+                new IdiomaRepositorio(),
+                new UsuarioPreferenciaRepositorio(),
+                new TraduccionRepositorio(),
+                new SERVICIOS.IdiomaCatalogoService(),
+                _usuarioEstadoBLL,
+                _bitacoraBLL,
+                uow,
+                _servicioIdioma);
 
-                _idiomaBLL = new IdiomaBLL(
-                    new IdiomaRepositorio(),
-                    new UsuarioPreferenciaRepositorio(),
-                    new TraduccionRepositorio(),
-                    new SERVICIOS.IdiomaCatalogoService(),
-                    _usuarioEstadoBLL,
-                    _bitacoraBLL,
-                    uow,
-                    _servicioIdioma);
+            _permisoBLL = new PermisoBLL(
+                new PermisoRepositorio(),
+                new UsuarioPermisoRepositorio(),
+                new SERVICIOS.PermisoService(),
+                new UsuarioRepositorio(),
+                _usuarioEstadoBLL,
+                _bitacoraBLL,
+                uow,
+                _sesion,
+                _autorizacion);
 
-                _permisoBLL = new PermisoBLL(
-                    new PermisoRepositorio(),
-                    new UsuarioPermisoRepositorio(),
-                    new SERVICIOS.PermisoService(),
-                    new UsuarioRepositorio(),
-                    _usuarioEstadoBLL,
-                    _bitacoraBLL,
-                    uow,
-                    _sesion,
-                    _autorizacion);
+            _usuarioBLL = new UsuarioBLL(
+                new UsuarioRepositorio(),
+                new PasswordHashService(),
+                _idiomaBLL,
+                _permisoBLL,
+                _usuarioEstadoBLL,
+                _integridadBLL,
+                _bitacoraBLL,
+                uow,
+                _sesion,
+                _autorizacion);
 
-                _usuarioBLL = new UsuarioBLL(
-                    new UsuarioRepositorio(),
-                    new PasswordHashService(),
-                    _idiomaBLL,
-                    _permisoBLL,
-                    _usuarioEstadoBLL,
-                    _integridadBLL,
-                    _bitacoraBLL,
-                    uow,
-                    _sesion,
-                    _autorizacion);
-
-                _inicializado = true;
-            }
+            _inicializado = true;
         }
 
         public static ISesion Sesion

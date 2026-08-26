@@ -5,7 +5,6 @@ namespace BLL
 {
     public static class InicializacionHistorialBLL
     {
-        private static readonly object Sync = new object();
         private static bool _inicializado;
 
         public static void Inicializar()
@@ -15,20 +14,12 @@ namespace BLL
                 return;
             }
 
-            lock (Sync)
-            {
-                if (_inicializado)
-                {
-                    return;
-                }
+            UsuarioHistorialRepositorio usuarioHistorialRepositorio = new UsuarioHistorialRepositorio();
+            HistorialEstadosService.GetInstance().Configurar(
+                usuarioId => usuarioHistorialRepositorio.ObtenerVersiones(usuarioId),
+                historialId => usuarioHistorialRepositorio.ObtenerVersion(historialId));
 
-                UsuarioHistorialRepositorio usuarioHistorialRepositorio = new UsuarioHistorialRepositorio();
-                HistorialEstadosService.GetInstance().Configurar(
-                    usuarioId => usuarioHistorialRepositorio.ObtenerVersiones(usuarioId),
-                    historialId => usuarioHistorialRepositorio.ObtenerVersion(historialId));
-
-                _inicializado = true;
-            }
+            _inicializado = true;
         }
     }
 }
