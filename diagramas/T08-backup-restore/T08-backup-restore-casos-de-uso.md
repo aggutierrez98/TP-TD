@@ -1,0 +1,64 @@
+# T08. Gestion de Backup y Restauracion de Base de Datos
+
+_Especificaciones de casos de uso_
+
+A continuacion se especifican los casos de uso del modulo de backup y restauracion de la base de datos: la creacion de una copia de seguridad completa y la restauracion de la base a partir de un archivo de backup, ambos mediante los comandos nativos BACKUP DATABASE / RESTORE DATABASE de SQL Server.
+
+---
+
+**ID y Nombre:** CU01 Crear backup  
+**Estado:** Implementado  
+**Descripcion:** Permite al administrador generar una copia de seguridad completa de la base de datos en un archivo .bak elegido por el mismo.  
+**Actor Principal:** Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** La aplicacion se encuentra iniciada, hay una sesion activa con el permiso gestionbackup y el administrador abrio la pantalla de backup desde el menu Administracion.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El administrador necesita generar una copia de seguridad de la base de datos, por ejemplo antes de una operacion riesgosa o como resguardo periodico.  
+
+**Escenario Principal:**
+1. El administrador abre la pantalla de backup desde el menu Administracion.
+2. El administrador presiona crear backup y selecciona la ruta destino del archivo .bak mediante un cuadro de dialogo para guardar archivo.
+3. El sistema valida que la ruta no este vacia, que la extension sea .bak y que el directorio destino exista.
+4. El sistema ejecuta la sentencia BACKUP DATABASE de SQL Server hacia el archivo seleccionado.
+5. El sistema registra la operacion en la bitacora.
+6. El sistema informa al administrador que el backup se creo correctamente.
+
+**Flujos Alternativos:**
+2a. Si el administrador cancela el cuadro de dialogo sin elegir una ruta, el caso de uso finaliza sin cambios.
+3a. Si la ruta seleccionada no tiene extension .bak, el sistema advierte del formato invalido y finaliza el caso de uso.
+3b. Si el directorio destino no existe, el sistema informa el error y finaliza el caso de uso.
+4a. Si SQL Server rechaza o falla el BACKUP DATABASE (por ejemplo, permisos insuficientes o disco sin espacio), el sistema registra el fallo tecnico en la bitacora e informa el error al administrador, sin dejar un backup exitoso.
+
+**Postcondiciones:** Existe un archivo .bak con una copia integra de la base de datos al momento del backup, y queda un evento de bitacora que deja traza de la operacion. Si el proceso fallo, no se genera un backup valido y solo queda registrado el error tecnico.
+
+---
+
+**ID y Nombre:** CU02 Restaurar backup  
+**Estado:** Implementado  
+**Descripcion:** Permite al administrador restaurar la base de datos completa a partir de un archivo .bak existente, reemplazando el contenido actual.  
+**Actor Principal:** Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** La aplicacion se encuentra iniciada, hay una sesion activa con el permiso gestionbackup, el administrador abrio la pantalla de backup desde el menu Administracion y existe un archivo .bak valido generado previamente.  
+**Puntos de Extension:** Al finalizar con exito, dispara el cierre de la sesion actual y el regreso a la pantalla de login, porque el estado en memoria de sesion y permisos puede haber quedado desincronizado del contenido restaurado.  
+**Condicion:** El administrador necesita revertir la base de datos a un estado previo guardado en un archivo de backup.  
+
+**Escenario Principal:**
+1. El administrador presiona restaurar backup y selecciona un archivo .bak existente mediante un cuadro de dialogo para abrir archivo.
+2. El sistema valida que el archivo exista y tenga extension .bak.
+3. El sistema solicita confirmacion explicita advirtiendo que se perderan los datos actuales y que se cerraran todas las conexiones activas a la base.
+4. El administrador confirma la operacion.
+5. El sistema pone la base de datos en modo SINGLE_USER, expulsando las demas conexiones activas.
+6. El sistema ejecuta la sentencia RESTORE DATABASE con la opcion REPLACE a partir del archivo seleccionado.
+7. El sistema vuelve la base de datos al modo MULTI_USER.
+8. El sistema limpia el pool de conexiones de la aplicacion.
+9. El sistema registra la operacion en la bitacora.
+10. El sistema informa al administrador que la restauracion se completo correctamente.
+11. El sistema cierra la sesion actual y vuelve a la pantalla de login.
+
+**Flujos Alternativos:**
+1a. Si el administrador cancela el cuadro de dialogo sin elegir un archivo, el caso de uso finaliza sin cambios.
+2a. Si el archivo seleccionado no existe o no tiene extension .bak, el sistema informa el error y finaliza el caso de uso.
+4a. Si el administrador no confirma la advertencia, el caso de uso finaliza sin cambios.
+6a. Si SQL Server rechaza o falla el RESTORE DATABASE (por ejemplo, archivo corrupto o incompatible), el sistema igualmente vuelve la base al modo MULTI_USER en un bloque finally, registra el fallo tecnico en la bitacora e informa el error al administrador, sin cerrar la sesion actual.
+
+**Postcondiciones:** La base de datos queda con el contenido del archivo .bak restaurado, en modo MULTI_USER, con el pool de conexiones de la aplicacion limpio, un evento de bitacora que deja traza de la operacion, y la sesion actual cerrada volviendo a la pantalla de login. Si el proceso fallo, la base vuelve a estar operativa en modo MULTI_USER sin aplicar la restauracion, y la sesion actual continua activa.

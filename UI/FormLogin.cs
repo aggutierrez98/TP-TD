@@ -42,12 +42,15 @@ namespace TpIDS
                 txtbNickname.Clear();
                 txtbPassword.Clear();
 
-                FormGestionUsuarios formGestion = new FormGestionUsuarios();
-                formGestion.Show();
+                Hide();
 
-                formGestion.FormClosed += (s, args) =>
+                FormPrincipal formPrincipal = new FormPrincipal();
+                formPrincipal.Show();
+
+                formPrincipal.FormClosed += (s, args) =>
                 {
                     gestorUsuario.CerrarSesionActual();
+                    Show();
                 };
             }
             catch (Exception ex)
@@ -60,5 +63,6 @@ namespace TpIDS
         {
             new FormRegistro().ShowDialog();
         }
+
     }
 }

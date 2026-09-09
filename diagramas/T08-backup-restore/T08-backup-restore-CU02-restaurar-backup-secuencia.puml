@@ -1,0 +1,100 @@
+@startuml
+title T08 - CU02 Restaurar backup - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormPrincipal" as Principal
+participant "FormBackup" as Form
+participant "OpenFileDialog" as Dlg
+participant "UiDialogHelper" as UiDlg
+participant "BackupBLL" as BLL
+participant "IBackupRepositorio" as Repo
+participant "BackupDAL" as DAL
+participant "IBitacoraBLL" as Bita
+participant "UsuarioBLL" as UBLL
+
+Admin -> Form : btnRestaurarBackup_Click()
+activate Form
+Form -> Dlg : ShowDialog()
+Dlg --> Form : DialogResult, rutaOrigen
+
+alt Admin cancela el dialogo
+  Form --> Admin : no hace nada (finaliza)
+else Admin selecciona un archivo
+  Form -> BLL : RestaurarBackup(rutaOrigen)
+  activate BLL
+  BLL -> BLL : valida que el archivo exista y tenga extension ".bak"
+
+  alt archivo inexistente o extension invalida
+    BLL --> Form : throw ExcepcionNegocio("...InvalidBackupFile")
+    Form -> UiDlg : MostrarError("FormBackup.Error.InvalidBackupFile")
+    UiDlg --> Form
+  else archivo valido
+    BLL --> Form : ok (validacion superada)
+    deactivate BLL
+    Form -> UiDlg : Confirmar("FormBackup.Confirm.RestoreWarning", MessageBoxIcon.Warning)
+    UiDlg --> Form : confirmacion
+
+    alt confirmacion != Yes
+      Form --> Admin : cancela (finaliza sin cambios)
+    else confirmacion == Yes
+      Form -> BLL : EjecutarRestauracion(rutaOrigen)
+      activate BLL
+      BLL -> Repo : RestaurarBackup(rutaOrigen)
+      activate Repo
+      Repo -> DAL : RestaurarBackup(rutaOrigen)
+      activate DAL
+      DAL -> DAL : abre SqlConnection propia\n(sin AccesoDatosSqlServer/IUnidadDeTrabajo)
+      DAL -> DAL : ALTER DATABASE TpCatedraIDS\nSET SINGLE_USER WITH ROLLBACK IMMEDIATE
+
+      alt SQL Server ejecuta el RESTORE correctamente
+        DAL -> DAL : RESTORE DATABASE TpCatedraIDS\nFROM DISK = @rutaOrigen WITH REPLACE
+        DAL -> DAL : ALTER DATABASE TpCatedraIDS\nSET MULTI_USER  (finally)
+        DAL --> Repo : ok
+        deactivate DAL
+        Repo --> BLL : ok
+        deactivate Repo
+        BLL -> BLL : SqlConnection.ClearAllPools()
+        BLL -> Bita : RegistrarOperacion("FormBackup.Activity.BackupRestored", rutaOrigen, "BackupBLL")
+        Bita --> BLL
+        BLL --> Form : ok
+        deactivate BLL
+        Form -> UiDlg : MostrarInfo("FormBackup.Info.BackupRestored")
+        UiDlg --> Form
+        Form -> UBLL : CerrarSesionActual()
+        UBLL --> Form
+        Form -> Principal : Close()
+        note right of Principal
+          FormLogin tiene suscripto FormClosed de
+          FormPrincipal: al cerrarse, cierra sesion
+          (redundante) y vuelve a mostrarse (T02).
+        end note
+      else SQL Server rechaza o falla el RESTORE
+        DAL -> DAL : RESTORE DATABASE lanza SqlException
+        DAL -> DAL : ALTER DATABASE TpCatedraIDS\nSET MULTI_USER  (finally, igual se ejecuta)
+        DAL --> Repo : throw SqlException
+        deactivate DAL
+        Repo --> BLL : propaga excepcion
+        deactivate Repo
+        BLL -> Bita : RegistrarExcepcionTecnica(ex, "FormBackup.Activity.BackupRestoreFailed", "BackupBLL")
+        Bita --> BLL
+        BLL --> Form : propaga excepcion
+        deactivate BLL
+        Form -> UiDlg : MostrarError("FormBackup.Error.BackupRestoreFailed")
+        UiDlg --> Form
+        note right of Form
+          La sesion actual NO se cierra: el ALTER
+          DATABASE SET MULTI_USER del finally deja la
+          base operativa aunque la restauracion no se
+          haya aplicado.
+        end note
+      end
+    end
+  end
+end
+
+deactivate Form
+
+@enduml

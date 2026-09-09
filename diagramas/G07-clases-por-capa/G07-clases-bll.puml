@@ -1,0 +1,160 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa BLL
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "BLL (reglas de negocio + composicion)" {
+
+  class CompositionRoot <<static>> {
+    +Inicializar() : void
+    +Usuario : UsuarioBLL
+    +Permiso : PermisoBLL
+    +Idioma : IdiomaBLL
+    +Integridad : IntegridadBLL
+    +GestorBitacora : BitacoraBLL
+    +Categoria : CategoriaBLL
+    +Movimiento : MovimientoBLL
+    +Backup : BackupBLL
+    +Sesion : ISesion
+    +Autorizacion : IAutorizacion
+    +ServicioIdioma : IObservado
+  }
+
+  class UsuarioBLL {
+    +Login(usuario : Usuario, passwordRaw : string) : Usuario
+    +DesbloquearUsuario(id : int) : bool
+    +Registrar(usuario : Usuario, passwordRaw : string) : bool
+    +CerrarSesionActual() : void
+    +ObtenerTodos() : List<Usuario>
+    +Actualizar(...) : bool
+    +Eliminar(id : int) : bool
+    +ObtenerHistorialEstados(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersionHistorial(historialId : int) : UsuarioHistorialSnapshot
+    +ObtenerDiferenciasConVersionAnterior(historialId : int) : List<ResultadoComparacionEstado>
+    +RestaurarVersion(historialId : int) : bool
+  }
+  class PermisoBLL {
+    +ObtenerCatalogo() : List<IPermiso>
+    +GuardarCatalogo(raices : List<IPermiso>) : void
+    +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
+    +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
+    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
+  }
+  class IdiomaBLL {
+    +CrearIdioma(nombre : string) : int
+    +ActualizarIdioma(...) : bool
+    +EliminarIdioma(idiomaId : int) : bool
+    +GuardarTraduccion(idiomaId : int, key : string, valor : string) : void
+    +ImportarJson(...) : void
+    +ExportarJson(...) : void
+    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
+  }
+  class UsuarioEstadoBLL {
+    +GuardarVersionActual(...) : int
+    +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +CompararVersiones(...) : List<ResultadoComparacionEstado>
+  }
+  class IntegridadBLL {
+    +CalcularDVH<T>(entidad : T) : string
+    +ValidarIntegridadGlobal() : void
+  }
+  class BitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    +RegistrarOperacion(...) : void
+    +RegistrarExcepcionTecnica(...) : void
+  }
+  class CategoriaBLL {
+    +ObtenerVisiblesParaUsuario(usuarioId : int) : List<Categoria>
+    +Crear(nombre : string) : int
+    +Actualizar(id : int, nuevoNombre : string) : bool
+    +Eliminar(id : int) : bool
+  }
+  class MovimientoBLL {
+    +ObtenerPorUsuario(usuarioId : int, filtro : FiltroMovimiento) : List<Movimiento>
+    +Crear(categoriaId : int, tipo : TipoMovimiento, monto : decimal, fecha : DateTime, descripcion : string) : int
+    +Actualizar(...) : bool
+    +Eliminar(id : int) : bool
+  }
+  class BackupBLL {
+    +CrearBackup(rutaArchivo : string) : void
+    +RestaurarBackup(rutaArchivo : string) : void
+  }
+  class PasswordHashService <<internal>>
+  class ManejadorExcepcionesBLL <<static>>
+  class InicializadorAplicacionBLL <<static>>
+  class InicializacionHistorialBLL <<static>>
+
+  package "Contratos internos" {
+    interface IBitacoraBLL
+    interface IPermisoBLL
+    interface IIdiomaBLL
+    interface IUsuarioEstadoBLL
+    interface IIntegridadBLL
+    interface IPasswordHashService
+  }
+}
+
+CompositionRoot ..> UsuarioBLL : <<instantiates>>
+CompositionRoot ..> PermisoBLL : <<instantiates>>
+CompositionRoot ..> IdiomaBLL : <<instantiates>>
+CompositionRoot ..> IntegridadBLL : <<instantiates>>
+CompositionRoot ..> BitacoraBLL : <<instantiates>>
+CompositionRoot ..> UsuarioEstadoBLL : <<instantiates>>
+CompositionRoot ..> CategoriaBLL : <<instantiates>>
+CompositionRoot ..> MovimientoBLL : <<instantiates>>
+CompositionRoot ..> BackupBLL : <<instantiates>>
+
+BitacoraBLL ..|> IBitacoraBLL
+PermisoBLL ..|> IPermisoBLL
+IdiomaBLL ..|> IIdiomaBLL
+UsuarioEstadoBLL ..|> IUsuarioEstadoBLL
+IntegridadBLL ..|> IIntegridadBLL
+PasswordHashService ..|> IPasswordHashService
+
+UsuarioBLL ..> IPermisoBLL
+UsuarioBLL ..> IIdiomaBLL
+UsuarioBLL ..> IUsuarioEstadoBLL
+UsuarioBLL ..> IIntegridadBLL
+UsuarioBLL ..> IBitacoraBLL
+UsuarioBLL ..> IPasswordHashService
+CategoriaBLL ..> IBitacoraBLL
+MovimientoBLL ..> IBitacoraBLL
+BackupBLL ..> IBitacoraBLL
+
+' --- Quiebres de layout (edges ocultos, no representan relaciones reales) ---
+' Fuerzan una grilla de 3 columnas en las clases de servicio, en los
+' utilitarios y en los contratos, en vez de una sola fila muy ancha,
+' para que el diagrama entre en una hoja A4/Word sin quedar ilegible.
+
+UsuarioBLL -[hidden]right-> PermisoBLL
+PermisoBLL -[hidden]right-> IdiomaBLL
+
+UsuarioEstadoBLL -[hidden]right-> IntegridadBLL
+IntegridadBLL -[hidden]right-> BitacoraBLL
+
+CategoriaBLL -[hidden]right-> MovimientoBLL
+MovimientoBLL -[hidden]right-> BackupBLL
+
+PasswordHashService -[hidden]right-> ManejadorExcepcionesBLL
+
+InicializadorAplicacionBLL -[hidden]right-> InicializacionHistorialBLL
+
+CompositionRoot -[hidden]down-> UsuarioBLL
+UsuarioBLL -[hidden]down-> UsuarioEstadoBLL
+UsuarioEstadoBLL -[hidden]down-> CategoriaBLL
+CategoriaBLL -[hidden]down-> PasswordHashService
+PasswordHashService -[hidden]down-> InicializadorAplicacionBLL
+
+IBitacoraBLL -[hidden]right-> IPermisoBLL
+IPermisoBLL -[hidden]right-> IIdiomaBLL
+IUsuarioEstadoBLL -[hidden]right-> IIntegridadBLL
+IIntegridadBLL -[hidden]right-> IPasswordHashService
+IBitacoraBLL -[hidden]down-> IUsuarioEstadoBLL
+
+@enduml

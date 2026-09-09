@@ -11,6 +11,8 @@ namespace TpIDS.UiTests
     /// Trazabilidad: diagramas/T04-perfiles-usuario (CU01 Gestionar permisos,
     /// CU02 Asignar perfil(es) a usuario, CU03 Controlar acceso de usuario).
     /// Incluye ademas alta/baja logica/borrado fisico desde FormGestionUsuarios.
+    /// FormGestionUsuarios y FormGestionPermisos ya no son la pantalla post-login: se
+    /// llega a ellas navegando el shell FormPrincipal (Administracion &gt; Usuarios/Permisos).
     /// </summary>
     [TestClass]
     public class T04_UsuariosPermisosTests : UiTestBase
@@ -22,9 +24,8 @@ namespace TpIDS.UiTests
             string grupo = NombreUnico("uitestgrp");
             int catalogosPrevios = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.PermissionCatalogUpdate", null);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionPermisos");
-            Window permisos = App.EsperarVentana("FormGestionPermisos");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window permisos = AbrirGestionPermisos(principal);
 
             UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupo);
             UiFind.Click(permisos, "btnCrearGrupo");
@@ -68,9 +69,8 @@ namespace TpIDS.UiTests
         {
             string grupo = NombreUnico("uitestvacio");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionPermisos");
-            Window permisos = App.EsperarVentana("FormGestionPermisos");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window permisos = AbrirGestionPermisos(principal);
 
             UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupo);
             UiFind.Click(permisos, "btnCrearGrupo");
@@ -98,7 +98,8 @@ namespace TpIDS.UiTests
             string username = NombreUnico("uitest_perm");
             int asignacionesPrevias = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.UserPermissionsUpdate", null);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             SeleccionarUsuarioEnGestion(gestion, username);
@@ -135,34 +136,42 @@ namespace TpIDS.UiTests
                 "La asignacion de permisos no quedo en la bitacora.");
         }
 
+        // CU03 ahora se controla en dos niveles: el shell FormPrincipal gatea el acceso a
+        // las pantallas (menu Administracion completo, no boton por boton), y dentro de
+        // FormGestionUsuarios (solo alcanzable con gestionusuarios) siguen los botones
+        // propios de esa pantalla. Un usuario basico ni siquiera puede abrir
+        // FormGestionUsuarios: no tiene sentido verificar sus botones para ese caso.
         [TestMethod]
         [TestCategory("UI")]
         public void T04_CU03_UsuarioBasico_SoloVeAccionesPermitidas()
         {
-            Window gestion = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
+            Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
 
-            Assert.IsTrue(UiFind.Boton(gestion, "btnConfiguracion").IsEnabled, "basico tiene configuracionusuario.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnAgregarUsuario").IsEnabled, "basico no gestiona usuarios.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnEliminarUsuario").IsEnabled, "basico no gestiona usuarios.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnGestionPermisos").IsEnabled, "basico no gestiona permisos.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnBitacora").IsEnabled, "basico no ve bitacora.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnHistorialUsuario").IsEnabled, "basico no ve historial.");
-            Assert.IsFalse(UiFind.Boton(gestion, "btnGestionIdiomas").IsEnabled, "basico no gestiona idiomas.");
+            Assert.IsFalse(
+                UiFind.MenuTopHabilitado(principal, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Administration")),
+                "basico no gestiona usuarios/permisos/idiomas/bitacora: el menu Administracion debe estar deshabilitado.");
+            Assert.IsTrue(
+                UiFind.MenuTopHabilitado(principal, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Finance")),
+                "basico gestiona sus propios movimientos y categorias.");
         }
 
         [TestMethod]
         [TestCategory("UI")]
         public void T04_CU03_Admin_VeTodasLasAcciones()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
 
+            Assert.IsTrue(
+                UiFind.MenuTopHabilitado(principal, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Administration")),
+                "admin gestiona usuarios/permisos/idiomas/bitacora.");
+            Assert.IsTrue(
+                UiFind.MenuTopHabilitado(principal, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Finance")),
+                "admin tambien gestiona sus propios movimientos y categorias.");
+
+            Window gestion = AbrirGestionUsuarios(principal);
             Assert.IsTrue(UiFind.Boton(gestion, "btnAgregarUsuario").IsEnabled);
             Assert.IsTrue(UiFind.Boton(gestion, "btnEliminarUsuario").IsEnabled);
-            Assert.IsTrue(UiFind.Boton(gestion, "btnGestionPermisos").IsEnabled);
-            Assert.IsTrue(UiFind.Boton(gestion, "btnBitacora").IsEnabled);
             Assert.IsTrue(UiFind.Boton(gestion, "btnHistorialUsuario").IsEnabled);
-            Assert.IsTrue(UiFind.Boton(gestion, "btnGestionIdiomas").IsEnabled);
-            Assert.IsTrue(UiFind.Boton(gestion, "btnConfiguracion").IsEnabled);
         }
 
         [TestMethod]
@@ -171,7 +180,8 @@ namespace TpIDS.UiTests
         {
             string username = NombreUnico("uitest_baja");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             // Baja logica: desmarcar activo + editar + confirmar.
@@ -227,7 +237,8 @@ namespace TpIDS.UiTests
         {
             string username = NombreUnico("uitest_del");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             string dvvAntes = TestDatabase.ObtenerDvv("Usuarios");
@@ -259,7 +270,8 @@ namespace TpIDS.UiTests
         [TestCategory("UI")]
         public void T04_CU02_SinUsuarioSeleccionado_AdvierteEnLasAcciones()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
 
             UiFind.DeseleccionarFilaGrilla(gestion, "dgvUsuarios", TestConfig.AdminUsername);
 
@@ -282,7 +294,8 @@ namespace TpIDS.UiTests
         {
             string username = NombreUnico("uitest_cancel");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             int hardDeletesPrevios = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.UserHardDelete", null);
@@ -329,7 +342,8 @@ namespace TpIDS.UiTests
         {
             string username = NombreUnico("uitest_nopass");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             UiFind.EscribirTexto(gestion, "txtbNombreUsuario", username);
             UiFind.EscribirTexto(gestion, "txtbPasswordUsuario", string.Empty);
             UiFind.Click(gestion, "btnAgregarUsuario");
@@ -348,9 +362,8 @@ namespace TpIDS.UiTests
         [TestCategory("UI")]
         public void T04_CU01_ValidacionesDeNombreYSeleccion_Advierte()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionPermisos");
-            Window permisos = App.EsperarVentana("FormGestionPermisos");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window permisos = AbrirGestionPermisos(principal);
 
             // CU01 7a: nombre vacio.
             UiFind.EscribirTexto(permisos, "txtbNombreGrupo", string.Empty);
@@ -373,9 +386,8 @@ namespace TpIDS.UiTests
         [TestCategory("UI")]
         public void T04_CU01_GrupoDuplicadoEnRaiz_InformaError()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionPermisos");
-            Window permisos = App.EsperarVentana("FormGestionPermisos");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window permisos = AbrirGestionPermisos(principal);
 
             // CU01 7b: ya existe el grupo 'admin' en la raiz del catalogo seed.
             UiFind.EscribirTexto(permisos, "txtbNombreGrupo", "admin");
@@ -399,9 +411,8 @@ namespace TpIDS.UiTests
             string grupoA = NombreUnico("uitestcicloa");
             string grupoB = NombreUnico("uitestciclob");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionPermisos");
-            Window permisos = App.EsperarVentana("FormGestionPermisos");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window permisos = AbrirGestionPermisos(principal);
 
             // Grupo A en la raiz del catalogo.
             UiFind.EscribirTexto(permisos, "txtbNombreGrupo", grupoA);

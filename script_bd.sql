@@ -23,6 +23,9 @@ CREATE TABLE dbo.Usuarios
     Username VARCHAR(50) NOT NULL,
     PasswordHash VARCHAR(MAX) NOT NULL,
     Activo BIT NOT NULL CONSTRAINT DF_Usuarios_Activo DEFAULT (1),
+    IntentosFallidos INT NOT NULL CONSTRAINT DF_Usuarios_IntentosFallidos DEFAULT (0),
+    Bloqueado BIT NOT NULL CONSTRAINT DF_Usuarios_Bloqueado DEFAULT (0),
+    BloqueadoHasta DATETIME NULL,
     DVH VARCHAR(100) NULL,
     CONSTRAINT PK_Usuarios PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT UQ_Usuarios_Username UNIQUE (Username)
@@ -120,6 +123,9 @@ DECLARE @PermisoVerBitacoraId INT;
 DECLARE @PermisoHistorialUsuariosId INT;
 DECLARE @PermisoConfiguracionUsuarioId INT;
 DECLARE @PermisoGestionIdiomasId INT;
+DECLARE @PermisoGestionMovimientosId INT;
+DECLARE @PermisoGestionCategoriasId INT;
+DECLARE @PermisoGestionBackupId INT;
 DECLARE @GrupoAdminId INT;
 DECLARE @GrupoBasicoId INT;
 DECLARE @AdminUserId INT;
@@ -143,6 +149,18 @@ SET @PermisoConfiguracionUsuarioId = SCOPE_IDENTITY();
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionidiomas', 0);
 SET @PermisoGestionIdiomasId = SCOPE_IDENTITY();
 
+-- NEG01/NEG02 (movimientos y categorias): a diferencia del resto (tecnicos, solo grupo admin),
+-- estos dos son el producto en si: todo usuario basico los necesita desde el alta.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionmovimientos', 0);
+SET @PermisoGestionMovimientosId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestioncategorias', 0);
+SET @PermisoGestionCategoriasId = SCOPE_IDENTITY();
+
+-- T08: tecnico, solo grupo admin (igual que gestionidiomas/verbitacora).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionbackup', 0);
+SET @PermisoGestionBackupId = SCOPE_IDENTITY();
+
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
 SET @GrupoAdminId = SCOPE_IDENTITY();
 
@@ -157,7 +175,12 @@ VALUES
     (@GrupoAdminId, @PermisoHistorialUsuariosId),
     (@GrupoAdminId, @PermisoConfiguracionUsuarioId),
     (@GrupoAdminId, @PermisoGestionIdiomasId),
-    (@GrupoBasicoId, @PermisoConfiguracionUsuarioId);
+    (@GrupoAdminId, @PermisoGestionMovimientosId),
+    (@GrupoAdminId, @PermisoGestionCategoriasId),
+    (@GrupoAdminId, @PermisoGestionBackupId),
+    (@GrupoBasicoId, @PermisoConfiguracionUsuarioId),
+    (@GrupoBasicoId, @PermisoGestionMovimientosId),
+    (@GrupoBasicoId, @PermisoGestionCategoriasId);
 
 INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
 VALUES
@@ -229,6 +252,68 @@ CREATE TABLE dbo.UsuarioHistorialPermiso
     CONSTRAINT PK_UsuarioHistorialPermiso PRIMARY KEY CLUSTERED (HistorialId, PermisoId),
     CONSTRAINT FK_UsuarioHistorialPermiso_Historial FOREIGN KEY (HistorialId) REFERENCES dbo.UsuarioHistorial(HistorialId)
 );
+GO
+
+-- NEG01/NEG02: nucleo de negocio de FINAZAPP (movimientos financieros y sus categorias).
+CREATE TABLE dbo.Categoria
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    UsuarioId INT NULL,
+    CONSTRAINT PK_Categoria PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Categoria_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id)
+);
+GO
+
+-- Unicidad de nombre separada para catalogo global (UsuarioId NULL) vs. personal:
+-- UNIQUE normal no permite esta semantica NULL-friendly, por eso son indices filtrados.
+-- Los indices filtrados exigen QUOTED_IDENTIFIER ON en la sesion que los crea.
+SET QUOTED_IDENTIFIER ON;
+GO
+
+CREATE UNIQUE INDEX UQ_Categoria_Nombre_Global
+    ON dbo.Categoria (Nombre)
+    WHERE UsuarioId IS NULL;
+GO
+
+CREATE UNIQUE INDEX UQ_Categoria_Nombre_Usuario
+    ON dbo.Categoria (UsuarioId, Nombre)
+    WHERE UsuarioId IS NOT NULL;
+GO
+
+CREATE TABLE dbo.Movimiento
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    CategoriaId INT NOT NULL,
+    Tipo VARCHAR(10) NOT NULL,
+    Monto DECIMAL(18,2) NOT NULL,
+    Fecha DATE NOT NULL,
+    Descripcion VARCHAR(300) NULL,
+    FechaCreacion DATETIME NOT NULL CONSTRAINT DF_Movimiento_FechaCreacion DEFAULT (GETDATE()),
+    CONSTRAINT PK_Movimiento PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Movimiento_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_Movimiento_Categoria FOREIGN KEY (CategoriaId) REFERENCES dbo.Categoria(Id),
+    CONSTRAINT CK_Movimiento_Tipo CHECK (Tipo IN ('Ingreso', 'Egreso')),
+    CONSTRAINT CK_Movimiento_Monto CHECK (Monto > 0)
+);
+GO
+
+CREATE INDEX IX_Movimiento_UsuarioId_Fecha
+    ON dbo.Movimiento (UsuarioId, Fecha DESC);
+GO
+
+-- Categorias globales por defecto (UsuarioId NULL), visibles para todos los usuarios.
+INSERT INTO dbo.Categoria (Nombre, UsuarioId)
+VALUES
+    ('Alimentacion', NULL),
+    ('Transporte', NULL),
+    ('Vivienda', NULL),
+    ('Salud', NULL),
+    ('Entretenimiento', NULL),
+    ('Sueldo', NULL),
+    ('Otros Ingresos', NULL),
+    ('Otros Egresos', NULL);
 GO
 
 -- BEGIN AUTO-GENERATED I18N BASE SEED

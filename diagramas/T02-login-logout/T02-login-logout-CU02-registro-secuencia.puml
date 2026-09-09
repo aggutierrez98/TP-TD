@@ -36,11 +36,18 @@ else datos completos
     UBLL -> Bita : RegistrarFalloNegocioInterno("...RejectedUserCreation", "...UsernameAlreadyExists", "UsuarioBLL", unidad)
     UBLL --> Reg : throw ExcepcionNegocio("Error.User.UsernameExists")
   else username disponible
-    UBLL -> Integ : CalcularDVH(nuevoUsuario)
-    Integ --> UBLL : dvh
     UBLL -> UoW : Usuarios.InsertarYObtenerId(nuevoUsuario)
     UoW -> Repo : InsertarYObtenerId(nuevoUsuario)
     Repo --> UBLL : nuevoId
+    note over UBLL
+      El DVH depende del Id: se calcula
+      recien despues de conocer el Id real
+      (evita un DVH desfasado del recalculo global).
+    end note
+    UBLL -> Integ : CalcularDVH(nuevoUsuario)
+    Integ --> UBLL : dvh
+    UBLL -> UoW : Usuarios.ActualizarDVH(nuevoId, dvh)
+    UoW -> Repo : ActualizarDVH(nuevoId, dvh)
     UBLL -> PermBLL : AsignarPerfilBasicoInterno(nuevoId, unidad)
     UBLL -> EstadoBLL : GuardarVersionActualInterno(nuevoId, "...Creation", "...InitialCreation", unidad)
     UBLL -> Bita : RegistrarOperacionInterno("...UserCreation", "...", "UsuarioBLL", unidad)

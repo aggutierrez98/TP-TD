@@ -62,7 +62,22 @@ namespace TpIDS.UiTests.Infrastructure
             }
 
             return VentanasDelProceso()
-                .FirstOrDefault(ventana => ventana.AutomationId == automationId);
+                .FirstOrDefault(ventana => CoincideAutomationId(ventana, automationId));
+        }
+
+        // Recorrer todo el arbol (no solo ControlType.Window) para llegar a los hijos MDI
+        // expone tambien elementos Window "internos" (p. ej. del propio MdiClient) que no
+        // soportan AutomationId via UIA: se descartan en vez de cortar la busqueda.
+        private static bool CoincideAutomationId(Window ventana, string automationId)
+        {
+            try
+            {
+                return ventana.AutomationId == automationId;
+            }
+            catch (FlaUI.Core.Exceptions.PropertyNotSupportedException)
+            {
+                return false;
+            }
         }
 
         public bool VentanaCerrada(string automationId, TimeSpan timeout)
@@ -151,7 +166,11 @@ namespace TpIDS.UiTests.Infrastructure
 
         // En UIA3 los modales (MessageBox, ShowDialog) cuelgan de la ventana dueña,
         // no del desktop, y pueden anidarse (FormLogin > FormRegistro > MessageBox):
-        // se recorre en profundidad acotada la cadena de ventanas hijas.
+        // se recorre en profundidad acotada la cadena de ventanas hijas. No se filtra
+        // por ControlType.Window en la recursion (solo al decidir si agregar un
+        // elemento): un hijo MDI (FormGestionUsuarios, etc.) cuelga de un MdiClient
+        // nativo que no es el mismo ControlType.Window, y filtrar ahi cortaria la
+        // busqueda antes de llegar al hijo MDI real.
         private static void AgregarVentanas(
             AutomationElement elemento,
             ConditionFactory condiciones,
@@ -169,8 +188,7 @@ namespace TpIDS.UiTests.Infrastructure
                 return;
             }
 
-            foreach (AutomationElement hijo in elemento.FindAllChildren(
-                condiciones.ByControlType(FlaUI.Core.Definitions.ControlType.Window)))
+            foreach (AutomationElement hijo in elemento.FindAllChildren())
             {
                 AgregarVentanas(hijo, condiciones, ventanas, profundidadRestante - 1);
             }

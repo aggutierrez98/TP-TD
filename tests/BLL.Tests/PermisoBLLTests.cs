@@ -122,6 +122,113 @@ namespace BLL.Tests
         }
 
         [TestMethod]
+        public void GuardarPermisosUsuario_QuitaUnicaCoberturaDirectaDeUnaPatente_ThrowsExcepcionNegocio()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.PermisoRepo.Nodos.Add(Simple(5, "patentex"));
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(1, new List<int>()));
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void GuardarPermisosUsuario_OtroUsuarioActivoCubreLaPatente_Permite()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "un2" };
+            fixture.Unidad.PermisoRepo.Nodos.Add(Simple(5, "patentex"));
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[2] = new List<int> { 5 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            sut.GuardarPermisosUsuario(1, new List<int>());
+
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void GuardarPermisosUsuario_PatenteSigueCubiertaPorFamilia_Permite()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            IPermiso familia = Grupo(10, "nf");
+            IPermiso patenteX = Simple(5, "patentex");
+            familia.Agregar(patenteX);
+            fixture.Unidad.PermisoRepo.Nodos.Add(familia);
+            fixture.Unidad.PermisoRepo.Nodos.Add(patenteX);
+            fixture.Unidad.PermisoRepo.Relaciones.Add(Tuple.Create(10, 5));
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5, 10 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            sut.GuardarPermisosUsuario(1, new List<int> { 10 });
+
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void GuardarCatalogo_BorrarFamiliaUnicaCoberturaDeUnUsuario_ThrowsExcepcionNegocio()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            IPermiso familiaExistente = Grupo(10, "nf");
+            IPermiso patenteXExistente = Simple(5, "patentex");
+            familiaExistente.Agregar(patenteXExistente);
+            fixture.Unidad.PermisoRepo.Nodos.Add(familiaExistente);
+            fixture.Unidad.PermisoRepo.Nodos.Add(patenteXExistente);
+            fixture.Unidad.PermisoRepo.Relaciones.Add(Tuple.Create(10, 5));
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 10 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarCatalogo(new List<IPermiso> { Simple(5, "patentex") }));
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void GuardarCatalogo_BorrarFamiliaSinDependientes_Permite()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.PermisoRepo.Nodos.Add(Grupo(10, "nf"));
+            fixture.Unidad.PermisoRepo.Nodos.Add(Simple(5, "patentex"));
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            sut.GuardarCatalogo(new List<IPermiso> { Simple(5, "patentex") });
+
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void ValidarPuedeEliminarUsuario_EsUnicoTitularDeAlgunaPatente_ThrowsExcepcionNegocio()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.PermisoRepo.Nodos.Add(Simple(5, "patentex"));
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ValidarPuedeEliminarUsuario(1, fixture.Unidad));
+        }
+
+        [TestMethod]
+        public void ValidarPuedeEliminarUsuario_OtroUsuarioActivoCubreSusPatentes_NoLanza()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            fixture.Unidad.PermisoRepo.Nodos.Add(Simple(5, "patentex"));
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "un" };
+            fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "un2" };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
+            fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[2] = new List<int> { 5 };
+            PermisoBLL sut = fixture.CreateSut();
+
+            sut.ValidarPuedeEliminarUsuario(1, fixture.Unidad);
+        }
+
+        [TestMethod]
         public void AsignarPerfilBasicoInterno_BasicoExists_AssignsOnlyBasico()
         {
             PermisoFixture fixture = new PermisoFixture();

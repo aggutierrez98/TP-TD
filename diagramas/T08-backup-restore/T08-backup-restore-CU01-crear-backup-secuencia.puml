@@ -1,0 +1,77 @@
+@startuml
+title T08 - CU01 Crear backup - Secuencia
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormPrincipal" as Principal
+participant "FormBackup" as Form
+participant "SaveFileDialog" as Dlg
+participant "UiDialogHelper" as UiDlg
+participant "BackupBLL" as BLL
+participant "IBackupRepositorio" as Repo
+participant "BackupDAL" as DAL
+participant "IBitacoraBLL" as Bita
+
+Admin -> Principal : menu Administracion > Backup
+Principal -> Form : new FormBackup() / Show()
+activate Form
+
+Admin -> Form : btnCrearBackup_Click()
+Form -> Dlg : ShowDialog()
+Dlg --> Form : DialogResult, rutaDestino
+
+alt Admin cancela el dialogo
+  Form --> Admin : no hace nada (finaliza)
+else Admin selecciona una ruta
+  Form -> BLL : CrearBackup(rutaDestino)
+  activate BLL
+  BLL -> BLL : valida ruta no vacia y extension == ".bak"
+  alt ruta vacia o extension distinta a .bak
+    BLL --> Form : throw ExcepcionNegocio("...InvalidBackupPath")
+    Form -> UiDlg : MostrarWarning("FormBackup.Warning.InvalidPath")
+    UiDlg --> Form
+  else extension valida
+    BLL -> BLL : valida existencia del directorio destino
+    alt directorio destino inexistente
+      BLL --> Form : throw ExcepcionNegocio("...BackupDirectoryNotFound")
+      Form -> UiDlg : MostrarError("FormBackup.Error.DirectoryNotFound")
+      UiDlg --> Form
+    else directorio existente
+      BLL -> Repo : CrearBackup(rutaDestino)
+      activate Repo
+      Repo -> DAL : CrearBackup(rutaDestino)
+      activate DAL
+      DAL -> DAL : abre SqlConnection propia\n(sin AccesoDatosSqlServer/IUnidadDeTrabajo)
+      DAL -> DAL : ExecuteNonQuery("BACKUP DATABASE TpCatedraIDS TO DISK = @ruta")
+      alt SQL Server ejecuta el backup correctamente
+        DAL --> Repo : ok
+        deactivate DAL
+        Repo --> BLL : ok
+        deactivate Repo
+        BLL -> Bita : RegistrarOperacion("FormBackup.Activity.BackupCreated", rutaDestino, "BackupBLL")
+        Bita --> BLL
+        BLL --> Form : ok
+        deactivate BLL
+        Form -> UiDlg : MostrarInfo("FormBackup.Info.BackupCreated")
+        UiDlg --> Form
+      else SQL Server rechaza o falla el BACKUP DATABASE
+        DAL --> Repo : throw SqlException
+        deactivate DAL
+        Repo --> BLL : propaga excepcion
+        deactivate Repo
+        BLL -> Bita : RegistrarExcepcionTecnica(ex, "FormBackup.Activity.BackupFailed", "BackupBLL")
+        Bita --> BLL
+        BLL --> Form : propaga excepcion
+        deactivate BLL
+        Form -> UiDlg : MostrarError("FormBackup.Error.BackupFailed")
+        UiDlg --> Form
+      end
+    end
+  end
+end
+
+deactivate Form
+
+@enduml

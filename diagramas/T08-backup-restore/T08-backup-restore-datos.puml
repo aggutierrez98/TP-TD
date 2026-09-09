@@ -1,0 +1,39 @@
+@startuml
+title T08 - Gestion de Backup y Restauracion de Base de Datos - DER
+
+hide methods
+hide stereotypes
+skinparam backgroundColor white
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+entity "Bitacora" as Bitacora {
+  *Id : int <<PK, IDENTITY, NOT NULL>>
+  --
+  FechaHora : datetime <<NOT NULL>>
+  UsuarioId : int <<FK -> Usuarios.Id, NULL>>
+  UsernameSnapshot : varchar(50) <<NULL>>
+  Actividad : varchar(100) <<NOT NULL>>
+  Informacion : varchar(500) <<NULL>>
+  Nivel : varchar(20) <<NOT NULL>>
+  Origen : varchar(100) <<NOT NULL>>
+  EsTecnica : bit <<NOT NULL, DEFAULT 0>>
+}
+
+note bottom of Bitacora
+  T08 no tiene tabla propia: no persiste metadata de
+  backups (ni rutas de archivos .bak, ni fechas, ni
+  historial de operaciones) en ninguna tabla de la base.
+  El archivo .bak elegido por el administrador es la unica
+  persistencia del backup en si, fuera de la base de datos.
+
+  La unica relacion de T08 con el modelo de datos es de
+  escritura: BackupBLL registra en Bitacora (via IBitacoraBLL)
+  un evento por cada CrearBackup/RestaurarBackup, exitoso o
+  fallido (Actividad = "BackupCreated"/"BackupRestored" o su
+  variante de fallo, EsTecnica = 1 ante fallo tecnico de SQL
+  Server). Mismo criterio documentado en T03 (T03-encriptado-datos.puml)
+  para modulos tecnicos sin tabla propia.
+end note
+
+@enduml

@@ -16,6 +16,7 @@
     <ProjectReference Include="..\..\ABSTRACCIONES\ABSTRACCIONES.csproj" />
     <ProjectReference Include="..\..\BE\BE.csproj" />
     <ProjectReference Include="..\..\SERVICIOS\SERVICIOS.csproj" />
+    <ProjectReference Include="..\..\DAL\DAL.csproj" />
     <ProjectReference Include="..\..\REPOSITORIO\REPOSITORIO.csproj" />
     <ProjectReference Include="..\..\BLL\BLL.csproj" />
   </ItemGroup>

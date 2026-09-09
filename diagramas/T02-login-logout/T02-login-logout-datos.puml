@@ -13,16 +13,28 @@ entity "Usuarios" as Usuarios {
   Username : varchar(50) <<UQ (UQ_Usuarios_Username), NOT NULL>>
   PasswordHash : varchar(max) <<NOT NULL>>
   Activo : bit <<NOT NULL>>
+  IntentosFallidos : int <<NOT NULL, DEFAULT 0>>
+  Bloqueado : bit <<NOT NULL, DEFAULT 0>>
+  BloqueadoHasta : datetime <<NULL>>
   DVH : varchar(100) <<NULL>>
 }
 
 note bottom of Usuarios
   Tabla nucleo de login/logout/registro.
   DVH = digito verificador horizontal (T07).
+  IntentosFallidos/Bloqueado/BloqueadoHasta soportan
+  el bloqueo progresivo de cuenta (soft lockout OWASP):
+  Bloqueado=true + BloqueadoHasta=NULL = bloqueo
+  permanente; Bloqueado=true + BloqueadoHasta futuro =
+  bloqueo temporal vigente. Estos 3 campos participan
+  del DVH igual que Activo.
   El detalle de tablas relacionadas
   (Bitacora, UsuarioPermiso, UsuarioHistorial,
   DigitoVerificadorVertical) vive en sus modulos
   y en el DER integrado G07.
+  Fuente: script_bd.sql (no se pudo inspeccionar
+  TpCatedraIDS en SQL Server real desde este entorno,
+  no hay sqlcmd/conectividad Windows disponible en WSL).
 end note
 
 @enduml

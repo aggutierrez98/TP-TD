@@ -17,11 +17,14 @@ namespace BLL
 
         // BLL de caso de uso: una sola instancia de cada uno, compartida por referencia.
         private static BitacoraBLL _bitacoraBLL;
+        private static CategoriaBLL _categoriaBLL;
+        private static MovimientoBLL _movimientoBLL;
         private static UsuarioEstadoBLL _usuarioEstadoBLL;
         private static IntegridadBLL _integridadBLL;
         private static IdiomaBLL _idiomaBLL;
         private static PermisoBLL _permisoBLL;
         private static UsuarioBLL _usuarioBLL;
+        private static BackupBLL _backupBLL;
 
         public static void Inicializar()
         {
@@ -44,6 +47,10 @@ namespace BLL
             UnidadDeTrabajoFactory uow = new UnidadDeTrabajoFactory();
 
             _bitacoraBLL = new BitacoraBLL(new BitacoraRepositorio(), uow, _sesion);
+
+            _categoriaBLL = new CategoriaBLL(new CategoriaRepositorio(), uow, _sesion, _bitacoraBLL);
+
+            _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), uow, _sesion, _bitacoraBLL);
 
             _usuarioEstadoBLL = new UsuarioEstadoBLL(
                 new UsuarioRepositorio(),
@@ -92,6 +99,8 @@ namespace BLL
                 uow,
                 _sesion,
                 _autorizacion);
+
+            _backupBLL = new BackupBLL(new BackupRepositorio(), _bitacoraBLL);
 
             _inicializado = true;
         }
@@ -149,6 +158,21 @@ namespace BLL
         public static BitacoraBLL GestorBitacora
         {
             get { Inicializar(); return _bitacoraBLL; }
+        }
+
+        public static CategoriaBLL Categoria
+        {
+            get { Inicializar(); return _categoriaBLL; }
+        }
+
+        public static MovimientoBLL Movimiento
+        {
+            get { Inicializar(); return _movimientoBLL; }
+        }
+
+        public static BackupBLL Backup
+        {
+            get { Inicializar(); return _backupBLL; }
         }
     }
 }

@@ -22,6 +22,12 @@ namespace BLL
 
         private const string TablaUsuarios = "Usuarios";
 
+        private const int UmbralBloqueoTemporalCorto = 3;
+        private const int UmbralBloqueoTemporalLargo = 4;
+        private const int UmbralBloqueoPermanente = 5;
+        private static readonly TimeSpan DuracionBloqueoCorto = TimeSpan.FromMinutes(1);
+        private static readonly TimeSpan DuracionBloqueoLargo = TimeSpan.FromMinutes(5);
+
         internal UsuarioBLL(
             IUsuarioRepositorio usuarioRepositorio,
             IPasswordHashService passwordHasher,
@@ -61,18 +67,163 @@ namespace BLL
                 return null;
             }
 
+            // Soft lockout (OWASP): un bloqueo activo se rechaza sin verificar
+            // password ni tocar el contador, para no permitir que probar
+            // contrasenas durante la espera salte de etapa.
+            if (usuarioBD.Bloqueado)
+            {
+                if (usuarioBD.BloqueadoHasta == null)
+                {
+                    _bitacoraBLL.RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginRejectedPermanentlyLocked", "UsuarioBLL");
+                    throw new ExcepcionNegocio("Error.User.LoginPermanentlyLocked");
+                }
+
+                if (usuarioBD.BloqueadoHasta.Value > DateTime.Now)
+                {
+                    _bitacoraBLL.RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginRejectedTemporarilyLocked", "UsuarioBLL");
+                    throw new ExcepcionNegocio("Error.User.LoginTemporarilyLocked");
+                }
+
+                // BloqueadoHasta ya vencio: el intento sigue su curso normal y el
+                // estado de bloqueo se resuelve mas abajo segun exito o fallo.
+            }
+
             bool esValido = _passwordHasher.VerifyPassword(passwordRaw, usuarioBD.PasswordHash);
             if (!esValido)
             {
-                _bitacoraBLL.RegistrarFalloNegocio("FormAuditLog.Value.Activity.FailedLogin", "FormAuditLog.Value.Info.LoginInvalidCredentials", "UsuarioBLL");
+                RegistrarIntentoFallidoYAplicarBloqueoSiCorresponde(usuarioBD);
                 return null;
             }
+
+            ResetearContadorYBloqueoInterno(usuarioBD);
 
             _sesion.IniciarSesion(usuarioBD);
             _autorizacion.ActualizarPermisosUsuarioActual(_permisoBLL.ObtenerPermisosDirectosUsuario(usuarioBD.Id));
             _idiomaBLL.AplicarIdiomaSesionUsuario(usuarioBD.Id);
             _bitacoraBLL.RegistrarOperacion("FormAuditLog.Value.Activity.SuccessfulLogin", "FormAuditLog.Value.Info.SuccessfulLogin", "UsuarioBLL");
             return usuarioBD;
+        }
+
+        private void RegistrarIntentoFallidoYAplicarBloqueoSiCorresponde(Usuario usuarioBD)
+        {
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    string dvhAnterior = usuarioBD.DVH;
+                    int nuevosIntentos = usuarioBD.IntentosFallidos + 1;
+                    bool nuevoBloqueado;
+                    DateTime? nuevoBloqueadoHasta;
+                    string informacionBitacora;
+
+                    if (nuevosIntentos == UmbralBloqueoTemporalCorto)
+                    {
+                        nuevoBloqueado = true;
+                        nuevoBloqueadoHasta = DateTime.Now.Add(DuracionBloqueoCorto);
+                        informacionBitacora = "FormAuditLog.Value.Info.LoginLockedTemporaryShort";
+                    }
+                    else if (nuevosIntentos == UmbralBloqueoTemporalLargo)
+                    {
+                        nuevoBloqueado = true;
+                        nuevoBloqueadoHasta = DateTime.Now.Add(DuracionBloqueoLargo);
+                        informacionBitacora = "FormAuditLog.Value.Info.LoginLockedTemporaryLong";
+                    }
+                    else if (nuevosIntentos >= UmbralBloqueoPermanente)
+                    {
+                        nuevoBloqueado = true;
+                        nuevoBloqueadoHasta = null;
+                        informacionBitacora = "FormAuditLog.Value.Info.LoginLockedPermanent";
+                    }
+                    else
+                    {
+                        nuevoBloqueado = false;
+                        nuevoBloqueadoHasta = null;
+                        informacionBitacora = "FormAuditLog.Value.Info.LoginInvalidCredentials";
+                    }
+
+                    usuarioBD.IntentosFallidos = nuevosIntentos;
+                    usuarioBD.Bloqueado = nuevoBloqueado;
+                    usuarioBD.BloqueadoHasta = nuevoBloqueadoHasta;
+                    usuarioBD.DVH = _integridadBLL.CalcularDVH(usuarioBD);
+
+                    unidad.Usuarios.ActualizarEstadoBloqueo(usuarioBD.Id, nuevosIntentos, nuevoBloqueado, nuevoBloqueadoHasta, usuarioBD.DVH);
+                    _bitacoraBLL.RegistrarFalloNegocioInterno("FormAuditLog.Value.Activity.FailedLogin", informacionBitacora, "UsuarioBLL", unidad);
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, usuarioBD.DVH, unidad);
+                    unidad.Save();
+                }
+                catch (Exception ex)
+                {
+                    throw new ExcepcionTecnica("Error.User.LoginRegisterAttemptFailed", ex);
+                }
+            }
+        }
+
+        private void ResetearContadorYBloqueoInterno(Usuario usuarioBD)
+        {
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    string dvhAnterior = usuarioBD.DVH;
+                    usuarioBD.IntentosFallidos = 0;
+                    usuarioBD.Bloqueado = false;
+                    usuarioBD.BloqueadoHasta = null;
+                    usuarioBD.DVH = _integridadBLL.CalcularDVH(usuarioBD);
+
+                    unidad.Usuarios.ActualizarEstadoBloqueo(usuarioBD.Id, 0, false, null, usuarioBD.DVH);
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, usuarioBD.DVH, unidad);
+                    unidad.Save();
+                }
+                catch (Exception ex)
+                {
+                    throw new ExcepcionTecnica("Error.User.LoginRegisterAttemptFailed", ex);
+                }
+            }
+        }
+
+        public bool DesbloquearUsuario(int id)
+        {
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    Usuario usuario = unidad.Usuarios.ObtenerPorId(id);
+                    if (usuario == null)
+                    {
+                        throw new ExcepcionNegocio("Error.User.NotFound");
+                    }
+
+                    if (!usuario.Bloqueado)
+                    {
+                        throw new ExcepcionNegocio("Error.User.NotLocked");
+                    }
+
+                    string dvhAnterior = usuario.DVH;
+                    usuario.IntentosFallidos = 0;
+                    usuario.Bloqueado = false;
+                    usuario.BloqueadoHasta = null;
+                    usuario.DVH = _integridadBLL.CalcularDVH(usuario);
+
+                    bool actualizado = unidad.Usuarios.ActualizarEstadoBloqueo(id, 0, false, null, usuario.DVH);
+                    if (!actualizado)
+                    {
+                        throw new ExcepcionTecnica("Error.User.UnlockFailed");
+                    }
+
+                    _bitacoraBLL.RegistrarOperacionInterno("FormAuditLog.Value.Activity.UserUnlock", "FormAuditLog.Value.Info.UserUnlock", "UsuarioBLL", unidad);
+                    _integridadBLL.ActualizarDVVInterno(TablaUsuarios, dvhAnterior, usuario.DVH, unidad);
+                    unidad.Save();
+                    return true;
+                }
+                catch (ExcepcionNegocio)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new ExcepcionTecnica("Error.User.UnlockFailed", ex);
+                }
+            }
         }
 
         public void CerrarSesionActual()
@@ -273,6 +424,8 @@ namespace BLL
                     {
                         throw new ExcepcionNegocio("Error.User.NotFound");
                     }
+
+                    _permisoBLL.ValidarPuedeEliminarUsuario(id, unidad);
 
                     // Baja fisica: capturar la firma antes del DELETE permite
                     // restarla del DVV luego de eliminar la fila.

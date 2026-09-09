@@ -1,0 +1,84 @@
+@startuml
+title T06 - Gestion de Bitacora y Control de Cambios - Captura de version (secuencia general)
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+participant "OperacionBLL\n(p. ej. UsuarioBLL, PermisoBLL, IdiomaBLL)" as OperacionBLL
+participant "UsuarioEstadoBLL" as EBLL
+participant "IUnidadDeTrabajo" as UoW
+participant "IUsuarioRepositorio" as URepo
+participant "IUsuarioPreferenciaRepositorio" as PrefRepo
+participant "IUsuarioPermisoRepositorio" as PermRepo
+participant "ISesion" as Sesion
+participant "HistorialEstadosService\n(IServicioHistorialEstados)" as Hist
+participant "IUsuarioHistorialRepositorio" as HistRepo
+participant "UsuarioHistorialDAL" as DAL
+
+note over OperacionBLL
+  Secuencia general del modulo T06 (bitacora y control de cambios).
+  Documenta el lado de control de cambios: toda operacion que cambia
+  el estado de un usuario (alta, edicion, baja, restauracion, cambio
+  de permisos o de idioma) captura una version dentro de la misma
+  transaccion (unidad de trabajo). El lado de bitacora no tiene un
+  flujo general propio: sus CU01 (consultar) y CU02 (registrar) ya
+  cubren el 100% de su comportamiento, igual que en T02/T04/T05.
+end note
+
+OperacionBLL -> EBLL : GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad)
+activate EBLL
+
+EBLL -> EBLL : ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, unidad)
+activate EBLL
+EBLL -> UoW : Usuarios.ObtenerPorId(usuarioId)
+UoW -> URepo : ObtenerPorId(usuarioId)
+URepo --> EBLL : usuario
+alt usuario == null
+  EBLL --> EBLL : snapshot = null
+else usuario existe
+  EBLL -> UoW : UsuarioPreferencias.ObtenerPorUsuarioId(usuarioId)
+  UoW -> PrefRepo : ObtenerPorUsuarioId(usuarioId)
+  PrefRepo --> EBLL : preferencia
+  EBLL -> Sesion : GetUsuarioActualId()
+  Sesion --> EBLL : actorUsuarioId?
+  EBLL -> Sesion : GetUsuarioActualNombre()
+  Sesion --> EBLL : actorUsername
+  EBLL -> UoW : UsuarioPermisos.ObtenerPermisoIdsPorUsuario(usuarioId)
+  UoW -> PermRepo : ObtenerPermisoIdsPorUsuario(usuarioId)
+  PermRepo --> EBLL : permisosIds
+  EBLL --> EBLL : snapshot (UsuarioHistorialSnapshot)
+end
+deactivate EBLL
+
+alt snapshot == null (usuario inexistente)
+  EBLL --> OperacionBLL : 0
+else snapshot construido
+  EBLL -> UoW : UsuarioHistorial.GuardarVersion(snapshot)
+  UoW -> HistRepo : GuardarVersion(snapshot)
+  activate HistRepo
+  HistRepo -> DAL : GuardarVersion(snapshot, accesoDatos)
+  DAL -> DAL : INSERT UsuarioHistorial (OUTPUT HistorialId)
+  loop por cada permiso del snapshot
+    DAL -> DAL : INSERT UsuarioHistorialPermiso
+  end
+  DAL --> HistRepo : historialId
+  HistRepo --> EBLL : historialId
+  deactivate HistRepo
+  EBLL --> OperacionBLL : historialId
+  note right of OperacionBLL
+    El caller hace unidad.Save() al final de su propia
+    transaccion; esta captura no hace commit por si sola.
+  end note
+end
+deactivate EBLL
+
+note over Hist
+  La LECTURA del historial (ObtenerHistorial/ObtenerVersion)
+  no pasa por IUnidadDeTrabajo: usa el singleton
+  HistorialEstadosService, configurado en el arranque
+  (InicializacionHistorialBLL) con delegados directos a
+  UsuarioHistorialRepositorio.ObtenerVersiones/ObtenerVersion.
+  Ver T06-bitacora-control-cambios-CU03-consultar-historial-secuencia.puml.
+end note
+
+@enduml

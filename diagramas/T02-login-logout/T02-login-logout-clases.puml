@@ -14,7 +14,6 @@ package "UI" {
   class FormLogin {
     -gestorUsuario : UsuarioBLL
     -gestorBitacora : BitacoraBLL
-    -gestorIdioma : IdiomaBLL
     +btnIngreso_Click() : void
     +btnRegistro_Click() : void
   }
@@ -42,6 +41,7 @@ package "BLL" {
     +Login(usuarioEntidad : Usuario, passwordRaw : string) : Usuario
     +CerrarSesionActual() : void
     +Registrar(usuario : Usuario, passwordRaw : string) : bool
+    +DesbloquearUsuario(id : int) : bool
   }
 
   class PasswordHashService <<internal>> {
@@ -66,7 +66,7 @@ package "BLL" {
     +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) : void
   }
   interface IUsuarioEstadoBLL <<internal>> {
-    +GuardarVersionActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : void
+    +GuardarVersionActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : int
   }
 }
 
@@ -83,6 +83,7 @@ package "REPOSITORIO" {
     +ObtenerPorId(id : int) : Usuario
     +InsertarYObtenerId(usuario : Usuario) : int
     +ObtenerTodos() : List<Usuario>
+    +ActualizarEstadoBloqueo(id : int, intentosFallidos : int, bloqueado : bool, bloqueadoHasta : DateTime?, dvh : string) : bool
   }
   class UsuarioRepositorio
 }
@@ -91,6 +92,7 @@ package "DAL" {
   class UsuarioDAL {
     +ObtenerPorUsername(username : string, accesoDatos : AccesoDatosSqlServer = null) : Usuario
     +InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatosSqlServer = null) : int
+    +ActualizarEstadoBloqueo(id : int, intentosFallidos : int, bloqueado : bool, bloqueadoHasta : DateTime?, dvh : string, accesoDatos : AccesoDatosSqlServer = null) : bool
   }
   class AccesoDatosSqlServer
 }
@@ -136,6 +138,9 @@ package "BE" {
     +Username : string
     +PasswordHash : string
     +Activo : bool
+    +IntentosFallidos : int
+    +Bloqueado : bool
+    +BloqueadoHasta : DateTime?
     +DVH : string
   }
 }

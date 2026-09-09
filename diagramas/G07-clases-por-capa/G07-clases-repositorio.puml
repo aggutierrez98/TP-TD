@@ -1,0 +1,87 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa REPOSITORIO
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "REPOSITORIO (persistencia / Unit of Work)" {
+
+  interface IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
+  }
+  interface IUnidadDeTrabajo <<IDisposable>> {
+    +Usuarios : IUsuarioRepositorio
+    +UsuarioPermisos : IUsuarioPermisoRepositorio
+    +UsuarioPreferencias : IUsuarioPreferenciaRepositorio
+    +UsuarioHistorial : IUsuarioHistorialRepositorio
+    +Permisos : IPermisoRepositorio
+    +Idiomas : IIdiomaRepositorio
+    +Traducciones : ITraduccionRepositorio
+    +Bitacora : IBitacoraRepositorio
+    +Integridad : IIntegridadRepositorio
+    +Categorias : ICategoriaRepositorio
+    +Movimientos : IMovimientoRepositorio
+    +Save() : void
+  }
+
+  class UnidadDeTrabajoFactory
+  class UnidadDeTrabajoSqlServer <<internal>>
+
+  interface IUsuarioRepositorio
+  interface IUsuarioPermisoRepositorio
+  interface IUsuarioPreferenciaRepositorio
+  interface IUsuarioHistorialRepositorio
+  interface IPermisoRepositorio
+  interface IIdiomaRepositorio
+  interface ITraduccionRepositorio
+  interface IBitacoraRepositorio
+  interface IIntegridadRepositorio
+  interface ICategoriaRepositorio
+  interface IMovimientoRepositorio
+  interface IBackupRepositorio
+
+  class UsuarioRepositorio
+  class UsuarioPermisoRepositorio
+  class UsuarioPreferenciaRepositorio
+  class UsuarioHistorialRepositorio
+  class PermisoRepositorio
+  class IdiomaRepositorio
+  class TraduccionRepositorio
+  class BitacoraRepositorio
+  class IntegridadRepositorio
+  class CategoriaRepositorio
+  class MovimientoRepositorio
+  class BackupRepositorio
+}
+
+UnidadDeTrabajoFactory ..|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoFactory ..> UnidadDeTrabajoSqlServer : <<creates>>
+UnidadDeTrabajoSqlServer ..|> IUnidadDeTrabajo
+IUnidadDeTrabajo o--> IUsuarioRepositorio
+IUnidadDeTrabajo o--> IPermisoRepositorio
+IUnidadDeTrabajo o--> IIdiomaRepositorio
+IUnidadDeTrabajo o--> IBitacoraRepositorio
+IUnidadDeTrabajo o--> IIntegridadRepositorio
+IUnidadDeTrabajo o--> ICategoriaRepositorio
+IUnidadDeTrabajo o--> IMovimientoRepositorio
+
+UsuarioRepositorio ..|> IUsuarioRepositorio
+UsuarioPermisoRepositorio ..|> IUsuarioPermisoRepositorio
+UsuarioPreferenciaRepositorio ..|> IUsuarioPreferenciaRepositorio
+UsuarioHistorialRepositorio ..|> IUsuarioHistorialRepositorio
+PermisoRepositorio ..|> IPermisoRepositorio
+IdiomaRepositorio ..|> IIdiomaRepositorio
+TraduccionRepositorio ..|> ITraduccionRepositorio
+BitacoraRepositorio ..|> IBitacoraRepositorio
+IntegridadRepositorio ..|> IIntegridadRepositorio
+CategoriaRepositorio ..|> ICategoriaRepositorio
+MovimientoRepositorio ..|> IMovimientoRepositorio
+BackupRepositorio ..|> IBackupRepositorio
+
+
+@enduml

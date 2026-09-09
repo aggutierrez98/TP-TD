@@ -14,7 +14,7 @@ Casos de uso de autenticacion del sistema (login, registro y logout), segun la i
 **Actor Principal:** Usuario  
 **Actor Secundario:** -  
 **Precondiciones:** La aplicacion esta iniciada y supero la verificacion de integridad de arranque (T07). El usuario ya existe en la base de datos y se encuentra activo.  
-**Puntos de Extension:** CU02 Registro (se accede desde el boton Registrarse de la pantalla de login).  
+**Puntos de Extension:** CU02 Registro (se accede desde el boton Registrarse de la pantalla de login). Un usuario que queda bloqueado solo puede volver a intentar login cuando el bloqueo temporal vence, o requiere que un administrador lo desbloquee desde la pantalla de Gestion de Usuarios (boton Desbloquear) si el bloqueo es permanente.  
 **Condicion:** El usuario desea autenticarse para acceder a la gestion de usuarios del sistema.  
 
 **Escenario Principal:**
@@ -23,21 +23,28 @@ Casos de uso de autenticacion del sistema (login, registro y logout), segun la i
 3. El sistema valida que el nombre de usuario y la contrasena no esten vacios.
 4. El sistema busca al usuario por su nombre de usuario a traves del repositorio.
 5. El sistema verifica que el usuario este activo.
-6. El sistema verifica la contrasena ingresada contra el hash almacenado (PBKDF2).
-7. El sistema inicia la sesion del usuario.
-8. El sistema obtiene los permisos directos del usuario y actualiza los permisos efectivos de la sesion.
-9. El sistema aplica el idioma configurado para el usuario.
-10. El sistema registra en la bitacora la operacion de login exitoso.
-11. El sistema limpia los campos del formulario y abre la pantalla de gestion de usuarios con la sesion iniciada.
+6. El sistema verifica que la cuenta no tenga un bloqueo activo (o que un bloqueo temporal previo ya haya vencido).
+7. El sistema verifica la contrasena ingresada contra el hash almacenado (PBKDF2).
+8. El sistema resetea a cero el contador de intentos fallidos y limpia el estado de bloqueo del usuario.
+9. El sistema inicia la sesion del usuario.
+10. El sistema obtiene los permisos directos del usuario y actualiza los permisos efectivos de la sesion.
+11. El sistema aplica el idioma configurado para el usuario.
+12. El sistema registra en la bitacora la operacion de login exitoso.
+13. El sistema limpia los campos del formulario y abre la pantalla de gestion de usuarios con la sesion iniciada.
 
 **Flujos Alternativos:**
 3a. Si el nombre de usuario o la contrasena estan vacios, el sistema registra un fallo de negocio en la bitacora, informa que se deben completar los campos y finaliza el caso de uso.
 4a. Si el usuario no existe, el sistema registra el fallo en la bitacora, informa credenciales incorrectas y finaliza el caso de uso.
 5a. Si el usuario existe pero esta inactivo, el sistema registra el fallo en la bitacora, informa credenciales incorrectas y finaliza el caso de uso.
-6a. Si la contrasena no coincide con el hash almacenado, el sistema registra el fallo en la bitacora, informa credenciales incorrectas y finaliza el caso de uso.
-11a. Si ocurre una excepcion tecnica durante el proceso, el sistema muestra el error de login al usuario y finaliza el caso de uso.
+6a. Si la cuenta esta bloqueada de forma permanente (5 intentos fallidos consecutivos sin login exitoso), el sistema registra el fallo en la bitacora, rechaza el intento sin verificar la contrasena ni incrementar el contador, informa que la cuenta esta bloqueada de forma permanente y que debe comunicarse con el administrador, y finaliza el caso de uso.
+6b. Si la cuenta tiene un bloqueo temporal vigente (tercer o cuarto intento fallido, dentro de la ventana de 1 o 5 minutos), el sistema registra el fallo en la bitacora, rechaza el intento sin verificar la contrasena ni incrementar el contador, informa que la cuenta esta bloqueada temporalmente y que debe reintentar mas tarde, y finaliza el caso de uso.
+7a. Si la contrasena no coincide con el hash almacenado y es el primer o el segundo intento fallido consecutivo, el sistema incrementa el contador de intentos fallidos, no aplica ningun bloqueo, registra el fallo en la bitacora, informa credenciales incorrectas (mensaje generico) y finaliza el caso de uso.
+7b. Si la contrasena no coincide con el hash almacenado y es el tercer intento fallido consecutivo, el sistema incrementa el contador, aplica un bloqueo temporal de 1 minuto, recalcula el digito verificador horizontal (DVH) del usuario y actualiza el digito verificador vertical (DVV) de la tabla Usuarios dentro de la misma transaccion, registra el fallo en la bitacora, informa credenciales incorrectas (mensaje generico, sin revelar el bloqueo) y finaliza el caso de uso.
+7c. Si la contrasena no coincide con el hash almacenado y es el cuarto intento fallido consecutivo (una vez vencido el bloqueo temporal corto), el sistema incrementa el contador, aplica un bloqueo temporal de 5 minutos, recalcula DVH/DVV de la misma forma, registra el fallo en la bitacora, informa credenciales incorrectas (mensaje generico) y finaliza el caso de uso.
+7d. Si la contrasena no coincide con el hash almacenado y es el quinto intento fallido consecutivo (una vez vencido el bloqueo temporal largo), el sistema incrementa el contador, aplica un bloqueo permanente (requiere desbloqueo manual de un administrador), recalcula DVH/DVV de la misma forma, registra el fallo en la bitacora, informa credenciales incorrectas (mensaje generico) y finaliza el caso de uso.
+13a. Si ocurre una excepcion tecnica durante el proceso (por ejemplo al persistir el contador de intentos, el estado de bloqueo o los digitos verificadores), el sistema muestra el error de login al usuario y finaliza el caso de uso.
 
-**Postcondiciones:** La sesion del usuario queda iniciada con sus permisos efectivos e idioma cargados, la pantalla de gestion de usuarios queda visible y el login exitoso queda registrado en la bitacora.
+**Postcondiciones:** Si el login fue exitoso: la sesion del usuario queda iniciada con sus permisos efectivos e idioma cargados, el contador de intentos fallidos y el estado de bloqueo quedan en cero/limpio, la pantalla de gestion de usuarios queda visible y el login exitoso queda registrado en la bitacora. Si el login fallo por contrasena invalida: el contador de intentos fallidos del usuario queda incrementado y, segun el umbral alcanzado (3, 4 o 5 intentos), el usuario puede quedar con un bloqueo temporal o permanente vigente en la base de datos, con su DVH y el DVV de la tabla Usuarios actualizados de forma consistente.
 
 ---
 
@@ -58,7 +65,7 @@ Casos de uso de autenticacion del sistema (login, registro y logout), segun la i
 5. El sistema valida que el nombre de usuario y la contrasena no esten vacios.
 6. El sistema genera el hash seguro de la contrasena (PBKDF2).
 7. El sistema verifica que no exista otro usuario con el mismo nombre de usuario.
-8. El sistema calcula el digito verificador horizontal (DVH) del nuevo usuario y lo inserta en la base.
+8. El sistema inserta el nuevo usuario en la base, calcula su digito verificador horizontal (DVH) a partir del Id asignado y lo persiste.
 9. El sistema asigna al nuevo usuario el perfil basico de permisos.
 10. El sistema guarda la version inicial en el historial del usuario y registra la operacion en la bitacora.
 11. El sistema actualiza el digito verificador vertical (DVV) de la tabla de usuarios y confirma la transaccion.
@@ -387,11 +394,11 @@ Casos de uso de administracion de idiomas y traducciones, y de configuracion del
 
 **Postcondiciones:** La preferencia de idioma del usuario queda persistida, con version en su historial y en la bitacora, y la interfaz queda mostrada en el nuevo idioma.
 
-## T06a. Gestion de Bitacora
+## T06. Gestion de Bitacora y Control de Cambios
 
 _Especificaciones de casos de uso_
 
-A continuacion se especifican los casos de uso de la bitacora del sistema segun la implementacion vigente: la consulta filtrada de eventos y el registro centralizado de operaciones, fallos de negocio y excepciones tecnicas.
+A continuacion se especifican los casos de uso del modulo de bitacora y control de cambios segun la implementacion vigente: la consulta filtrada de eventos de bitacora y el registro centralizado de operaciones, fallos de negocio y excepciones tecnicas (bitacora); y la consulta del historial de versiones de un usuario con sus diferencias y la restauracion a una version historica (control de cambios).
 
 ---
 
@@ -446,12 +453,6 @@ A continuacion se especifican los casos de uso de la bitacora del sistema segun 
 
 **Postcondiciones:** El evento queda persistido en la tabla Bitacora, disponible para su consulta posterior.
 
-## T06b. Gestion de Control de Cambios
-
-_Especificaciones de casos de uso_
-
-A continuacion se especifican los casos de uso del control de cambios (historial de estados de usuario) segun la implementacion vigente: la consulta del historial de versiones con sus diferencias y la restauracion de un usuario a una version historica.
-
 ---
 
 **ID y Nombre:** CU16 Consultar historial de usuario  
@@ -482,7 +483,7 @@ A continuacion se especifican los casos de uso del control de cambios (historial
 
 ---
 
-**ID y Nombre:** CU17 Restaurar version de usuario  
+**ID y Nombre:** CU17 Restaurar punto del historial de usuario  
 **Estado:** Implementado  
 **Descripcion:** Restaura el estado de un usuario a una version historica seleccionada, reescribiendo sus datos, permisos y preferencia de idioma, recalculando su integridad y dejando traza en historial y bitacora.  
 **Actor Principal:** Administrador  
@@ -546,3 +547,68 @@ Caso de uso de verificacion de integridad de los datos mediante digitos verifica
 6a. Si ocurre otra excepcion tecnica durante el arranque, el sistema registra la excepcion tecnica y no continua con el inicio normal.
 
 **Postcondiciones:** Si la integridad es valida (o se inicializan las firmas por primera vez), la aplicacion continua hacia la pantalla de login. Si se detecta corrupcion, se muestra la pantalla de contingencia de integridad y no se habilita el uso normal del sistema.
+
+## T08. Gestion de Backup y Restauracion de Base de Datos
+
+_Especificaciones de casos de uso_
+
+A continuacion se especifican los casos de uso del modulo de backup y restauracion de la base de datos: la creacion de una copia de seguridad completa y la restauracion de la base a partir de un archivo de backup, ambos mediante los comandos nativos BACKUP DATABASE / RESTORE DATABASE de SQL Server.
+
+---
+
+**ID y Nombre:** CU19 Crear backup  
+**Estado:** Implementado  
+**Descripcion:** Permite al administrador generar una copia de seguridad completa de la base de datos en un archivo .bak elegido por el mismo.  
+**Actor Principal:** Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** La aplicacion se encuentra iniciada, hay una sesion activa con el permiso gestionbackup y el administrador abrio la pantalla de backup desde el menu Administracion.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El administrador necesita generar una copia de seguridad de la base de datos, por ejemplo antes de una operacion riesgosa o como resguardo periodico.  
+
+**Escenario Principal:**
+1. El administrador abre la pantalla de backup desde el menu Administracion.
+2. El administrador presiona crear backup y selecciona la ruta destino del archivo .bak mediante un cuadro de dialogo para guardar archivo.
+3. El sistema valida que la ruta no este vacia, que la extension sea .bak y que el directorio destino exista.
+4. El sistema ejecuta la sentencia BACKUP DATABASE de SQL Server hacia el archivo seleccionado.
+5. El sistema registra la operacion en la bitacora.
+6. El sistema informa al administrador que el backup se creo correctamente.
+
+**Flujos Alternativos:**
+2a. Si el administrador cancela el cuadro de dialogo sin elegir una ruta, el caso de uso finaliza sin cambios.
+3a. Si la ruta seleccionada no tiene extension .bak, el sistema advierte del formato invalido y finaliza el caso de uso.
+3b. Si el directorio destino no existe, el sistema informa el error y finaliza el caso de uso.
+4a. Si SQL Server rechaza o falla el BACKUP DATABASE (por ejemplo, permisos insuficientes o disco sin espacio), el sistema registra el fallo tecnico en la bitacora e informa el error al administrador, sin dejar un backup exitoso.
+
+**Postcondiciones:** Existe un archivo .bak con una copia integra de la base de datos al momento del backup, y queda un evento de bitacora que deja traza de la operacion. Si el proceso fallo, no se genera un backup valido y solo queda registrado el error tecnico.
+
+---
+
+**ID y Nombre:** CU20 Restaurar backup  
+**Estado:** Implementado  
+**Descripcion:** Permite al administrador restaurar la base de datos completa a partir de un archivo .bak existente, reemplazando el contenido actual.  
+**Actor Principal:** Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** La aplicacion se encuentra iniciada, hay una sesion activa con el permiso gestionbackup, el administrador abrio la pantalla de backup desde el menu Administracion y existe un archivo .bak valido generado previamente.  
+**Puntos de Extension:** Al finalizar con exito, dispara el cierre de la sesion actual y el regreso a la pantalla de login, porque el estado en memoria de sesion y permisos puede haber quedado desincronizado del contenido restaurado.  
+**Condicion:** El administrador necesita revertir la base de datos a un estado previo guardado en un archivo de backup.  
+
+**Escenario Principal:**
+1. El administrador presiona restaurar backup y selecciona un archivo .bak existente mediante un cuadro de dialogo para abrir archivo.
+2. El sistema valida que el archivo exista y tenga extension .bak.
+3. El sistema solicita confirmacion explicita advirtiendo que se perderan los datos actuales y que se cerraran todas las conexiones activas a la base.
+4. El administrador confirma la operacion.
+5. El sistema pone la base de datos en modo SINGLE_USER, expulsando las demas conexiones activas.
+6. El sistema ejecuta la sentencia RESTORE DATABASE con la opcion REPLACE a partir del archivo seleccionado.
+7. El sistema vuelve la base de datos al modo MULTI_USER.
+8. El sistema limpia el pool de conexiones de la aplicacion.
+9. El sistema registra la operacion en la bitacora.
+10. El sistema informa al administrador que la restauracion se completo correctamente.
+11. El sistema cierra la sesion actual y vuelve a la pantalla de login.
+
+**Flujos Alternativos:**
+1a. Si el administrador cancela el cuadro de dialogo sin elegir un archivo, el caso de uso finaliza sin cambios.
+2a. Si el archivo seleccionado no existe o no tiene extension .bak, el sistema informa el error y finaliza el caso de uso.
+4a. Si el administrador no confirma la advertencia, el caso de uso finaliza sin cambios.
+6a. Si SQL Server rechaza o falla el RESTORE DATABASE (por ejemplo, archivo corrupto o incompatible), el sistema igualmente vuelve la base al modo MULTI_USER en un bloque finally, registra el fallo tecnico en la bitacora e informa el error al administrador, sin cerrar la sesion actual.
+
+**Postcondiciones:** La base de datos queda con el contenido del archivo .bak restaurado, en modo MULTI_USER, con el pool de conexiones de la aplicacion limpio, un evento de bitacora que deja traza de la operacion, y la sesion actual cerrada volviendo a la pantalla de login. Si el proceso fallo, la base vuelve a estar operativa en modo MULTI_USER sin aplicar la restauracion, y la sesion actual continua activa.

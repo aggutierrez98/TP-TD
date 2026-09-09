@@ -30,18 +30,15 @@ namespace TpIDS
             this.btnAgregarUsuario = new System.Windows.Forms.Button();
             this.btnEditarUsuario = new System.Windows.Forms.Button();
             this.btnEliminarUsuario = new System.Windows.Forms.Button();
-            this.btnConfiguracion = new System.Windows.Forms.Button();
-            this.btnGestionIdiomas = new System.Windows.Forms.Button();
+            this.btnDesbloquearUsuario = new System.Windows.Forms.Button();
             this.groupBoxPermisosUsuario = new System.Windows.Forms.GroupBox();
             this.tvwPermisosUsuario = new System.Windows.Forms.TreeView();
             this.btnGuardarPermisosUsuario = new System.Windows.Forms.Button();
-            this.btnGestionPermisos = new System.Windows.Forms.Button();
             this.btnHistorialUsuario = new System.Windows.Forms.Button();
-            this.btnBitacora = new System.Windows.Forms.Button();
-            this.btnLogout = new System.Windows.Forms.Button();
             this.colUsuariosId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colUsuariosUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colUsuariosActive = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.colUsuariosBloqueado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlSesionActual.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
             this.groupBoxGestion.SuspendLayout();
@@ -107,7 +104,8 @@ namespace TpIDS
             this.dgvUsuarios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colUsuariosId,
             this.colUsuariosUsername,
-            this.colUsuariosActive});
+            this.colUsuariosActive,
+            this.colUsuariosBloqueado});
             this.dgvUsuarios.Location = new System.Drawing.Point(15, 70);
             this.dgvUsuarios.MultiSelect = false;
             this.dgvUsuarios.Name = "dgvUsuarios";
@@ -131,6 +129,7 @@ namespace TpIDS
             this.groupBoxGestion.Controls.Add(this.btnAgregarUsuario);
             this.groupBoxGestion.Controls.Add(this.btnEditarUsuario);
             this.groupBoxGestion.Controls.Add(this.btnEliminarUsuario);
+            this.groupBoxGestion.Controls.Add(this.btnDesbloquearUsuario);
             this.groupBoxGestion.Location = new System.Drawing.Point(15, 315);
             this.groupBoxGestion.Name = "groupBoxGestion";
             this.groupBoxGestion.Size = new System.Drawing.Size(530, 190);
@@ -189,57 +188,46 @@ namespace TpIDS
             // 
             this.btnAgregarUsuario.Location = new System.Drawing.Point(10, 145);
             this.btnAgregarUsuario.Name = "btnAgregarUsuario";
-            this.btnAgregarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnAgregarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnAgregarUsuario.TabIndex = 5;
             this.btnAgregarUsuario.Tag = "FormUserManagement.AddButton";
             this.btnAgregarUsuario.Text = "Agregar usuario";
             this.btnAgregarUsuario.UseVisualStyleBackColor = true;
             this.btnAgregarUsuario.Click += new System.EventHandler(this.btnAgregarUsuario_Click);
-            // 
+            //
             // btnEditarUsuario
-            // 
-            this.btnEditarUsuario.Location = new System.Drawing.Point(157, 145);
+            //
+            this.btnEditarUsuario.Location = new System.Drawing.Point(140, 145);
             this.btnEditarUsuario.Name = "btnEditarUsuario";
-            this.btnEditarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnEditarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnEditarUsuario.TabIndex = 6;
             this.btnEditarUsuario.Tag = "FormUserManagement.EditButton";
             this.btnEditarUsuario.Text = "Editar usuario";
             this.btnEditarUsuario.UseVisualStyleBackColor = true;
             this.btnEditarUsuario.Click += new System.EventHandler(this.btnEditarUsuario_Click);
-            // 
+            //
             // btnEliminarUsuario
-            // 
-            this.btnEliminarUsuario.Location = new System.Drawing.Point(305, 145);
+            //
+            this.btnEliminarUsuario.Location = new System.Drawing.Point(270, 145);
             this.btnEliminarUsuario.Name = "btnEliminarUsuario";
-            this.btnEliminarUsuario.Size = new System.Drawing.Size(135, 30);
+            this.btnEliminarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnEliminarUsuario.TabIndex = 7;
             this.btnEliminarUsuario.Tag = "FormUserManagement.DeleteButton";
             this.btnEliminarUsuario.Text = "Eliminar usuario";
             this.btnEliminarUsuario.UseVisualStyleBackColor = true;
             this.btnEliminarUsuario.Click += new System.EventHandler(this.btnEliminarUsuario_Click);
-            // 
-            // btnConfiguracion
-            // 
-            this.btnConfiguracion.Location = new System.Drawing.Point(15, 540);
-            this.btnConfiguracion.Name = "btnConfiguracion";
-            this.btnConfiguracion.Size = new System.Drawing.Size(170, 30);
-            this.btnConfiguracion.TabIndex = 4;
-            this.btnConfiguracion.Tag = "FormUserManagement.ConfigurationButton";
-            this.btnConfiguracion.Text = "Configuracion";
-            this.btnConfiguracion.UseVisualStyleBackColor = true;
-            this.btnConfiguracion.Click += new System.EventHandler(this.btnConfiguracion_Click);
-            // 
-            // btnGestionIdiomas
-            // 
-            this.btnGestionIdiomas.Location = new System.Drawing.Point(195, 540);
-            this.btnGestionIdiomas.Name = "btnGestionIdiomas";
-            this.btnGestionIdiomas.Size = new System.Drawing.Size(170, 30);
-            this.btnGestionIdiomas.TabIndex = 5;
-            this.btnGestionIdiomas.Tag = "FormUserManagement.LanguageManagementButton";
-            this.btnGestionIdiomas.Text = "Gestion de idiomas";
-            this.btnGestionIdiomas.UseVisualStyleBackColor = true;
-            this.btnGestionIdiomas.Click += new System.EventHandler(this.btnGestionIdiomas_Click);
-            // 
+            //
+            // btnDesbloquearUsuario
+            //
+            this.btnDesbloquearUsuario.Location = new System.Drawing.Point(400, 145);
+            this.btnDesbloquearUsuario.Name = "btnDesbloquearUsuario";
+            this.btnDesbloquearUsuario.Size = new System.Drawing.Size(124, 30);
+            this.btnDesbloquearUsuario.TabIndex = 8;
+            this.btnDesbloquearUsuario.Tag = "FormUserManagement.UnlockButton";
+            this.btnDesbloquearUsuario.Text = "Desbloquear";
+            this.btnDesbloquearUsuario.UseVisualStyleBackColor = true;
+            this.btnDesbloquearUsuario.Click += new System.EventHandler(this.btnDesbloquearUsuario_Click);
+            //
             // groupBoxPermisosUsuario
             // 
             this.groupBoxPermisosUsuario.Controls.Add(this.tvwPermisosUsuario);
@@ -271,52 +259,17 @@ namespace TpIDS
             this.btnGuardarPermisosUsuario.Text = "Guardar permisos del usuario";
             this.btnGuardarPermisosUsuario.UseVisualStyleBackColor = true;
             this.btnGuardarPermisosUsuario.Click += new System.EventHandler(this.btnGuardarPermisosUsuario_Click);
-            // 
-            // btnGestionPermisos
-            // 
-            this.btnGestionPermisos.Location = new System.Drawing.Point(375, 540);
-            this.btnGestionPermisos.Name = "btnGestionPermisos";
-            this.btnGestionPermisos.Size = new System.Drawing.Size(170, 30);
-            this.btnGestionPermisos.TabIndex = 7;
-            this.btnGestionPermisos.Tag = "FormUserManagement.PermissionManagementButton";
-            this.btnGestionPermisos.Text = "Gestion de permisos";
-            this.btnGestionPermisos.UseVisualStyleBackColor = true;
-            this.btnGestionPermisos.Click += new System.EventHandler(this.btnGestionPermisos_Click);
-            // 
+            //
             // btnHistorialUsuario
-            // 
-            this.btnHistorialUsuario.Location = new System.Drawing.Point(555, 540);
+            //
+            this.btnHistorialUsuario.Location = new System.Drawing.Point(15, 540);
             this.btnHistorialUsuario.Name = "btnHistorialUsuario";
             this.btnHistorialUsuario.Size = new System.Drawing.Size(170, 30);
-            this.btnHistorialUsuario.TabIndex = 8;
+            this.btnHistorialUsuario.TabIndex = 7;
             this.btnHistorialUsuario.Tag = "FormUserManagement.HistoryButton";
             this.btnHistorialUsuario.Text = "Historial de usuario";
             this.btnHistorialUsuario.UseVisualStyleBackColor = true;
             this.btnHistorialUsuario.Click += new System.EventHandler(this.btnHistorialUsuario_Click);
-            // 
-            // btnBitacora
-            // 
-            this.btnBitacora.Location = new System.Drawing.Point(735, 540);
-            this.btnBitacora.Name = "btnBitacora";
-            this.btnBitacora.Size = new System.Drawing.Size(170, 30);
-            this.btnBitacora.TabIndex = 9;
-            this.btnBitacora.Tag = "FormUserManagement.AuditLogButton";
-            this.btnBitacora.Text = "Bitacora";
-            this.btnBitacora.UseVisualStyleBackColor = true;
-            this.btnBitacora.Click += new System.EventHandler(this.btnBitacora_Click);
-            // 
-            // btnLogout
-            // 
-            this.btnLogout.BackColor = System.Drawing.Color.RosyBrown;
-            this.btnLogout.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btnLogout.Location = new System.Drawing.Point(928, 543);
-            this.btnLogout.Name = "btnLogout";
-            this.btnLogout.Size = new System.Drawing.Size(170, 30);
-            this.btnLogout.TabIndex = 10;
-            this.btnLogout.Tag = "FormUserManagement.LogoutButton";
-            this.btnLogout.Text = "Logout";
-            this.btnLogout.UseVisualStyleBackColor = false;
-            this.btnLogout.Click += new System.EventHandler(this.btnLogout_Click);
             //
             // colUsuariosId
             //
@@ -339,18 +292,20 @@ namespace TpIDS
             this.colUsuariosActive.Name = "Active";
             this.colUsuariosActive.ReadOnly = true;
             //
+            // colUsuariosBloqueado
+            //
+            this.colUsuariosBloqueado.DataPropertyName = "Bloqueado";
+            this.colUsuariosBloqueado.HeaderText = "Bloqueado";
+            this.colUsuariosBloqueado.Name = "Bloqueado";
+            this.colUsuariosBloqueado.ReadOnly = true;
+            //
             // FormGestionUsuarios
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1140, 585);
-            this.Controls.Add(this.btnLogout);
-            this.Controls.Add(this.btnBitacora);
             this.Controls.Add(this.btnHistorialUsuario);
-            this.Controls.Add(this.btnGestionPermisos);
             this.Controls.Add(this.groupBoxPermisosUsuario);
-            this.Controls.Add(this.btnGestionIdiomas);
-            this.Controls.Add(this.btnConfiguracion);
             this.Controls.Add(this.lblTituloGestionUsuarios);
             this.Controls.Add(this.pnlSesionActual);
             this.Controls.Add(this.dgvUsuarios);
@@ -387,17 +342,14 @@ namespace TpIDS
         private System.Windows.Forms.Button btnAgregarUsuario;
         private System.Windows.Forms.Button btnEditarUsuario;
         private System.Windows.Forms.Button btnEliminarUsuario;
-        private System.Windows.Forms.Button btnConfiguracion;
-        private System.Windows.Forms.Button btnGestionIdiomas;
+        private System.Windows.Forms.Button btnDesbloquearUsuario;
         private System.Windows.Forms.GroupBox groupBoxPermisosUsuario;
         private System.Windows.Forms.TreeView tvwPermisosUsuario;
         private System.Windows.Forms.Button btnGuardarPermisosUsuario;
-        private System.Windows.Forms.Button btnGestionPermisos;
         private System.Windows.Forms.Button btnHistorialUsuario;
-        private System.Windows.Forms.Button btnBitacora;
-        private System.Windows.Forms.Button btnLogout;
         private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosUsername;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuariosActive;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuariosBloqueado;
     }
 }

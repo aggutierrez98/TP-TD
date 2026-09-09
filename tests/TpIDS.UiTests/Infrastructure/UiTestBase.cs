@@ -67,12 +67,63 @@ namespace TpIDS.UiTests.Infrastructure
             UiFind.Click(login, "btnIngreso");
         }
 
-        /// <summary>Login completo: arranca la app si hace falta y deja abierta FormGestionUsuarios.</summary>
+        /// <summary>Login completo: arranca la app si hace falta y deja abierto el shell FormPrincipal.</summary>
         internal Window LoginComo(string usuario, string password)
         {
             Window login = EsperarLogin();
             CompletarLogin(login, usuario, password);
+            return App.EsperarVentana("FormPrincipal");
+        }
+
+        private static readonly string TextoMenuSesion = TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Session");
+        private static readonly string TextoMenuAdministracion = TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Administration");
+
+        /// <summary>Navega Administracion &gt; Usuarios desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirGestionUsuarios(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuAdministracion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Users"));
             return App.EsperarVentana("FormGestionUsuarios");
+        }
+
+        /// <summary>Navega Administracion &gt; Permisos desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirGestionPermisos(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuAdministracion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Permissions"));
+            return App.EsperarVentana("FormGestionPermisos");
+        }
+
+        /// <summary>Navega Administracion &gt; Idiomas desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirGestionIdiomas(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuAdministracion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Languages"));
+            return App.EsperarVentana("FormGestionIdiomas");
+        }
+
+        /// <summary>Navega Administracion &gt; Bitacora desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirBitacora(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuAdministracion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.AuditLog"));
+            return App.EsperarVentana("FormBitacora");
+        }
+
+        /// <summary>Navega Administracion &gt; Backup desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirBackup(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuAdministracion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Backup"));
+            return App.EsperarVentana("FormBackup");
+        }
+
+        /// <summary>Navega Sesion &gt; Mi configuracion desde el shell y espera el dialogo modal.</summary>
+        internal Window AbrirConfiguracion(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuSesion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.MyConfiguration"));
+            return App.EsperarVentana("FormConfiguracionUsuario");
+        }
+
+        /// <summary>Navega Sesion &gt; Cerrar sesion desde el shell (no espera el MessageBox de confirmacion).</summary>
+        internal void CerrarSesionDesdeMenu(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuSesion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Logout"));
         }
 
         /// <summary>

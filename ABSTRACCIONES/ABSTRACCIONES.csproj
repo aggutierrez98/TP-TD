@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DigitoVerificadorAttribute.cs" />
+    <Compile Include="TipoMovimiento.cs" />
     <Compile Include="IAutorizacion.cs" />
     <Compile Include="IBitacora.cs" />
     <Compile Include="IIntegrable.cs" />

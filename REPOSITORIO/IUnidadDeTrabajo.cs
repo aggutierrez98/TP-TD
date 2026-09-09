@@ -6,9 +6,13 @@ namespace REPOSITORIO
     {
         IBitacoraRepositorio Bitacora { get; }
 
+        ICategoriaRepositorio Categorias { get; }
+
         IIdiomaRepositorio Idiomas { get; }
 
         IIntegridadRepositorio Integridad { get; }
+
+        IMovimientoRepositorio Movimientos { get; }
 
         IPermisoRepositorio Permisos { get; }
 

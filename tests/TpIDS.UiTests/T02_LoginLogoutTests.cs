@@ -19,13 +19,13 @@ namespace TpIDS.UiTests
 
         [TestMethod]
         [TestCategory("UI")]
-        public void T02_CU01_LoginValido_AbreGestionYRegistraBitacora()
+        public void T02_CU01_LoginValido_AbrePantallaPrincipalYRegistraBitacora()
         {
             int loginsPrevios = TestDatabase.ContarBitacora(ActividadLoginOk, TestConfig.AdminUsername);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
 
-            Assert.IsNotNull(gestion, "No se abrio FormGestionUsuarios tras el login.");
+            Assert.IsNotNull(principal, "No se abrio FormPrincipal tras el login.");
             Assert.AreEqual(
                 loginsPrevios + 1,
                 TestDatabase.ContarBitacora(ActividadLoginOk, TestConfig.AdminUsername),
@@ -249,17 +249,17 @@ namespace TpIDS.UiTests
 
         [TestMethod]
         [TestCategory("UI")]
-        public void T02_CU03_LogoutConfirmado_CierraGestionYVuelveALogin()
+        public void T02_CU03_LogoutConfirmado_CierraShellYVuelveALogin()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
 
-            UiFind.Click(gestion, "btnLogout");
+            CerrarSesionDesdeMenu(principal);
             MessageBoxWindow confirmacion = App.EsperarMessageBox();
             confirmacion.ConfirmarSi();
 
             Assert.IsTrue(
-                App.VentanaCerrada("FormGestionUsuarios", TimeSpan.FromSeconds(10)),
-                "FormGestionUsuarios deberia cerrarse al confirmar el logout.");
+                App.VentanaCerrada("FormPrincipal", TimeSpan.FromSeconds(10)),
+                "FormPrincipal deberia cerrarse al confirmar el logout.");
             Assert.IsNotNull(App.BuscarVentana("FormLogin"), "La pantalla de login deberia quedar visible tras el logout.");
         }
 
@@ -267,16 +267,16 @@ namespace TpIDS.UiTests
         [TestCategory("UI")]
         public void T02_CU03_LogoutNoConfirmado_MantieneSesion()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
 
-            UiFind.Click(gestion, "btnLogout");
+            CerrarSesionDesdeMenu(principal);
             MessageBoxWindow confirmacion = App.EsperarMessageBox();
             confirmacion.RechazarNo();
             confirmacion.EsperarCierre(TimeSpan.FromSeconds(5));
 
             Assert.IsNotNull(
-                App.BuscarVentana("FormGestionUsuarios"),
-                "FormGestionUsuarios deberia seguir abierta si el usuario no confirma el logout.");
+                App.BuscarVentana("FormPrincipal"),
+                "FormPrincipal deberia seguir abierta si el usuario no confirma el logout.");
         }
     }
 }

@@ -41,8 +41,10 @@ namespace BLL.Tests.TestDoubles
         public FakeUnidadDeTrabajo()
         {
             BitacoraRepo = new FakeBitacoraRepositorio();
+            CategoriaRepo = new FakeCategoriaRepositorio();
             IdiomaRepo = new FakeIdiomaRepositorio();
             IntegridadRepo = new FakeIntegridadRepositorio();
+            MovimientoRepo = new FakeMovimientoRepositorio();
             PermisoRepo = new FakePermisoRepositorio();
             TraduccionRepo = new FakeTraduccionRepositorio();
             UsuarioHistorialRepo = new FakeUsuarioHistorialRepositorio();
@@ -53,9 +55,13 @@ namespace BLL.Tests.TestDoubles
 
         public FakeBitacoraRepositorio BitacoraRepo { get; set; }
 
+        public FakeCategoriaRepositorio CategoriaRepo { get; set; }
+
         public FakeIdiomaRepositorio IdiomaRepo { get; set; }
 
         public FakeIntegridadRepositorio IntegridadRepo { get; set; }
+
+        public FakeMovimientoRepositorio MovimientoRepo { get; set; }
 
         public FakePermisoRepositorio PermisoRepo { get; set; }
 
@@ -79,9 +85,13 @@ namespace BLL.Tests.TestDoubles
 
         public IBitacoraRepositorio Bitacora { get { return BitacoraRepo; } }
 
+        public ICategoriaRepositorio Categorias { get { return CategoriaRepo; } }
+
         public IIdiomaRepositorio Idiomas { get { return IdiomaRepo; } }
 
         public IIntegridadRepositorio Integridad { get { return IntegridadRepo; } }
+
+        public IMovimientoRepositorio Movimientos { get { return MovimientoRepo; } }
 
         public IPermisoRepositorio Permisos { get { return PermisoRepo; } }
 
@@ -112,6 +122,169 @@ namespace BLL.Tests.TestDoubles
         }
     }
 
+    internal sealed class FakeCategoriaRepositorio : ICategoriaRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Categoria> Categorias { get; } = new Dictionary<int, Categoria>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ExisteNombreEnScopeResult { get; set; }
+
+        public Categoria LastInserted { get; private set; }
+
+        public Categoria LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Categoria ObtenerPorId(int id)
+        {
+            Categoria categoria;
+            return Categorias.TryGetValue(id, out categoria) ? categoria : null;
+        }
+
+        public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
+        {
+            return Categorias.Values
+                .Where(item => item.UsuarioId == null || item.UsuarioId == usuarioId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(Categoria categoria)
+        {
+            if (categoria.Id <= 0)
+            {
+                categoria.Id = _nextId++;
+            }
+
+            Categorias[categoria.Id] = categoria;
+            LastInserted = categoria;
+            return categoria.Id;
+        }
+
+        public bool Actualizar(Categoria categoria)
+        {
+            LastUpdated = categoria;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Categorias[categoria.Id] = categoria;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Categorias.Remove(id);
+        }
+
+        public bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido)
+        {
+            return Categorias.Values.Any(item =>
+                item.UsuarioId == usuarioId &&
+                string.Equals(item.Nombre, nombre, StringComparison.OrdinalIgnoreCase) &&
+                (!idExcluido.HasValue || item.Id != idExcluido.Value));
+        }
+    }
+
+    internal sealed class FakeMovimientoRepositorio : IMovimientoRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Movimiento> Movimientos { get; } = new Dictionary<int, Movimiento>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Movimiento LastInserted { get; private set; }
+
+        public Movimiento LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Movimiento ObtenerPorId(int id)
+        {
+            Movimiento movimiento;
+            return Movimientos.TryGetValue(id, out movimiento) ? movimiento : null;
+        }
+
+        public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
+        {
+            IEnumerable<Movimiento> query = Movimientos.Values.Where(item => item.UsuarioId == usuarioId);
+
+            if (filtro != null)
+            {
+                if (filtro.FechaDesde.HasValue)
+                {
+                    query = query.Where(item => item.Fecha >= filtro.FechaDesde.Value);
+                }
+
+                if (filtro.FechaHasta.HasValue)
+                {
+                    query = query.Where(item => item.Fecha <= filtro.FechaHasta.Value);
+                }
+
+                if (filtro.CategoriaId.HasValue)
+                {
+                    query = query.Where(item => item.CategoriaId == filtro.CategoriaId.Value);
+                }
+
+                if (filtro.Tipo.HasValue)
+                {
+                    query = query.Where(item => item.Tipo == filtro.Tipo.Value);
+                }
+            }
+
+            return query.OrderByDescending(item => item.Fecha).ToList();
+        }
+
+        public int InsertarYObtenerId(Movimiento movimiento)
+        {
+            if (movimiento.Id <= 0)
+            {
+                movimiento.Id = _nextId++;
+            }
+
+            Movimientos[movimiento.Id] = movimiento;
+            LastInserted = movimiento;
+            return movimiento.Id;
+        }
+
+        public bool Actualizar(Movimiento movimiento)
+        {
+            LastUpdated = movimiento;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Movimientos[movimiento.Id] = movimiento;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Movimientos.Remove(id);
+        }
+    }
+
     internal sealed class FakeUsuarioRepositorio : IUsuarioRepositorio
     {
         private int _nextId = 1;
@@ -128,11 +301,17 @@ namespace BLL.Tests.TestDoubles
 
         public bool ThrowOnInsert { get; set; }
 
+        public bool ThrowOnActualizarEstadoBloqueo { get; set; }
+
         public Usuario LastInserted { get; private set; }
 
         public Usuario LastUpdated { get; private set; }
 
         public int? LastDeletedId { get; private set; }
+
+        public int ActualizarEstadoBloqueoCallCount { get; private set; }
+
+        public Tuple<int, int, bool, DateTime?, string> LastEstadoBloqueoUpdate { get; private set; }
 
         public Usuario ObtenerPorId(int id)
         {
@@ -199,6 +378,28 @@ namespace BLL.Tests.TestDoubles
 
             Usuarios[usuario.Id] = usuario;
             LastUpdated = usuario;
+            return true;
+        }
+
+        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
+        {
+            if (ThrowOnActualizarEstadoBloqueo)
+            {
+                throw new InvalidOperationException("ActualizarEstadoBloqueo failed.");
+            }
+
+            ActualizarEstadoBloqueoCallCount++;
+            LastEstadoBloqueoUpdate = Tuple.Create(id, intentosFallidos, bloqueado, bloqueadoHasta, dvh);
+
+            Usuario usuario;
+            if (Usuarios.TryGetValue(id, out usuario))
+            {
+                usuario.IntentosFallidos = intentosFallidos;
+                usuario.Bloqueado = bloqueado;
+                usuario.BloqueadoHasta = bloqueadoHasta;
+                usuario.DVH = dvh;
+            }
+
             return true;
         }
 
@@ -522,6 +723,43 @@ namespace BLL.Tests.TestDoubles
         }
     }
 
+    internal sealed class FakeBackupRepositorio : IBackupRepositorio
+    {
+        public bool ThrowOnCrear { get; set; }
+
+        public bool ThrowOnRestaurar { get; set; }
+
+        public string UltimaRutaCreada { get; private set; }
+
+        public string UltimaRutaRestaurada { get; private set; }
+
+        public int CrearBackupCallCount { get; private set; }
+
+        public int RestaurarBackupCallCount { get; private set; }
+
+        public void CrearBackup(string rutaArchivo)
+        {
+            CrearBackupCallCount++;
+            UltimaRutaCreada = rutaArchivo;
+
+            if (ThrowOnCrear)
+            {
+                throw new ExcepcionTecnica("Error.Technical.SqlFailure");
+            }
+        }
+
+        public void RestaurarBackup(string rutaArchivo)
+        {
+            RestaurarBackupCallCount++;
+            UltimaRutaRestaurada = rutaArchivo;
+
+            if (ThrowOnRestaurar)
+            {
+                throw new ExcepcionTecnica("Error.Technical.SqlFailure");
+            }
+        }
+    }
+
     internal sealed class FakeBitacoraRepositorio : IBitacoraRepositorio
     {
         public List<EventoBitacora> Eventos { get; } = new List<EventoBitacora>();
@@ -713,6 +951,20 @@ namespace BLL.Tests.TestDoubles
             GuardarPermisosIds = permisosId;
             LastUnidad = unidad;
         }
+
+        public int? ValidarPuedeEliminarUsuarioId { get; private set; }
+
+        public bool ThrowOnValidarPuedeEliminarUsuario { get; set; }
+
+        public void ValidarPuedeEliminarUsuario(int usuarioId, IUnidadDeTrabajo unidad)
+        {
+            ValidarPuedeEliminarUsuarioId = usuarioId;
+            LastUnidad = unidad;
+            if (ThrowOnValidarPuedeEliminarUsuario)
+            {
+                throw new ExcepcionNegocio("Error.Permission.OrphanedPatente");
+            }
+        }
     }
 
     internal sealed class SpyUsuarioEstadoBLL : IUsuarioEstadoBLL
@@ -778,7 +1030,7 @@ namespace BLL.Tests.TestDoubles
         public string CalcularDVH<T>(T entidad) where T : class
         {
             Usuario usuario = entidad as Usuario;
-            return usuario == null ? NextDvh : "DVH:" + usuario.Username + ":" + usuario.PasswordHash + ":" + usuario.Activo;
+            return usuario == null ? NextDvh : "DVH:" + usuario.Username + ":" + usuario.PasswordHash + ":" + usuario.Activo + ":" + usuario.IntentosFallidos + ":" + usuario.Bloqueado + ":" + usuario.BloqueadoHasta;
         }
 
         public void RecalcularDVVInterno(string tabla, IEnumerable<string> listaDVH, IUnidadDeTrabajo unidad)

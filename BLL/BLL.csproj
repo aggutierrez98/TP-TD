@@ -43,8 +43,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompositionRoot.cs" />
+    <Compile Include="BackupBLL.cs" />
     <Compile Include="BitacoraBLL.cs" />
+    <Compile Include="CategoriaBLL.cs" />
     <Compile Include="ContratosInternosBLL.cs" />
+    <Compile Include="MovimientoBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
     <Compile Include="InicializacionHistorialBLL.cs" />
     <Compile Include="InicializadorAplicacionBLL.cs" />

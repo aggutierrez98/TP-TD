@@ -2,7 +2,7 @@
 
 ## Formal document
 
-- Google Doc del TP final: `https://docs.google.com/document/d/1fiUOTtxZipf-rsXXskIBwyjFz1ng-kLH/edit`
+- Google Doc del TP final: `https://docs.google.com/document/d/1vwaQ_KgrLtoiwhx-CT-iFmGwZ4FuOFq5wVy3qxs8ecY/edit` ("Trabajo Final TD Gutierrez")
 
 ## Repo-first policy
 
@@ -20,7 +20,7 @@ Ejemplos:
 
 - `diagramas/T04-perfiles-usuario/`
 - `diagramas/T05-multidioma/`
-- `diagramas/T06a-bitacora/`
+- `diagramas/T06-bitacora-control-cambios/`
 
 ## Suggested file naming
 

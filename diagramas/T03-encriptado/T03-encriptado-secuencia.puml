@@ -1,0 +1,72 @@
+@startuml
+title T03 - Gestion de Encriptado - Secuencia General
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+participant "UsuarioBLL" as UBLL
+participant "IPasswordHashService" as IPHS
+participant "PasswordHashService" as PHS
+participant "IPasswordHasher" as IPH
+participant "PasswordHasher" as PH
+participant "RNGCryptoServiceProvider" as RNG
+participant "Rfc2898DeriveBytes" as PBKDF2
+
+== Hash (CU02 Registro) ==
+
+UBLL -> IPHS : HashPassword(passwordRaw)
+activate IPHS
+IPHS -> PHS : HashPassword(passwordRaw)
+activate PHS
+PHS -> IPH : HashPassword(password)
+activate IPH
+IPH -> PH : HashPassword(password)
+activate PH
+PH -> RNG : GetBytes(salt[16])
+RNG --> PH : salt
+PH -> PBKDF2 : new Rfc2898DeriveBytes(password, salt, 20000)
+PH -> PBKDF2 : GetBytes(32)
+PBKDF2 --> PH : hash[32]
+PH -> PH : hashBytes = salt + hash
+PH --> IPH : Base64(hashBytes)
+deactivate PH
+IPH --> PHS : passwordHash
+deactivate IPH
+PHS --> IPHS : passwordHash
+deactivate PHS
+IPHS --> UBLL : passwordHash
+deactivate IPHS
+
+== Verify (CU01 Login) ==
+
+UBLL -> IPHS : VerifyPassword(passwordRaw, usuarioBD.PasswordHash)
+activate IPHS
+IPHS -> PHS : VerifyPassword(passwordRaw, passwordHash)
+activate PHS
+PHS -> IPH : VerifyPassword(password, storedHash)
+activate IPH
+IPH -> PH : VerifyPassword(password, storedHash)
+activate PH
+PH -> PH : storedHashBytes = Base64Decode(storedHash)
+PH -> PH : salt = storedHashBytes[0..16), hashAlmacenado = storedHashBytes[16..48)
+PH -> PBKDF2 : new Rfc2898DeriveBytes(password, salt, 20000)
+PH -> PBKDF2 : GetBytes(32)
+PBKDF2 --> PH : testHash[32]
+PH -> PH : comparar testHash con hashAlmacenado byte a byte
+PH --> IPH : esValido
+deactivate PH
+IPH --> PHS : esValido
+deactivate IPH
+PHS --> IPHS : esValido
+deactivate PHS
+IPHS --> UBLL : esValido
+deactivate IPHS
+
+note over PH
+  Salt aleatorio de 16 bytes por password (RNGCryptoServiceProvider).
+  PBKDF2 (Rfc2898DeriveBytes) con 20000 iteraciones deriva 32 bytes.
+  El hash persistido es Base64(salt + hash); nunca se guarda
+  la contrasena en claro (T03-encriptado-datos.puml).
+end note
+
+@enduml

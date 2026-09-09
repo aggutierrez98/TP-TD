@@ -199,14 +199,12 @@ namespace TpIDS.UiTests
         {
             string nombre = NombreUnico("uitest_inc");
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionIdiomas");
-            Window idiomas = App.EsperarVentana("FormGestionIdiomas");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window idiomas = AbrirGestionIdiomas(principal);
             CrearIdiomaDesdeGestion(idiomas, nombre);
             idiomas.Close();
 
-            UiFind.Click(gestion, "btnConfiguracion");
-            Window configuracion = App.EsperarVentana("FormConfiguracionUsuario");
+            Window configuracion = AbrirConfiguracion(principal);
             UiFind.SeleccionarItemCombo(configuracion, "cmbIdiomas", nombre);
             UiFind.Click(configuracion, "btnGuardarConfiguracion");
 
@@ -235,9 +233,8 @@ namespace TpIDS.UiTests
         {
             int preferenciasPrevias = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.LanguagePreferenceUpdate", null);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnConfiguracion");
-            Window configuracion = App.EsperarVentana("FormConfiguracionUsuario");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window configuracion = AbrirConfiguracion(principal);
 
             UiFind.SeleccionarItemCombo(configuracion, "cmbIdiomas", IdiomaDefault);
             UiFind.Click(configuracion, "btnGuardarConfiguracion");
@@ -348,9 +345,8 @@ namespace TpIDS.UiTests
 
         private Window AbrirGestionIdiomas()
         {
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
-            UiFind.Click(gestion, "btnGestionIdiomas");
-            return App.EsperarVentana("FormGestionIdiomas");
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            return AbrirGestionIdiomas(principal);
         }
 
         private void CrearIdiomaDesdeGestion(Window idiomas, string nombre)

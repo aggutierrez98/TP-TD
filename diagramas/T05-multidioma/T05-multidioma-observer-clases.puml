@@ -66,7 +66,6 @@ package "BLL" {
     +ExportarJson(idiomaId : int, rutaArchivo : string) : void
     +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
     +AplicarIdiomaSesionUsuario(usuarioId : int) : void
-    +AplicarIdiomaSesion(idiomaId : int) : void
   }
   class CompositionRoot <<static>> {
     +ServicioIdioma : IObservado
@@ -99,6 +98,15 @@ package "REPOSITORIO" {
     +ObtenerPorUsuarioId(usuarioId : int) : UsuarioPreferencia
     +Guardar(usuarioId : int, idiomaId : int?) : bool
   }
+  class IdiomaRepositorio
+  class TraduccionRepositorio
+  class UsuarioPreferenciaRepositorio
+}
+
+package "DAL" {
+  class IdiomaDAL
+  class UsuarioPreferenciaDAL
+  class AccesoDatosSqlServer
 }
 
 package "UI" {
@@ -138,6 +146,19 @@ IdiomaBLL --> IdiomaCatalogoService
 IdiomaBLL ..> IUnidadDeTrabajo
 CompositionRoot ..> IdiomaService : GetInstance()
 CompositionRoot ..> IdiomaBLL : <<creates>>
+
+' ---- REPOSITORIO -> DAL ----
+IUnidadDeTrabajo --> IIdiomaRepositorio : Idiomas
+IUnidadDeTrabajo --> ITraduccionRepositorio : Traducciones
+IUnidadDeTrabajo --> IUsuarioPreferenciaRepositorio : UsuarioPreferencias
+IdiomaRepositorio ..|> IIdiomaRepositorio
+TraduccionRepositorio ..|> ITraduccionRepositorio
+UsuarioPreferenciaRepositorio ..|> IUsuarioPreferenciaRepositorio
+IdiomaRepositorio --> IdiomaDAL
+TraduccionRepositorio --> IdiomaRepositorio : delega (mismo IdiomaDAL)
+UsuarioPreferenciaRepositorio --> UsuarioPreferenciaDAL
+IdiomaDAL --> AccesoDatosSqlServer
+UsuarioPreferenciaDAL --> AccesoDatosSqlServer
 
 note bottom of IdiomaService
   CambiarIdioma(idioma) fija _idiomaActual y llama Notificar(),

@@ -8,9 +8,10 @@ actor Usuario
 participant "FormLogin" as Login
 participant "UsuarioBLL" as UBLL
 participant "IUsuarioRepositorio" as Repo
-participant "UsuarioDAL" as DAL
 participant "PasswordHashService" as PHS
-participant "PasswordHasher" as PH
+participant "IUnidadDeTrabajoFactory" as UoWF
+participant "IUnidadDeTrabajo" as UoW
+participant "IIntegridadBLL" as Integ
 participant "ISesion" as Sesion
 participant "IPermisoBLL" as PermBLL
 participant "IAutorizacion" as Autz
@@ -29,8 +30,6 @@ else datos completos
   activate UBLL
   UBLL -> Repo : ObtenerPorUsername(username.Trim())
   activate Repo
-  Repo -> DAL : ObtenerPorUsername(username, null)
-  DAL --> Repo : usuarioBD
   Repo --> UBLL : usuarioBD
   deactivate Repo
 
@@ -41,23 +40,114 @@ else datos completos
     UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...InactiveUserLogin", "UsuarioBLL")
     UBLL --> Login : null
   else usuario existe y activo
-    UBLL -> PHS : VerifyPassword(passwordRaw, usuarioBD.PasswordHash)
-    activate PHS
-    PHS -> PH : VerifyPassword(passwordRaw, storedHash)
-    PH --> PHS : esValido
-    PHS --> UBLL : esValido
-    deactivate PHS
-    alt password invalida
-      UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...LoginInvalidCredentials", "UsuarioBLL")
-      UBLL --> Login : null
-    else password valida
-      UBLL -> Sesion : IniciarSesion(usuarioBD)
-      UBLL -> PermBLL : ObtenerPermisosDirectosUsuario(usuarioBD.Id)
-      PermBLL --> UBLL : permisos
-      UBLL -> Autz : ActualizarPermisosUsuarioActual(permisos)
-      UBLL -> IdBLL : AplicarIdiomaSesionUsuario(usuarioBD.Id)
-      UBLL -> Bita : RegistrarOperacion("...SuccessfulLogin", "...", "UsuarioBLL")
-      UBLL --> Login : usuarioBD
+    alt usuarioBD.Bloqueado == true y BloqueadoHasta == null (bloqueo permanente)
+      note over UBLL
+        Soft lockout (OWASP): el bloqueo activo se
+        rechaza sin verificar password ni tocar el
+        contador de intentos.
+      end note
+      UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...LoginRejectedPermanentlyLocked", "UsuarioBLL")
+      UBLL --> Login : throw ExcepcionNegocio("Error.User.LoginPermanentlyLocked")
+    else usuarioBD.Bloqueado == true y BloqueadoHasta.Value > DateTime.Now (bloqueo temporal vigente)
+      UBLL -> Bita : RegistrarFalloNegocio("...FailedLogin", "...LoginRejectedTemporarilyLocked", "UsuarioBLL")
+      UBLL --> Login : throw ExcepcionNegocio("Error.User.LoginTemporarilyLocked")
+    else no bloqueado, o bloqueo temporal ya vencido (BloqueadoHasta.Value <= DateTime.Now)
+      UBLL -> PHS : VerifyPassword(passwordRaw, usuarioBD.PasswordHash)
+      activate PHS
+      PHS --> UBLL : esValido
+      deactivate PHS
+
+      alt password invalida
+        UBLL -> UBLL : RegistrarIntentoFallidoYAplicarBloqueoSiCorresponde(usuarioBD)
+        activate UBLL
+        note over UBLL
+          using (unidad = _unidadDeTrabajoFactory.Crear()) { try { ... }
+          catch (Exception ex) { throw new ExcepcionTecnica(
+          "Error.User.LoginRegisterAttemptFailed", ex); } }
+        end note
+        UBLL -> UoWF : Crear()
+        UoWF --> UBLL : unidad
+        activate UoW
+        note over UBLL
+          dvhAnterior = usuarioBD.DVH
+          nuevosIntentos = usuarioBD.IntentosFallidos + 1
+        end note
+        alt nuevosIntentos == 3 (tercer intento fallido)
+          note over UBLL
+            nuevoBloqueado = true
+            nuevoBloqueadoHasta = DateTime.Now + 1 minuto
+            informacionBitacora = "...LoginLockedTemporaryShort"
+          end note
+        else nuevosIntentos == 4 (cuarto intento fallido)
+          note over UBLL
+            nuevoBloqueado = true
+            nuevoBloqueadoHasta = DateTime.Now + 5 minutos
+            informacionBitacora = "...LoginLockedTemporaryLong"
+          end note
+        else nuevosIntentos >= 5 (quinto intento fallido)
+          note over UBLL
+            nuevoBloqueado = true
+            nuevoBloqueadoHasta = null (bloqueo permanente)
+            informacionBitacora = "...LoginLockedPermanent"
+          end note
+        else nuevosIntentos == 1 o 2 (sin efecto)
+          note over UBLL
+            nuevoBloqueado = false
+            nuevoBloqueadoHasta = null
+            informacionBitacora = "...LoginInvalidCredentials"
+          end note
+        end
+        note over UBLL
+          usuarioBD.IntentosFallidos = nuevosIntentos
+          usuarioBD.Bloqueado = nuevoBloqueado
+          usuarioBD.BloqueadoHasta = nuevoBloqueadoHasta
+        end note
+        UBLL -> Integ : CalcularDVH(usuarioBD)
+        Integ --> UBLL : dvh
+        UBLL -> UoW : Usuarios.ActualizarEstadoBloqueo(usuarioBD.Id, nuevosIntentos, nuevoBloqueado, nuevoBloqueadoHasta, dvh)
+        UoW -> Repo : ActualizarEstadoBloqueo(usuarioBD.Id, nuevosIntentos, nuevoBloqueado, nuevoBloqueadoHasta, dvh)
+        Repo --> UBLL : true
+        UBLL -> Bita : RegistrarFalloNegocioInterno("...FailedLogin", informacionBitacora, "UsuarioBLL", unidad)
+        UBLL -> Integ : ActualizarDVVInterno("Usuarios", dvhAnterior, dvh, unidad)
+        UBLL -> UoW : Save()
+        deactivate UoW
+        deactivate UBLL
+        UBLL --> Login : null
+      else password valida
+        UBLL -> UBLL : ResetearContadorYBloqueoInterno(usuarioBD)
+        activate UBLL
+        note over UBLL
+          using (unidad = _unidadDeTrabajoFactory.Crear()) { try { ... }
+          catch (Exception ex) { throw new ExcepcionTecnica(
+          "Error.User.LoginRegisterAttemptFailed", ex); } }
+        end note
+        UBLL -> UoWF : Crear()
+        UoWF --> UBLL : unidad
+        activate UoW
+        note over UBLL
+          dvhAnterior = usuarioBD.DVH
+          usuarioBD.IntentosFallidos = 0
+          usuarioBD.Bloqueado = false
+          usuarioBD.BloqueadoHasta = null
+        end note
+        UBLL -> Integ : CalcularDVH(usuarioBD)
+        Integ --> UBLL : dvh
+        UBLL -> UoW : Usuarios.ActualizarEstadoBloqueo(usuarioBD.Id, 0, false, null, dvh)
+        UoW -> Repo : ActualizarEstadoBloqueo(usuarioBD.Id, 0, false, null, dvh)
+        Repo --> UBLL : true
+        UBLL -> Integ : ActualizarDVVInterno("Usuarios", dvhAnterior, dvh, unidad)
+        UBLL -> UoW : Save()
+        deactivate UoW
+        deactivate UBLL
+
+        UBLL -> Sesion : IniciarSesion(usuarioBD)
+        UBLL -> PermBLL : ObtenerPermisosDirectosUsuario(usuarioBD.Id)
+        PermBLL --> UBLL : permisos
+        UBLL -> Autz : ActualizarPermisosUsuarioActual(permisos)
+        UBLL -> IdBLL : AplicarIdiomaSesionUsuario(usuarioBD.Id)
+        UBLL -> Bita : RegistrarOperacion("...SuccessfulLogin", "...", "UsuarioBLL")
+        UBLL --> Login : usuarioBD
+      end
     end
   end
   deactivate UBLL

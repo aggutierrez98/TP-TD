@@ -31,6 +31,8 @@ namespace BLL
         void AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad);
 
         void GuardarPermisosUsuarioInterno(int usuarioId, List<int> permisosId, IUnidadDeTrabajo unidad);
+
+        void ValidarPuedeEliminarUsuario(int usuarioId, IUnidadDeTrabajo unidad);
     }
 
     internal interface IUsuarioEstadoBLL

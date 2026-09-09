@@ -1,0 +1,61 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa ABSTRACCIONES
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "ABSTRACCIONES (contratos / interfaces)" {
+
+  ' --- Seguridad / sesion / autorizacion ---
+  interface ISesion
+  interface IAutorizacion
+  interface IUsuarioAutenticado
+  interface IPasswordHasher
+  interface IPermiso {
+    +Agregar(permiso : IPermiso) : void
+    +ObtenerPermisosHoja() : IList<IPermiso>
+  }
+
+  ' --- Idioma (Observer) ---
+  interface IObservado
+  interface IObservador
+  interface IIdioma
+  interface ITraduccion
+  interface IPalabra
+  interface IUsuarioPreferencia
+
+  ' --- Bitacora ---
+  interface IBitacora
+  interface IEventoBitacora
+  interface IFiltroBitacora
+
+  ' --- Integridad (DV) ---
+  interface IIntegridadService
+  interface IIntegrable
+  class DigitoVerificadorAttribute <<Attribute>> {
+    +Orden : int
+  }
+
+  ' --- Control de cambios / historial ---
+  interface IServicioHistorialEstados
+  interface IUsuarioSnapshot
+  interface IResultadoComparacionEstado
+
+  ' --- Movimientos (dominio financiero, NEG01/NEG02) ---
+  enum TipoMovimiento {
+    Ingreso
+    Egreso
+  }
+}
+
+IObservado ..> IObservador : notifica
+IObservado ..> IIdioma
+IIdioma o--> "*" ITraduccion
+IPermiso o--> "*" IPermiso : Composite
+
+@enduml

@@ -36,15 +36,19 @@ else con sesion
   BLL -> Bita : RegistrarOperacionInterno("...LanguagePreferenceUpdate", "...", "IdiomaBLL", unidad)
   BLL -> UoW : Save()
   deactivate UoW
-  BLL -> BLL : AplicarIdiomaSesion(idiomaId)
-  BLL -> Repo : ObtenerIdiomaCompleto(idiomaId)
-  Repo --> BLL : idioma
+  BLL -> BLL : AplicarIdiomaSesion(idioma)
+  activate BLL
+  note right of BLL
+    Reutiliza el objeto idioma ya obtenido
+    arriba (no vuelve a consultar el repositorio).
+  end note
   BLL -> Cat : ValidarIdiomaSeleccionable(idioma)
   BLL -> Obs : CambiarIdioma(idioma)
   activate Obs
   Obs -> Obs : Notificar()
   Obs -> Form : Actualizar(this)  // Observer: re-traduce todos los Forms abiertos
   deactivate Obs
+  deactivate BLL
   BLL --> Form : true
   deactivate BLL
   Form --> Usuario : Info "SettingsSaved"

@@ -1,0 +1,73 @@
+@startuml
+title T08 - Gestion de Backup y Restauracion de Base de Datos - Secuencia general
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+actor Administrador as Admin
+participant "FormBackup" as Form
+participant "BackupBLL" as BLL
+participant "IBackupRepositorio" as Repo
+participant "BackupDAL" as DAL
+participant "IBitacoraBLL" as Bita
+participant "UsuarioBLL" as UBLL
+
+Admin -> Form : abre pantalla de backup\n(menu Administracion, permiso gestionbackup)
+activate Form
+
+alt Crear backup (CU01)
+  Admin -> Form : btnCrearBackup_Click()\n(elige ruta .bak con SaveFileDialog)
+  Form -> BLL : CrearBackup(rutaDestino)
+  activate BLL
+  BLL -> BLL : valida ruta / extension .bak / directorio destino
+  BLL -> Repo : CrearBackup(rutaDestino)
+  Repo -> DAL : CrearBackup(rutaDestino)
+  DAL -> DAL : BACKUP DATABASE ... TO DISK = rutaDestino\n(conexion propia, sin transaccion)
+  DAL --> Repo : ok
+  Repo --> BLL : ok
+  BLL -> Bita : RegistrarOperacion("BackupCreated", ...)
+  BLL --> Form : ok
+  deactivate BLL
+  Form --> Admin : Info "backup creado"
+  note right of Form
+    Ver detalle en
+    T08-backup-restore-CU01-crear-backup-secuencia.puml
+  end note
+
+else Restaurar backup (CU02)
+  Admin -> Form : btnRestaurarBackup_Click()\n(elige archivo .bak con OpenFileDialog)
+  Form -> Form : confirma advertencia\n(perdida de datos actuales + cierre de conexiones)
+  Form -> BLL : RestaurarBackup(rutaOrigen)
+  activate BLL
+  BLL -> BLL : valida archivo existente / extension .bak
+  BLL -> Repo : RestaurarBackup(rutaOrigen)
+  Repo -> DAL : RestaurarBackup(rutaOrigen)
+  DAL -> DAL : ALTER DATABASE SET SINGLE_USER
+  DAL -> DAL : RESTORE DATABASE ... WITH REPLACE
+  DAL -> DAL : ALTER DATABASE SET MULTI_USER (finally)
+  DAL --> Repo : ok
+  Repo --> BLL : ok
+  BLL -> BLL : limpia pool de conexiones (SqlConnection.ClearAllPools())
+  BLL -> Bita : RegistrarOperacion("BackupRestored", ...)
+  BLL --> Form : ok
+  deactivate BLL
+  Form --> Admin : Info "restauracion completada"
+  Form -> UBLL : CerrarSesionActual()
+  Form -> Form : cierra sesion y vuelve a FormLogin
+  note right of Form
+    Ver detalle en
+    T08-backup-restore-CU02-restaurar-backup-secuencia.puml
+  end note
+end
+
+deactivate Form
+
+note over DAL
+  BackupDAL abre su propia SqlConnection y NO pasa por
+  AccesoDatosSqlServer/IUnidadDeTrabajo: SQL Server no
+  permite BACKUP/RESTORE DATABASE dentro de una
+  transaccion explicita, que es como opera el resto
+  del sistema.
+end note
+
+@enduml

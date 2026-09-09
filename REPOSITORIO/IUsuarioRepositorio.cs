@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BE;
 
@@ -14,6 +15,8 @@ namespace REPOSITORIO
         bool Actualizar(Usuario usuario);
 
         bool ActualizarDVH(int id, string dvh);
+
+        bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh);
 
         bool GuardarEstadoCompleto(Usuario usuario);
 

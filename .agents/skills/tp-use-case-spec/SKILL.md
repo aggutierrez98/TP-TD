@@ -18,6 +18,10 @@ Aplicar esta skill cuando haya que crear o actualizar especificaciones de casos 
 1. [references/use-case-spec-format.md](references/use-case-spec-format.md): formato y semantica
    exacta de cada campo, convenciones y esquema JSON.
 2. [examples/ejemplo-casos-de-uso.json](examples/ejemplo-casos-de-uso.json): ejemplo completo.
+3. La skill `../tp-carpeta-modelo/SKILL.md` tiene la plantilla oficial de especificacion de CU
+   (item N02 de la Carpeta Modelo vigente). **Ojo:** no coincide campo a campo con el formato de
+   esta skill (faltan caratula/historial de revision como campos propios; sobran Estado/Actor
+   Principal/Actor Secundario) — discrepancia conocida, no resuelta automaticamente.
 
 ## Formato (estandar obligatorio)
 

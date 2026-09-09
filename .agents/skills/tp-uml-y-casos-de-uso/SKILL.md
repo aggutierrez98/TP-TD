@@ -35,13 +35,20 @@ las subskills aportan el *como* (sintaxis PlantUML, toolchain, formato de la esp
 
 1. `.agents/01-stack-dotnet-winforms.md`
 2. `.agents/02-architecture-7-layers.md`
-3. [references/catalogo-requisitos.md](references/catalogo-requisitos.md): que artefactos exige
-   cada requisito, su ubicacion y su nomenclatura.
+3. [references/catalogo-requisitos.md](references/catalogo-requisitos.md): convenciones de
+   carpeta/nomenclatura de archivo y procedimiento de alta de un requisito nuevo. La numeracion ya
+   esta reconciliada contra la Carpeta Modelo 2023 vigente; para saber que artefactos exige cada
+   requisito concreto (mapeo item oficial <-> carpeta del repo) ver la skill `tp-carpeta-modelo`.
 4. [references/der-desde-mssql.md](references/der-desde-mssql.md): como inspeccionar la base real
    en SQL Server para construir los DER fielmente.
 5. [references/docs-sync-sources.md](references/docs-sync-sources.md): fuentes de verdad y
    sincronizacion con el documento formal.
 6. La skill `google-drive:google-docs` cuando haya que editar el documento formal.
+7. La skill `../tp-carpeta-modelo/SKILL.md` (y su
+   [references/mapeo-repo.md](../tp-carpeta-modelo/references/mapeo-repo.md)) cuando haya duda de
+   que exige textualmente la catedra (numeracion de un grupo G0X/N0X/T0X/A0X/D0X, alcance de un
+   requisito, formato de entrega) o de en que carpeta del repo vive cada item — es la fuente
+   oficial vigente, por encima de lo que asuma este catalogo.
 
 ## Modelo del catalogo
 
@@ -55,7 +62,7 @@ por requisito, esta en [references/catalogo-requisitos.md](references/catalogo-r
 Familias de requisitos:
 
 - `T0X` — requisitos tecnicos (T01..T07).
-- `G0X` — entregables globales de integracion (G06 clases por capa, G07 DER integrado).
+- `G0X` — entregables globales de integracion (G07 clases por capa, G08 DER integrado).
 - `N0X` — requisitos de negocio (mismo patron; confirmar el set vigente con el usuario).
 
 ## Ubicacion y nomenclatura

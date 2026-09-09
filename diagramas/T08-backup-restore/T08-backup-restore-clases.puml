@@ -1,0 +1,81 @@
+@startuml
+title T08 - Gestion de Backup y Restauracion de Base de Datos - Clases
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "UI" {
+  class FormBackup {
+    +btnCrearBackup_Click() : void
+    +btnRestaurarBackup_Click() : void
+  }
+}
+
+package "BLL" {
+  class BackupBLL {
+    +CrearBackup(rutaDestino : string) : void
+    +RestaurarBackup(rutaOrigen : string) : void
+  }
+  interface IBitacoraBLL <<internal>>
+  class UsuarioBLL {
+    +CerrarSesionActual() : void
+  }
+}
+
+package "REPOSITORIO" {
+  interface IBackupRepositorio {
+    +CrearBackup(rutaDestino : string) : void
+    +RestaurarBackup(rutaOrigen : string) : void
+  }
+  class BackupRepositorio
+}
+
+package "DAL" {
+  class BackupDAL {
+    +CrearBackup(rutaDestino : string) : void
+    +RestaurarBackup(rutaOrigen : string) : void
+  }
+}
+
+FormBackup --> BackupBLL
+FormBackup ..> UsuarioBLL : CerrarSesionActual()\n(CU02, tras restaurar con exito)
+
+BackupBLL --> IBackupRepositorio
+BackupBLL ..> IBitacoraBLL : RegistrarOperacion / RegistrarExcepcionTecnica
+
+IBackupRepositorio <|.. BackupRepositorio
+BackupRepositorio --> BackupDAL
+
+note right of BackupBLL
+  Valida ruta/extension .bak y, en restaurar,
+  existencia del archivo antes de delegar
+  al repositorio. No recibe ni abre
+  IUnidadDeTrabajo (ver nota de BackupDAL).
+end note
+
+note bottom of BackupDAL
+  A diferencia de casi todos los demas DAL del
+  sistema, BackupDAL abre su propia SqlConnection
+  y NO pasa por AccesoDatosSqlServer/IUnidadDeTrabajo:
+  SQL Server prohibe BACKUP DATABASE y RESTORE
+  DATABASE dentro de una transaccion explicita
+  (AccesoDatosSqlServer.Write/WriteWithResult
+  siempre ejecutan dentro de una SqlTransaction).
+
+  CrearBackup ejecuta BACKUP DATABASE ... TO DISK.
+
+  RestaurarBackup ejecuta, en orden: ALTER DATABASE
+  ... SET SINGLE_USER WITH ROLLBACK IMMEDIATE,
+  RESTORE DATABASE ... WITH REPLACE y ALTER DATABASE
+  ... SET MULTI_USER (este ultimo paso corre en un
+  finally, incluso si el RESTORE fallo). Tras
+  finalizar, BackupBLL limpia el pool de conexiones
+  de la aplicacion (SqlConnection.ClearAllPools()).
+end note
+
+@enduml

@@ -34,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
+      <HintPath>..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -48,6 +48,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormBackup.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBackup.Designer.cs">
+      <DependentUpon>FormBackup.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormConfiguracionUsuario.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -87,11 +93,29 @@
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormGestionCategorias.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionCategorias.Designer.cs">
+      <DependentUpon>FormGestionCategorias.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormGestionIdiomas.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FormGestionIdiomas.Designer.cs">
       <DependentUpon>FormGestionIdiomas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormMovimientos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMovimientos.Designer.cs">
+      <DependentUpon>FormMovimientos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormPrincipal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPrincipal.Designer.cs">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
     </Compile>
     <Compile Include="FormGestionPermisos.cs">
       <SubType>Form</SubType>
@@ -128,6 +152,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormGestionUsuarios.resx">
       <DependentUpon>FormGestionUsuarios.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormLogin.resx">
+      <DependentUpon>FormLogin.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

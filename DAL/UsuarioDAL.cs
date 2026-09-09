@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -15,6 +16,9 @@ namespace DAL
                 Username = row["Username"].ToString(),
                 PasswordHash = row["PasswordHash"].ToString(),
                 Activo = (bool)row["Activo"],
+                IntentosFallidos = (int)row["IntentosFallidos"],
+                Bloqueado = (bool)row["Bloqueado"],
+                BloqueadoHasta = row.IsNull("BloqueadoHasta") ? (DateTime?)null : (DateTime)row["BloqueadoHasta"],
                 DVH = row.IsNull("DVH") ? null : row["DVH"].ToString()
             };
         }
@@ -22,7 +26,7 @@ namespace DAL
         public Usuario ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo, DVH
+                SELECT Id, Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH
                 FROM Usuarios
                 WHERE Id = @Id";
 
@@ -51,7 +55,7 @@ namespace DAL
         public Usuario ObtenerPorUsername(string username, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo, DVH
+                SELECT Id, Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH
                 FROM Usuarios
                 WHERE Username = @Username";
 
@@ -80,9 +84,9 @@ namespace DAL
         public int InsertarYObtenerId(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Usuarios (Username, PasswordHash, Activo, DVH)
+                INSERT INTO Usuarios (Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH)
                 OUTPUT INSERTED.Id
-                VALUES (@Username, @PasswordHash, @Activo, @DVH)";
+                VALUES (@Username, @PasswordHash, @Activo, @IntentosFallidos, @Bloqueado, @BloqueadoHasta, @DVH)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -94,6 +98,9 @@ namespace DAL
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
                     accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo),
+                    accesoDatos.CreateParameter("@IntentosFallidos", SqlDbType.Int, usuario.IntentosFallidos),
+                    accesoDatos.CreateParameter("@Bloqueado", SqlDbType.Bit, usuario.Bloqueado),
+                    accesoDatos.CreateParameter("@BloqueadoHasta", SqlDbType.DateTime, usuario.BloqueadoHasta),
                     accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, usuario.DVH)
                 };
 
@@ -116,7 +123,7 @@ namespace DAL
         public List<Usuario> ObtenerTodos()
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo, DVH
+                SELECT Id, Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH
                 FROM Usuarios
                 ORDER BY Activo DESC, Username";
 
@@ -140,7 +147,7 @@ namespace DAL
         public List<Usuario> ObtenerTodos(AccesoDatosSqlServer accesoDatos)
         {
             const string query = @"
-                SELECT Id, Username, PasswordHash, Activo, DVH
+                SELECT Id, Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH
                 FROM Usuarios
                 ORDER BY Id";
 
@@ -175,6 +182,9 @@ namespace DAL
                 SET Username = @Username,
                     PasswordHash = @PasswordHash,
                     Activo = @Activo,
+                    IntentosFallidos = @IntentosFallidos,
+                    Bloqueado = @Bloqueado,
+                    BloqueadoHasta = @BloqueadoHasta,
                     DVH = @DVH
                 WHERE Id = @Id";
 
@@ -188,8 +198,48 @@ namespace DAL
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, usuario.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, usuario.PasswordHash),
                     accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, usuario.Activo),
+                    accesoDatos.CreateParameter("@IntentosFallidos", SqlDbType.Int, usuario.IntentosFallidos),
+                    accesoDatos.CreateParameter("@Bloqueado", SqlDbType.Bit, usuario.Bloqueado),
+                    accesoDatos.CreateParameter("@BloqueadoHasta", SqlDbType.DateTime, usuario.BloqueadoHasta),
                     accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, usuario.DVH),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        // Actualiza el contador de intentos fallidos, el estado de bloqueo (temporal o
+        // permanente) y su DVH en una unica sentencia: Login los modifica siempre juntos.
+        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                UPDATE Usuarios
+                SET IntentosFallidos = @IntentosFallidos,
+                    Bloqueado = @Bloqueado,
+                    BloqueadoHasta = @BloqueadoHasta,
+                    DVH = @DVH
+                WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@IntentosFallidos", SqlDbType.Int, intentosFallidos),
+                    accesoDatos.CreateParameter("@Bloqueado", SqlDbType.Bit, bloqueado),
+                    accesoDatos.CreateParameter("@BloqueadoHasta", SqlDbType.DateTime, bloqueadoHasta),
+                    accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, dvh),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

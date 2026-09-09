@@ -8,8 +8,8 @@ namespace TpIDS.UiTests
 {
     /// <summary>
     /// Ola 4 - T06a Gestion de Bitacora + T06b Control de cambios de usuario.
-    /// Trazabilidad: diagramas/T06a-bitacora (CU01 Consultar bitacora) y
-    /// diagramas/T06b-control-cambios (historial de versiones y restauracion).
+    /// Trazabilidad: diagramas/T06-bitacora-control-cambios (CU01 Consultar bitacora,
+    /// CU03/CU04 historial de versiones y restauracion).
     /// El registro en bitacora (T06a CU02) se verifica transversalmente en T02/T04/T05.
     /// </summary>
     [TestClass]
@@ -24,10 +24,9 @@ namespace TpIDS.UiTests
             CompletarLogin(login, TestConfig.AdminUsername, "password-incorrecta");
             App.EsperarMessageBox().CerrarConOk();
             CompletarLogin(login, TestConfig.AdminUsername, TestConfig.AdminPassword);
-            Window gestion = App.EsperarVentana("FormGestionUsuarios");
+            Window principal = App.EsperarVentana("FormPrincipal");
 
-            UiFind.Click(gestion, "btnBitacora");
-            Window bitacora = App.EsperarVentana("FormBitacora");
+            Window bitacora = AbrirBitacora(principal);
 
             // Filtro por usuario (el DAL aplica UsernameSnapshot LIKE %texto%).
             UiFind.EscribirTexto(bitacora, "txtbUsuarioBitacora", TestConfig.AdminUsername);
@@ -57,12 +56,43 @@ namespace TpIDS.UiTests
 
         [TestMethod]
         [TestCategory("UI")]
+        public void T06a_CU01_FiltroFecha_CoincideConSql()
+        {
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window bitacora = AbrirBitacora(principal);
+
+            // El picker Win32 conserva su hora de reloj al setear solo la fecha via UIA:
+            // se pide un dia entero de margen y se relee el valor realmente aplicado
+            // para comparar contra la misma marca exacta que uso el filtro.
+            UiFind.MarcarCheckBox(bitacora, "chkbFechaDesdeBitacora", true);
+            UiFind.EstablecerFecha(bitacora, "dtpFechaDesdeBitacora", DateTime.Now.AddDays(-1));
+            UiFind.MarcarCheckBox(bitacora, "chkbFechaHastaBitacora", true);
+            UiFind.EstablecerFecha(bitacora, "dtpFechaHastaBitacora", DateTime.Now.AddDays(1));
+
+            DateTime desdeAplicado = UiFind.LeerFecha(bitacora, "dtpFechaDesdeBitacora");
+            DateTime hastaAplicado = UiFind.LeerFecha(bitacora, "dtpFechaHastaBitacora");
+
+            UiFind.Click(bitacora, "btnBuscarBitacora");
+
+            int filasFecha = UiFind.ContarFilasGrilla(bitacora, "dgvBitacora");
+            int sqlFecha = TestDatabase.Contar(
+                "SELECT COUNT(*) FROM dbo.Bitacora WHERE FechaHora >= @desde AND FechaHora <= @hasta",
+                new SqlParameter("@desde", desdeAplicado),
+                new SqlParameter("@hasta", hastaAplicado));
+
+            Assert.IsTrue(sqlFecha > 0, "El login deberia haber generado al menos un evento en el rango de hoy.");
+            Assert.AreEqual(sqlFecha, filasFecha, "La grilla filtrada por fecha no coincide con la BD.");
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
         public void T06b_HistorialUsuario_ListaLasVersionesDelUsuario()
         {
             string username = NombreUnico("uitest_hist");
             string renombrado = username + "_v2";
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             // Version 2: rename por edicion.
@@ -93,7 +123,8 @@ namespace TpIDS.UiTests
             string renombrado = username + "_v2";
             int restauracionesPrevias = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.UserRestoration", null);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             SeleccionarUsuarioEnGestion(gestion, username);
@@ -142,7 +173,8 @@ namespace TpIDS.UiTests
             string renombrado = username + "_v2";
             int restauracionesPrevias = TestDatabase.ContarBitacora("FormAuditLog.Value.Activity.UserRestoration", null);
 
-            Window gestion = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window principal = LoginComo(TestConfig.AdminUsername, TestConfig.AdminPassword);
+            Window gestion = AbrirGestionUsuarios(principal);
             CrearUsuarioDesdeGestion(gestion, username);
 
             SeleccionarUsuarioEnGestion(gestion, username);

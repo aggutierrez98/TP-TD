@@ -15,36 +15,40 @@ state "Arranque\n(Program.Main)" as Arranque
 state "FormContingenciaIntegridad" as Cont
 state "FormLogin" as Login
 state "FormRegistro\n<<modal>>" as Registro
-state "FormGestionUsuarios\n<<hub principal>>" as Hub
-state "FormConfiguracionUsuario\n<<modal>>" as Config
+state "FormPrincipal" as Principal
+state "FormMovimientos" as Movimientos
+state "FormGestionCategorias" as Categorias
+state "FormGestionUsuarios" as Usuarios
+state "FormGestionPermisos" as Permisos
 state "FormGestionIdiomas" as Idiomas
-state "FormGestionPermisos\n<<modal>>" as Permisos
+state "FormBitacora" as Bitacora
+state "FormBackup" as Backup
+state "FormConfiguracionUsuario\n<<modal>>" as Config
 state "FormHistorialUsuario\n<<modal>>" as Historial
-state "FormBitacora\n<<modal>>" as Bitacora
 
 Arranque --> Cont : integridad invalida (T07)
 Arranque --> Login : integridad OK
 
 Login --> Registro : "Registrarse"
 Registro --> Login : cerrar
-Login --> Hub : login correcto
-Hub --> Login : Logout / cerrar
+Login --> Principal : login correcto
+Principal --> Login : Logout / cerrar
 
-Hub --> Config : Configuracion\n[perm]
-Hub --> Idiomas : Gestion Idiomas\n[perm]
-Hub --> Permisos : Gestion Permisos\n[perm]
-Hub --> Historial : Historial Usuario\n[perm + usuario sel.]
-Hub --> Bitacora : Bitacora\n[perm]
+Principal --> Movimientos : Movimientos\n[perm]\n(pantalla inicial si hay permiso)
+Principal --> Categorias : Gestion Categorias\n[perm]
+Principal --> Usuarios : Gestion Usuarios\n[perm]
+Principal --> Permisos : Gestion Permisos\n[perm]
+Principal --> Idiomas : Gestion Idiomas\n[perm]
+Principal --> Bitacora : Bitacora\n[perm]
+Principal --> Backup : Backup\n[perm]
+Principal --> Config : Mi Configuracion\n[perm]
 
-Config --> Hub : cerrar
-Idiomas --> Hub : cerrar
-Permisos --> Hub : cerrar
-Historial --> Hub : cerrar
-Bitacora --> Hub : cerrar
+Usuarios --> Historial : Historial Usuario\n[perm + usuario sel.]
+Historial --> Usuarios : cerrar
 
-note right of Hub
-  Cada accion valida un IPermiso (T04)
-  antes de abrir la pantalla destino.
+note right of Principal
+  Cada accion de menu valida un permiso antes de abrir
+  la pantalla destino.
 end note
 
 @enduml

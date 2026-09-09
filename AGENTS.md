@@ -1,6 +1,11 @@
 # Documentacion del Proyecto (Agentes y Desarrolladores)
 
-Todo el conocimiento de contexto se ubica dentro del subdirectorio `.agents/`. Leer estas referencias antes de actuar y escribir codigo:
+**Antes que nada**, leer [ESTADO-ACTUAL-Y-PROXIMOS-PASOS.md](ESTADO-ACTUAL-Y-PROXIMOS-PASOS.md):
+contexto completo del proyecto (que es FINAZAPP, por que se prioriza cada cosa, donde vive
+cada artefacto del TP) y los pendientes vigentes. Mantenerlo actualizado al cerrar sesiones
+de trabajo largas o al tomar decisiones de alcance con el usuario.
+
+Todo el conocimiento de contexto adicional se ubica dentro del subdirectorio `.agents/`. Leer estas referencias antes de actuar y escribir codigo:
 
 ## Base del proyecto
 
@@ -38,6 +43,7 @@ Viven en el repo bajo `.agents/skills/`. Las validadas en build fallan la compil
 | `strict-tdd` | Ciclo red-green estricto: baseline en verde, test primero (unit en `SERVICIOS.Tests`/`BLL.Tests`, integracion en `TpIDS.IntegrationTests` para REPOSITORIO/DAL), verlo fallar, implementar, verlo pasar. Los tests UI FlaUI van despues del desarrollo, nunca dentro del ciclo | Ante todo cambio de comportamiento en SERVICIOS, BLL, REPOSITORIO o DAL | [SKILL.md](.agents/skills/strict-tdd/SKILL.md) |
 | `test-suite-verification` | Cierre con la suite en verde via `tests/tools/run-tests.ps1 -IncludeIntegration`, reportando contadores reales del TRX. Define el protocolo de la suite UI FlaUI (avisar que toma el escritorio ~5 minutos y esperar confirmacion) y de las corridas con `-UiFilter`. Complementa a `winforms-build-verification`, no lo reemplaza | Al cerrar un cambio funcional o tocar el harness de tests | [SKILL.md](.agents/skills/test-suite-verification/SKILL.md) |
 | `winforms-ui-control-naming` | Nomenclatura obligatoria de controles visuales y handlers WinForms | Al agregar o renombrar controles | [SKILL.md](.agents/skills/winforms-ui-control-naming/SKILL.md) |
+| `tp-carpeta-modelo` | Fuente oficial vigente (2023) de la Carpeta Modelo de la catedra: formato de entrega, estructura completa G0X/N0X/T0X/A0X/D0X y plantilla oficial de especificacion de CU. Referencia de solo lectura, consultada por las demas skills del TP | Ante duda de que exige textualmente la catedra (numeracion de un grupo, alcance de un requisito, formato de entrega) | [SKILL.md](.agents/skills/tp-carpeta-modelo/SKILL.md) |
 | `tp-delivery-standards` | Restricciones tecnicas, criterios de entrega, balanceo documentacion-codigo y exigencias del TP | Al preparar o revisar material de entrega | [SKILL.md](.agents/skills/tp-delivery-standards/SKILL.md) |
 | `tp-uml-y-casos-de-uso` | Punto de entrada para diagramar o especificar: que artefactos exige cada requisito (T0X/G0X/N0X), su ubicacion bajo `diagramas/<requisito>/` y su nomenclatura. Orquesta las subskills de PlantUML y de casos de uso, sincroniza con la documentacion formal y valida los artefactos. Se ejecuta a demanda y preguntando primero al usuario | Al crear o modificar diagramas UML o especificaciones de casos de uso | [SKILL.md](.agents/skills/tp-uml-y-casos-de-uso/SKILL.md) |
 | `plantuml` (subskill) | Crear, editar, convertir o validar diagramas UML con PlantUML. Orquestada por `tp-uml-y-casos-de-uso` | Solo cuando la tarea realmente requiera diagramacion PlantUML | [SKILL.md](.agents/skills/tp-delivery-standards/embedded-skills/plantuml/SKILL.md) |

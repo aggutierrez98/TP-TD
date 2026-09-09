@@ -10,8 +10,10 @@ namespace REPOSITORIO
         private bool _disposeInvocado;
 
         private IBitacoraRepositorio _bitacora;
+        private ICategoriaRepositorio _categorias;
         private IIdiomaRepositorio _idiomas;
         private IIntegridadRepositorio _integridad;
+        private IMovimientoRepositorio _movimientos;
         private IPermisoRepositorio _permisos;
         private ITraduccionRepositorio _traducciones;
         private IUsuarioHistorialRepositorio _usuarioHistorial;
@@ -28,6 +30,11 @@ namespace REPOSITORIO
             get { return _bitacora ?? (_bitacora = new BitacoraRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public ICategoriaRepositorio Categorias
+        {
+            get { return _categorias ?? (_categorias = new CategoriaRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IIdiomaRepositorio Idiomas
         {
             get { return _idiomas ?? (_idiomas = new IdiomaRepositorio(ObtenerAccesoDatosTransaccional())); }
@@ -36,6 +43,11 @@ namespace REPOSITORIO
         public IIntegridadRepositorio Integridad
         {
             get { return _integridad ?? (_integridad = new IntegridadRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IMovimientoRepositorio Movimientos
+        {
+            get { return _movimientos ?? (_movimientos = new MovimientoRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public IPermisoRepositorio Permisos

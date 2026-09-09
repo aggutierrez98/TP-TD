@@ -1,0 +1,106 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa SERVICIOS
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "ABSTRACCIONES" <<Frame>> {
+  interface IPermiso
+  enum TipoMovimiento
+}
+
+package "SERVICIOS (servicios concretos + tipos de dominio)" {
+
+  ' --- Seguridad / sesion / permisos ---
+  ' Las interfaces de ABSTRACCIONES implementadas 1:1 por una sola clase
+  ' se muestran como estereotipo en la propia clase (no como caja aparte)
+  ' para no duplicar nodos sin agregar informacion nueva.
+  class Sesion <<singleton>> <<ISesion>>
+  class UsuarioAutenticadoSesion <<IUsuarioAutenticado>>
+  class AutorizacionService <<singleton>> <<IAutorizacion>>
+  class PasswordHasher <<IPasswordHasher>>
+  class PermisoService
+  class PermisoSimple <<IPermiso>>
+  class PermisoGrupo <<IPermiso>>
+
+  ' --- Idioma (Observer) ---
+  class IdiomaService <<singleton>> <<IObservado>>
+  class IdiomaCatalogoService
+  class Idioma <<IIdioma>>
+  class Traduccion <<ITraduccion>>
+  class Palabra <<IPalabra>>
+
+  ' --- Integridad ---
+  class IntegridadService <<IIntegridadService>>
+
+  ' --- Historial / control de cambios ---
+  class HistorialEstadosService <<singleton>> <<IServicioHistorialEstados>>
+  class UsuarioHistorialSnapshot <<IUsuarioSnapshot>>
+  class ResultadoComparacionEstado <<IResultadoComparacionEstado>>
+  class UsuarioPreferencia <<IUsuarioPreferencia>>
+
+  ' --- Bitacora ---
+  class EventoBitacora <<IEventoBitacora>>
+  class FiltroBitacora <<IFiltroBitacora>>
+
+  ' --- Movimientos (dominio financiero, NEG01/NEG02) ---
+  class FiltroMovimiento
+
+  ' --- Excepciones ---
+  class ExcepcionNegocio
+  class ExcepcionTecnica
+  class ExcepcionIntegridad
+  enum TipoFalloIntegridad
+}
+
+AutorizacionService --> PermisoService
+PermisoSimple ..|> IPermiso
+PermisoGrupo ..|> IPermiso
+PermisoGrupo o--> "*" IPermiso : Hijos (Composite)
+Idioma o--> "*" Traduccion
+Traduccion --> Palabra
+FiltroMovimiento ..> TipoMovimiento
+ExcepcionIntegridad --|> ExcepcionTecnica
+ExcepcionIntegridad --> TipoFalloIntegridad
+
+' --- Quiebres de layout (edges ocultos, no representan relaciones reales) ---
+' Fuerzan una grilla de ~4 columnas por fila en vez de una sola fila muy
+' ancha, para que el diagrama entre en una hoja A4/Word sin quedar ilegible.
+
+Sesion -[hidden]right-> UsuarioAutenticadoSesion
+UsuarioAutenticadoSesion -[hidden]right-> AutorizacionService
+AutorizacionService -[hidden]right-> PasswordHasher
+
+PermisoService -[hidden]right-> PermisoSimple
+PermisoSimple -[hidden]right-> PermisoGrupo
+
+IdiomaService -[hidden]right-> IdiomaCatalogoService
+IdiomaCatalogoService -[hidden]right-> Idioma
+
+Traduccion -[hidden]right-> Palabra
+
+HistorialEstadosService -[hidden]right-> UsuarioHistorialSnapshot
+UsuarioHistorialSnapshot -[hidden]right-> ResultadoComparacionEstado
+ResultadoComparacionEstado -[hidden]right-> UsuarioPreferencia
+
+EventoBitacora -[hidden]right-> FiltroBitacora
+FiltroBitacora -[hidden]right-> FiltroMovimiento
+
+ExcepcionNegocio -[hidden]right-> ExcepcionTecnica
+ExcepcionTecnica -[hidden]right-> ExcepcionIntegridad
+ExcepcionIntegridad -[hidden]right-> TipoFalloIntegridad
+
+Sesion -[hidden]down-> PermisoService
+PermisoService -[hidden]down-> IdiomaService
+IdiomaService -[hidden]down-> Traduccion
+Traduccion -[hidden]down-> IntegridadService
+IntegridadService -[hidden]down-> HistorialEstadosService
+HistorialEstadosService -[hidden]down-> EventoBitacora
+EventoBitacora -[hidden]down-> ExcepcionNegocio
+
+@enduml

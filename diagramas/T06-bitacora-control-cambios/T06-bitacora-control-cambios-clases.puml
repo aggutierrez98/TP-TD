@@ -1,0 +1,206 @@
+@startuml
+title T06 - Gestion de Bitacora y Control de Cambios - Clases
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "UI" {
+  class FormBitacora {
+    +btnBuscarBitacora_Click() : void
+    -RefrescarDatos() : void
+  }
+  class FormHistorialUsuario {
+    +btnRestaurarVersion_Click() : void
+    +dgvHistorialUsuario_SelectionChanged() : void
+    -RefrescarDatos() : void
+  }
+}
+
+package "BLL" {
+  class BitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    +RegistrarOperacionInterno(actividad : string, informacion : string, origen : string, unidad : IUnidadDeTrabajo) : void
+    +RegistrarFalloNegocioInterno(actividad : string, informacion : string, origen : string, unidad : IUnidadDeTrabajo) : void
+  }
+  class UsuarioBLL {
+    +ObtenerHistorialEstados(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersionHistorial(historialId : int) : UsuarioHistorialSnapshot
+    +ObtenerDiferenciasConVersionAnterior(historialId : int) : List<ResultadoComparacionEstado>
+    +RestaurarVersion(historialId : int) : bool
+  }
+  class UsuarioEstadoBLL {
+    +GuardarVersionActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : int
+    +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
+    +CompararVersiones(actual : UsuarioHistorialSnapshot, anterior : UsuarioHistorialSnapshot) : List<ResultadoComparacionEstado>
+    +AplicarSnapshotInterno(snapshot : UsuarioHistorialSnapshot, unidad : IUnidadDeTrabajo) : void
+    +ConstruirSnapshotActualInterno(usuarioId : int, accion : string, observaciones : string, unidad : IUnidadDeTrabajo) : UsuarioHistorialSnapshot
+  }
+  interface IBitacoraBLL <<internal>>
+  interface IIntegridadBLL <<internal>> {
+    +CalcularDVH<T>(entidad : T) : string
+    +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) : void
+  }
+  class "otros BLL\n(PermisoBLL, IdiomaBLL, ...)" as OtrosBLL
+}
+
+package "ABSTRACCIONES" {
+  interface IBitacora {
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    +ConsultarBitacora(filtro : IFiltroBitacora) : IList<IEventoBitacora>
+  }
+  interface IEventoBitacora {
+    +Id : int
+    +FechaHora : DateTime
+    +UsuarioId : int?
+    +UsernameSnapshot : string
+    +Actividad : string
+    +Informacion : string
+    +Nivel : string
+    +Origen : string
+    +EsTecnica : bool
+  }
+  interface IFiltroBitacora {
+    +FechaDesde : DateTime?
+    +FechaHasta : DateTime?
+    +Usuario : string
+    +Actividad : string
+    +Nivel : string
+    +EsTecnica : bool?
+  }
+  interface ISesion
+  interface IServicioHistorialEstados {
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<IUsuarioSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : IUsuarioSnapshot
+  }
+  interface IUsuarioSnapshot
+  interface IResultadoComparacionEstado
+}
+
+package "SERVICIOS" {
+  class EventoBitacora
+  class FiltroBitacora
+  class HistorialEstadosService <<singleton>> {
+    +GetInstance() : HistorialEstadosService
+    +Configurar(...) : void
+    +ObtenerVersionesUsuario(usuarioId : int) : IList<UsuarioHistorialSnapshot>
+    +ObtenerVersionUsuario(historialId : int) : UsuarioHistorialSnapshot
+  }
+  class UsuarioHistorialSnapshot {
+    +HistorialId : int
+    +UsuarioId : int
+    +FechaHora : DateTime
+    +Accion : string
+    +Observaciones : string
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+    +IdiomaId : int?
+    +PermisosIds : IList<int>
+  }
+  class ResultadoComparacionEstado {
+    +Campo : string
+    +ValorAnterior : string
+    +ValorNuevo : string
+  }
+}
+
+package "REPOSITORIO" {
+  interface IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
+  }
+  interface IUnidadDeTrabajo {
+    +Usuarios : IUsuarioRepositorio
+    +UsuarioPermisos : IUsuarioPermisoRepositorio
+    +UsuarioPreferencias : IUsuarioPreferenciaRepositorio
+    +UsuarioHistorial : IUsuarioHistorialRepositorio
+    +Bitacora : IBitacoraRepositorio
+    +Save() : void
+  }
+  interface IBitacoraRepositorio {
+    +Guardar(evento : EventoBitacora) : int
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+  class BitacoraRepositorio
+  interface IUsuarioHistorialRepositorio {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot) : int
+    +ObtenerVersiones(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
+  }
+  class UsuarioHistorialRepositorio
+}
+
+package "DAL" {
+  class BitacoraDAL {
+    +Guardar(evento : EventoBitacora, accesoDatos : AccesoDatosSqlServer = null) : int
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+  class UsuarioHistorialDAL {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatosSqlServer = null) : int
+    +ObtenerVersiones(usuarioId : int) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(historialId : int) : UsuarioHistorialSnapshot
+  }
+  class AccesoDatosSqlServer
+}
+
+BitacoraBLL ..|> IBitacora
+BitacoraBLL ..|> IBitacoraBLL
+EventoBitacora ..|> IEventoBitacora
+FiltroBitacora ..|> IFiltroBitacora
+
+FormBitacora --> BitacoraBLL
+FormHistorialUsuario --> UsuarioBLL
+OtrosBLL ..> IBitacoraBLL : registran eventos
+
+BitacoraBLL --> IBitacoraRepositorio
+BitacoraBLL --> IUnidadDeTrabajoFactory
+BitacoraBLL --> ISesion : snapshot usuario actual
+BitacoraBLL ..> EventoBitacora : <<creates>>
+
+UsuarioBLL --> UsuarioEstadoBLL
+UsuarioBLL ..> IIntegridadBLL : restaurar recalcula DVH/DVV
+UsuarioBLL ..> IBitacoraBLL
+
+UsuarioEstadoBLL ..|> "IUsuarioEstadoBLL"
+UsuarioEstadoBLL --> IServicioHistorialEstados : lectura de versiones
+UsuarioEstadoBLL ..> IUnidadDeTrabajo : escritura (GuardarVersion / AplicarSnapshot)
+UsuarioEstadoBLL ..> ResultadoComparacionEstado : <<creates>>
+
+HistorialEstadosService ..|> IServicioHistorialEstados
+HistorialEstadosService ..> IUsuarioHistorialRepositorio : delegados (Configurar)
+UsuarioHistorialSnapshot ..|> IUsuarioSnapshot
+ResultadoComparacionEstado ..|> IResultadoComparacionEstado
+
+IUnidadDeTrabajo --> IBitacoraRepositorio : Bitacora
+IUnidadDeTrabajo --> IUsuarioHistorialRepositorio : UsuarioHistorial
+BitacoraRepositorio ..|> IBitacoraRepositorio
+BitacoraRepositorio --> BitacoraDAL
+BitacoraDAL --> AccesoDatosSqlServer
+UsuarioHistorialRepositorio ..|> IUsuarioHistorialRepositorio
+UsuarioHistorialRepositorio --> UsuarioHistorialDAL
+UsuarioHistorialDAL --> AccesoDatosSqlServer
+
+note bottom of BitacoraBLL
+  RegistrarOperacion/FalloNegocio/ExcepcionTecnica abren su propia
+  unidad (auditoria autonoma). Las variantes *Interno se enrolan en
+  la unidad de trabajo del caso de uso llamador (misma transaccion).
+end note
+
+note bottom of UsuarioEstadoBLL
+  Lectura del historial: HistorialEstadosService (singleton
+  configurado con delegados al repositorio en el arranque).
+  Escritura (guardar version / restaurar): via IUnidadDeTrabajo
+  dentro de la transaccion del caso de uso.
+end note
+
+@enduml

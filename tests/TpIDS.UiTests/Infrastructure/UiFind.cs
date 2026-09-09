@@ -59,6 +59,90 @@ namespace TpIDS.UiTests.Infrastructure
             boton.Click();
         }
 
+        /// <summary>
+        /// Navega el MenuStrip principal (AutomationId "menuStripPrincipal"): expande el
+        /// item de primer nivel y clickea el item dentro de su dropdown, matcheando por
+        /// texto visible (Name) ya traducido. Usa Menu.Items / MenuItem.Items en vez de
+        /// FindFirstDescendant porque los ToolStripMenuItem no se materializan como
+        /// descendientes normales en el arbol de automatizacion de WinForms, y matchea
+        /// por Name (no AutomationId) porque los items de primer nivel de un MenuStrip
+        /// no soportan la propiedad AutomationId via UIA (PropertyNotSupportedException).
+        /// </summary>
+        public static void ClickMenu(Window ventana, string textoMenuTop, string textoItem)
+        {
+            try
+            {
+                ventana.SetForeground();
+            }
+            catch
+            {
+                // Si no se puede traer al frente se intenta igual.
+            }
+
+            Menu menuStrip = Elemento(ventana, "menuStripPrincipal").AsMenu();
+
+            RetryResult<MenuItem> menuTopResultado = Retry.WhileNull(
+                () => menuStrip.Items.FirstOrDefault(item => CoincideNombre(item, textoMenuTop)),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromMilliseconds(200));
+
+            if (!menuTopResultado.Success || menuTopResultado.Result == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontro el menu de primer nivel '" + textoMenuTop + "'.");
+            }
+
+            MenuItem menuTop = menuTopResultado.Result;
+            menuTop.Expand();
+
+            RetryResult<MenuItem> resultado = Retry.WhileNull(
+                () => menuTop.Items.FirstOrDefault(item => CoincideNombre(item, textoItem)),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromMilliseconds(200));
+
+            if (!resultado.Success || resultado.Result == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontro el item de menu '" + textoItem + "' dentro de '" + textoMenuTop + "'.");
+            }
+
+            resultado.Result.Click();
+        }
+
+        /// <summary>Lee el estado Enabled de un item de primer nivel del MenuStrip principal, sin expandirlo.</summary>
+        public static bool MenuTopHabilitado(Window ventana, string textoMenuTop)
+        {
+            Menu menuStrip = Elemento(ventana, "menuStripPrincipal").AsMenu();
+
+            RetryResult<MenuItem> resultado = Retry.WhileNull(
+                () => menuStrip.Items.FirstOrDefault(item => CoincideNombre(item, textoMenuTop)),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromMilliseconds(200));
+
+            if (!resultado.Success || resultado.Result == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontro el menu de primer nivel '" + textoMenuTop + "'.");
+            }
+
+            return resultado.Result.IsEnabled;
+        }
+
+        // Los separadores de un dropdown se enumeran como MenuItem igual que los items
+        // reales: se descartan en vez de cortar el escaneo de Items si alguna propiedad
+        // no esta soportada para ese elemento puntual.
+        private static bool CoincideNombre(MenuItem item, string texto)
+        {
+            try
+            {
+                return item.Name == texto;
+            }
+            catch (FlaUI.Core.Exceptions.PropertyNotSupportedException)
+            {
+                return false;
+            }
+        }
+
         public static TextBox CajaTexto(AutomationElement raiz, string automationId)
         {
             return Elemento(raiz, automationId).AsTextBox();
@@ -86,6 +170,18 @@ namespace TpIDS.UiTests.Infrastructure
         {
             AutomationElement contenedor = Elemento(raiz, automationId);
             EstablecerValor(Elemento(contenedor, "txtbInput"), valor);
+        }
+
+        /// <summary>Establece la fecha de un DateTimePicker (control Win32, sin ValuePattern por UIA).</summary>
+        public static void EstablecerFecha(AutomationElement raiz, string automationId, DateTime valor)
+        {
+            Elemento(raiz, automationId).AsDateTimePicker().SelectedDate = valor;
+        }
+
+        /// <summary>Lee la fecha actual de un DateTimePicker.</summary>
+        public static DateTime LeerFecha(AutomationElement raiz, string automationId)
+        {
+            return Elemento(raiz, automationId).AsDateTimePicker().SelectedDate.Value;
         }
 
         /// <summary>Marca o desmarca un CheckBox por TogglePattern (sin teclado).</summary>

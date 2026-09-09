@@ -11,10 +11,6 @@ namespace TpIDS
 {
     public partial class FormGestionUsuarios : FormTraducibleBase
     {
-        private const string PermisoBitacora = "verbitacora";
-        private const string PermisoConfiguracion = "configuracionusuario";
-        private const string PermisoGestionIdiomas = "gestionidiomas";
-        private const string PermisoGestionPermisos = "gestionpermisos";
         private const string PermisoGestionUsuarios = "gestionusuarios";
         private const string PermisoHistorialUsuarios = "historialusuarios";
 
@@ -76,27 +72,30 @@ namespace TpIDS
             chkbUsuarioActivo.Checked = true;
             dgvUsuarios.ClearSelection();
             tvwPermisosUsuario.Nodes.Clear();
+            ActualizarEstadoBotonDesbloquear();
         }
 
         private void AplicarPermisosPantalla()
         {
             bool puedeGestionarUsuarios = _autorizacion.TienePermiso(PermisoGestionUsuarios);
-            bool puedeGestionarPermisos = _autorizacion.TienePermiso(PermisoGestionPermisos);
             bool puedeVerHistorial = _autorizacion.TienePermiso(PermisoHistorialUsuarios);
-            bool puedeVerBitacora = _autorizacion.TienePermiso(PermisoBitacora);
-            bool puedeConfigurarUsuario = _autorizacion.TienePermiso(PermisoConfiguracion);
-            bool puedeGestionarIdiomas = _autorizacion.TienePermiso(PermisoGestionIdiomas);
 
             btnAgregarUsuario.Enabled = puedeGestionarUsuarios;
             btnEditarUsuario.Enabled = puedeGestionarUsuarios;
             btnEliminarUsuario.Enabled = puedeGestionarUsuarios;
             groupBoxPermisosUsuario.Enabled = puedeGestionarUsuarios;
             btnGuardarPermisosUsuario.Enabled = puedeGestionarUsuarios;
-            btnGestionPermisos.Enabled = puedeGestionarPermisos;
             btnHistorialUsuario.Enabled = puedeVerHistorial;
-            btnBitacora.Enabled = puedeVerBitacora;
-            btnConfiguracion.Enabled = puedeConfigurarUsuario;
-            btnGestionIdiomas.Enabled = puedeGestionarIdiomas;
+            ActualizarEstadoBotonDesbloquear();
+        }
+
+        // Solo tiene sentido ofrecer el desbloqueo si hay un usuario seleccionado
+        // y esta efectivamente bloqueado (temporal o permanente).
+        private void ActualizarEstadoBotonDesbloquear()
+        {
+            btnDesbloquearUsuario.Enabled = _autorizacion.TienePermiso(PermisoGestionUsuarios)
+                && _usuarioSeleccionado != null
+                && _usuarioSeleccionado.Bloqueado;
         }
 
         private bool ValidarPermiso(string permiso)
@@ -256,6 +255,46 @@ namespace TpIDS
             }
         }
 
+        private void btnDesbloquearUsuario_Click(object sender, EventArgs e)
+        {
+            if (!ValidarPermiso(PermisoGestionUsuarios))
+            {
+                return;
+            }
+
+            if (_usuarioSeleccionado == null)
+            {
+                UiDialogHelper.MostrarWarningConTitulo(
+                    "FormUserManagement.Warning.NoUserSelectedUnlock",
+                    "FormUserManagement.Warning.NoUserSelectedTitle");
+                return;
+            }
+
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormUserManagement.Confirm.UnlockUserMessage",
+                "FormUserManagement.Confirm.UnlockUserTitle",
+                MessageBoxIcon.Warning);
+
+            if (confirmacion != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                if (usuarioBLL.DesbloquearUsuario(_usuarioSeleccionado.Id))
+                {
+                    UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserUnlocked");
+                    LimpiarSeleccion();
+                    RefrescarDatos();
+                }
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Desbloqueo de usuario");
+            }
+        }
+
         private void CargarPermisosUsuario()
         {
             tvwPermisosUsuario.Nodes.Clear();
@@ -352,6 +391,7 @@ namespace TpIDS
                 txtbPasswordUsuario.Clear();
                 chkbUsuarioActivo.Checked = true;
                 tvwPermisosUsuario.Nodes.Clear();
+                ActualizarEstadoBotonDesbloquear();
                 return;
             }
 
@@ -360,6 +400,7 @@ namespace TpIDS
             txtbPasswordUsuario.Clear();
             chkbUsuarioActivo.Checked = usuario.Activo;
             CargarPermisosUsuario();
+            ActualizarEstadoBotonDesbloquear();
         }
 
         private void ReseleccionarUsuario(DataGridView grilla, int usuarioId)
@@ -398,41 +439,6 @@ namespace TpIDS
             lblSesionActualUsuario.Text = string.IsNullOrWhiteSpace(username) ? "-" : username;
         }
 
-        private void btnConfiguracion_Click(object sender, EventArgs e)
-        {
-            if (!ValidarPermiso(PermisoConfiguracion))
-            {
-                return;
-            }
-
-            new FormConfiguracionUsuario().ShowDialog(this);
-        }
-
-        private void btnGestionIdiomas_Click(object sender, EventArgs e)
-        {
-            if (!ValidarPermiso(PermisoGestionIdiomas))
-            {
-                return;
-            }
-
-            new FormGestionIdiomas().Show(this);
-        }
-
-        private void btnGestionPermisos_Click(object sender, EventArgs e)
-        {
-            if (!ValidarPermiso(PermisoGestionPermisos))
-            {
-                return;
-            }
-
-            using (FormGestionPermisos formGestionPermisos = new FormGestionPermisos())
-            {
-                formGestionPermisos.ShowDialog(this);
-            }
-
-            CargarPermisosUsuario();
-        }
-
         private void btnHistorialUsuario_Click(object sender, EventArgs e)
         {
             if (!ValidarPermiso(PermisoHistorialUsuarios))
@@ -454,34 +460,6 @@ namespace TpIDS
             RefrescarDatos();
             CargarPermisosUsuario();
             ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
-        }
-
-        private void btnBitacora_Click(object sender, EventArgs e)
-        {
-            if (!ValidarPermiso(PermisoBitacora))
-            {
-                return;
-            }
-
-            using (FormBitacora formBitacora = new FormBitacora())
-            {
-                formBitacora.ShowDialog(this);
-            }
-        }
-
-        private void btnLogout_Click(object sender, EventArgs e)
-        {
-            DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormUserManagement.Confirm.LogoutMessage",
-                MessageBoxIcon.Warning);
-
-            if (confirmacion != DialogResult.Yes)
-            {
-                return;
-            }
-
-            usuarioBLL.CerrarSesionActual();
-            Close();
         }
 
     }

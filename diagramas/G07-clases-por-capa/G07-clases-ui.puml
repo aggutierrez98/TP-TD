@@ -1,0 +1,79 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa UI
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+hide empty members
+
+package "ABSTRACCIONES" <<Frame>> {
+  interface IObservador
+}
+
+package "UI (TpIDS)" {
+
+  class Program <<static>> {
+    +Main() : void
+  }
+
+  class FormTraducibleBase {
+    +Actualizar(observado : IObservado) : void
+  }
+
+  ' --- Pantallas ---
+  class FormLogin
+  class FormRegistro
+  class FormPrincipal
+  class FormGestionUsuarios
+  class FormGestionPermisos
+  class FormGestionIdiomas
+  class FormGestionCategorias
+  class FormMovimientos
+  class FormConfiguracionUsuario
+  class FormHistorialUsuario
+  class FormBitacora
+  class FormBackup
+  class FormContingenciaIntegridad
+
+  ' --- Controles / helpers ---
+  class PasswordTextBox
+  class IdiomaFormHelper <<static>>
+  class OpcionTraducible
+  class UiDialogHelper <<static>>
+  class UiExceptionHandler <<static>>
+}
+
+FormTraducibleBase ..|> IObservador
+
+FormLogin --|> FormTraducibleBase
+FormRegistro --|> FormTraducibleBase
+FormPrincipal --|> FormTraducibleBase
+FormGestionUsuarios --|> FormTraducibleBase
+FormGestionPermisos --|> FormTraducibleBase
+FormGestionIdiomas --|> FormTraducibleBase
+FormGestionCategorias --|> FormTraducibleBase
+FormMovimientos --|> FormTraducibleBase
+FormConfiguracionUsuario --|> FormTraducibleBase
+FormHistorialUsuario --|> FormTraducibleBase
+FormBitacora --|> FormTraducibleBase
+FormBackup --|> FormTraducibleBase
+FormContingenciaIntegridad --|> FormTraducibleBase
+
+FormTraducibleBase ..> IdiomaFormHelper : Aplicar(this, idiomaActual)
+Program ..> FormLogin 
+Program ..> FormContingenciaIntegridad 
+FormLogin ..> FormPrincipal 
+FormLogin ..> FormRegistro 
+FormPrincipal ..> FormMovimientos 
+FormPrincipal ..> FormGestionCategorias 
+FormPrincipal ..> FormGestionUsuarios 
+FormPrincipal ..> FormGestionPermisos 
+FormPrincipal ..> FormGestionIdiomas 
+FormPrincipal ..> FormBitacora 
+FormPrincipal ..> FormBackup 
+FormPrincipal ..> FormConfiguracionUsuario 
+FormGestionUsuarios ..> FormHistorialUsuario 
+
+@enduml

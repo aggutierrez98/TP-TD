@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BE;
 using DAL;
@@ -43,6 +44,11 @@ namespace REPOSITORIO
         public bool ActualizarDVH(int id, string dvh)
         {
             return _usuarioDAL.ActualizarDVH(id, dvh, _accesoDatos);
+        }
+
+        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
+        {
+            return _usuarioDAL.ActualizarEstadoBloqueo(id, intentosFallidos, bloqueado, bloqueadoHasta, dvh, _accesoDatos);
         }
 
         public bool GuardarEstadoCompleto(Usuario usuario)

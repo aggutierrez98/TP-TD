@@ -1,0 +1,162 @@
+@startuml G00-modelo-dominio
+' Modelo de dominio de FINAZAPP como producto completo (vision G01-G06), no solo el
+' codigo ya implementado. Las clases con <<Implementado>> ya existen en BE/ (Usuario,
+' Categoria, Movimiento); el resto son clases conceptuales del alcance de negocio
+' definido en G02 que todavia no se codean en este TP (ver G00-descripcion-global-producto.md).
+title FINAZAPP - Modelo de Dominio (vision completa del producto)
+
+skinparam class {
+  BackgroundColor<<Implementado>> #D5E8D4
+  BorderColor<<Implementado>> #82B366
+  BackgroundColor<<Vision>> #F5F5F5
+  BorderColor<<Vision>> #999999
+}
+
+package "Usuarios y Seguridad" {
+  class Usuario <<Implementado>> {
+    +id
+    +nombre
+    +email
+    +passwordHash
+    +estado
+  }
+
+  class Permiso <<Implementado>> {
+    +nombre
+    +tipo : atomico | compuesto
+  }
+
+  class CuentaFinanciera <<Vision>> {
+    +alias
+    +entidad
+    +tipo
+    +credencialesCifradas
+  }
+}
+
+package "Ingesta y Consolidacion de Movimientos" {
+  class Movimiento <<Implementado>> {
+    +fecha
+    +monto
+    +tipo : ingreso | egreso
+    +descripcion
+    +medioDePago
+  }
+
+  class Categoria <<Implementado>> {
+    +nombre
+    +tipo
+  }
+
+  class Ticket <<Vision>> {
+    +imagen
+    +fechaCaptura
+    +estadoOCR
+    +montoExtraido
+  }
+}
+
+package "Ahorro y Descuentos Inteligentes" {
+  class ListaDeCompras <<Vision>> {
+    +nombre
+    +fechaCreacion
+  }
+
+  class ItemLista <<Vision>> {
+    +producto
+    +cantidad
+    +comprado
+  }
+
+  class Comercio <<Vision>> {
+    +nombre
+    +rubro
+    +ubicacion
+  }
+
+  class Promocion <<Vision>> {
+    +descripcion
+    +descuento
+    +vigenciaDesde
+    +vigenciaHasta
+    +medioDePagoAplicable
+  }
+
+  class Notificacion <<Vision>> {
+    +mensaje
+    +fecha
+    +leida
+  }
+}
+
+package "Presupuesto y Analitica" {
+  class Presupuesto <<Vision>> {
+    +montoLimite
+    +periodo
+  }
+
+  class ResumenFinanciero <<Vision>> {
+    +periodo
+    +balance
+    +tasaAhorro
+  }
+}
+
+package "Inteligencia Artificial" {
+  class AgenteIA <<Vision>> {
+    +tipo
+  }
+
+  class SugerenciaFinanciera <<Vision>> {
+    +fecha
+    +contenido
+    +parametrosOrigen
+  }
+
+  class ChatbotFinanciero <<Vision>> {
+  }
+
+  class ConsultaChatbot <<Vision>> {
+    +pregunta
+    +respuesta
+    +fecha
+  }
+}
+
+' Usuarios y Seguridad
+Usuario "1" -- "0..*" Permiso : tiene asignados
+Permiso "1" o-- "0..*" Permiso : agrupa (Composite)
+Usuario "1" -- "0..*" CuentaFinanciera : posee
+
+' Ingesta y Consolidacion de Movimientos
+Usuario "1" -- "0..*" Movimiento : registra
+Usuario "0..1" -- "0..*" Categoria : personaliza
+Categoria "1" -- "0..*" Movimiento : clasifica
+CuentaFinanciera "0..1" -- "0..*" Movimiento : origina / sincroniza
+Ticket "0..1" -- "0..1" Movimiento : genera
+
+' Ahorro y Descuentos Inteligentes
+Usuario "1" -- "0..*" ListaDeCompras : crea
+ListaDeCompras "1" *-- "1..*" ItemLista : contiene
+Comercio "1" -- "0..*" Promocion : ofrece
+Promocion "0..*" -- "0..*" Notificacion : dispara
+Usuario "1" -- "0..*" Notificacion : recibe
+
+' Presupuesto y Analitica
+Usuario "1" -- "0..*" Presupuesto : define
+Categoria "1" -- "0..*" Presupuesto : limita
+Usuario "1" -- "0..*" ResumenFinanciero : genera (periodico)
+
+' Inteligencia Artificial
+AgenteIA "1" -- "0..*" SugerenciaFinanciera : genera
+Usuario "1" -- "0..*" SugerenciaFinanciera : recibe
+Usuario "1" -- "0..*" ConsultaChatbot : realiza
+ChatbotFinanciero "1" -- "0..*" ConsultaChatbot : responde
+
+legend right
+  |= Color |= Significado |
+  |<#D5E8D4>| Implementado en el codigo del TP |
+  |<#F5F5F5>| Vision de producto (G02), pendiente de codear |
+endlegend
+
+@enduml

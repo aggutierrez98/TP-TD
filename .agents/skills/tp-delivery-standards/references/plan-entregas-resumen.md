@@ -16,13 +16,18 @@
 - `T03` Encriptado/hash para datos sensibles.
 - `T04` Perfiles de usuario, uso de Composite y recursion.
 - `T05` Multiples idiomas, uso de Observer y cambio dinamico.
-- `T06a/T06b` Bitacora y control de cambios.
-- `T07/T08` Digitos verificadores e integridad.
-- `G06/G07` Diagrama de clases y modelo de datos integrados por capa.
+- `T06` Bitacora y control de cambios.
+- `T07` Digitos verificadores e integridad (item oficial).
+- `T08` Backup y restauracion de la base de datos (extension no oficial del equipo, no es un item formal de la Carpeta Modelo).
+- `G07/G08` Diagrama de clases y modelo de datos integrados por capa.
 
 ## TD 2023 destacados
 
-- `N01/N02` Proceso de negocio, analisis, diseno, implementacion y pruebas.
+- `N01/N02` Especificacion funcional y especificacion de Casos de Uso: son dos **tipos de
+  artefacto** oficiales, repetidos por cada proceso de negocio del proyecto (no dos procesos
+  distintos). Este repo indexa sus procesos de negocio reales con numeracion propia
+  `NEG01`, `NEG02`, ... (ej. `NEG01-movimientos`, `NEG02-categorias`); cada uno tiene su propio
+  N01 (analisis y diseno) y N02 (implementacion y pruebas).
 - `A01` Instalador completo.
 - `A02` Reporte/exportacion PDF.
 - `A02` Serializacion.

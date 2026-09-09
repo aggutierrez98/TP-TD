@@ -74,6 +74,28 @@ namespace BLL
                 try
                 {
                     List<IPermiso> existentes = unidad.Permisos.ObtenerNodos();
+
+                    // Solo se exige cobertura para patentes que ya existian antes de este
+                    // guardado: una patente recien creada en este mismo llamado todavia no
+                    // fue asignada a nadie por diseno, no es una "zona de nadie" sobreviniente.
+                    HashSet<int> idsPreexistentes = new HashSet<int>(existentes.Select(item => item.Id));
+                    Dictionary<int, IPermiso> indicePropuesto = nodos
+                        .Where(item => item.Id > 0)
+                        .ToDictionary(item => item.Id);
+                    HashSet<int> patentesPreexistentesEnPropuesta = new HashSet<int>(
+                        nodos.Where(item => !item.EsGrupo && idsPreexistentes.Contains(item.Id)).Select(item => item.Id));
+                    List<List<int>> asignacionesActivas = unidad.Usuarios.ObtenerTodos()
+                        .Where(item => item.Activo)
+                        .Select(item => unidad.UsuarioPermisos.ObtenerPermisoIdsPorUsuario(item.Id))
+                        .ToList();
+
+                    ValidarNingunaPatenteQuedaSinCobertura(
+                        indicePropuesto,
+                        patentesPreexistentesEnPropuesta,
+                        asignacionesActivas,
+                        "FormAuditLog.Value.Activity.RejectedPermissionCatalogUpdate",
+                        unidad);
+
                     foreach (IPermiso nodo in nodos)
                     {
                         nodo.Id = unidad.Permisos.Guardar(nodo);
@@ -118,6 +140,8 @@ namespace BLL
                     {
                         throw new ExcepcionNegocio("Error.Permission.UserNotFound");
                     }
+
+                    ValidarNingunaPatenteQuedaSinCoberturaTrasCambio(usuarioId, permisosId, unidad, "FormAuditLog.Value.Activity.RejectedUserPermissionsUpdate");
 
                     GuardarPermisosUsuarioInterno(usuarioId, permisosId, unidad);
                     _usuarioEstadoBLL.GuardarVersionActualInterno(usuarioId, "FormUserHistory.Value.Action.PermissionsUpdate", "FormUserHistory.Value.Obs.PermissionsUpdate", unidad);
@@ -182,6 +206,85 @@ namespace BLL
                 permisosId == null ? new List<int>() : permisosId.Distinct().ToList());
         }
 
+        internal void ValidarPuedeEliminarUsuario(int usuarioId, IUnidadDeTrabajo unidad)
+        {
+            if (unidad == null)
+            {
+                throw new ArgumentNullException("unidad");
+            }
+
+            Dictionary<int, IPermiso> indice = ConstruirIndiceCatalogo(unidad);
+            HashSet<int> patentesExistentes = new HashSet<int>(
+                indice.Values.Where(item => !item.EsGrupo).Select(item => item.Id));
+            List<List<int>> asignacionesOtrosActivos = unidad.Usuarios.ObtenerTodos()
+                .Where(item => item.Activo && item.Id != usuarioId)
+                .Select(item => unidad.UsuarioPermisos.ObtenerPermisoIdsPorUsuario(item.Id))
+                .ToList();
+
+            ValidarNingunaPatenteQuedaSinCobertura(
+                indice,
+                patentesExistentes,
+                asignacionesOtrosActivos,
+                "FormAuditLog.Value.Activity.RejectedUserHardDelete",
+                unidad);
+        }
+
+        private void ValidarNingunaPatenteQuedaSinCoberturaTrasCambio(int usuarioId, List<int> permisosIdPropuestos, IUnidadDeTrabajo unidad, string actividadRechazo)
+        {
+            Dictionary<int, IPermiso> indice = ConstruirIndiceCatalogo(unidad);
+            HashSet<int> patentesExistentes = new HashSet<int>(
+                indice.Values.Where(item => !item.EsGrupo).Select(item => item.Id));
+
+            List<List<int>> asignaciones = unidad.Usuarios.ObtenerTodos()
+                .Where(item => item.Activo)
+                .Select(item => item.Id == usuarioId
+                    ? (permisosIdPropuestos == null ? new List<int>() : permisosIdPropuestos)
+                    : unidad.UsuarioPermisos.ObtenerPermisoIdsPorUsuario(item.Id))
+                .ToList();
+
+            ValidarNingunaPatenteQuedaSinCobertura(indice, patentesExistentes, asignaciones, actividadRechazo, unidad);
+        }
+
+        private Dictionary<int, IPermiso> ConstruirIndiceCatalogo(IUnidadDeTrabajo unidad)
+        {
+            List<IPermiso> nodos = unidad.Permisos.ObtenerNodos();
+            List<Tuple<int, int>> relaciones = unidad.Permisos.ObtenerRelaciones();
+            List<IPermiso> catalogo = _permisoService.ConstruirArbol(nodos, relaciones).ToList();
+            return _permisoService.Aplanar(catalogo).ToDictionary(item => item.Id);
+        }
+
+        // Invariante de control interno (T04): ninguna patente puede quedar sin al
+        // menos un titular efectivo en todo el sistema (directo o heredado por
+        // familia). Es una validacion global, no local al usuario/familia que se
+        // esta editando: alcanza con que algun otro usuario activo la cubra.
+        private void ValidarNingunaPatenteQuedaSinCobertura(
+            Dictionary<int, IPermiso> indiceCatalogo,
+            IEnumerable<int> idsPatentesAValidar,
+            IEnumerable<List<int>> asignacionesUsuariosActivos,
+            string actividadRechazo,
+            IUnidadDeTrabajo unidad)
+        {
+            HashSet<int> patentesCubiertas = new HashSet<int>();
+            foreach (List<int> permisosId in asignacionesUsuariosActivos)
+            {
+                List<IPermiso> nodosAsignados = permisosId
+                    .Where(indiceCatalogo.ContainsKey)
+                    .Select(id => indiceCatalogo[id])
+                    .ToList();
+
+                foreach (IPermiso hoja in _permisoService.ObtenerPermisosEfectivos(nodosAsignados))
+                {
+                    patentesCubiertas.Add(hoja.Id);
+                }
+            }
+
+            if (idsPatentesAValidar.Except(patentesCubiertas).Any())
+            {
+                _bitacoraBLL.RegistrarFalloNegocioInterno(actividadRechazo, "FormAuditLog.Value.Info.PermissionWouldOrphanPatente", "PermisoBLL", unidad);
+                throw new ExcepcionNegocio("Error.Permission.OrphanedPatente");
+            }
+        }
+
         void IPermisoBLL.AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad)
         {
             AsignarPerfilBasicoInterno(usuarioId, unidad);
@@ -190,6 +293,11 @@ namespace BLL
         void IPermisoBLL.GuardarPermisosUsuarioInterno(int usuarioId, List<int> permisosId, IUnidadDeTrabajo unidad)
         {
             GuardarPermisosUsuarioInterno(usuarioId, permisosId, unidad);
+        }
+
+        void IPermisoBLL.ValidarPuedeEliminarUsuario(int usuarioId, IUnidadDeTrabajo unidad)
+        {
+            ValidarPuedeEliminarUsuario(usuarioId, unidad);
         }
     }
 }

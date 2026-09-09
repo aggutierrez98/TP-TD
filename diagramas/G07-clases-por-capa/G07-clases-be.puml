@@ -1,0 +1,54 @@
+@startuml
+title G07 - Diagrama de clases parcial - Capa BE
+
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+
+package "ABSTRACCIONES" <<Frame>> {
+  interface IUsuarioAutenticado
+  interface IIntegrable
+  enum TipoMovimiento
+}
+
+package "BE (entidades de negocio)" {
+  class Usuario {
+    +Id : int  <<DigitoVerificador(1)>>
+    +Username : string  <<DigitoVerificador(2)>>
+    +PasswordHash : string  <<DigitoVerificador(3)>>
+    +Activo : bool  <<DigitoVerificador(4)>>
+    +IntentosFallidos : int  <<DigitoVerificador(5)>>
+    +Bloqueado : bool  <<DigitoVerificador(6)>>
+    +BloqueadoHasta : DateTime?  <<DigitoVerificador(7)>>
+    +DVH : string
+    +Usuario()
+    +Usuario(username : string)
+  }
+
+  class Categoria {
+    +Id : int
+    +Nombre : string
+    +UsuarioId : int?
+    +EsGlobal : bool  <<readonly>>
+  }
+
+  class Movimiento {
+    +Id : int
+    +UsuarioId : int
+    +CategoriaId : int
+    +Tipo : TipoMovimiento
+    +Monto : decimal
+    +Fecha : DateTime
+    +Descripcion : string
+    +FechaCreacion : DateTime
+  }
+}
+
+Usuario ..|> IUsuarioAutenticado
+Usuario ..|> IIntegrable
+Movimiento ..> TipoMovimiento
+
+@enduml

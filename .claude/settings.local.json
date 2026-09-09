@@ -28,7 +28,14 @@
       "Bash(yt-dlp *)",
       "Bash(ffprobe -v quiet -show_format -show_streams \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\")",
       "Bash(ffmpeg -i \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\" -vf \"scale=-2:720\" -c:v libx264 -b:v 200k -c:a aac -b:a 96k -movflags +faststart \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C# \\(comprimido\\).mp4\")",
-      "Bash(ffmpeg -y -i \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\" -vf \"scale=-2:720\" -c:v libx264 -b:v 170k -c:a aac -b:a 80k -movflags +faststart \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C# \\(comprimido\\).mp4\")"
+      "Bash(ffmpeg -y -i \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C#.mp4\" -vf \"scale=-2:720\" -c:v libx264 -b:v 170k -c:a aac -b:a 80k -movflags +faststart \"/mnt/c/Users/agust/Desktop/Arquitectura de software en capas con en C# \\(comprimido\\).mp4\")",
+      "Bash(pdfinfo \"/mnt/c/Users/agust/Desktop/Presentación con plantilla.pdf\")",
+      "Bash(pdfinfo \"/mnt/c/Users/agust/Desktop/Carpeta modelo TC y TD 2020.pdf\")",
+      "Bash(xargs -n1 basename)",
+      "Bash(git -C /mnt/c/dev/TpIDS-TD log -1 --format=%ad diagramas/G06-clases-por-capa diagramas/G07-modelo-datos-integrado)",
+      "Bash(git -C /mnt/c/dev/TpIDS-TD log --since=\"2026-07-02\" --name-only --pretty=format:\"%h %ad %s\" --date=short -- BE BLL DAL REPOSITORIO SERVICIOS ABSTRACCIONES)",
+      "Bash(echo \"sqlcmd-status:$?\")",
+      "Bash(rtk grep *)"
     ]
   }
 }
