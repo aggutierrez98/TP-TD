@@ -25,12 +25,17 @@ namespace TpIDS
             this.mnuFinanzas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuMovimientos = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuCategorias = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuListaCompras = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuAdministracion = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuUsuarios = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuPermisos = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuIdiomas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuBitacora = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuBackup = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperador = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuNotificaciones = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuComercios = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuMonedas = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripPrincipal.SuspendLayout();
             this.SuspendLayout();
             //
@@ -39,7 +44,8 @@ namespace TpIDS
             this.menuStripPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuSesion,
             this.mnuFinanzas,
-            this.mnuAdministracion});
+            this.mnuAdministracion,
+            this.mnuOperador});
             this.menuStripPrincipal.Location = new System.Drawing.Point(0, 0);
             this.menuStripPrincipal.Name = "menuStripPrincipal";
             this.menuStripPrincipal.Size = new System.Drawing.Size(1000, 24);
@@ -81,7 +87,8 @@ namespace TpIDS
             //
             this.mnuFinanzas.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuMovimientos,
-            this.mnuCategorias});
+            this.mnuCategorias,
+            this.mnuListaCompras});
             this.mnuFinanzas.Name = "mnuFinanzas";
             this.mnuFinanzas.Size = new System.Drawing.Size(65, 20);
             this.mnuFinanzas.Tag = "FormMainShell.Menu.Finance";
@@ -102,6 +109,14 @@ namespace TpIDS
             this.mnuCategorias.Tag = "FormMainShell.Menu.Categories";
             this.mnuCategorias.Text = "Categorias";
             this.mnuCategorias.Click += new System.EventHandler(this.mnuCategorias_Click);
+            //
+            // mnuListaCompras
+            //
+            this.mnuListaCompras.Name = "mnuListaCompras";
+            this.mnuListaCompras.Size = new System.Drawing.Size(180, 22);
+            this.mnuListaCompras.Tag = "FormMainShell.Menu.ShoppingList";
+            this.mnuListaCompras.Text = "Lista de compras";
+            this.mnuListaCompras.Click += new System.EventHandler(this.mnuListaCompras_Click);
             //
             // mnuAdministracion
             //
@@ -156,6 +171,41 @@ namespace TpIDS
             this.mnuBackup.Text = "Backup";
             this.mnuBackup.Click += new System.EventHandler(this.mnuBackup_Click);
             //
+            // mnuOperador
+            //
+            this.mnuOperador.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuNotificaciones,
+            this.mnuComercios,
+            this.mnuMonedas});
+            this.mnuOperador.Name = "mnuOperador";
+            this.mnuOperador.Size = new System.Drawing.Size(76, 20);
+            this.mnuOperador.Tag = "FormMainShell.Menu.Operator";
+            this.mnuOperador.Text = "Operador";
+            //
+            // mnuNotificaciones
+            //
+            this.mnuNotificaciones.Name = "mnuNotificaciones";
+            this.mnuNotificaciones.Size = new System.Drawing.Size(180, 22);
+            this.mnuNotificaciones.Tag = "FormMainShell.Menu.Notifications";
+            this.mnuNotificaciones.Text = "Notificaciones";
+            this.mnuNotificaciones.Click += new System.EventHandler(this.mnuNotificaciones_Click);
+            //
+            // mnuComercios
+            //
+            this.mnuComercios.Name = "mnuComercios";
+            this.mnuComercios.Size = new System.Drawing.Size(180, 22);
+            this.mnuComercios.Tag = "FormMainShell.Menu.Merchants";
+            this.mnuComercios.Text = "Comercios";
+            this.mnuComercios.Click += new System.EventHandler(this.mnuComercios_Click);
+            //
+            // mnuMonedas
+            //
+            this.mnuMonedas.Name = "mnuMonedas";
+            this.mnuMonedas.Size = new System.Drawing.Size(180, 22);
+            this.mnuMonedas.Tag = "FormMainShell.Menu.Currencies";
+            this.mnuMonedas.Text = "Monedas";
+            this.mnuMonedas.Click += new System.EventHandler(this.mnuMonedas_Click);
+            //
             // FormPrincipal
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -186,11 +236,16 @@ namespace TpIDS
         private System.Windows.Forms.ToolStripMenuItem mnuFinanzas;
         private System.Windows.Forms.ToolStripMenuItem mnuMovimientos;
         private System.Windows.Forms.ToolStripMenuItem mnuCategorias;
+        private System.Windows.Forms.ToolStripMenuItem mnuListaCompras;
         private System.Windows.Forms.ToolStripMenuItem mnuAdministracion;
         private System.Windows.Forms.ToolStripMenuItem mnuUsuarios;
         private System.Windows.Forms.ToolStripMenuItem mnuPermisos;
         private System.Windows.Forms.ToolStripMenuItem mnuIdiomas;
         private System.Windows.Forms.ToolStripMenuItem mnuBitacora;
         private System.Windows.Forms.ToolStripMenuItem mnuBackup;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperador;
+        private System.Windows.Forms.ToolStripMenuItem mnuNotificaciones;
+        private System.Windows.Forms.ToolStripMenuItem mnuComercios;
+        private System.Windows.Forms.ToolStripMenuItem mnuMonedas;
     }
 }

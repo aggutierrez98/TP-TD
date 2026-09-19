@@ -125,11 +125,17 @@ DECLARE @PermisoConfiguracionUsuarioId INT;
 DECLARE @PermisoGestionIdiomasId INT;
 DECLARE @PermisoGestionMovimientosId INT;
 DECLARE @PermisoGestionCategoriasId INT;
+DECLARE @PermisoGestionListaComprasId INT;
 DECLARE @PermisoGestionBackupId INT;
+DECLARE @PermisoGestionNotificacionesId INT;
+DECLARE @PermisoGestionComerciosId INT;
+DECLARE @PermisoGestionMonedasId INT;
 DECLARE @GrupoAdminId INT;
 DECLARE @GrupoBasicoId INT;
+DECLARE @GrupoOperadorId INT;
 DECLARE @AdminUserId INT;
 DECLARE @UsuarioBasicoId INT;
+DECLARE @UsuarioOperadorId INT;
 
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionusuarios', 0);
 SET @PermisoGestionUsuariosId = SCOPE_IDENTITY();
@@ -157,15 +163,37 @@ SET @PermisoGestionMovimientosId = SCOPE_IDENTITY();
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestioncategorias', 0);
 SET @PermisoGestionCategoriasId = SCOPE_IDENTITY();
 
+-- Lista de compras: igual que movimientos/categorias, nucleo de producto disponible desde el alta.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionlistacompras', 0);
+SET @PermisoGestionListaComprasId = SCOPE_IDENTITY();
+
 -- T08: tecnico, solo grupo admin (igual que gestionidiomas/verbitacora).
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionbackup', 0);
 SET @PermisoGestionBackupId = SCOPE_IDENTITY();
+
+-- Notificaciones (back-office): rol "operador" nuevo, exclusivo (no va a admin ni a basico).
+-- El operador administra notificaciones de todos los usuarios, no solo las propias.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionnotificaciones', 0);
+SET @PermisoGestionNotificacionesId = SCOPE_IDENTITY();
+
+-- Comercios (back-office): tambien rol "operador", pero a diferencia de notificaciones
+-- el usuario pidio que admin lo tenga desde el arranque (no como agregado posterior).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestioncomercios', 0);
+SET @PermisoGestionComerciosId = SCOPE_IDENTITY();
+
+-- Monedas (back-office): rol "operador", y al igual que Comercios el usuario pidio que
+-- admin lo tenga desde el arranque.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionmonedas', 0);
+SET @PermisoGestionMonedasId = SCOPE_IDENTITY();
 
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
 SET @GrupoAdminId = SCOPE_IDENTITY();
 
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('basico', 1);
 SET @GrupoBasicoId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('operador', 1);
+SET @GrupoOperadorId = SCOPE_IDENTITY();
 
 INSERT INTO dbo.PermisoCompuesto (PermisoPadreId, PermisoHijoId)
 VALUES
@@ -177,25 +205,37 @@ VALUES
     (@GrupoAdminId, @PermisoGestionIdiomasId),
     (@GrupoAdminId, @PermisoGestionMovimientosId),
     (@GrupoAdminId, @PermisoGestionCategoriasId),
+    (@GrupoAdminId, @PermisoGestionListaComprasId),
     (@GrupoAdminId, @PermisoGestionBackupId),
+    (@GrupoAdminId, @PermisoGestionNotificacionesId),
+    (@GrupoAdminId, @PermisoGestionComerciosId),
+    (@GrupoAdminId, @PermisoGestionMonedasId),
     (@GrupoBasicoId, @PermisoConfiguracionUsuarioId),
     (@GrupoBasicoId, @PermisoGestionMovimientosId),
-    (@GrupoBasicoId, @PermisoGestionCategoriasId);
+    (@GrupoBasicoId, @PermisoGestionCategoriasId),
+    (@GrupoBasicoId, @PermisoGestionListaComprasId),
+    (@GrupoOperadorId, @PermisoGestionNotificacionesId),
+    (@GrupoOperadorId, @PermisoGestionComerciosId),
+    (@GrupoOperadorId, @PermisoGestionMonedasId);
 
 INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
 VALUES
     ('admin', 'jdLqOYiW5l0Rzxvs2F6C9s+XPP1lpDouX9r4gg8K72K00snMfMzAo84u8OAQP4Hc', 1),
-    ('user', 'DDQdLlDvTDqmjKrOv8/nV7l2SmyoVkxqURLPHM1EG8fYYF61cjoTPjh45V3iiql9', 1);
+    ('user', 'DDQdLlDvTDqmjKrOv8/nV7l2SmyoVkxqURLPHM1EG8fYYF61cjoTPjh45V3iiql9', 1),
+    ('operador', 'AS8qXPgTV1LxO3ERPzBGoPb09ETNny2aNSkTIAGGd1Ytdi9AcGD5WoDKdSxxgp8Z', 1);
 
 SELECT @AdminUserId = Id FROM dbo.Usuarios WHERE Username = 'admin';
 SELECT @UsuarioBasicoId = Id FROM dbo.Usuarios WHERE Username = 'user';
+SELECT @UsuarioOperadorId = Id FROM dbo.Usuarios WHERE Username = 'operador';
 SELECT @GrupoAdminId = Id FROM dbo.Permiso WHERE Nombre = 'admin';
 SELECT @GrupoBasicoId = Id FROM dbo.Permiso WHERE Nombre = 'basico';
+SELECT @GrupoOperadorId = Id FROM dbo.Permiso WHERE Nombre = 'operador';
 
 INSERT INTO dbo.UsuarioPermiso (UsuarioId, PermisoId)
 VALUES
     (@AdminUserId, @GrupoAdminId),
-    (@UsuarioBasicoId, @GrupoBasicoId);
+    (@UsuarioBasicoId, @GrupoBasicoId),
+    (@UsuarioOperadorId, @GrupoOperadorId);
 GO
 
 CREATE TABLE dbo.Bitacora
@@ -303,6 +343,272 @@ CREATE INDEX IX_Movimiento_UsuarioId_Fecha
     ON dbo.Movimiento (UsuarioId, Fecha DESC);
 GO
 
+-- Piloto DAL/REPOSITORIO sobre el modelo de dominio de FINAZAPP (G00): EntidadFinanciera
+-- y CuentaFinanciera son las primeras clases <<Vision>> en tener persistencia real.
+CREATE TABLE dbo.EntidadFinanciera
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT PK_EntidadFinanciera PRIMARY KEY CLUSTERED (Id)
+);
+GO
+
+ALTER TABLE dbo.EntidadFinanciera
+ADD CONSTRAINT UQ_EntidadFinanciera_Nombre UNIQUE (Nombre);
+GO
+
+CREATE TABLE dbo.CuentaFinanciera
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    EntidadFinancieraId INT NOT NULL,
+    Alias VARCHAR(100) NOT NULL,
+    Tipo VARCHAR(30) NOT NULL,
+    CredencialesCifradas VARCHAR(500) NULL,
+    CONSTRAINT PK_CuentaFinanciera PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_CuentaFinanciera_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_CuentaFinanciera_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id)
+);
+GO
+
+CREATE INDEX IX_CuentaFinanciera_UsuarioId
+    ON dbo.CuentaFinanciera (UsuarioId);
+GO
+
+-- Cluster Comercio/Producto sobre el modelo de dominio de FINAZAPP (G00).
+CREATE TABLE dbo.RubroComercio
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT PK_RubroComercio PRIMARY KEY CLUSTERED (Id)
+);
+GO
+
+ALTER TABLE dbo.RubroComercio
+ADD CONSTRAINT UQ_RubroComercio_Nombre UNIQUE (Nombre);
+GO
+
+CREATE TABLE dbo.CategoriaProducto
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT PK_CategoriaProducto PRIMARY KEY CLUSTERED (Id)
+);
+GO
+
+ALTER TABLE dbo.CategoriaProducto
+ADD CONSTRAINT UQ_CategoriaProducto_Nombre UNIQUE (Nombre);
+GO
+
+-- Prerequisito minimo para Producto.MonedaId (no forma parte de este lote de negocio,
+-- solo el catalogo base; TasaConversion queda para el cluster Multi-Moneda).
+CREATE TABLE dbo.Moneda
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Codigo VARCHAR(10) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT PK_Moneda PRIMARY KEY CLUSTERED (Id)
+);
+GO
+
+ALTER TABLE dbo.Moneda
+ADD CONSTRAINT UQ_Moneda_Codigo UNIQUE (Codigo);
+GO
+
+CREATE TABLE dbo.Comercio
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    RubroComercioId INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    Ubicacion VARCHAR(200) NULL,
+    CONSTRAINT PK_Comercio PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Comercio_RubroComercio FOREIGN KEY (RubroComercioId) REFERENCES dbo.RubroComercio(Id)
+);
+GO
+
+CREATE INDEX IX_Comercio_RubroComercioId
+    ON dbo.Comercio (RubroComercioId);
+GO
+
+CREATE TABLE dbo.Producto
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    ComercioId INT NOT NULL,
+    CategoriaProductoId INT NOT NULL,
+    MonedaId INT NOT NULL,
+    Nombre VARCHAR(150) NOT NULL,
+    Precio DECIMAL(18,2) NOT NULL,
+    CONSTRAINT PK_Producto PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Producto_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id),
+    CONSTRAINT FK_Producto_CategoriaProducto FOREIGN KEY (CategoriaProductoId) REFERENCES dbo.CategoriaProducto(Id),
+    CONSTRAINT FK_Producto_Moneda FOREIGN KEY (MonedaId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT CK_Producto_Precio CHECK (Precio > 0)
+);
+GO
+
+CREATE INDEX IX_Producto_ComercioId
+    ON dbo.Producto (ComercioId);
+GO
+
+-- Promocion y MedioDePago sobre el modelo de dominio de FINAZAPP (G00). Las relaciones
+-- de Promocion son todas N:M (aplica a uno o varios medios de pago / comercios / rubros),
+-- resueltas con tablas intermedias sin columna Id propia (mismo patron que UsuarioPermiso).
+CREATE TABLE dbo.Promocion
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Descripcion VARCHAR(300) NOT NULL,
+    Descuento DECIMAL(5,2) NOT NULL,
+    VigenciaDesde DATE NOT NULL,
+    VigenciaHasta DATE NOT NULL,
+    CONSTRAINT PK_Promocion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT CK_Promocion_Descuento CHECK (Descuento > 0 AND Descuento <= 100),
+    CONSTRAINT CK_Promocion_Vigencia CHECK (VigenciaHasta >= VigenciaDesde)
+);
+GO
+
+CREATE TABLE dbo.MedioDePago
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    EntidadFinancieraId INT NOT NULL,
+    Tipo VARCHAR(30) NOT NULL,
+    Marca VARCHAR(50) NULL,
+    Segmento VARCHAR(50) NULL,
+    CONSTRAINT PK_MedioDePago PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_MedioDePago_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id),
+    CONSTRAINT CK_MedioDePago_Tipo CHECK (Tipo IN ('TarjetaCredito', 'TarjetaDebito', 'TarjetaPrepaga', 'CuentaBilleteraVirtual', 'CuentaDNI'))
+);
+GO
+
+CREATE INDEX IX_MedioDePago_EntidadFinancieraId
+    ON dbo.MedioDePago (EntidadFinancieraId);
+GO
+
+CREATE TABLE dbo.PromocionMedioDePago
+(
+    PromocionId INT NOT NULL,
+    MedioDePagoId INT NOT NULL,
+    CONSTRAINT PK_PromocionMedioDePago PRIMARY KEY CLUSTERED (PromocionId, MedioDePagoId),
+    CONSTRAINT FK_PromocionMedioDePago_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionMedioDePago_MedioDePago FOREIGN KEY (MedioDePagoId) REFERENCES dbo.MedioDePago(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionComercio
+(
+    PromocionId INT NOT NULL,
+    ComercioId INT NOT NULL,
+    CONSTRAINT PK_PromocionComercio PRIMARY KEY CLUSTERED (PromocionId, ComercioId),
+    CONSTRAINT FK_PromocionComercio_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionComercio_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionRubroComercio
+(
+    PromocionId INT NOT NULL,
+    RubroComercioId INT NOT NULL,
+    CONSTRAINT PK_PromocionRubroComercio PRIMARY KEY CLUSTERED (PromocionId, RubroComercioId),
+    CONSTRAINT FK_PromocionRubroComercio_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionRubroComercio_RubroComercio FOREIGN KEY (RubroComercioId) REFERENCES dbo.RubroComercio(Id)
+);
+GO
+
+-- ListaDeCompras/ItemLista y Notificacion sobre el modelo de dominio de FINAZAPP (G00).
+-- Notificacion, RecordatorioCompra y RecordatorioInversion (herencia real en BE) se
+-- persisten con Table Per Hierarchy: una sola tabla Notificacion, columnas de subclase
+-- nullable, discriminadas por TipoNotificacion.
+CREATE TABLE dbo.ListaDeCompras
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    FechaCreacion DATETIME NOT NULL CONSTRAINT DF_ListaDeCompras_FechaCreacion DEFAULT (GETDATE()),
+    CONSTRAINT PK_ListaDeCompras PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ListaDeCompras_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id)
+);
+GO
+
+CREATE INDEX IX_ListaDeCompras_UsuarioId
+    ON dbo.ListaDeCompras (UsuarioId);
+GO
+
+-- ItemLista.Descripcion es texto libre tipeado por el usuario (ej. "Leche descremada 1L");
+-- el mapeo futuro ItemLista -> Producto (para asignarle promocion) queda fuera de alcance
+-- de este lote y no se modela aqui.
+CREATE TABLE dbo.ItemLista
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    ListaDeComprasId INT NOT NULL,
+    Descripcion VARCHAR(200) NOT NULL,
+    Cantidad INT NOT NULL,
+    Comprado BIT NOT NULL CONSTRAINT DF_ItemLista_Comprado DEFAULT (0),
+    CONSTRAINT PK_ItemLista PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ItemLista_ListaDeCompras FOREIGN KEY (ListaDeComprasId) REFERENCES dbo.ListaDeCompras(Id),
+    CONSTRAINT CK_ItemLista_Cantidad CHECK (Cantidad > 0)
+);
+GO
+
+CREATE INDEX IX_ItemLista_ListaDeComprasId
+    ON dbo.ItemLista (ListaDeComprasId);
+GO
+
+-- TipoNotificacion es el discriminador de la jerarquia Notificacion / RecordatorioCompra /
+-- RecordatorioInversion (Table Per Hierarchy: una sola tabla, columnas de subclase nullable).
+CREATE TABLE dbo.Notificacion
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    TipoNotificacion VARCHAR(30) NOT NULL,
+    Mensaje VARCHAR(300) NOT NULL,
+    Fecha DATETIME NOT NULL CONSTRAINT DF_Notificacion_Fecha DEFAULT (GETDATE()),
+    Leida BIT NOT NULL CONSTRAINT DF_Notificacion_Leida DEFAULT (0),
+    ItemListaId INT NULL,
+    PromocionId INT NULL,
+    FechaVencimiento DATE NULL,
+    CONSTRAINT PK_Notificacion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Notificacion_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_Notificacion_ItemLista FOREIGN KEY (ItemListaId) REFERENCES dbo.ItemLista(Id),
+    CONSTRAINT FK_Notificacion_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT CK_Notificacion_Tipo CHECK (TipoNotificacion IN ('Notificacion', 'RecordatorioCompra', 'RecordatorioInversion')),
+    CONSTRAINT CK_Notificacion_RecordatorioCompra_Campos CHECK (
+        (TipoNotificacion <> 'RecordatorioCompra') OR (ItemListaId IS NOT NULL AND FechaVencimiento IS NOT NULL)
+    )
+);
+GO
+
+CREATE INDEX IX_Notificacion_UsuarioId
+    ON dbo.Notificacion (UsuarioId);
+GO
+
+-- ReglaCategorizacion sobre el modelo de dominio de FINAZAPP (G00). Ultima tabla
+-- intermedia N:M del modelo: una regla puede disparar en uno o varios comercios.
+CREATE TABLE dbo.ReglaCategorizacion
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    CategoriaId INT NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    PalabrasClave VARCHAR(300) NULL,
+    CONSTRAINT PK_ReglaCategorizacion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ReglaCategorizacion_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_ReglaCategorizacion_Categoria FOREIGN KEY (CategoriaId) REFERENCES dbo.Categoria(Id)
+);
+GO
+
+CREATE INDEX IX_ReglaCategorizacion_UsuarioId
+    ON dbo.ReglaCategorizacion (UsuarioId);
+GO
+
+CREATE TABLE dbo.ComercioReglaCategorizacion
+(
+    ComercioId INT NOT NULL,
+    ReglaCategorizacionId INT NOT NULL,
+    CONSTRAINT PK_ComercioReglaCategorizacion PRIMARY KEY CLUSTERED (ComercioId, ReglaCategorizacionId),
+    CONSTRAINT FK_ComercioReglaCategorizacion_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id),
+    CONSTRAINT FK_ComercioReglaCategorizacion_ReglaCategorizacion FOREIGN KEY (ReglaCategorizacionId) REFERENCES dbo.ReglaCategorizacion(Id)
+);
+GO
+
 -- Categorias globales por defecto (UsuarioId NULL), visibles para todos los usuarios.
 INSERT INTO dbo.Categoria (Nombre, UsuarioId)
 VALUES
@@ -314,6 +620,56 @@ VALUES
     ('Sueldo', NULL),
     ('Otros Ingresos', NULL),
     ('Otros Egresos', NULL);
+GO
+
+-- Dashboard y TarjetaDashboard sobre el modelo de dominio de FINAZAPP (G00). Un usuario
+-- tiene a lo sumo un Dashboard (0..1 en el diagrama, de ahi el UNIQUE en UsuarioId);
+-- Dashboard *-- TarjetaDashboard es composicion (una tarjeta no existe sin su dashboard).
+CREATE TABLE dbo.Dashboard
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    CONSTRAINT PK_Dashboard PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_Dashboard_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT UQ_Dashboard_UsuarioId UNIQUE (UsuarioId)
+);
+GO
+
+CREATE TABLE dbo.TarjetaDashboard
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    DashboardId INT NOT NULL,
+    Tipo VARCHAR(30) NOT NULL,
+    Orden INT NOT NULL,
+    CONSTRAINT PK_TarjetaDashboard PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_TarjetaDashboard_Dashboard FOREIGN KEY (DashboardId) REFERENCES dbo.Dashboard(Id),
+    CONSTRAINT CK_TarjetaDashboard_Tipo CHECK (Tipo IN ('SaldoActual', 'GastosPorCategoria', 'ComparativoMensual', 'AhorroObjetivo'))
+);
+GO
+
+CREATE INDEX IX_TarjetaDashboard_DashboardId
+    ON dbo.TarjetaDashboard (DashboardId);
+GO
+
+-- TasaConversion sobre el modelo de dominio de FINAZAPP (G00). Primera entidad con 2 FK
+-- distintas a la misma tabla (Moneda): moneda base y moneda de conversion.
+CREATE TABLE dbo.TasaConversion
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    MonedaBaseId INT NOT NULL,
+    MonedaConversionId INT NOT NULL,
+    CalculoConversion DECIMAL(18,6) NOT NULL,
+    FechaActualizacion DATETIME NOT NULL CONSTRAINT DF_TasaConversion_FechaActualizacion DEFAULT (GETDATE()),
+    CONSTRAINT PK_TasaConversion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_TasaConversion_MonedaBase FOREIGN KEY (MonedaBaseId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT FK_TasaConversion_MonedaConversion FOREIGN KEY (MonedaConversionId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT CK_TasaConversion_MonedasDistintas CHECK (MonedaBaseId <> MonedaConversionId),
+    CONSTRAINT CK_TasaConversion_Calculo CHECK (CalculoConversion > 0)
+);
+GO
+
+CREATE UNIQUE INDEX UQ_TasaConversion_Par
+    ON dbo.TasaConversion (MonedaBaseId, MonedaConversionId);
 GO
 
 -- BEGIN AUTO-GENERATED I18N BASE SEED

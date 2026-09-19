@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using ABSTRACCIONES;
 using BE;
 using BLL;
@@ -42,10 +44,23 @@ namespace BLL.Tests.TestDoubles
         {
             BitacoraRepo = new FakeBitacoraRepositorio();
             CategoriaRepo = new FakeCategoriaRepositorio();
+            CategoriaProductoRepo = new FakeCategoriaProductoRepositorio();
+            ComercioRepo = new FakeComercioRepositorio();
+            MonedaRepo = new FakeMonedaRepositorio();
+            TasaConversionRepo = new FakeTasaConversionRepositorio();
             IdiomaRepo = new FakeIdiomaRepositorio();
             IntegridadRepo = new FakeIntegridadRepositorio();
+            ItemListaRepo = new FakeItemListaRepositorio();
+            ListaDeComprasRepo = new FakeListaDeComprasRepositorio();
             MovimientoRepo = new FakeMovimientoRepositorio();
+            NotificacionRepo = new FakeNotificacionRepositorio();
             PermisoRepo = new FakePermisoRepositorio();
+            ProductoRepo = new FakeProductoRepositorio();
+            PromocionRepo = new FakePromocionRepositorio();
+            PromocionComercioRepo = new FakePromocionComercioRepositorio();
+            RecordatorioCompraRepo = new FakeRecordatorioCompraRepositorio();
+            RecordatorioInversionRepo = new FakeRecordatorioInversionRepositorio();
+            RubroComercioRepo = new FakeRubroComercioRepositorio();
             TraduccionRepo = new FakeTraduccionRepositorio();
             UsuarioHistorialRepo = new FakeUsuarioHistorialRepositorio();
             UsuarioPermisoRepo = new FakeUsuarioPermisoRepositorio();
@@ -57,13 +72,39 @@ namespace BLL.Tests.TestDoubles
 
         public FakeCategoriaRepositorio CategoriaRepo { get; set; }
 
+        public FakeCategoriaProductoRepositorio CategoriaProductoRepo { get; set; }
+
+        public FakeComercioRepositorio ComercioRepo { get; set; }
+
+        public FakeMonedaRepositorio MonedaRepo { get; set; }
+
+        public FakeTasaConversionRepositorio TasaConversionRepo { get; set; }
+
         public FakeIdiomaRepositorio IdiomaRepo { get; set; }
 
         public FakeIntegridadRepositorio IntegridadRepo { get; set; }
 
+        public FakeItemListaRepositorio ItemListaRepo { get; set; }
+
+        public FakeListaDeComprasRepositorio ListaDeComprasRepo { get; set; }
+
         public FakeMovimientoRepositorio MovimientoRepo { get; set; }
 
+        public FakeNotificacionRepositorio NotificacionRepo { get; set; }
+
         public FakePermisoRepositorio PermisoRepo { get; set; }
+
+        public FakeProductoRepositorio ProductoRepo { get; set; }
+
+        public FakePromocionRepositorio PromocionRepo { get; set; }
+
+        public FakePromocionComercioRepositorio PromocionComercioRepo { get; set; }
+
+        public FakeRecordatorioCompraRepositorio RecordatorioCompraRepo { get; set; }
+
+        public FakeRecordatorioInversionRepositorio RecordatorioInversionRepo { get; set; }
+
+        public FakeRubroComercioRepositorio RubroComercioRepo { get; set; }
 
         public FakeTraduccionRepositorio TraduccionRepo { get; set; }
 
@@ -87,13 +128,39 @@ namespace BLL.Tests.TestDoubles
 
         public ICategoriaRepositorio Categorias { get { return CategoriaRepo; } }
 
+        public ICategoriaProductoRepositorio CategoriasProducto { get { return CategoriaProductoRepo; } }
+
+        public IComercioRepositorio Comercios { get { return ComercioRepo; } }
+
+        public IMonedaRepositorio Monedas { get { return MonedaRepo; } }
+
         public IIdiomaRepositorio Idiomas { get { return IdiomaRepo; } }
 
         public IIntegridadRepositorio Integridad { get { return IntegridadRepo; } }
 
+        public IItemListaRepositorio ItemsLista { get { return ItemListaRepo; } }
+
+        public IListaDeComprasRepositorio ListasDeCompras { get { return ListaDeComprasRepo; } }
+
         public IMovimientoRepositorio Movimientos { get { return MovimientoRepo; } }
 
+        public INotificacionRepositorio Notificaciones { get { return NotificacionRepo; } }
+
         public IPermisoRepositorio Permisos { get { return PermisoRepo; } }
+
+        public IProductoRepositorio Productos { get { return ProductoRepo; } }
+
+        public IPromocionRepositorio Promociones { get { return PromocionRepo; } }
+
+        public IPromocionComercioRepositorio PromocionComercio { get { return PromocionComercioRepo; } }
+
+        public IRecordatorioCompraRepositorio RecordatoriosCompra { get { return RecordatorioCompraRepo; } }
+
+        public IRecordatorioInversionRepositorio RecordatoriosInversion { get { return RecordatorioInversionRepo; } }
+
+        public IRubroComercioRepositorio RubrosComercio { get { return RubroComercioRepo; } }
+
+        public ITasaConversionRepositorio TasasConversion { get { return TasaConversionRepo; } }
 
         public ITraduccionRepositorio Traducciones { get { return TraduccionRepo; } }
 
@@ -149,7 +216,7 @@ namespace BLL.Tests.TestDoubles
         public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
         {
             return Categorias.Values
-                .Where(item => item.UsuarioId == null || item.UsuarioId == usuarioId)
+                .Where(item => item.Usuario == null || item.Usuario.Id == usuarioId)
                 .ToList();
         }
 
@@ -191,9 +258,950 @@ namespace BLL.Tests.TestDoubles
         public bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido)
         {
             return Categorias.Values.Any(item =>
-                item.UsuarioId == usuarioId &&
+                item.Usuario?.Id == usuarioId &&
                 string.Equals(item.Nombre, nombre, StringComparison.OrdinalIgnoreCase) &&
                 (!idExcluido.HasValue || item.Id != idExcluido.Value));
+        }
+    }
+
+    internal sealed class FakeRubroComercioRepositorio : IRubroComercioRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, RubroComercio> Rubros { get; } = new Dictionary<int, RubroComercio>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public RubroComercio LastInserted { get; private set; }
+
+        public RubroComercio LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public RubroComercio ObtenerPorId(int id)
+        {
+            RubroComercio rubro;
+            return Rubros.TryGetValue(id, out rubro) ? rubro : null;
+        }
+
+        public List<RubroComercio> ObtenerTodas()
+        {
+            return Rubros.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(RubroComercio rubro)
+        {
+            if (rubro.Id <= 0)
+            {
+                rubro.Id = _nextId++;
+            }
+
+            Rubros[rubro.Id] = rubro;
+            LastInserted = rubro;
+            return rubro.Id;
+        }
+
+        public bool Actualizar(RubroComercio rubro)
+        {
+            LastUpdated = rubro;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Rubros[rubro.Id] = rubro;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Rubros.Remove(id);
+        }
+    }
+
+    internal sealed class FakeComercioRepositorio : IComercioRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Comercio> Comercios { get; } = new Dictionary<int, Comercio>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public Comercio LastInserted { get; private set; }
+
+        public Comercio LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Comercio ObtenerPorId(int id)
+        {
+            Comercio comercio;
+            return Comercios.TryGetValue(id, out comercio) ? comercio : null;
+        }
+
+        public List<Comercio> ObtenerPorRubro(int rubroComercioId)
+        {
+            return Comercios.Values
+                .Where(item => item.RubroComercio != null && item.RubroComercio.Id == rubroComercioId)
+                .ToList();
+        }
+
+        public List<Comercio> ObtenerTodos()
+        {
+            return Comercios.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(Comercio comercio)
+        {
+            if (comercio.Id <= 0)
+            {
+                comercio.Id = _nextId++;
+            }
+
+            Comercios[comercio.Id] = comercio;
+            LastInserted = comercio;
+            return comercio.Id;
+        }
+
+        public bool Actualizar(Comercio comercio)
+        {
+            LastUpdated = comercio;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Comercios[comercio.Id] = comercio;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Comercios.Remove(id);
+        }
+    }
+
+    // Construye, via reflexion, un SqlException real con Number = 547 (violacion de FK),
+    // envuelto igual que lo hace AccesoDatosSqlServer.ExecuteInTransaction en produccion.
+    // SqlException no tiene constructor publico; esta es la tecnica estandar para
+    // instanciarlo en tests sin depender de una base de datos real.
+    internal static class FakeSqlExceptionFactory
+    {
+        public static ExcepcionTecnica CrearExcepcionTecnicaPorViolacionForanea()
+        {
+            return new ExcepcionTecnica("Error.Technical.SqlFailure", CrearSqlException(547));
+        }
+
+        private static SqlException CrearSqlException(int number)
+        {
+            SqlErrorCollection collection = (SqlErrorCollection)Activator.CreateInstance(
+                typeof(SqlErrorCollection), true);
+
+            object error = CrearSqlError(number);
+
+            typeof(SqlErrorCollection)
+                .GetMethod("Add", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(collection, new object[] { error });
+
+            SqlException exception = (SqlException)typeof(SqlException)
+                .GetMethod("CreateException", BindingFlags.NonPublic | BindingFlags.Static, null,
+                    new[] { typeof(SqlErrorCollection), typeof(string) }, null)
+                .Invoke(null, new object[] { collection, "11.0.0" });
+
+            return exception;
+        }
+
+        private static object CrearSqlError(int number)
+        {
+            ConstructorInfo[] constructores = typeof(SqlError).GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance);
+            foreach (ConstructorInfo constructor in constructores)
+            {
+                ParameterInfo[] parametros = constructor.GetParameters();
+                object[] args = new object[parametros.Length];
+                bool ok = true;
+                for (int i = 0; i < parametros.Length; i++)
+                {
+                    Type t = parametros[i].ParameterType;
+                    if (i == 0 && t == typeof(int))
+                    {
+                        args[i] = number;
+                    }
+                    else if (t == typeof(byte))
+                    {
+                        args[i] = (byte)0;
+                    }
+                    else if (t == typeof(string))
+                    {
+                        args[i] = "x";
+                    }
+                    else if (t == typeof(int))
+                    {
+                        args[i] = 0;
+                    }
+                    else if (t == typeof(uint))
+                    {
+                        args[i] = (uint)0;
+                    }
+                    else if (t == typeof(Exception))
+                    {
+                        args[i] = null;
+                    }
+                    else if (t == typeof(Guid))
+                    {
+                        args[i] = Guid.Empty;
+                    }
+                    else
+                    {
+                        ok = false;
+                        break;
+                    }
+                }
+
+                if (ok)
+                {
+                    try
+                    {
+                        return constructor.Invoke(args);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("No se encontro un constructor de SqlError compatible.");
+        }
+    }
+
+    internal sealed class FakeCategoriaProductoRepositorio : ICategoriaProductoRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, CategoriaProducto> Categorias { get; } = new Dictionary<int, CategoriaProducto>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public CategoriaProducto LastInserted { get; private set; }
+
+        public CategoriaProducto LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public CategoriaProducto ObtenerPorId(int id)
+        {
+            CategoriaProducto categoria;
+            return Categorias.TryGetValue(id, out categoria) ? categoria : null;
+        }
+
+        public List<CategoriaProducto> ObtenerTodas()
+        {
+            return Categorias.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(CategoriaProducto categoria)
+        {
+            if (categoria.Id <= 0)
+            {
+                categoria.Id = _nextId++;
+            }
+
+            Categorias[categoria.Id] = categoria;
+            LastInserted = categoria;
+            return categoria.Id;
+        }
+
+        public bool Actualizar(CategoriaProducto categoria)
+        {
+            LastUpdated = categoria;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Categorias[categoria.Id] = categoria;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Categorias.Remove(id);
+        }
+    }
+
+    internal sealed class FakeProductoRepositorio : IProductoRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Producto> Productos { get; } = new Dictionary<int, Producto>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Producto LastInserted { get; private set; }
+
+        public Producto LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Producto ObtenerPorId(int id)
+        {
+            Producto producto;
+            return Productos.TryGetValue(id, out producto) ? producto : null;
+        }
+
+        public List<Producto> ObtenerPorComercio(int comercioId)
+        {
+            return Productos.Values
+                .Where(item => item.Comercio != null && item.Comercio.Id == comercioId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(Producto producto)
+        {
+            if (producto.Id <= 0)
+            {
+                producto.Id = _nextId++;
+            }
+
+            Productos[producto.Id] = producto;
+            LastInserted = producto;
+            return producto.Id;
+        }
+
+        public bool Actualizar(Producto producto)
+        {
+            LastUpdated = producto;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Productos[producto.Id] = producto;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Productos.Remove(id);
+        }
+    }
+
+    internal sealed class FakePromocionRepositorio : IPromocionRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Promocion> Promociones { get; } = new Dictionary<int, Promocion>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Promocion LastInserted { get; private set; }
+
+        public Promocion LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Promocion ObtenerPorId(int id)
+        {
+            Promocion promocion;
+            return Promociones.TryGetValue(id, out promocion) ? promocion : null;
+        }
+
+        public List<Promocion> ObtenerTodas()
+        {
+            return Promociones.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(Promocion promocion)
+        {
+            if (promocion.Id <= 0)
+            {
+                promocion.Id = _nextId++;
+            }
+
+            Promociones[promocion.Id] = promocion;
+            LastInserted = promocion;
+            return promocion.Id;
+        }
+
+        public bool Actualizar(Promocion promocion)
+        {
+            LastUpdated = promocion;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Promociones[promocion.Id] = promocion;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Promociones.Remove(id);
+        }
+    }
+
+    internal sealed class FakePromocionComercioRepositorio : IPromocionComercioRepositorio
+    {
+        public Dictionary<int, List<int>> ComercioIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public Dictionary<int, List<int>> PromocionIdsPorComercio { get; } = new Dictionary<int, List<int>>();
+
+        public int? LastPromocionIdReemplazado { get; private set; }
+
+        public List<int> LastComercioIdsReemplazados { get; private set; }
+
+        public List<int> ObtenerComercioIdsPorPromocion(int promocionId)
+        {
+            List<int> comercioIds;
+            return ComercioIdsPorPromocion.TryGetValue(promocionId, out comercioIds) ? comercioIds.ToList() : new List<int>();
+        }
+
+        public List<int> ObtenerPromocionIdsPorComercio(int comercioId)
+        {
+            List<int> promocionIds;
+            return PromocionIdsPorComercio.TryGetValue(comercioId, out promocionIds) ? promocionIds.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarComerciosDePromocion(int promocionId, List<int> comercioIds)
+        {
+            LastPromocionIdReemplazado = promocionId;
+            LastComercioIdsReemplazados = comercioIds == null ? new List<int>() : comercioIds.ToList();
+            ComercioIdsPorPromocion[promocionId] = LastComercioIdsReemplazados.ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakeMonedaRepositorio : IMonedaRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Moneda> Monedas { get; } = new Dictionary<int, Moneda>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Moneda LastInserted { get; private set; }
+
+        public Moneda LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Moneda ObtenerPorId(int id)
+        {
+            Moneda moneda;
+            return Monedas.TryGetValue(id, out moneda) ? moneda : null;
+        }
+
+        public List<Moneda> ObtenerTodas()
+        {
+            return Monedas.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(Moneda moneda)
+        {
+            if (moneda.Id <= 0)
+            {
+                moneda.Id = _nextId++;
+            }
+
+            Monedas[moneda.Id] = moneda;
+            LastInserted = moneda;
+            return moneda.Id;
+        }
+
+        public bool Actualizar(Moneda moneda)
+        {
+            LastUpdated = moneda;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Monedas[moneda.Id] = moneda;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Monedas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeTasaConversionRepositorio : ITasaConversionRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, TasaConversion> Tasas { get; } = new Dictionary<int, TasaConversion>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public TasaConversion LastInserted { get; private set; }
+
+        public TasaConversion LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public TasaConversion ObtenerPorId(int id)
+        {
+            TasaConversion tasa;
+            return Tasas.TryGetValue(id, out tasa) ? tasa : null;
+        }
+
+        public List<TasaConversion> ObtenerTodas()
+        {
+            return Tasas.Values.ToList();
+        }
+
+        public TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId)
+        {
+            return Tasas.Values.FirstOrDefault(item =>
+                item.MonedaBase != null && item.MonedaBase.Id == monedaBaseId &&
+                item.MonedaConversion != null && item.MonedaConversion.Id == monedaConversionId);
+        }
+
+        public int InsertarYObtenerId(TasaConversion tasa)
+        {
+            if (tasa.Id <= 0)
+            {
+                tasa.Id = _nextId++;
+            }
+
+            Tasas[tasa.Id] = tasa;
+            LastInserted = tasa;
+            return tasa.Id;
+        }
+
+        public bool Actualizar(TasaConversion tasa)
+        {
+            LastUpdated = tasa;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Tasas[tasa.Id] = tasa;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Tasas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeItemListaRepositorio : IItemListaRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, ItemLista> Items { get; } = new Dictionary<int, ItemLista>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public ItemLista LastInserted { get; private set; }
+
+        public ItemLista LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public ItemLista ObtenerPorId(int id)
+        {
+            ItemLista item;
+            return Items.TryGetValue(id, out item) ? item : null;
+        }
+
+        public List<ItemLista> ObtenerPorListaDeCompras(int listaDeComprasId)
+        {
+            return Items.Values
+                .Where(item => item.ListaDeCompras != null && item.ListaDeCompras.Id == listaDeComprasId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(ItemLista itemLista)
+        {
+            if (itemLista.Id <= 0)
+            {
+                itemLista.Id = _nextId++;
+            }
+
+            Items[itemLista.Id] = itemLista;
+            LastInserted = itemLista;
+            return itemLista.Id;
+        }
+
+        public bool Actualizar(ItemLista itemLista)
+        {
+            LastUpdated = itemLista;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Items[itemLista.Id] = itemLista;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Items.Remove(id);
+        }
+    }
+
+    internal sealed class FakeListaDeComprasRepositorio : IListaDeComprasRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, ListaDeCompras> Listas { get; } = new Dictionary<int, ListaDeCompras>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public ListaDeCompras LastInserted { get; private set; }
+
+        public ListaDeCompras LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public ListaDeCompras ObtenerPorId(int id)
+        {
+            ListaDeCompras lista;
+            return Listas.TryGetValue(id, out lista) ? lista : null;
+        }
+
+        public List<ListaDeCompras> ObtenerPorUsuario(int usuarioId)
+        {
+            return Listas.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(ListaDeCompras listaDeCompras)
+        {
+            if (listaDeCompras.Id <= 0)
+            {
+                listaDeCompras.Id = _nextId++;
+            }
+
+            Listas[listaDeCompras.Id] = listaDeCompras;
+            LastInserted = listaDeCompras;
+            return listaDeCompras.Id;
+        }
+
+        public bool Actualizar(ListaDeCompras listaDeCompras)
+        {
+            LastUpdated = listaDeCompras;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Listas[listaDeCompras.Id] = listaDeCompras;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Listas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeNotificacionRepositorio : INotificacionRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Notificacion> Notificaciones { get; } = new Dictionary<int, Notificacion>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Notificacion LastInserted { get; private set; }
+
+        public Notificacion LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Notificacion ObtenerPorId(int id)
+        {
+            Notificacion notificacion;
+            return Notificaciones.TryGetValue(id, out notificacion) ? notificacion : null;
+        }
+
+        public List<Notificacion> ObtenerPorUsuario(int usuarioId)
+        {
+            return Notificaciones.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .ToList();
+        }
+
+        public List<Notificacion> ObtenerTodas()
+        {
+            return Notificaciones.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(Notificacion notificacion)
+        {
+            if (notificacion.Id <= 0)
+            {
+                notificacion.Id = _nextId++;
+            }
+
+            Notificaciones[notificacion.Id] = notificacion;
+            LastInserted = notificacion;
+            return notificacion.Id;
+        }
+
+        public bool Actualizar(Notificacion notificacion)
+        {
+            LastUpdated = notificacion;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Notificaciones[notificacion.Id] = notificacion;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Notificaciones.Remove(id);
+        }
+    }
+
+    internal sealed class FakeRecordatorioCompraRepositorio : IRecordatorioCompraRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, RecordatorioCompra> Recordatorios { get; } = new Dictionary<int, RecordatorioCompra>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public RecordatorioCompra LastInserted { get; private set; }
+
+        public RecordatorioCompra LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public RecordatorioCompra ObtenerPorId(int id)
+        {
+            RecordatorioCompra recordatorio;
+            return Recordatorios.TryGetValue(id, out recordatorio) ? recordatorio : null;
+        }
+
+        public List<RecordatorioCompra> ObtenerPorUsuario(int usuarioId)
+        {
+            return Recordatorios.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .ToList();
+        }
+
+        public List<RecordatorioCompra> ObtenerTodas()
+        {
+            return Recordatorios.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(RecordatorioCompra recordatorio)
+        {
+            if (recordatorio.Id <= 0)
+            {
+                recordatorio.Id = _nextId++;
+            }
+
+            Recordatorios[recordatorio.Id] = recordatorio;
+            LastInserted = recordatorio;
+            return recordatorio.Id;
+        }
+
+        public bool Actualizar(RecordatorioCompra recordatorio)
+        {
+            LastUpdated = recordatorio;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Recordatorios[recordatorio.Id] = recordatorio;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Recordatorios.Remove(id);
+        }
+    }
+
+    internal sealed class FakeRecordatorioInversionRepositorio : IRecordatorioInversionRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, RecordatorioInversion> Recordatorios { get; } = new Dictionary<int, RecordatorioInversion>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public RecordatorioInversion LastInserted { get; private set; }
+
+        public RecordatorioInversion LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public RecordatorioInversion ObtenerPorId(int id)
+        {
+            RecordatorioInversion recordatorio;
+            return Recordatorios.TryGetValue(id, out recordatorio) ? recordatorio : null;
+        }
+
+        public List<RecordatorioInversion> ObtenerPorUsuario(int usuarioId)
+        {
+            return Recordatorios.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .ToList();
+        }
+
+        public List<RecordatorioInversion> ObtenerTodas()
+        {
+            return Recordatorios.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(RecordatorioInversion recordatorio)
+        {
+            if (recordatorio.Id <= 0)
+            {
+                recordatorio.Id = _nextId++;
+            }
+
+            Recordatorios[recordatorio.Id] = recordatorio;
+            LastInserted = recordatorio;
+            return recordatorio.Id;
+        }
+
+        public bool Actualizar(RecordatorioInversion recordatorio)
+        {
+            LastUpdated = recordatorio;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Recordatorios[recordatorio.Id] = recordatorio;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Recordatorios.Remove(id);
         }
     }
 
@@ -221,7 +1229,7 @@ namespace BLL.Tests.TestDoubles
 
         public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
         {
-            IEnumerable<Movimiento> query = Movimientos.Values.Where(item => item.UsuarioId == usuarioId);
+            IEnumerable<Movimiento> query = Movimientos.Values.Where(item => item.Usuario.Id == usuarioId);
 
             if (filtro != null)
             {
@@ -237,7 +1245,7 @@ namespace BLL.Tests.TestDoubles
 
                 if (filtro.CategoriaId.HasValue)
                 {
-                    query = query.Where(item => item.CategoriaId == filtro.CategoriaId.Value);
+                    query = query.Where(item => item.Categoria.Id == filtro.CategoriaId.Value);
                 }
 
                 if (filtro.Tipo.HasValue)

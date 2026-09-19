@@ -11,10 +11,23 @@ namespace REPOSITORIO
 
         private IBitacoraRepositorio _bitacora;
         private ICategoriaRepositorio _categorias;
+        private ICategoriaProductoRepositorio _categoriasProducto;
+        private IComercioRepositorio _comercios;
         private IIdiomaRepositorio _idiomas;
         private IIntegridadRepositorio _integridad;
+        private IItemListaRepositorio _itemsLista;
+        private IListaDeComprasRepositorio _listasDeCompras;
+        private IMonedaRepositorio _monedas;
         private IMovimientoRepositorio _movimientos;
+        private INotificacionRepositorio _notificaciones;
         private IPermisoRepositorio _permisos;
+        private IProductoRepositorio _productos;
+        private IPromocionRepositorio _promociones;
+        private IPromocionComercioRepositorio _promocionComercio;
+        private IRecordatorioCompraRepositorio _recordatoriosCompra;
+        private IRecordatorioInversionRepositorio _recordatoriosInversion;
+        private IRubroComercioRepositorio _rubrosComercio;
+        private ITasaConversionRepositorio _tasasConversion;
         private ITraduccionRepositorio _traducciones;
         private IUsuarioHistorialRepositorio _usuarioHistorial;
         private IUsuarioPermisoRepositorio _usuarioPermisos;
@@ -35,6 +48,16 @@ namespace REPOSITORIO
             get { return _categorias ?? (_categorias = new CategoriaRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public ICategoriaProductoRepositorio CategoriasProducto
+        {
+            get { return _categoriasProducto ?? (_categoriasProducto = new CategoriaProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IComercioRepositorio Comercios
+        {
+            get { return _comercios ?? (_comercios = new ComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IIdiomaRepositorio Idiomas
         {
             get { return _idiomas ?? (_idiomas = new IdiomaRepositorio(ObtenerAccesoDatosTransaccional())); }
@@ -45,14 +68,69 @@ namespace REPOSITORIO
             get { return _integridad ?? (_integridad = new IntegridadRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public IItemListaRepositorio ItemsLista
+        {
+            get { return _itemsLista ?? (_itemsLista = new ItemListaRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IListaDeComprasRepositorio ListasDeCompras
+        {
+            get { return _listasDeCompras ?? (_listasDeCompras = new ListaDeComprasRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IMonedaRepositorio Monedas
+        {
+            get { return _monedas ?? (_monedas = new MonedaRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IMovimientoRepositorio Movimientos
         {
             get { return _movimientos ?? (_movimientos = new MovimientoRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public INotificacionRepositorio Notificaciones
+        {
+            get { return _notificaciones ?? (_notificaciones = new NotificacionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IPermisoRepositorio Permisos
         {
             get { return _permisos ?? (_permisos = new PermisoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IProductoRepositorio Productos
+        {
+            get { return _productos ?? (_productos = new ProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionRepositorio Promociones
+        {
+            get { return _promociones ?? (_promociones = new PromocionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionComercioRepositorio PromocionComercio
+        {
+            get { return _promocionComercio ?? (_promocionComercio = new PromocionComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IRecordatorioCompraRepositorio RecordatoriosCompra
+        {
+            get { return _recordatoriosCompra ?? (_recordatoriosCompra = new RecordatorioCompraRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IRecordatorioInversionRepositorio RecordatoriosInversion
+        {
+            get { return _recordatoriosInversion ?? (_recordatoriosInversion = new RecordatorioInversionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IRubroComercioRepositorio RubrosComercio
+        {
+            get { return _rubrosComercio ?? (_rubrosComercio = new RubroComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public ITasaConversionRepositorio TasasConversion
+        {
+            get { return _tasasConversion ?? (_tasasConversion = new TasaConversionRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public ITraduccionRepositorio Traducciones

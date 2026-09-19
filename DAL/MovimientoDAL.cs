@@ -15,8 +15,8 @@ namespace DAL
             return new Movimiento
             {
                 Id = (int)row["Id"],
-                UsuarioId = (int)row["UsuarioId"],
-                CategoriaId = (int)row["CategoriaId"],
+                Usuario = new Usuario { Id = (int)row["UsuarioId"] },
+                Categoria = new Categoria { Id = (int)row["CategoriaId"] },
                 Tipo = (TipoMovimiento)Enum.Parse(typeof(TipoMovimiento), row["Tipo"].ToString()),
                 Monto = (decimal)row["Monto"],
                 Fecha = (DateTime)row["Fecha"],
@@ -114,8 +114,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, movimiento.UsuarioId),
-                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, movimiento.CategoriaId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, movimiento.Usuario.Id),
+                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, movimiento.Categoria.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, movimiento.Tipo.ToString()),
                     accesoDatos.CreateParameter("@Monto", SqlDbType.Decimal, movimiento.Monto),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.Date, movimiento.Fecha),
@@ -151,7 +151,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, movimiento.CategoriaId),
+                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, movimiento.Categoria.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, movimiento.Tipo.ToString()),
                     accesoDatos.CreateParameter("@Monto", SqlDbType.Decimal, movimiento.Monto),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.Date, movimiento.Fecha),

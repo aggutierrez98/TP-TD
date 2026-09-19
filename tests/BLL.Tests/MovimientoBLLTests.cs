@@ -15,7 +15,7 @@ namespace BLL.Tests
         public void Crear_MontoNoPositivo_ThrowsExcepcionNegocioAndDoesNotCreateUow()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", UsuarioId = null });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             MovimientoBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, TipoMovimiento.Ingreso, 0m, new DateTime(2026, 8, 1), "x"));
@@ -35,7 +35,7 @@ namespace BLL.Tests
         public void Crear_CategoriaDeOtroUsuario_ThrowsExcepcionNegocio()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
-            fixture.CategoriaRepo.Categorias.Add(5, new Categoria { Id = 5, Nombre = "Ajena", UsuarioId = 99 });
+            fixture.CategoriaRepo.Categorias.Add(5, new Categoria { Id = 5, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             MovimientoBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(5, TipoMovimiento.Ingreso, 100m, new DateTime(2026, 8, 1), null));
@@ -45,14 +45,14 @@ namespace BLL.Tests
         public void Crear_Valido_InsertaComoPropioDelUsuarioActualAuditaYGuarda()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 7);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", UsuarioId = null });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             MovimientoBLL sut = fixture.CreateSut();
 
             int id = sut.Crear(1, TipoMovimiento.Egreso, 250.50m, new DateTime(2026, 8, 15), "Compra");
 
             Movimiento insertado = fixture.Unidad.MovimientoRepo.Movimientos[id];
-            Assert.AreEqual(7, insertado.UsuarioId);
-            Assert.AreEqual(1, insertado.CategoriaId);
+            Assert.AreEqual(7, insertado.Usuario.Id);
+            Assert.AreEqual(1, insertado.Categoria.Id);
             Assert.AreEqual(TipoMovimiento.Egreso, insertado.Tipo);
             Assert.AreEqual(250.50m, insertado.Monto);
             Assert.AreEqual("Compra", insertado.Descripcion);
@@ -64,8 +64,8 @@ namespace BLL.Tests
         public void Actualizar_MovimientoDeOtroUsuario_ThrowsExcepcionNegocio()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", UsuarioId = null });
-            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, UsuarioId = 99, CategoriaId = 1, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(3, 1, TipoMovimiento.Ingreso, 20m, new DateTime(2026, 8, 2), null));
@@ -75,8 +75,8 @@ namespace BLL.Tests
         public void Actualizar_Valido_ActualizaAuditaYGuarda()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 5);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", UsuarioId = null });
-            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, UsuarioId = 5, CategoriaId = 1, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
             bool resultado = sut.Actualizar(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado");
@@ -94,7 +94,7 @@ namespace BLL.Tests
         public void Eliminar_MovimientoDeOtroUsuario_ThrowsExcepcionNegocio()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
-            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, UsuarioId = 99, CategoriaId = 1, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(3));
@@ -104,7 +104,7 @@ namespace BLL.Tests
         public void Eliminar_Valido_EliminaAuditaYGuarda()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 5);
-            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, UsuarioId = 5, CategoriaId = 1, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
             bool resultado = sut.Eliminar(3);
@@ -119,7 +119,7 @@ namespace BLL.Tests
         public void ObtenerPorUsuario_DelegaAlRepositorio()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 5);
-            fixture.MovimientoRepo.Movimientos.Add(1, new Movimiento { Id = 1, UsuarioId = 5, CategoriaId = 1, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            fixture.MovimientoRepo.Movimientos.Add(1, new Movimiento { Id = 1, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
             System.Collections.Generic.List<Movimiento> resultado = sut.ObtenerPorUsuario(5, null);

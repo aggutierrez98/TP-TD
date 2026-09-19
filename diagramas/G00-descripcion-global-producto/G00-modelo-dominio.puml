@@ -3,6 +3,49 @@
 ' codigo ya implementado. Las clases con <<Implementado>> ya existen en BE/ (Usuario,
 ' Categoria, Movimiento); el resto son clases conceptuales del alcance de negocio
 ' definido en G02 que todavia no se codean en este TP (ver G00-descripcion-global-producto.md).
+'
+' Actualizacion 2026-09-11: fusionado el relevamiento de clases aportado por el usuario
+' (Diagrama-dominio.drawio) dentro de este modelo unico, corrigiendo falencias UML2 del
+' relevamiento original (agregacion usada donde correspondia asociacion simple, y
+' multiplicidades muchos-a-muchos espurias) y decisiones de alcance tomadas con el usuario:
+'   - EntidadFinanciera + ConexionFinanciera + TipoCuenta del relevamiento se COLAPSAN en la
+'     ya existente CuentaFinanciera <<Vision>>: modelar el detalle de conexion real (URL,
+'     llave) insinuaria sincronizacion bancaria real, ya descartada como inviable (ver
+'     ESTADO-ACTUAL-Y-PROXIMOS-PASOS.md).
+'   - EntradaChat del relevamiento se fusiona con la ya existente ConsultaChatbot (mismo
+'     concepto, evita clase duplicada).
+'   - TipoTarjetaDashboard del relevamiento se colapsa a un atributo enumerado de
+'     TarjetaDashboard (mismo patron que Movimiento.tipo), no amerita clase propia.
+'   - ProductoCateogoria del relevamiento (clase con un solo atributo "nombre") se resuelve
+'     como la asociacion muchos-a-muchos real Producto<->Categoria; no necesita clase
+'     asociativa porque la relacion no tiene atributos propios.
+'   - Comercio-Producto y Comercio-ReglaCategorizacion: se llevaron a la multiplicidad
+'     correcta (1..* y N:M respectivamente) donde el relevamiento traia N:M o 1:N incorrectos.
+'
+' Correccion 2026-09-11 (segunda pasada, con el usuario): la primera fusion modelaba mal
+' Promocion como si la ofreciera directamente el Comercio. En Argentina el descuento lo da
+' un MedioDePago (tarjeta credito/debito/prepaga, cuenta de billetera virtual, Cuenta DNI,
+' o un segmento particular como "Galicia Eminent") emitido por una EntidadFinanciera, y se
+' aplica a uno o varios Comercio y/o a un RubroComercio entero (ej: "20% en supermercados").
+' Se reintroduce EntidadFinanciera (solo como catalogo -- nombre -- nunca con detalle de
+' conexion real, esa decision de colapso sigue en pie) y se agregan MedioDePago y
+' RubroComercio. CuentaFinanciera.entidad y Comercio.rubro pasan de atributo string a
+' relacion real contra estas clases.
+'
+' Correccion 2026-09-11 (tercera pasada, con el usuario):
+'   - RecordatorioCompra pasa a ser una GENERALIZACION de Notificacion (no una clase suelta
+'     vinculada por asociacion): un recordatorio de compra ES una notificacion particular.
+'     Se agrega tambien RecordatorioInversion como otra subclase de Notificacion (misma
+'     logica, detalle pendiente de relevar). La Notificacion base sigue cubriendo los casos
+'     genericos (marketing puntual, etc.). Un RecordatorioCompra se dispara por dos motivos
+'     de negocio distintos (no estructurales, se documentan aca): (a) se carga una Promocion
+'     nueva que aplica a un ItemLista vigente del usuario, o (b) paso un tiempo determinado
+'     con el ItemLista sin comprarse -- por eso Promocion sigue siendo "0..1" (opcional) en
+'     su relacion con RecordatorioCompra.
+'   - Categoria (la ya <<Implementado>> para Movimiento/Presupuesto) NO es la categoria de
+'     Producto -- son conceptos distintos (categoria de gasto personal vs. categoria de
+'     catalogo de producto). Correccion de un error propio de la pasada anterior: se agrega
+'     CategoriaProducto <<Vision>> y se saca la asociacion incorrecta Producto-Categoria.
 title FINAZAPP - Modelo de Dominio (vision completa del producto)
 
 skinparam class {
@@ -28,9 +71,12 @@ package "Usuarios y Seguridad" {
 
   class CuentaFinanciera <<Vision>> {
     +alias
-    +entidad
     +tipo
     +credencialesCifradas
+  }
+
+  class EntidadFinanciera <<Vision>> {
+    +nombre
   }
 }
 
@@ -54,6 +100,11 @@ package "Ingesta y Consolidacion de Movimientos" {
     +estadoOCR
     +montoExtraido
   }
+
+  class ReglaCategorizacion <<Vision>> {
+    +nombre
+    +palabrasClave
+  }
 }
 
 package "Ahorro y Descuentos Inteligentes" {
@@ -63,15 +114,23 @@ package "Ahorro y Descuentos Inteligentes" {
   }
 
   class ItemLista <<Vision>> {
-    +producto
     +cantidad
     +comprado
   }
 
   class Comercio <<Vision>> {
     +nombre
-    +rubro
     +ubicacion
+  }
+
+  class RubroComercio <<Vision>> {
+    +nombre
+  }
+
+  class MedioDePago <<Vision>> {
+    +tipo : tarjetaCredito | tarjetaDebito | tarjetaPrepaga | cuentaBilleteraVirtual | cuentaDNI
+    +marca
+    +segmento
   }
 
   class Promocion <<Vision>> {
@@ -79,13 +138,25 @@ package "Ahorro y Descuentos Inteligentes" {
     +descuento
     +vigenciaDesde
     +vigenciaHasta
-    +medioDePagoAplicable
   }
 
   class Notificacion <<Vision>> {
     +mensaje
     +fecha
     +leida
+  }
+
+  class Producto <<Vision>> {
+    +nombre
+    +precio
+  }
+
+  class CategoriaProducto <<Vision>> {
+    +nombre
+  }
+
+  class RecordatorioCompra <<Vision>> {
+    +fechaVencimiento
   }
 }
 
@@ -99,6 +170,29 @@ package "Presupuesto y Analitica" {
     +periodo
     +balance
     +tasaAhorro
+  }
+
+  class Dashboard <<Vision>> {
+  }
+
+  class TarjetaDashboard <<Vision>> {
+    +tipo : saldoActual | gastosPorCategoria | comparativoMensual | ahorroObjetivo
+    +orden
+  }
+
+  class RecordatorioInversion <<Vision>> {
+  }
+}
+
+package "Multi-Moneda" {
+  class Moneda <<Vision>> {
+    +codigo
+    +nombre
+  }
+
+  class TasaConversion <<Vision>> {
+    +calculoConversion
+    +fechaActualizacion
   }
 }
 
@@ -120,6 +214,7 @@ package "Inteligencia Artificial" {
     +pregunta
     +respuesta
     +fecha
+    +esPregunta
   }
 }
 
@@ -127,6 +222,7 @@ package "Inteligencia Artificial" {
 Usuario "1" -- "0..*" Permiso : tiene asignados
 Permiso "1" o-- "0..*" Permiso : agrupa (Composite)
 Usuario "1" -- "0..*" CuentaFinanciera : posee
+CuentaFinanciera "0..*" -- "1" EntidadFinanciera : pertenece a
 
 ' Ingesta y Consolidacion de Movimientos
 Usuario "1" -- "0..*" Movimiento : registra
@@ -134,18 +230,39 @@ Usuario "0..1" -- "0..*" Categoria : personaliza
 Categoria "1" -- "0..*" Movimiento : clasifica
 CuentaFinanciera "0..1" -- "0..*" Movimiento : origina / sincroniza
 Ticket "0..1" -- "0..1" Movimiento : genera
+Movimiento "0..*" -- "1" Moneda : se registra en
+Usuario "1" -- "0..*" ReglaCategorizacion : define
+Categoria "1" -- "0..*" ReglaCategorizacion : asigna
+Comercio "0..*" -- "0..*" ReglaCategorizacion : dispara
 
 ' Ahorro y Descuentos Inteligentes
 Usuario "1" -- "0..*" ListaDeCompras : crea
 ListaDeCompras "1" *-- "1..*" ItemLista : contiene
-Comercio "1" -- "0..*" Promocion : ofrece
-Promocion "0..*" -- "0..*" Notificacion : dispara
+ItemLista "0..*" -- "1" Producto : refiere a
+Producto "0..*" -- "1" CategoriaProducto : pertenece a
+Producto "0..*" -- "1" Moneda : se cotiza en
+Comercio "0..*" -- "1" RubroComercio : pertenece a
+Comercio "1" -- "0..*" Producto : vende
+EntidadFinanciera "1" -- "0..*" MedioDePago : emite
+Promocion "0..*" -- "0..*" MedioDePago : aplica a
+Promocion "0..*" -- "0..*" Comercio : aplica a (alcance puntual)
+Promocion "0..*" -- "0..*" RubroComercio : aplica a (alcance por rubro)
 Usuario "1" -- "0..*" Notificacion : recibe
+Notificacion <|-- RecordatorioCompra
+Notificacion <|-- RecordatorioInversion
+Promocion "0..1" -- "0..*" RecordatorioCompra : dispara (por nueva promo)
+ItemLista "1" -- "0..*" RecordatorioCompra : origina (por tiempo en lista)
 
 ' Presupuesto y Analitica
 Usuario "1" -- "0..*" Presupuesto : define
 Categoria "1" -- "0..*" Presupuesto : limita
 Usuario "1" -- "0..*" ResumenFinanciero : genera (periodico)
+Usuario "1" -- "0..1" Dashboard : configura
+Dashboard "1" *-- "0..*" TarjetaDashboard : contiene
+
+' Multi-Moneda
+Moneda "1" -- "0..*" TasaConversion : es base de
+TasaConversion "0..*" -- "1" Moneda : convierte a
 
 ' Inteligencia Artificial
 AgenteIA "1" -- "0..*" SugerenciaFinanciera : genera

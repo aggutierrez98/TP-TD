@@ -13,7 +13,7 @@ namespace DAL
             {
                 Id = (int)row["Id"],
                 Nombre = row["Nombre"].ToString(),
-                UsuarioId = row.IsNull("UsuarioId") ? (int?)null : (int)row["UsuarioId"]
+                Usuario = row.IsNull("UsuarioId") ? null : new Usuario { Id = (int)row["UsuarioId"] }
             };
         }
 
@@ -97,7 +97,7 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, categoria.Nombre),
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, categoria.UsuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, categoria.Usuario?.Id)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);

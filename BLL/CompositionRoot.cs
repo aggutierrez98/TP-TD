@@ -18,7 +18,16 @@ namespace BLL
         // BLL de caso de uso: una sola instancia de cada uno, compartida por referencia.
         private static BitacoraBLL _bitacoraBLL;
         private static CategoriaBLL _categoriaBLL;
+        private static CategoriaProductoBLL _categoriaProductoBLL;
+        private static ComercioBLL _comercioBLL;
+        private static RubroComercioBLL _rubroComercioBLL;
+        private static ProductoBLL _productoBLL;
+        private static PromocionBLL _promocionBLL;
+        private static MonedaBLL _monedaBLL;
+        private static TasaConversionBLL _tasaConversionBLL;
         private static MovimientoBLL _movimientoBLL;
+        private static ListaDeComprasBLL _listaDeComprasBLL;
+        private static NotificacionBLL _notificacionBLL;
         private static UsuarioEstadoBLL _usuarioEstadoBLL;
         private static IntegridadBLL _integridadBLL;
         private static IdiomaBLL _idiomaBLL;
@@ -50,7 +59,30 @@ namespace BLL
 
             _categoriaBLL = new CategoriaBLL(new CategoriaRepositorio(), uow, _sesion, _bitacoraBLL);
 
+            _rubroComercioBLL = new RubroComercioBLL(new RubroComercioRepositorio(), uow, _bitacoraBLL);
+
+            _comercioBLL = new ComercioBLL(new ComercioRepositorio(), uow, _bitacoraBLL);
+
+            _categoriaProductoBLL = new CategoriaProductoBLL(new CategoriaProductoRepositorio(), uow, _bitacoraBLL);
+
+            _productoBLL = new ProductoBLL(new ProductoRepositorio(), new MonedaRepositorio(), uow, _bitacoraBLL);
+
+            _promocionBLL = new PromocionBLL(new PromocionRepositorio(), new PromocionComercioRepositorio());
+
+            _monedaBLL = new MonedaBLL(new MonedaRepositorio());
+
+            _tasaConversionBLL = new TasaConversionBLL(new TasaConversionRepositorio(), uow, _bitacoraBLL);
+
             _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), uow, _sesion, _bitacoraBLL);
+
+            _listaDeComprasBLL = new ListaDeComprasBLL(new ListaDeComprasRepositorio(), uow, _sesion, _bitacoraBLL);
+
+            _notificacionBLL = new NotificacionBLL(
+                new NotificacionRepositorio(),
+                new RecordatorioCompraRepositorio(),
+                new RecordatorioInversionRepositorio(),
+                uow,
+                _bitacoraBLL);
 
             _usuarioEstadoBLL = new UsuarioEstadoBLL(
                 new UsuarioRepositorio(),
@@ -165,9 +197,54 @@ namespace BLL
             get { Inicializar(); return _categoriaBLL; }
         }
 
+        public static ComercioBLL Comercio
+        {
+            get { Inicializar(); return _comercioBLL; }
+        }
+
+        public static RubroComercioBLL RubroComercio
+        {
+            get { Inicializar(); return _rubroComercioBLL; }
+        }
+
+        public static CategoriaProductoBLL CategoriaProducto
+        {
+            get { Inicializar(); return _categoriaProductoBLL; }
+        }
+
+        public static ProductoBLL Producto
+        {
+            get { Inicializar(); return _productoBLL; }
+        }
+
+        public static PromocionBLL Promocion
+        {
+            get { Inicializar(); return _promocionBLL; }
+        }
+
+        public static MonedaBLL Moneda
+        {
+            get { Inicializar(); return _monedaBLL; }
+        }
+
+        public static TasaConversionBLL TasaConversion
+        {
+            get { Inicializar(); return _tasaConversionBLL; }
+        }
+
         public static MovimientoBLL Movimiento
         {
             get { Inicializar(); return _movimientoBLL; }
+        }
+
+        public static ListaDeComprasBLL ListaDeCompras
+        {
+            get { Inicializar(); return _listaDeComprasBLL; }
+        }
+
+        public static NotificacionBLL Notificacion
+        {
+            get { Inicializar(); return _notificacionBLL; }
         }
 
         public static BackupBLL Backup

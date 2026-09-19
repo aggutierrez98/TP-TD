@@ -22,12 +22,26 @@ namespace REPOSITORIO
 
         public Categoria ObtenerPorId(int id)
         {
-            return _categoriaDAL.ObtenerPorId(id, _accesoDatos);
+            Categoria categoria = _categoriaDAL.ObtenerPorId(id, _accesoDatos);
+            Hidratar(categoria);
+            return categoria;
         }
 
         public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
         {
-            return _categoriaDAL.ObtenerVisiblesParaUsuario(usuarioId, _accesoDatos);
+            List<Categoria> categorias = _categoriaDAL.ObtenerVisiblesParaUsuario(usuarioId, _accesoDatos);
+            categorias.ForEach(Hidratar);
+            return categorias;
+        }
+
+        private void Hidratar(Categoria categoria)
+        {
+            if (categoria == null || categoria.Usuario == null)
+            {
+                return;
+            }
+
+            categoria.Usuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(categoria.Usuario.Id);
         }
 
         public int InsertarYObtenerId(Categoria categoria)

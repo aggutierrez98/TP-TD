@@ -52,7 +52,7 @@ namespace BLL
                     Categoria nuevaCategoria = new Categoria
                     {
                         Nombre = nombreNormalizado,
-                        UsuarioId = usuarioActualId
+                        Usuario = new Usuario { Id = usuarioActualId }
                     };
 
                     int id = unidad.Categorias.InsertarYObtenerId(nuevaCategoria);
@@ -156,7 +156,7 @@ namespace BLL
         }
 
         // Una categoria solo puede ser editada/eliminada por su dueno. Las
-        // globales (UsuarioId null) no se pueden tocar desde esta pantalla.
+        // globales (Usuario null) no se pueden tocar desde esta pantalla.
         private static void ValidarPropiedad(Categoria categoria, int usuarioActualId)
         {
             if (categoria == null)
@@ -164,7 +164,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Category.NotFound");
             }
 
-            if (categoria.UsuarioId != usuarioActualId)
+            if (categoria.Usuario == null || categoria.Usuario.Id != usuarioActualId)
             {
                 throw new ExcepcionNegocio("Error.Category.NotOwned");
             }

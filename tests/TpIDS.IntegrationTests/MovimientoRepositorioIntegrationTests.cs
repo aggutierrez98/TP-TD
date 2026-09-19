@@ -25,8 +25,8 @@ namespace TpIDS.IntegrationTests
 
                 int id = repositorio.InsertarYObtenerId(new Movimiento
                 {
-                    UsuarioId = usuarioId,
-                    CategoriaId = categoriaId,
+                    Usuario = new BE.Usuario { Id = usuarioId },
+                    Categoria = new Categoria { Id = categoriaId },
                     Tipo = TipoMovimiento.Egreso,
                     Monto = 150.75m,
                     Fecha = new DateTime(2026, 8, 1),
@@ -35,8 +35,8 @@ namespace TpIDS.IntegrationTests
 
                 Movimiento obtenido = repositorio.ObtenerPorId(id);
                 Assert.IsNotNull(obtenido);
-                Assert.AreEqual(usuarioId, obtenido.UsuarioId);
-                Assert.AreEqual(categoriaId, obtenido.CategoriaId);
+                Assert.AreEqual(usuarioId, obtenido.Usuario.Id);
+                Assert.AreEqual(categoriaId, obtenido.Categoria.Id);
                 Assert.AreEqual(TipoMovimiento.Egreso, obtenido.Tipo);
                 Assert.AreEqual(150.75m, obtenido.Monto);
                 Assert.AreEqual(new DateTime(2026, 8, 1), obtenido.Fecha);
@@ -55,12 +55,12 @@ namespace TpIDS.IntegrationTests
                 MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
                 int categoriaA = ObtenerCategoriaGlobalId(accesoDatos);
-                int categoriaB = new CategoriaRepositorio(accesoDatos).InsertarYObtenerId(new Categoria { Nombre = "CategoriaTestMovB", UsuarioId = usuarioId });
+                int categoriaB = new CategoriaRepositorio(accesoDatos).InsertarYObtenerId(new Categoria { Nombre = "CategoriaTestMovB", Usuario = new BE.Usuario { Id = usuarioId } });
 
-                int idDentro = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaA, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 8, 10) });
-                int idFueraDeRango = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaA, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 1, 1) });
-                int idOtraCategoria = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaB, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 8, 11) });
-                int idOtroTipo = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaA, Tipo = TipoMovimiento.Egreso, Monto = 100m, Fecha = new DateTime(2026, 8, 12) });
+                int idDentro = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaA }, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 8, 10) });
+                int idFueraDeRango = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaA }, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 1, 1) });
+                int idOtraCategoria = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaB }, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 8, 11) });
+                int idOtroTipo = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaA }, Tipo = TipoMovimiento.Egreso, Monto = 100m, Fecha = new DateTime(2026, 8, 12) });
 
                 System.Collections.Generic.List<Movimiento> resultado = repositorio.ObtenerPorUsuario(usuarioId, new FiltroMovimiento
                 {
@@ -88,7 +88,7 @@ namespace TpIDS.IntegrationTests
                 MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
                 int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
-                int id = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaId, Tipo = TipoMovimiento.Ingreso, Monto = 50m, Fecha = new DateTime(2026, 8, 5) });
+                int id = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Ingreso, Monto = 50m, Fecha = new DateTime(2026, 8, 5) });
 
                 Movimiento actualizado = repositorio.ObtenerPorId(id);
                 actualizado.Monto = 999.99m;
@@ -113,7 +113,7 @@ namespace TpIDS.IntegrationTests
                 MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
                 int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
-                int id = repositorio.InsertarYObtenerId(new Movimiento { UsuarioId = usuarioId, CategoriaId = categoriaId, Tipo = TipoMovimiento.Egreso, Monto = 20m, Fecha = new DateTime(2026, 8, 6) });
+                int id = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Egreso, Monto = 20m, Fecha = new DateTime(2026, 8, 6) });
 
                 bool eliminado = repositorio.Eliminar(id);
 

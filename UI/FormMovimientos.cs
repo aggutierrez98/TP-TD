@@ -111,7 +111,7 @@ namespace TpIDS
                         Id = item.Id,
                         Fecha = item.Fecha,
                         Tipo = item.Tipo.ToString(),
-                        Categoria = nombresCategoria.ContainsKey(item.CategoriaId) ? nombresCategoria[item.CategoriaId] : string.Empty,
+                        Categoria = nombresCategoria.ContainsKey(item.Categoria.Id) ? nombresCategoria[item.Categoria.Id] : string.Empty,
                         Monto = item.Monto,
                         Descripcion = item.Descripcion
                     })

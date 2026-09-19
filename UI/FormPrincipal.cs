@@ -10,11 +10,15 @@ namespace TpIDS
         private const string PermisoConfiguracion = "configuracionusuario";
         private const string PermisoGestionMovimientos = "gestionmovimientos";
         private const string PermisoGestionCategorias = "gestioncategorias";
+        private const string PermisoGestionListaCompras = "gestionlistacompras";
         private const string PermisoGestionUsuarios = "gestionusuarios";
         private const string PermisoGestionPermisos = "gestionpermisos";
         private const string PermisoGestionIdiomas = "gestionidiomas";
         private const string PermisoBitacora = "verbitacora";
         private const string PermisoGestionBackup = "gestionbackup";
+        private const string PermisoGestionNotificaciones = "gestionnotificaciones";
+        private const string PermisoGestionComercios = "gestioncomercios";
+        private const string PermisoGestionMonedas = "gestionmonedas";
 
         private readonly IAutorizacion autorizacion = CompositionRoot.Autorizacion;
         private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
@@ -36,17 +40,22 @@ namespace TpIDS
             bool puedeConfigurar = autorizacion.TienePermiso(PermisoConfiguracion);
             bool puedeMovimientos = autorizacion.TienePermiso(PermisoGestionMovimientos);
             bool puedeCategorias = autorizacion.TienePermiso(PermisoGestionCategorias);
+            bool puedeListaCompras = autorizacion.TienePermiso(PermisoGestionListaCompras);
             bool puedeUsuarios = autorizacion.TienePermiso(PermisoGestionUsuarios);
             bool puedePermisos = autorizacion.TienePermiso(PermisoGestionPermisos);
             bool puedeIdiomas = autorizacion.TienePermiso(PermisoGestionIdiomas);
             bool puedeBitacora = autorizacion.TienePermiso(PermisoBitacora);
             bool puedeBackup = autorizacion.TienePermiso(PermisoGestionBackup);
+            bool puedeNotificaciones = autorizacion.TienePermiso(PermisoGestionNotificaciones);
+            bool puedeComercios = autorizacion.TienePermiso(PermisoGestionComercios);
+            bool puedeMonedas = autorizacion.TienePermiso(PermisoGestionMonedas);
 
             mnuMiConfiguracion.Enabled = puedeConfigurar;
 
             mnuMovimientos.Enabled = puedeMovimientos;
             mnuCategorias.Enabled = puedeCategorias;
-            mnuFinanzas.Enabled = puedeMovimientos || puedeCategorias;
+            mnuListaCompras.Enabled = puedeListaCompras;
+            mnuFinanzas.Enabled = puedeMovimientos || puedeCategorias || puedeListaCompras;
 
             mnuUsuarios.Enabled = puedeUsuarios;
             mnuPermisos.Enabled = puedePermisos;
@@ -54,6 +63,11 @@ namespace TpIDS
             mnuBitacora.Enabled = puedeBitacora;
             mnuBackup.Enabled = puedeBackup;
             mnuAdministracion.Enabled = puedeUsuarios || puedePermisos || puedeIdiomas || puedeBitacora || puedeBackup;
+
+            mnuNotificaciones.Enabled = puedeNotificaciones;
+            mnuComercios.Enabled = puedeComercios;
+            mnuMonedas.Enabled = puedeMonedas;
+            mnuOperador.Enabled = puedeNotificaciones || puedeComercios || puedeMonedas;
         }
 
         // Pantalla de aterrizaje: el nucleo de negocio (movimientos) si el usuario tiene acceso.
@@ -61,7 +75,7 @@ namespace TpIDS
         {
             if (mnuMovimientos.Enabled)
             {
-                AbrirHijoMdi(new FormMovimientos());
+                AbrirHijoMdiUnico<FormMovimientos>();
             }
         }
 
@@ -87,43 +101,82 @@ namespace TpIDS
 
         private void mnuMovimientos_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormMovimientos());
+            AbrirHijoMdiUnico<FormMovimientos>();
         }
 
         private void mnuCategorias_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormGestionCategorias());
+            AbrirHijoMdiUnico<FormGestionCategorias>();
+        }
+
+        private void mnuListaCompras_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormListaDeCompras>();
         }
 
         private void mnuUsuarios_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormGestionUsuarios());
+            AbrirHijoMdiUnico<FormGestionUsuarios>();
         }
 
         private void mnuPermisos_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormGestionPermisos());
+            AbrirHijoMdiUnico<FormGestionPermisos>();
         }
 
         private void mnuIdiomas_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormGestionIdiomas());
+            AbrirHijoMdiUnico<FormGestionIdiomas>();
         }
 
         private void mnuBitacora_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormBitacora());
+            AbrirHijoMdiUnico<FormBitacora>();
         }
 
         private void mnuBackup_Click(object sender, EventArgs e)
         {
-            AbrirHijoMdi(new FormBackup());
+            AbrirHijoMdiUnico<FormBackup>();
         }
 
-        private void AbrirHijoMdi(Form hijo)
+        private void mnuNotificaciones_Click(object sender, EventArgs e)
         {
-            hijo.MdiParent = this;
-            hijo.Show();
+            AbrirHijoMdiUnico<FormGestionNotificaciones>();
+        }
+
+        private void mnuComercios_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionComercios>();
+        }
+
+        private void mnuMonedas_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionMonedas>();
+        }
+
+        // Si ya hay un hijo MDI del tipo T abierto, lo enfoca en vez de abrir uno nuevo
+        // (evita duplicar pantallas al hacer doble click en el menu).
+        private void AbrirHijoMdiUnico<T>() where T : Form, new()
+        {
+            foreach (Form hijo in MdiChildren)
+            {
+                if (hijo is T existente)
+                {
+                    if (existente.WindowState == FormWindowState.Minimized)
+                    {
+                        existente.WindowState = FormWindowState.Normal;
+                    }
+
+                    existente.Activate();
+                    return;
+                }
+            }
+
+            T nuevo = new T
+            {
+                MdiParent = this
+            };
+            nuevo.Show();
         }
     }
 }

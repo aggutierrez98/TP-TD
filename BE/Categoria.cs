@@ -6,13 +6,11 @@ namespace BE
 
         public string Nombre { get; set; }
 
-        // NULL = categoria global (precargada, visible para todos los usuarios).
-        // Con valor = categoria propia de ese usuario.
-        public int? UsuarioId { get; set; }
+        public Usuario Usuario { get; set; } // Usuario == null => Categoria Global
 
         public bool EsGlobal
         {
-            get { return !UsuarioId.HasValue; }
+            get { return Usuario == null; }
         }
     }
 }

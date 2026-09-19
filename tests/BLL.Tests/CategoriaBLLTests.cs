@@ -23,7 +23,7 @@ namespace BLL.Tests
         public void Crear_NombreDuplicadoEnScopePropio_ThrowsExcepcionNegocio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "comida", UsuarioId = 1 });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "comida", Usuario = new Usuario { Id = 1 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Comida"));
@@ -39,7 +39,7 @@ namespace BLL.Tests
 
             Categoria insertada = fixture.Unidad.CategoriaRepo.Categorias[id];
             Assert.AreEqual("Ocio", insertada.Nombre);
-            Assert.AreEqual(7, insertada.UsuarioId);
+            Assert.AreEqual(7, insertada.Usuario.Id);
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls.Single().Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -57,7 +57,7 @@ namespace BLL.Tests
         public void Actualizar_CategoriaGlobal_ThrowsExcepcionNegocio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Alimentacion", UsuarioId = null });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Alimentacion", Usuario = null });
             CategoriaBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, "Nuevo"));
@@ -67,7 +67,7 @@ namespace BLL.Tests
         public void Actualizar_CategoriaDeOtroUsuario_ThrowsExcepcionNegocio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Ajena", UsuarioId = 99 });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(2, "Nuevo"));
@@ -77,7 +77,7 @@ namespace BLL.Tests
         public void Actualizar_Valido_ActualizaAuditaYGuarda()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 5);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Viejo", UsuarioId = 5 });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Viejo", Usuario = new Usuario { Id = 5 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             bool resultado = sut.Actualizar(3, "  Nuevo Nombre  ");
@@ -92,7 +92,7 @@ namespace BLL.Tests
         public void Eliminar_CategoriaGlobal_ThrowsExcepcionNegocio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Alimentacion", UsuarioId = null });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Alimentacion", Usuario = null });
             CategoriaBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
@@ -102,7 +102,7 @@ namespace BLL.Tests
         public void Eliminar_CategoriaDeOtroUsuario_ThrowsExcepcionNegocio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Ajena", UsuarioId = 99 });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(2));
@@ -112,7 +112,7 @@ namespace BLL.Tests
         public void Eliminar_Valido_EliminaAuditaYGuarda()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 5);
-            fixture.Unidad.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Propia", UsuarioId = 5 });
+            fixture.Unidad.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Propia", Usuario = new Usuario { Id = 5 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             bool resultado = sut.Eliminar(3);
@@ -127,9 +127,9 @@ namespace BLL.Tests
         public void ObtenerVisiblesParaUsuario_DelegaAlRepositorio()
         {
             CategoriaFixture fixture = new CategoriaFixture(usuarioActualId: 1);
-            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", UsuarioId = null });
-            fixture.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Propia", UsuarioId = 5 });
-            fixture.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Ajena", UsuarioId = 99 });
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            fixture.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Propia", Usuario = new Usuario { Id = 5 } });
+            fixture.CategoriaRepo.Categorias.Add(3, new Categoria { Id = 3, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             CategoriaBLL sut = fixture.CreateSut();
 
             System.Collections.Generic.List<Categoria> visibles = sut.ObtenerVisiblesParaUsuario(5);

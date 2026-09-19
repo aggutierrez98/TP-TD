@@ -46,8 +46,8 @@ namespace BLL
                 {
                     Movimiento nuevoMovimiento = new Movimiento
                     {
-                        UsuarioId = usuarioActualId,
-                        CategoriaId = categoriaId,
+                        Usuario = new Usuario { Id = usuarioActualId },
+                        Categoria = new Categoria { Id = categoriaId },
                         Tipo = tipo,
                         Monto = monto,
                         Fecha = fecha,
@@ -83,7 +83,7 @@ namespace BLL
                     Movimiento movimiento = unidad.Movimientos.ObtenerPorId(id);
                     ValidarPropiedad(movimiento, usuarioActualId);
 
-                    movimiento.CategoriaId = categoriaId;
+                    movimiento.Categoria = new Categoria { Id = categoriaId };
                     movimiento.Tipo = tipo;
                     movimiento.Monto = monto;
                     movimiento.Fecha = fecha;
@@ -168,7 +168,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Movement.CategoryNotFound");
             }
 
-            if (categoria.UsuarioId.HasValue && categoria.UsuarioId.Value != usuarioActualId)
+            if (categoria.Usuario != null && categoria.Usuario.Id != usuarioActualId)
             {
                 throw new ExcepcionNegocio("Error.Movement.CategoryNotAllowed");
             }
@@ -182,7 +182,7 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Movement.NotFound");
             }
 
-            if (movimiento.UsuarioId != usuarioActualId)
+            if (movimiento.Usuario.Id != usuarioActualId)
             {
                 throw new ExcepcionNegocio("Error.Movement.NotOwned");
             }

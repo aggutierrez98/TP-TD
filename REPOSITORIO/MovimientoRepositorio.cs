@@ -23,12 +23,27 @@ namespace REPOSITORIO
 
         public Movimiento ObtenerPorId(int id)
         {
-            return _movimientoDAL.ObtenerPorId(id, _accesoDatos);
+            Movimiento movimiento = _movimientoDAL.ObtenerPorId(id, _accesoDatos);
+            Hidratar(movimiento);
+            return movimiento;
         }
 
         public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
         {
-            return _movimientoDAL.ObtenerPorUsuario(usuarioId, filtro, _accesoDatos);
+            List<Movimiento> movimientos = _movimientoDAL.ObtenerPorUsuario(usuarioId, filtro, _accesoDatos);
+            movimientos.ForEach(Hidratar);
+            return movimientos;
+        }
+
+        private void Hidratar(Movimiento movimiento)
+        {
+            if (movimiento == null)
+            {
+                return;
+            }
+
+            movimiento.Usuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(movimiento.Usuario.Id);
+            movimiento.Categoria = new CategoriaRepositorio(_accesoDatos).ObtenerPorId(movimiento.Categoria.Id);
         }
 
         public int InsertarYObtenerId(Movimiento movimiento)

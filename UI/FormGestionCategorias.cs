@@ -167,7 +167,7 @@ namespace TpIDS
 
             dgvCategorias.DataSource = null;
             dgvCategorias.DataSource = categorias
-                .OrderBy(item => item.UsuarioId.HasValue)
+                .OrderBy(item => item.Usuario != null)  
                 .ThenBy(item => item.Nombre)
                 .Select(item => ProyectarFila(item, usuarioActualId))
                 .ToList();
@@ -211,7 +211,7 @@ namespace TpIDS
 
         private static FilaCategoria ProyectarFila(Categoria categoria, int usuarioActualId)
         {
-            bool esPropia = categoria.UsuarioId == usuarioActualId;
+            bool esPropia = categoria.Usuario != null && categoria.Usuario.Id == usuarioActualId;
             return new FilaCategoria
             {
                 Id = categoria.Id,
