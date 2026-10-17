@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
 using BE;
@@ -26,6 +27,7 @@ namespace BLL
         private readonly ISesion _sesion;
         private readonly IBitacoraBLL _bitacoraBLL;
         private readonly IEscaneoTicketService _escaneoTicketService;
+        private readonly IReporteTabularPdfService _reportePdfService;
 
         internal MovimientoBLL(
             IMovimientoRepositorio movimientoRepositorio,
@@ -34,7 +36,8 @@ namespace BLL
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
             ISesion sesion,
             IBitacoraBLL bitacoraBLL,
-            IEscaneoTicketService escaneoTicketService)
+            IEscaneoTicketService escaneoTicketService,
+            IReporteTabularPdfService reportePdfService)
         {
             _movimientoRepositorio = movimientoRepositorio;
             _categoriaRepositorio = categoriaRepositorio;
@@ -43,6 +46,35 @@ namespace BLL
             _sesion = sesion;
             _bitacoraBLL = bitacoraBLL;
             _escaneoTicketService = escaneoTicketService;
+            _reportePdfService = reportePdfService;
+        }
+
+        public byte[] ExportarPdf(ReporteMovimientosPdf reporte)
+        {
+            int? usuarioActualId = _sesion.GetUsuarioActualId();
+            if (reporte == null || !usuarioActualId.HasValue || reporte.UsuarioId != usuarioActualId.Value)
+            {
+                throw new ExcepcionNegocio("Error.Movement.ExportUserMismatch");
+            }
+            if (reporte.Filas == null || reporte.Filas.Count == 0)
+            {
+                throw new ExcepcionNegocio("Error.Movement.ExportEmpty");
+            }
+            if (reporte.Encabezados == null || reporte.Encabezados.Count != 6 ||
+                reporte.Filas.Any(fila => fila == null || fila.Count != 6))
+            {
+                throw new ExcepcionNegocio("Error.Movement.ExportInvalidColumns");
+            }
+
+            try
+            {
+                return _reportePdfService.Generar(reporte);
+            }
+            catch (ExcepcionTecnica) { throw; }
+            catch (Exception ex)
+            {
+                throw new ExcepcionTecnica("Error.Movement.ExportFailed", ex);
+            }
         }
 
         public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
@@ -54,6 +86,74 @@ namespace BLL
         {
             int usuarioActualId = _sesion.GetUsuarioActualId().Value;
             return _movimientoRepositorio.ObtenerTotalesPorCategoria(usuarioActualId, tipo, desde, hasta);
+        }
+
+        // Egresos del rango por comercio: los de mayor gasto (hasta "cantidad") ordenados de mayor a menor;
+        // lo gastado sin comercio asociado se informa aparte y no es un comercio mas.
+        public GastoPorComercio ObtenerGastoPorComercio(DateTime desde, DateTime hasta, int cantidad)
+        {
+            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            List<TotalPorComercio> totales = _movimientoRepositorio.ObtenerTotalesPorComercio(usuarioActualId, TipoMovimiento.Egreso, desde, hasta);
+
+            return new GastoPorComercio
+            {
+                Comercios = totales
+                    .Where(item => item.ComercioNombre != null)
+                    .OrderByDescending(item => item.Total)
+                    .Take(Math.Max(0, cantidad))
+                    .ToList(),
+                TotalSinComercio = totales.Where(item => item.ComercioNombre == null).Sum(item => item.Total)
+            };
+        }
+
+        // Acumulado de egresos por dia del mes de "hoy" (hasta hoy) y del mes anterior (completo), con la
+        // comparacion al mismo dia. Los dias sin egresos repiten el acumulado del dia anterior.
+        public GastoAcumuladoMensual ObtenerGastoAcumuladoMensual(DateTime hoy)
+        {
+            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            DateTime fecha = hoy.Date;
+            DateTime inicioMesActual = new DateTime(fecha.Year, fecha.Month, 1);
+            DateTime inicioMesAnterior = inicioMesActual.AddMonths(-1);
+            int diasMesAnterior = DateTime.DaysInMonth(inicioMesAnterior.Year, inicioMesAnterior.Month);
+
+            Dictionary<DateTime, decimal> totalPorDia = _movimientoRepositorio
+                .ObtenerTotalesPorDia(usuarioActualId, TipoMovimiento.Egreso, inicioMesAnterior, fecha)
+                .GroupBy(item => item.Fecha.Date)
+                .ToDictionary(grupo => grupo.Key, grupo => grupo.Sum(item => item.Total));
+
+            List<decimal> mesActual = AcumularPorDia(inicioMesActual, fecha.Day, totalPorDia);
+            List<decimal> mesAnterior = AcumularPorDia(inicioMesAnterior, diasMesAnterior, totalPorDia);
+
+            decimal acumuladoActual = mesActual[mesActual.Count - 1];
+            decimal anteriorAlMismoDia = mesAnterior[Math.Min(fecha.Day, diasMesAnterior) - 1];
+
+            return new GastoAcumuladoMensual
+            {
+                MesActual = mesActual,
+                MesAnterior = mesAnterior,
+                AcumuladoActual = acumuladoActual,
+                AcumuladoAnteriorAlMismoDia = anteriorAlMismoDia,
+                VariacionPorcentual = anteriorAlMismoDia > 0
+                    ? Math.Round((acumuladoActual - anteriorAlMismoDia) / anteriorAlMismoDia * 100m, 1)
+                    : (decimal?)null
+            };
+        }
+
+        private static List<decimal> AcumularPorDia(DateTime inicioMes, int dias, Dictionary<DateTime, decimal> totalPorDia)
+        {
+            List<decimal> acumulados = new List<decimal>(dias);
+            decimal acumulado = 0m;
+            for (int dia = 0; dia < dias; dia++)
+            {
+                if (totalPorDia.TryGetValue(inicioMes.AddDays(dia), out decimal total))
+                {
+                    acumulado += total;
+                }
+
+                acumulados.Add(acumulado);
+            }
+
+            return acumulados;
         }
 
         public List<TotalPorMes> ObtenerTotalesPorMes(DateTime desde, DateTime hasta)

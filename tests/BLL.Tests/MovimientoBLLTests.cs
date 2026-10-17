@@ -300,6 +300,222 @@ namespace BLL.Tests
             Assert.AreEqual(new DateTime(2026, 8, 31), fixture.MovimientoRepo.LastObtenerResumenArgs.Item3);
         }
 
+        [TestMethod]
+        public void ObtenerGastoPorComercio_ResuelveUsuarioYPideEgresosAlRepositorio()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 6);
+            MovimientoBLL sut = fixture.CreateSut();
+
+            sut.ObtenerGastoPorComercio(new DateTime(2026, 10, 1), new DateTime(2026, 10, 31), 8);
+
+            Assert.AreEqual(6, fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item1);
+            Assert.AreEqual(TipoMovimiento.Egreso, fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item2);
+            Assert.AreEqual(new DateTime(2026, 10, 1), fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item3);
+            Assert.AreEqual(new DateTime(2026, 10, 31), fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item4);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoPorComercio_MasComerciosQueElTope_DevuelveSoloLosMayoresOrdenados()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            for (int i = 1; i <= 10; i++)
+            {
+                fixture.MovimientoRepo.ObtenerTotalesPorComercioResult.Add(new TotalPorComercio { ComercioNombre = "Comercio" + i, Total = i * 100m });
+            }
+
+            GastoPorComercio resultado = fixture.CreateSut().ObtenerGastoPorComercio(new DateTime(2026, 10, 1), new DateTime(2026, 10, 31), 8);
+
+            Assert.AreEqual(8, resultado.Comercios.Count);
+            Assert.AreEqual("Comercio10", resultado.Comercios[0].ComercioNombre);
+            Assert.AreEqual("Comercio3", resultado.Comercios[7].ComercioNombre);
+            CollectionAssert.AreEqual(resultado.Comercios.OrderByDescending(item => item.Total).ToList(), resultado.Comercios);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoPorComercio_EgresosSinComercio_SeInformanAparteYNoSonBarra()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorComercioResult.Add(new TotalPorComercio { ComercioNombre = "Coto", Total = 300m });
+            fixture.MovimientoRepo.ObtenerTotalesPorComercioResult.Add(new TotalPorComercio { ComercioNombre = null, Total = 75m });
+
+            GastoPorComercio resultado = fixture.CreateSut().ObtenerGastoPorComercio(new DateTime(2026, 10, 1), new DateTime(2026, 10, 31), 8);
+
+            Assert.AreEqual(1, resultado.Comercios.Count);
+            Assert.AreEqual("Coto", resultado.Comercios[0].ComercioNombre);
+            Assert.AreEqual(75m, resultado.TotalSinComercio);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoPorComercio_SinDatos_DevuelveListaVaciaYSinComercioCero()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+
+            GastoPorComercio resultado = fixture.CreateSut().ObtenerGastoPorComercio(new DateTime(2026, 10, 1), new DateTime(2026, 10, 31), 8);
+
+            Assert.AreEqual(0, resultado.Comercios.Count);
+            Assert.AreEqual(0m, resultado.TotalSinComercio);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_PideEgresosDesdeElMesAnteriorHastaHoy()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 3);
+
+            fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
+
+            Assert.AreEqual(3, fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item1);
+            Assert.AreEqual(TipoMovimiento.Egreso, fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item2);
+            Assert.AreEqual(new DateTime(2026, 9, 1), fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item3);
+            Assert.AreEqual(new DateTime(2026, 10, 10), fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item4);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_DiasSinEgresos_RepitenElAcumuladoDelDiaAnterior()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 10, 1), Total = 100m });
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 10, 3), Total = 50m });
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 5));
+
+            CollectionAssert.AreEqual(new[] { 100m, 100m, 150m, 150m, 150m }, resultado.MesActual);
+            Assert.AreEqual(150m, resultado.AcumuladoActual);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_MesAnteriorCompleto_AcumulaTodosSusDias()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 9, 1), Total = 200m });
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 9, 30), Total = 100m });
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
+
+            Assert.AreEqual(30, resultado.MesAnterior.Count);
+            Assert.AreEqual(200m, resultado.MesAnterior[0]);
+            Assert.AreEqual(200m, resultado.MesAnterior[28]);
+            Assert.AreEqual(300m, resultado.MesAnterior[29]);
+            Assert.AreEqual(200m, resultado.AcumuladoAnteriorAlMismoDia);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_ConGastoPrevio_CalculaVariacionPorcentual()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 9, 2), Total = 100m });
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 10, 4), Total = 150m });
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
+
+            Assert.AreEqual(150m, resultado.AcumuladoActual);
+            Assert.AreEqual(100m, resultado.AcumuladoAnteriorAlMismoDia);
+            Assert.AreEqual(50m, resultado.VariacionPorcentual);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_MesAnteriorSinEgresosHastaElMismoDia_NoTieneVariacion()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 9, 20), Total = 500m });
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 10, 4), Total = 150m });
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
+
+            Assert.AreEqual(0m, resultado.AcumuladoAnteriorAlMismoDia);
+            Assert.IsNull(resultado.VariacionPorcentual);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_MesAnteriorMasCorto_ComparaConSuUltimoDia()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 2, 10), Total = 400m });
+            fixture.MovimientoRepo.ObtenerTotalesPorDiaResult.Add(new TotalPorDia { Fecha = new DateTime(2026, 3, 31), Total = 600m });
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 3, 31));
+
+            Assert.AreEqual(28, resultado.MesAnterior.Count);
+            Assert.AreEqual(31, resultado.MesActual.Count);
+            Assert.AreEqual(400m, resultado.AcumuladoAnteriorAlMismoDia);
+            Assert.AreEqual(50m, resultado.VariacionPorcentual);
+        }
+
+        [TestMethod]
+        public void ObtenerGastoAcumuladoMensual_SinEgresos_DevuelveAcumuladosEnCeroSinVariacion()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+
+            GastoAcumuladoMensual resultado = fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
+
+            Assert.AreEqual(0m, resultado.AcumuladoActual);
+            Assert.AreEqual(0m, resultado.AcumuladoAnteriorAlMismoDia);
+            Assert.IsNull(resultado.VariacionPorcentual);
+        }
+
+        [TestMethod]
+        public void ExportarPdf_SeleccionVacia_RechazaSinGenerar()
+        {
+            var fixture = new MovimientoFixture(7);
+            var ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => fixture.CreateSut().ExportarPdf(
+                CrearReporte(7, new string[0][])));
+            Assert.AreEqual("Error.Movement.ExportEmpty", ex.Message);
+            Assert.IsNull(fixture.Pdf.Recibido);
+        }
+
+        [TestMethod]
+        public void ExportarPdf_CapturaDeOtroUsuario_RechazaSinGenerar()
+        {
+            var fixture = new MovimientoFixture(7);
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => fixture.CreateSut().ExportarPdf(
+                CrearReporte(99, new[] { new[] { "Fecha", "Tipo", "Categoria", "Comercio", "Monto", "Descripcion" } })));
+            Assert.IsNull(fixture.Pdf.Recibido);
+        }
+
+        [TestMethod]
+        public void ExportarPdf_FilaConColumnasIncompletas_RechazaSinGenerar()
+        {
+            var fixture = new MovimientoFixture(7);
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => fixture.CreateSut().ExportarPdf(
+                CrearReporte(7, new[] { new[] { "solo una columna" } })));
+            Assert.IsNull(fixture.Pdf.Recibido);
+        }
+
+        [TestMethod]
+        public void ExportarPdf_CapturaValida_ConservaSubconjuntoOrdenYCriteriosSinReconsultar()
+        {
+            var fixture = new MovimientoFixture(7);
+            var filas = new[] {
+                new[] { "14/10/2026", "Egreso", "Comida", "Café", "$ 20,00", "Segundo" },
+                new[] { "13/10/2026", "Egreso", "Servicios", "", "$ 10,00", "Primero" }
+            };
+            var reporte = CrearReporte(7, filas);
+            byte[] resultado = fixture.CreateSut().ExportarPdf(reporte);
+            Assert.AreSame(fixture.Pdf.Resultado, resultado);
+            Assert.AreEqual(2, fixture.Pdf.Recibido.Filas.Count);
+            Assert.AreEqual("Segundo", fixture.Pdf.Recibido.Filas[0][5]);
+            Assert.AreEqual("Primero", fixture.Pdf.Recibido.Filas[1][5]);
+            Assert.AreEqual("Descripcion: compra", fixture.Pdf.Recibido.Filtros[0]);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+            // La solicitud es una captura, no conserva referencias mutables del formulario.
+            filas[0][5] = "Mutado";
+            Assert.AreEqual("Segundo", reporte.Filas[0][5]);
+        }
+
+        private static ReporteMovimientosPdf CrearReporte(int usuarioId, string[][] filas)
+        {
+            return new ReporteMovimientosPdf(usuarioId, "Movimientos",
+                new[] { "Fecha", "Tipo", "Categoria", "Comercio", "Monto", "Descripcion" },
+                filas, new[] { "Descripcion: compra" }, null, new DateTime(2026, 10, 14),
+                "Generado", "Movimientos", "Pagina {0} de {1}", "Continuacion");
+        }
+
+        private sealed class FakeReportePdf : IReporteTabularPdfService
+        {
+            public IReporteTabularPdf Recibido;
+            public readonly byte[] Resultado = { 1, 2, 3 };
+            public byte[] Generar(IReporteTabularPdf reporte) { Recibido = reporte; return Resultado; }
+        }
+
         private sealed class MovimientoFixture
         {
             public readonly FakeMovimientoRepositorio MovimientoRepo = new FakeMovimientoRepositorio();
@@ -308,6 +524,7 @@ namespace BLL.Tests
             public readonly SpyBitacoraBLL Bitacora = new SpyBitacoraBLL();
             public readonly FakeSesion Sesion = new FakeSesion();
             public readonly FakeEscaneoTicketService EscaneoTicket = new FakeEscaneoTicketService();
+            public readonly FakeReportePdf Pdf = new FakeReportePdf();
             public readonly FakeUnidadDeTrabajo Unidad;
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
 
@@ -320,7 +537,7 @@ namespace BLL.Tests
 
             public MovimientoBLL CreateSut()
             {
-                return new MovimientoBLL(MovimientoRepo, CategoriaRepo, ComercioRepo, UnidadFactory, Sesion, Bitacora, EscaneoTicket);
+                return new MovimientoBLL(MovimientoRepo, CategoriaRepo, ComercioRepo, UnidadFactory, Sesion, Bitacora, EscaneoTicket, Pdf);
             }
         }
     }

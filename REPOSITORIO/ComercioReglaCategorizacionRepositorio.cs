@@ -28,5 +28,10 @@ namespace REPOSITORIO
         {
             return _comercioReglaCategorizacionDAL.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacionId, comercioIds, _accesoDatos);
         }
+
+        public int ContarPorComercio(int comercioId)
+        {
+            return _comercioReglaCategorizacionDAL.ContarPorComercio(comercioId, _accesoDatos);
+        }
     }
 }

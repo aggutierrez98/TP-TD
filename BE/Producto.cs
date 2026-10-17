@@ -1,17 +1,13 @@
 namespace BE
 {
+    // Catalogo de productos independiente de los comercios: quien lo vende y a que precio
+    // vive en ComercioProducto.
     public class Producto
     {
         public int Id { get; set; }
 
-        public Comercio Comercio { get; set; }
-
         public CategoriaProducto CategoriaProducto { get; set; }
 
-        public Moneda Moneda { get; set; }
-
         public string Nombre { get; set; }
-
-        public decimal Precio { get; set; }
     }
 }

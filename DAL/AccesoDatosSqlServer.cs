@@ -9,8 +9,6 @@ namespace DAL
 {
     public sealed class AccesoDatosSqlServer : IDisposable
     {
-        private static readonly string[] ConnectionStringNames = { "TpIDS", "TpIDS-UAI" };
-
         private SqlConnection connection;
         private SqlTransaction transaction;
 
@@ -136,41 +134,28 @@ namespace DAL
                 return;
             }
 
-            Exception lastException = null;
-
-            foreach (string connectionStringName in ConnectionStringNames)
+            ConnectionStringSettings connectionSettings = ConfigurationManager.ConnectionStrings["TpIDS"];
+            if (connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.ConnectionString))
             {
-                ConnectionStringSettings connectionSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
-                if (connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.ConnectionString))
-                {
-                    continue;
-                }
-
-                try
-                {
-                    connection = new SqlConnection(connectionSettings.ConnectionString);
-                    connection.Open();
-                    return;
-                }
-                catch (SqlException ex)
-                {
-                    lastException = ex;
-
-                    if (connection != null)
-                    {
-                        connection.Dispose();
-                        connection = null;
-                    }
-                }
+                throw new InvalidOperationException(
+                    "No se encontro una connection string TpIDS valida en la configuracion.");
             }
 
-            if (lastException != null)
+            try
             {
-                throw new ExcepcionTecnica("Error.Technical.ConnectionUnavailable", lastException);
+                connection = new SqlConnection(connectionSettings.ConnectionString);
+                connection.Open();
             }
+            catch (SqlException ex)
+            {
+                if (connection != null)
+                {
+                    connection.Dispose();
+                    connection = null;
+                }
 
-            throw new InvalidOperationException(
-                "No se encontro ninguna connection string valida en la configuracion.");
+                throw new ExcepcionTecnica("Error.Technical.ConnectionUnavailable", ex);
+            }
         }
 
         private void StartTransaction()

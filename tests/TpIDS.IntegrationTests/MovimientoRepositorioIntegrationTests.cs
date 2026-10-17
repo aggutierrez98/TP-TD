@@ -147,6 +147,45 @@ namespace TpIDS.IntegrationTests
         }
 
         [TestMethod]
+        [DataRow("%")]
+        [DataRow("_")]
+        [DataRow("[")]
+        [DataRow("~%")]
+        public void ObtenerPorUsuario_TextoConMetacaracteres_BuscaLiteralYCombinaFiltros(string texto)
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                var repositorio = new MovimientoRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
+                Func<string, TipoMovimiento, DateTime, int> insertar = (descripcion, tipo, fecha) =>
+                    repositorio.InsertarYObtenerId(new Movimiento
+                    {
+                        Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId },
+                        Tipo = tipo, Fecha = fecha, Monto = 100m, Descripcion = descripcion
+                    });
+                var fechaValida = new DateTime(2026, 10, 10);
+                int coincide = insertar("Compra " + texto + " descuento", TipoMovimiento.Egreso, fechaValida);
+                int sinTexto = insertar("Compra ABC descuento", TipoMovimiento.Egreso, fechaValida);
+                int otroTipo = insertar("Compra " + texto + " descuento", TipoMovimiento.Ingreso, fechaValida);
+                int otraFecha = insertar("Compra " + texto + " descuento", TipoMovimiento.Egreso, fechaValida.AddMonths(-1));
+
+                var resultado = repositorio.ObtenerPorUsuario(usuarioId, new FiltroMovimiento
+                {
+                    Texto = texto, CategoriaId = categoriaId, Tipo = TipoMovimiento.Egreso,
+                    FechaDesde = fechaValida, FechaHasta = fechaValida
+                });
+
+                Assert.IsTrue(resultado.Any(m => m.Id == coincide), "Debe encontrar el texto literal.");
+                Assert.IsFalse(resultado.Any(m => m.Id == sinTexto), "No debe interpretar comodines SQL.");
+                Assert.IsFalse(resultado.Any(m => m.Id == otroTipo));
+                Assert.IsFalse(resultado.Any(m => m.Id == otraFecha));
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
         public void ObtenerTotalesPorCategoria_AgrupaPorCategoriaYFiltraPorTipoYRango()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
@@ -203,6 +242,79 @@ namespace TpIDS.IntegrationTests
 
                 accesoDatos.RollbackTransactionScope();
             }
+        }
+
+        [TestMethod]
+        public void ObtenerTotalesPorComercio_AgrupaPorComercioIncluyendoSinComercioYSoloDelTipoYRango()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
+                int rubroId = new RubroComercioRepositorio(accesoDatos).InsertarYObtenerId(new RubroComercio { Nombre = "RubroTestTotComercio" });
+                int comercioA = new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new Comercio { RubroComercio = new RubroComercio { Id = rubroId }, Nombre = "ComercioTestTotA" });
+                int comercioB = new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new Comercio { RubroComercio = new RubroComercio { Id = rubroId }, Nombre = "ComercioTestTotB" });
+
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, comercioA, 100m, new DateTime(2026, 8, 1)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, comercioA, 50m, new DateTime(2026, 8, 15)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, comercioB, 30m, new DateTime(2026, 8, 20)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, null, 70m, new DateTime(2026, 8, 21)));
+                // Fuera de rango, de otro tipo y de otro usuario: no deben sumar
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, comercioA, 999m, new DateTime(2026, 7, 31)));
+                repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Comercio = new Comercio { Id = comercioA }, Tipo = TipoMovimiento.Ingreso, Monto = 888m, Fecha = new DateTime(2026, 8, 5) });
+
+                System.Collections.Generic.List<SERVICIOS.TotalPorComercio> resultado = repositorio.ObtenerTotalesPorComercio(
+                    usuarioId, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+                Assert.AreEqual(150m, resultado.Single(item => item.ComercioNombre == "ComercioTestTotA").Total);
+                Assert.AreEqual(30m, resultado.Single(item => item.ComercioNombre == "ComercioTestTotB").Total);
+                Assert.AreEqual(70m, resultado.Single(item => item.ComercioNombre == null).Total);
+                Assert.IsTrue(repositorio.ObtenerTotalesPorComercio(-1, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31)).Count == 0);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ObtenerTotalesPorDia_AgrupaPorFechaSoloDelTipoYRangoPedidos()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
+
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, null, 100m, new DateTime(2026, 8, 3)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, null, 40m, new DateTime(2026, 8, 3)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, null, 25m, new DateTime(2026, 8, 9)));
+                repositorio.InsertarYObtenerId(NuevoEgreso(usuarioId, categoriaId, null, 999m, new DateTime(2026, 7, 31)));
+                repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Ingreso, Monto = 888m, Fecha = new DateTime(2026, 8, 3) });
+
+                System.Collections.Generic.List<SERVICIOS.TotalPorDia> resultado = repositorio.ObtenerTotalesPorDia(
+                    usuarioId, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+                Assert.AreEqual(2, resultado.Count);
+                Assert.AreEqual(140m, resultado.Single(item => item.Fecha == new DateTime(2026, 8, 3)).Total);
+                Assert.AreEqual(25m, resultado.Single(item => item.Fecha == new DateTime(2026, 8, 9)).Total);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        private static Movimiento NuevoEgreso(int usuarioId, int categoriaId, int? comercioId, decimal monto, DateTime fecha)
+        {
+            return new Movimiento
+            {
+                Usuario = new BE.Usuario { Id = usuarioId },
+                Categoria = new Categoria { Id = categoriaId },
+                Comercio = comercioId.HasValue ? new Comercio { Id = comercioId.Value } : null,
+                Tipo = TipoMovimiento.Egreso,
+                Monto = monto,
+                Fecha = fecha
+            };
         }
 
         [TestMethod]
@@ -270,6 +382,39 @@ namespace TpIDS.IntegrationTests
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ContarPorComercio_CuentaLosMovimientosAsociadosAlComercio()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                MovimientoRepositorio repositorio = new MovimientoRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
+                int rubroId = new RubroComercioRepositorio(accesoDatos).InsertarYObtenerId(new RubroComercio { Nombre = "RubroTestContarMov" });
+                int comercioConMovimientosId = new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new Comercio { RubroComercio = new RubroComercio { Id = rubroId }, Nombre = "ComercioTestContarMovUsado" });
+                int comercioSinUsoId = new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new Comercio { RubroComercio = new RubroComercio { Id = rubroId }, Nombre = "ComercioTestContarMovLibre" });
+                for (int i = 0; i < 2; i++)
+                {
+                    repositorio.InsertarYObtenerId(new Movimiento
+                    {
+                        Usuario = new BE.Usuario { Id = usuarioId },
+                        Categoria = new Categoria { Id = categoriaId },
+                        Comercio = new Comercio { Id = comercioConMovimientosId },
+                        Tipo = TipoMovimiento.Egreso,
+                        Monto = 10m,
+                        Fecha = new DateTime(2026, 8, 3),
+                        Descripcion = "Movimiento de conteo " + i
+                    });
+                }
+
+                Assert.AreEqual(2, repositorio.ContarPorComercio(comercioConMovimientosId));
+                Assert.AreEqual(0, repositorio.ContarPorComercio(comercioSinUsoId));
 
                 accesoDatos.RollbackTransactionScope();
             }

@@ -212,7 +212,7 @@ namespace TpIDS
 
         private void btnUbicarComercioEnMapa_Click(object sender, EventArgs e)
         {
-            using (FormSeleccionarUbicacionComercio formMapa = new FormSeleccionarUbicacionComercio(_latitudSeleccionada, _longitudSeleccionada))
+            using (FormSeleccionarUbicacionComercio formMapa = new FormSeleccionarUbicacionComercio(_latitudSeleccionada, _longitudSeleccionada, CompositionRoot.BusquedaUbicaciones))
             {
                 if (formMapa.ShowDialog(this) == DialogResult.OK)
                 {

@@ -35,6 +35,7 @@ namespace TpIDS
             public string MonedaConversion { get; set; }
             public decimal Calculo { get; set; }
             public DateTime FechaActualizacion { get; set; }
+            public bool EsManual { get; set; }
         }
 
         private void FormGestionMonedas_Load(object sender, EventArgs e)
@@ -220,7 +221,8 @@ namespace TpIDS
                 MonedaBase = tasa.MonedaBase?.Codigo ?? string.Empty,
                 MonedaConversion = tasa.MonedaConversion?.Codigo ?? string.Empty,
                 Calculo = tasa.CalculoConversion,
-                FechaActualizacion = tasa.FechaActualizacion
+                FechaActualizacion = tasa.FechaActualizacion,
+                EsManual = tasa.EsManual
             };
         }
 
@@ -286,6 +288,38 @@ namespace TpIDS
             }
         }
 
+        private void btnLiberarTasa_Click(object sender, EventArgs e)
+        {
+            if (!ObtenerFilaSeleccionada(dgvTasas, out FilaTasa fila))
+            {
+                UiDialogHelper.MostrarWarning("FormCurrencyManagement.Warning.SelectTasa");
+                return;
+            }
+
+            if (!fila.EsManual)
+            {
+                return;
+            }
+
+            try
+            {
+                if (tasaConversionBLL.Liberar(fila.Id))
+                {
+                    CargarTasas(fila.Id);
+                    UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.TasaReleased");
+                }
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Liberacion de tasa de conversion");
+            }
+        }
+
+        private void dgvTasas_SelectionChanged(object sender, EventArgs e)
+        {
+            btnLiberarTasa.Enabled = ObtenerFilaSeleccionada(dgvTasas, out FilaTasa fila) && fila.EsManual;
+        }
+
         private void btnEliminarTasa_Click(object sender, EventArgs e)
         {
             if (!ObtenerFilaSeleccionada(dgvTasas, out FilaTasa fila))
@@ -335,7 +369,7 @@ namespace TpIDS
             }
         }
 
-        private static void SeleccionarMonedaEnCombo(ComboBox combo, int monedaId)
+        private static void SeleccionarMonedaEnCombo(Krypton.Toolkit.KryptonComboBox combo, int monedaId)
         {
             for (int i = 0; i < combo.Items.Count; i++)
             {

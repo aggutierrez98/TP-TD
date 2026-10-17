@@ -7,5 +7,7 @@ namespace REPOSITORIO
         List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId);
 
         bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds);
+
+        int ContarPorComercio(int comercioId);
     }
 }

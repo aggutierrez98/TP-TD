@@ -69,7 +69,7 @@ namespace DAL
                   AND (@FechaHasta IS NULL OR Fecha <= @FechaHasta)
                   AND (@CategoriaId IS NULL OR CategoriaId = @CategoriaId)
                   AND (@Tipo IS NULL OR Tipo = @Tipo)
-                  AND (@Texto IS NULL OR Descripcion LIKE '%' + @Texto + '%')
+                  AND (@Texto IS NULL OR Descripcion LIKE '%' + @Texto + '%' ESCAPE '~')
                 ORDER BY Fecha DESC, Id DESC";
 
             bool dispose = accesoDatos == null;
@@ -84,7 +84,8 @@ namespace DAL
                     accesoDatos.CreateParameter("@FechaHasta", SqlDbType.Date, filtro.FechaHasta),
                     accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, filtro.CategoriaId),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, filtro.Tipo.HasValue ? filtro.Tipo.Value.ToString() : null),
-                    accesoDatos.CreateParameter("@Texto", SqlDbType.VarChar, filtro.Texto)
+                    accesoDatos.CreateParameter("@Texto", SqlDbType.VarChar, filtro.Texto == null ? null :
+                        filtro.Texto.Replace("~", "~~").Replace("%", "~%").Replace("_", "~_").Replace("[", "~["))
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -133,6 +134,93 @@ namespace DAL
                     totales.Add(new TotalPorCategoria
                     {
                         CategoriaNombre = row["CategoriaNombre"].ToString(),
+                        Total = (decimal)row["Total"]
+                    });
+                }
+
+                return totales;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        // Los movimientos sin comercio se agrupan en una fila con ComercioNombre = null.
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT c.Nombre AS ComercioNombre, SUM(m.Monto) AS Total
+                FROM Movimiento m LEFT JOIN Comercio c ON c.Id = m.ComercioId
+                WHERE m.UsuarioId=@UsuarioId AND m.Tipo=@Tipo AND m.Fecha BETWEEN @Desde AND @Hasta
+                GROUP BY m.ComercioId, c.Nombre";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
+                    accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
+                    accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                List<TotalPorComercio> totales = new List<TotalPorComercio>();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    totales.Add(new TotalPorComercio
+                    {
+                        ComercioNombre = row.IsNull("ComercioNombre") ? null : row["ComercioNombre"].ToString(),
+                        Total = (decimal)row["Total"]
+                    });
+                }
+
+                return totales;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT Fecha, SUM(Monto) AS Total
+                FROM Movimiento
+                WHERE UsuarioId=@UsuarioId AND Tipo=@Tipo AND Fecha BETWEEN @Desde AND @Hasta
+                GROUP BY Fecha ORDER BY Fecha";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
+                    accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
+                    accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                List<TotalPorDia> totales = new List<TotalPorDia>();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    totales.Add(new TotalPorDia
+                    {
+                        Fecha = ((DateTime)row["Fecha"]).Date,
                         Total = (decimal)row["Total"]
                     });
                 }
@@ -325,6 +413,35 @@ namespace DAL
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public int ContarPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT COUNT(*) AS Total
+                FROM Movimiento
+                WHERE ComercioId = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercioId)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return (int)dataTable.Rows[0]["Total"];
             }
             finally
             {

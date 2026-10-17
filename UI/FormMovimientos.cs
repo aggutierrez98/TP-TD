@@ -27,11 +27,19 @@ namespace TpIDS
         private string ultimaDescripcionSugerida;
         private int? ultimoComercioIdSugerido;
         private bool evaluandoSugerencia;
+        private readonly HashSet<int> movimientosMarcados = new HashSet<int>();
+        private FiltroMovimiento filtroAplicado;
+        private string categoriaAplicada;
+        private int usuarioConsulta;
+        private bool cambiandoMarcas;
+        private bool exportandoPdf;
+        private bool seleccionHabilitadaAntesEscaneo;
 
         public FormMovimientos()
         {
             InitializeComponent();
             Load += FormMovimientos_Load;
+            FormClosing += FormMovimientos_FormClosing;
         }
 
         private void FormMovimientos_Load(object sender, EventArgs e)
@@ -99,6 +107,14 @@ namespace TpIDS
             RefrescarDatos();
         }
 
+        private void txtbDescripcionFiltro_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.Enter) return;
+            e.Handled = true;
+            e.SuppressKeyPress = true;
+            RefrescarDatos();
+        }
+
         private void RefrescarDatos()
         {
             try
@@ -110,7 +126,8 @@ namespace TpIDS
                     FechaDesde = chkbFechaDesdeMovimientos.Checked ? (DateTime?)dtpFechaDesdeMovimientos.Value.Date : null,
                     FechaHasta = chkbFechaHastaMovimientos.Checked ? (DateTime?)dtpFechaHastaMovimientos.Value.Date : null,
                     CategoriaId = ObtenerCategoriaFiltroSeleccionada(),
-                    Tipo = ObtenerTipoSeleccionado(cmbTipoFiltro)
+                    Tipo = ObtenerTipoSeleccionado(cmbTipoFiltro),
+                    Texto = string.IsNullOrWhiteSpace(txtbDescripcionFiltro.Text) ? null : txtbDescripcionFiltro.Text.Trim()
                 };
 
                 List<Movimiento> movimientos = movimientoBLL.ObtenerPorUsuario(usuarioActualId, filtro);
@@ -118,8 +135,7 @@ namespace TpIDS
                     .ObtenerVisiblesParaUsuario(usuarioActualId)
                     .ToDictionary(item => item.Id, item => item.Nombre);
 
-                dgvMovimientos.DataSource = null;
-                dgvMovimientos.DataSource = movimientos
+                var filas = movimientos
                     .Select(item => new FilaMovimiento
                     {
                         Id = item.Id,
@@ -132,11 +148,165 @@ namespace TpIDS
                         Descripcion = item.Descripcion
                     })
                     .ToList();
+
+                // Obtener todo antes de reemplazar el listado: una consulta fallida
+                // conserva resultado, marcas y criterios anteriores juntos.
+                cambiandoMarcas = true;
+                try
+                {
+                    dgvMovimientos.DataSource = filas;
+                    foreach (DataGridViewRow row in dgvMovimientos.Rows)
+                        row.Cells[colMovimientosSeleccionar.Index].Value = false;
+                    filtroAplicado = filtro;
+                    categoriaAplicada = filtro.CategoriaId.HasValue && nombresCategoria.ContainsKey(filtro.CategoriaId.Value)
+                        ? nombresCategoria[filtro.CategoriaId.Value] : string.Empty;
+                    usuarioConsulta = usuarioActualId;
+                    movimientosMarcados.Clear();
+                }
+                finally { cambiandoMarcas = false; }
+                ActualizarSeleccionMovimientos();
             }
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Consulta de movimientos");
             }
+        }
+
+        private void dgvMovimientos_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dgvMovimientos.IsCurrentCellDirty && dgvMovimientos.CurrentCell?.OwningColumn == colMovimientosSeleccionar)
+                dgvMovimientos.CommitEdit(DataGridViewDataErrorContexts.Commit);
+        }
+
+        private void dgvMovimientos_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (cambiandoMarcas || e.RowIndex < 0 || e.ColumnIndex != colMovimientosSeleccionar.Index) return;
+            var row = dgvMovimientos.Rows[e.RowIndex];
+            if (!(row.DataBoundItem is FilaMovimiento fila)) return;
+            if (Equals(row.Cells[colMovimientosSeleccionar.Index].Value, true)) movimientosMarcados.Add(fila.Id);
+            else movimientosMarcados.Remove(fila.Id);
+            ActualizarSeleccionMovimientos();
+        }
+
+        private void btnSeleccionarTodosMovimientos_Click(object sender, EventArgs e)
+        {
+            MarcarMovimientos(true);
+        }
+
+        private void btnDesmarcarTodosMovimientos_Click(object sender, EventArgs e)
+        {
+            MarcarMovimientos(false);
+        }
+
+        private void MarcarMovimientos(bool marcar)
+        {
+            dgvMovimientos.EndEdit();
+            cambiandoMarcas = true;
+            try
+            {
+                movimientosMarcados.Clear();
+                foreach (DataGridViewRow row in dgvMovimientos.Rows)
+                {
+                    row.Cells[colMovimientosSeleccionar.Index].Value = marcar;
+                    if (marcar && row.DataBoundItem is FilaMovimiento fila) movimientosMarcados.Add(fila.Id);
+                }
+            }
+            finally { cambiandoMarcas = false; }
+            ActualizarSeleccionMovimientos();
+        }
+
+        private void ActualizarSeleccionMovimientos()
+        {
+            lblSeleccionMovimientos.Values.Text = UiDialogHelper.Traducir("FormMovements.SelectionCount",
+                movimientosMarcados.Count, dgvMovimientos.Rows.Count);
+            btnExportarMovimientosPdf.Enabled = movimientosMarcados.Count > 0 && !exportandoPdf;
+            btnSeleccionarTodosMovimientos.Enabled = dgvMovimientos.Rows.Count > 0 && !exportandoPdf;
+            btnDesmarcarTodosMovimientos.Enabled = movimientosMarcados.Count > 0 && !exportandoPdf;
+        }
+
+        private ReporteMovimientosPdf CapturarReporteMovimientos()
+        {
+            dgvMovimientos.EndEdit();
+            var columnas = new[] { colMovimientosFecha, colMovimientosTipo, colMovimientosCategoria,
+                colMovimientosComercio, colMovimientosMonto, colMovimientosDescripcion };
+            var filas = dgvMovimientos.Rows.Cast<DataGridViewRow>()
+                .Where(row => row.DataBoundItem is FilaMovimiento fila && movimientosMarcados.Contains(fila.Id))
+                .Select(row => columnas.Select(col => Convert.ToString(row.Cells[col.Index].FormattedValue,
+                    CultureInfo.CurrentCulture)).ToArray()).ToArray();
+            string sinLimite = UiDialogHelper.Traducir("FormMovements.Report.NoLimit");
+            string todos = UiDialogHelper.Traducir("FormMovements.Report.All");
+            var filtros = new[]
+            {
+                UiDialogHelper.Traducir("FormMovements.Report.From", filtroAplicado.FechaDesde?.ToString("d") ?? sinLimite),
+                UiDialogHelper.Traducir("FormMovements.Report.To", filtroAplicado.FechaHasta?.ToString("d") ?? sinLimite),
+                UiDialogHelper.Traducir("FormMovements.Report.Category", filtroAplicado.CategoriaId.HasValue ? categoriaAplicada : todos),
+                UiDialogHelper.Traducir("FormMovements.Report.Type", filtroAplicado.Tipo.HasValue ?
+                    UiDialogHelper.Traducir(filtroAplicado.Tipo.Value == TipoMovimiento.Ingreso ?
+                        "FormMovements.Value.Type.Income" : "FormMovements.Value.Type.Expense") : todos),
+                UiDialogHelper.Traducir("FormMovements.Report.Description", filtroAplicado.Texto ??
+                    UiDialogHelper.Traducir("FormMovements.Report.NoText"))
+            };
+            byte[] logo;
+            using (var resource = typeof(FormMovimientos).Assembly.GetManifestResourceStream("TpIDS.Resources.logo_reporte_finanzapp.png"))
+            using (var buffer = new MemoryStream())
+            {
+                if (resource == null) throw new ExcepcionTecnica("Error.Movement.ExportFailed");
+                resource.CopyTo(buffer);
+                logo = buffer.ToArray();
+            }
+            return new ReporteMovimientosPdf(usuarioConsulta, UiDialogHelper.Traducir("FormMovements.Report.Title"),
+                columnas.Select(col => col.HeaderText), filas, filtros, logo, DateTime.Now,
+                UiDialogHelper.Traducir("FormMovements.Report.Generated"), UiDialogHelper.Traducir("FormMovements.Report.Count"),
+                UiDialogHelper.Traducir("FormMovements.Report.PageFormat"), UiDialogHelper.Traducir("FormMovements.Report.Continuation"));
+        }
+
+        private async void btnExportarMovimientosPdf_Click(object sender, EventArgs e)
+        {
+            if (exportandoPdf || movimientosMarcados.Count == 0 || filtroAplicado == null) return;
+            using (var dialogo = new SaveFileDialog
+            {
+                Title = UiDialogHelper.Traducir("FormMovements.Export.SaveTitle"),
+                Filter = "PDF (*.pdf)|*.pdf", DefaultExt = "pdf", AddExtension = true,
+                OverwritePrompt = true, FileName = "FINAZAPP-movimientos-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".pdf"
+            })
+            {
+                if (dialogo.ShowDialog(this) != DialogResult.OK) return;
+                bool filtrosAntes = groupBoxFiltros.Enabled;
+                bool edicionAntes = groupBoxEdicion.Enabled;
+                bool grillaAntes = dgvMovimientos.Enabled;
+                bool seleccionAntes = tlpSeleccionMovimientos.Enabled;
+                bool cursorAntes = UseWaitCursor;
+                try
+                {
+                    var reporte = CapturarReporteMovimientos();
+                    string destino = dialogo.FileName;
+                    exportandoPdf = true;
+                    groupBoxFiltros.Enabled = groupBoxEdicion.Enabled = dgvMovimientos.Enabled = tlpSeleccionMovimientos.Enabled = false;
+                    UseWaitCursor = true;
+                    await Task.Run(() => ArchivoPdf.Guardar(destino, movimientoBLL.ExportarPdf(reporte)));
+                    UiDialogHelper.MostrarInfo("FormMovements.Export.Success", destino);
+                }
+                catch (Exception ex)
+                {
+                    UiExceptionHandler.Mostrar(ex is IOException || ex is UnauthorizedAccessException
+                        ? new ExcepcionTecnica("Error.Movement.ExportWriteFailed", ex) : ex, "Exportacion de movimientos");
+                }
+                finally
+                {
+                    exportandoPdf = false;
+                    groupBoxFiltros.Enabled = filtrosAntes;
+                    groupBoxEdicion.Enabled = edicionAntes;
+                    dgvMovimientos.Enabled = grillaAntes;
+                    tlpSeleccionMovimientos.Enabled = seleccionAntes;
+                    UseWaitCursor = cursorAntes;
+                    ActualizarSeleccionMovimientos();
+                }
+            }
+        }
+
+        private void FormMovimientos_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (exportandoPdf) e.Cancel = true;
         }
 
         private void btnAgregarMovimiento_Click(object sender, EventArgs e)
@@ -214,11 +384,13 @@ namespace TpIDS
                 filtrosHabilitadosAntesEscaneo = groupBoxFiltros.Enabled;
                 edicionHabilitadaAntesEscaneo = groupBoxEdicion.Enabled;
                 grillaHabilitadaAntesEscaneo = dgvMovimientos.Enabled;
+                seleccionHabilitadaAntesEscaneo = tlpSeleccionMovimientos.Enabled;
                 cursorEsperaAntesEscaneo = UseWaitCursor;
 
                 groupBoxFiltros.Enabled = false;
                 groupBoxEdicion.Enabled = false;
                 dgvMovimientos.Enabled = false;
+                tlpSeleccionMovimientos.Enabled = false;
                 UseWaitCursor = true;
                 pnlEscaneoTicket.Visible = true;
                 pnlEscaneoTicket.BringToFront();
@@ -229,6 +401,7 @@ namespace TpIDS
             groupBoxFiltros.Enabled = filtrosHabilitadosAntesEscaneo;
             groupBoxEdicion.Enabled = edicionHabilitadaAntesEscaneo;
             dgvMovimientos.Enabled = grillaHabilitadaAntesEscaneo;
+            tlpSeleccionMovimientos.Enabled = seleccionHabilitadaAntesEscaneo;
             UseWaitCursor = cursorEsperaAntesEscaneo;
         }
 
@@ -296,7 +469,7 @@ namespace TpIDS
 
         private void dgvMovimientos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0)
+            if (e.RowIndex < 0 || e.ColumnIndex == colMovimientosSeleccionar.Index)
             {
                 return;
             }
@@ -409,7 +582,7 @@ namespace TpIDS
                 ?.Id;
         }
 
-        private static TipoMovimiento? ObtenerTipoSeleccionado(ComboBox combo)
+        private static TipoMovimiento? ObtenerTipoSeleccionado(Krypton.Toolkit.KryptonComboBox combo)
         {
             OpcionTraducible opcion = combo.SelectedItem as OpcionTraducible;
             string valor = opcion?.Valor as string;
@@ -421,7 +594,7 @@ namespace TpIDS
             return (TipoMovimiento)Enum.Parse(typeof(TipoMovimiento), valor);
         }
 
-        private static void SeleccionarTipo(ComboBox combo, string valor)
+        private static void SeleccionarTipo(Krypton.Toolkit.KryptonComboBox combo, string valor)
         {
             foreach (object item in combo.Items)
             {
@@ -555,6 +728,7 @@ namespace TpIDS
         public override void Actualizar(IObservado observado)
         {
             base.Actualizar(observado);
+            ActualizarSeleccionMovimientos();
             if (cmbComercioMovimiento.DataSource is List<Comercio> lista && lista.Count > 0 && lista[0].Id == 0)
             {
                 lista[0].Nombre = UiDialogHelper.Traducir("FormMovements.Value.Commerce.None");

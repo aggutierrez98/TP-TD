@@ -67,6 +67,30 @@ namespace TpIDS.IntegrationTests
         }
 
         [TestMethod]
+        public void ObtenerSegmentosDistintos_ColapsaRepetidosYDescartaLosNulos()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                MedioPagoEntidadRepositorio repositorio = new MedioPagoEntidadRepositorio(accesoDatos);
+                int entidadAId = InsertarEntidadFinancieraTest(accesoDatos, "EntidadTestMpeSegmentosA");
+                int entidadBId = InsertarEntidadFinancieraTest(accesoDatos, "EntidadTestMpeSegmentosB");
+                int medioPagoId = InsertarMedioPagoTest(accesoDatos, BE.TipoMedioPago.TarjetaCredito, "MarcaTestMpeSegmentos");
+
+                InsertarMedioPagoEntidadTest(repositorio, entidadAId, medioPagoId, "SegTestPlatinum");
+                InsertarMedioPagoEntidadTest(repositorio, entidadBId, medioPagoId, "SegTestPlatinum");
+                InsertarMedioPagoEntidadTest(repositorio, entidadBId, InsertarMedioPagoTest(accesoDatos, BE.TipoMedioPago.TarjetaDebito, "MarcaTestMpeSegmentosDeb"), null);
+
+                List<string> segmentos = repositorio.ObtenerSegmentosDistintos();
+
+                Assert.AreEqual(1, segmentos.Count(item => item == "SegTestPlatinum"), "El segmento repetido aparece una sola vez.");
+                Assert.IsFalse(segmentos.Any(item => item == null), "Los segmentos nulos no se listan.");
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
         public void ObtenerPorMedioPago_DevuelveSoloLosDeEseMedioPago()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())

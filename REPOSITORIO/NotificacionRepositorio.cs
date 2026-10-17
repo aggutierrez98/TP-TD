@@ -6,6 +6,17 @@ namespace REPOSITORIO
 {
     public class NotificacionRepositorio : INotificacionRepositorio
     {
+        public Notificacion ObtenerPersonal(int id, int usuarioId) => _notificacionDAL.ObtenerPersonal(id, usuarioId, _accesoDatos);
+        public bool MarcarPersonalLeida(int id, int usuarioId) => _notificacionDAL.MarcarPersonalLeida(id, usuarioId, _accesoDatos);
+        public PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina)
+        {
+            return _notificacionDAL.ObtenerPaginaPersonal(usuarioId, filtro, pagina, _accesoDatos);
+        }
+
+        public int ContarNoLeidas(int usuarioId)
+        {
+            return _notificacionDAL.ContarNoLeidas(usuarioId, _accesoDatos);
+        }
         private readonly NotificacionDAL _notificacionDAL;
         private readonly AccesoDatosSqlServer _accesoDatos;
 
@@ -64,6 +75,11 @@ namespace REPOSITORIO
         public bool Eliminar(int id)
         {
             return _notificacionDAL.Eliminar(id, _accesoDatos);
+        }
+
+        public int ContarPorPromocion(int promocionId)
+        {
+            return _notificacionDAL.ContarPorPromocion(promocionId, _accesoDatos);
         }
     }
 }

@@ -19,104 +19,80 @@ namespace TpIDS.IntegrationTests
             {
                 accesoDatos.BeginTransactionScope();
                 ProductoRepositorio repositorio = new ProductoRepositorio(accesoDatos);
-                int comercioId = InsertarComercioTest(accesoDatos, "ComercioTestProductoPropio");
                 int categoriaProductoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoPropio");
-                int monedaId = InsertarMonedaTest(accesoDatos, "TP1", "MonedaTestProductoPropio");
 
                 int id = repositorio.InsertarYObtenerId(new BE.Producto
                 {
-                    Comercio = new BE.Comercio { Id = comercioId },
                     CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestPropio",
-                    Precio = 100.50m
+                    Nombre = "ProductoTestPropio"
                 });
 
                 BE.Producto obtenido = repositorio.ObtenerPorId(id);
                 Assert.IsNotNull(obtenido);
-                Assert.IsNotNull(obtenido.Comercio);
-                Assert.AreEqual(comercioId, obtenido.Comercio.Id);
-                Assert.AreEqual("ComercioTestProductoPropio", obtenido.Comercio.Nombre);
                 Assert.IsNotNull(obtenido.CategoriaProducto);
                 Assert.AreEqual(categoriaProductoId, obtenido.CategoriaProducto.Id);
-                Assert.IsNotNull(obtenido.Moneda);
-                Assert.AreEqual(monedaId, obtenido.Moneda.Id);
+                Assert.AreEqual("CategoriaTestProductoPropio", obtenido.CategoriaProducto.Nombre);
                 Assert.AreEqual("ProductoTestPropio", obtenido.Nombre);
-                Assert.AreEqual(100.50m, obtenido.Precio);
 
                 accesoDatos.RollbackTransactionScope();
             }
         }
 
         [TestMethod]
-        public void ObtenerPorComercio_ExcluyeProductosDeOtroComercio()
+        public void ObtenerTodos_IncluyeProductosInsertadosSinImportarComercio()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 accesoDatos.BeginTransactionScope();
                 ProductoRepositorio repositorio = new ProductoRepositorio(accesoDatos);
-                int comercioId = InsertarComercioTest(accesoDatos, "ComercioTestProductoFiltroA");
-                int otroComercioId = InsertarComercioTest(accesoDatos, "ComercioTestProductoFiltroB");
-                int categoriaProductoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoFiltro");
-                int monedaId = InsertarMonedaTest(accesoDatos, "TP2", "MonedaTestProductoFiltro");
+                int categoriaProductoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoTodos");
 
-                int idPropio = repositorio.InsertarYObtenerId(new BE.Producto
+                int idA = repositorio.InsertarYObtenerId(new BE.Producto
                 {
-                    Comercio = new BE.Comercio { Id = comercioId },
                     CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestComercioA",
-                    Precio = 10m
+                    Nombre = "ProductoTestTodosA"
                 });
-                int idAjeno = repositorio.InsertarYObtenerId(new BE.Producto
+                int idB = repositorio.InsertarYObtenerId(new BE.Producto
                 {
-                    Comercio = new BE.Comercio { Id = otroComercioId },
                     CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestComercioB",
-                    Precio = 20m
+                    Nombre = "ProductoTestTodosB"
                 });
 
-                System.Collections.Generic.List<BE.Producto> propios = repositorio.ObtenerPorComercio(comercioId);
+                System.Collections.Generic.List<BE.Producto> todos = repositorio.ObtenerTodos();
 
-                Assert.IsTrue(propios.Any(item => item.Id == idPropio));
-                Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
+                Assert.IsTrue(todos.Any(item => item.Id == idA));
+                Assert.IsTrue(todos.Any(item => item.Id == idB));
 
                 accesoDatos.RollbackTransactionScope();
             }
         }
 
         [TestMethod]
-        public void Actualizar_ProductoExistente_PersisteNuevoPrecio()
+        public void Actualizar_ProductoExistente_PersisteNuevoNombreYCategoria()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
             {
                 accesoDatos.BeginTransactionScope();
                 ProductoRepositorio repositorio = new ProductoRepositorio(accesoDatos);
-                int comercioId = InsertarComercioTest(accesoDatos, "ComercioTestProductoOriginal");
-                int categoriaProductoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoOriginal");
-                int monedaId = InsertarMonedaTest(accesoDatos, "TP3", "MonedaTestProductoOriginal");
+                int categoriaOriginalId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoOriginal");
+                int categoriaNuevaId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoNueva");
                 int id = repositorio.InsertarYObtenerId(new BE.Producto
                 {
-                    Comercio = new BE.Comercio { Id = comercioId },
-                    CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestOriginal",
-                    Precio = 50m
+                    CategoriaProducto = new BE.CategoriaProducto { Id = categoriaOriginalId },
+                    Nombre = "ProductoTestOriginal"
                 });
 
                 bool actualizado = repositorio.Actualizar(new BE.Producto
                 {
                     Id = id,
-                    Comercio = new BE.Comercio { Id = comercioId },
-                    CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestOriginal",
-                    Precio = 75.25m
+                    CategoriaProducto = new BE.CategoriaProducto { Id = categoriaNuevaId },
+                    Nombre = "ProductoTestRenombrado"
                 });
 
                 Assert.IsTrue(actualizado);
-                Assert.AreEqual(75.25m, repositorio.ObtenerPorId(id).Precio);
+                BE.Producto obtenido = repositorio.ObtenerPorId(id);
+                Assert.AreEqual("ProductoTestRenombrado", obtenido.Nombre);
+                Assert.AreEqual(categoriaNuevaId, obtenido.CategoriaProducto.Id);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -129,16 +105,11 @@ namespace TpIDS.IntegrationTests
             {
                 accesoDatos.BeginTransactionScope();
                 ProductoRepositorio repositorio = new ProductoRepositorio(accesoDatos);
-                int comercioId = InsertarComercioTest(accesoDatos, "ComercioTestProductoAEliminar");
                 int categoriaProductoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestProductoAEliminar");
-                int monedaId = InsertarMonedaTest(accesoDatos, "TP4", "MonedaTestProductoAEliminar");
                 int id = repositorio.InsertarYObtenerId(new BE.Producto
                 {
-                    Comercio = new BE.Comercio { Id = comercioId },
                     CategoriaProducto = new BE.CategoriaProducto { Id = categoriaProductoId },
-                    Moneda = new BE.Moneda { Id = monedaId },
-                    Nombre = "ProductoTestAEliminar",
-                    Precio = 30m
+                    Nombre = "ProductoTestAEliminar"
                 });
 
                 bool eliminado = repositorio.Eliminar(id);
@@ -150,20 +121,28 @@ namespace TpIDS.IntegrationTests
             }
         }
 
-        private static int InsertarComercioTest(AccesoDatosSqlServer accesoDatos, string nombre)
+        [TestMethod]
+        public void ContarPorCategoria_CuentaLosProductosDeEsaCategoria()
         {
-            int rubroComercioId = new RubroComercioRepositorio(accesoDatos).InsertarYObtenerId(new BE.RubroComercio { Nombre = "Rubro-" + nombre });
-            return new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new BE.Comercio { RubroComercio = new BE.RubroComercio { Id = rubroComercioId }, Nombre = nombre });
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                ProductoRepositorio repositorio = new ProductoRepositorio(accesoDatos);
+                int categoriaConProductosId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestContarConProductos");
+                int categoriaSinUsoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestContarSinProductos");
+                repositorio.InsertarYObtenerId(new BE.Producto { CategoriaProducto = new BE.CategoriaProducto { Id = categoriaConProductosId }, Nombre = "ProductoTestContarCategoriaA" });
+                repositorio.InsertarYObtenerId(new BE.Producto { CategoriaProducto = new BE.CategoriaProducto { Id = categoriaConProductosId }, Nombre = "ProductoTestContarCategoriaB" });
+
+                Assert.AreEqual(2, repositorio.ContarPorCategoria(categoriaConProductosId));
+                Assert.AreEqual(0, repositorio.ContarPorCategoria(categoriaSinUsoId));
+
+                accesoDatos.RollbackTransactionScope();
+            }
         }
 
         private static int InsertarCategoriaProductoTest(AccesoDatosSqlServer accesoDatos, string nombre)
         {
             return new CategoriaProductoRepositorio(accesoDatos).InsertarYObtenerId(new BE.CategoriaProducto { Nombre = nombre });
-        }
-
-        private static int InsertarMonedaTest(AccesoDatosSqlServer accesoDatos, string codigo, string nombre)
-        {
-            return new MonedaRepositorio(accesoDatos).InsertarYObtenerId(new BE.Moneda { Codigo = codigo, Nombre = nombre });
         }
     }
 }

@@ -115,7 +115,8 @@ namespace BLL
                     }
 
                     // Validacion proactiva: el medio no se puede borrar si alguna entidad lo ofrece.
-                    if (unidad.MediosPagoEntidad.ObtenerPorMedioPago(id).Count > 0)
+                    if (unidad.MediosPagoEntidad.ObtenerPorMedioPago(id).Count > 0
+                        || unidad.PromocionMediosPago.ContarPorMedioPago(id) > 0)
                     {
                         throw new ExcepcionNegocio("Error.PaymentMethodManagement.InUse");
                     }
@@ -133,20 +134,12 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Red de seguridad ante una condicion de carrera entre la validacion proactiva
-                    // y el delete real (mismo criterio que RubroComercioBLL.Eliminar).
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.PaymentMethodManagement.InUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.PaymentMethodManagement.DeleteFailed", ex);
                 }
             }

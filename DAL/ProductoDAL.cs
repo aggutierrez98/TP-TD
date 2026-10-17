@@ -12,18 +12,15 @@ namespace DAL
             return new Producto
             {
                 Id = (int)row["Id"],
-                Comercio = new Comercio { Id = (int)row["ComercioId"] },
                 CategoriaProducto = new CategoriaProducto { Id = (int)row["CategoriaProductoId"] },
-                Moneda = new Moneda { Id = (int)row["MonedaId"] },
-                Nombre = row["Nombre"].ToString(),
-                Precio = (decimal)row["Precio"]
+                Nombre = row["Nombre"].ToString()
             };
         }
 
         public Producto ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, ComercioId, CategoriaProductoId, MonedaId, Nombre, Precio
+                SELECT Id, CategoriaProductoId, Nombre
                 FROM Producto
                 WHERE Id = @Id";
 
@@ -49,12 +46,11 @@ namespace DAL
             }
         }
 
-        public List<Producto> ObtenerPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<Producto> ObtenerTodos(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, ComercioId, CategoriaProductoId, MonedaId, Nombre, Precio
+                SELECT Id, CategoriaProductoId, Nombre
                 FROM Producto
-                WHERE ComercioId = @ComercioId
                 ORDER BY Nombre";
 
             bool dispose = accesoDatos == null;
@@ -62,12 +58,7 @@ namespace DAL
 
             try
             {
-                List<SqlParameter> parametros = new List<SqlParameter>
-                {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId)
-                };
-
-                DataTable dataTable = accesoDatos.Read(query, parametros);
+                DataTable dataTable = accesoDatos.Read(query, new List<SqlParameter>());
                 List<Producto> productos = new List<Producto>();
                 foreach (DataRow row in dataTable.Rows)
                 {
@@ -88,9 +79,9 @@ namespace DAL
         public int InsertarYObtenerId(Producto producto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Producto (ComercioId, CategoriaProductoId, MonedaId, Nombre, Precio)
+                INSERT INTO Producto (CategoriaProductoId, Nombre)
                 OUTPUT INSERTED.Id
-                VALUES (@ComercioId, @CategoriaProductoId, @MonedaId, @Nombre, @Precio)";
+                VALUES (@CategoriaProductoId, @Nombre)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -99,11 +90,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, producto.Comercio.Id),
                     accesoDatos.CreateParameter("@CategoriaProductoId", SqlDbType.Int, producto.CategoriaProducto.Id),
-                    accesoDatos.CreateParameter("@MonedaId", SqlDbType.Int, producto.Moneda.Id),
-                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, producto.Nombre),
-                    accesoDatos.CreateParameter("@Precio", SqlDbType.Decimal, producto.Precio)
+                    accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, producto.Nombre)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);
@@ -122,9 +110,7 @@ namespace DAL
             const string query = @"
                 UPDATE Producto
                 SET CategoriaProductoId = @CategoriaProductoId,
-                    MonedaId = @MonedaId,
-                    Nombre = @Nombre,
-                    Precio = @Precio
+                    Nombre = @Nombre
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -135,9 +121,7 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@CategoriaProductoId", SqlDbType.Int, producto.CategoriaProducto.Id),
-                    accesoDatos.CreateParameter("@MonedaId", SqlDbType.Int, producto.Moneda.Id),
                     accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, producto.Nombre),
-                    accesoDatos.CreateParameter("@Precio", SqlDbType.Decimal, producto.Precio),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, producto.Id)
                 };
 
@@ -169,6 +153,35 @@ namespace DAL
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public int ContarPorCategoria(int categoriaProductoId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT COUNT(*) AS Total
+                FROM Producto
+                WHERE CategoriaProductoId = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoriaProductoId)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return (int)dataTable.Rows[0]["Total"];
             }
             finally
             {

@@ -139,6 +139,16 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.MerchantManagement.ComercioNotFound");
                     }
 
+                    // Un comercio no se borra mientras algo lo referencie (hay que soltar esas
+                    // referencias primero): productos asignados, movimientos, promociones y reglas.
+                    if (unidad.ComercioProductos.ObtenerPorComercio(id).Count > 0
+                        || unidad.Movimientos.ContarPorComercio(id) > 0
+                        || unidad.PromocionComercio.ObtenerPromocionIdsPorComercio(id).Count > 0
+                        || unidad.ComercioReglaCategorizacion.ContarPorComercio(id) > 0)
+                    {
+                        throw new ExcepcionNegocio("Error.MerchantManagement.ComercioInUse");
+                    }
+
                     bool eliminado = unidad.Comercios.Eliminar(id);
                     if (!eliminado)
                     {
@@ -153,24 +163,12 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // A diferencia de RubroComercio, aca no podemos validar de antemano:
-                    // Producto (quien referencia a Comercio via FK) esta fuera de esta tanda
-                    // y su repositorio todavia no forma parte de la Unidad de Trabajo. El
-                    // SqlException original ya llega envuelto como ExcepcionTecnica desde
-                    // AccesoDatosSqlServer.ExecuteInTransaction, por eso se revisa antes de
-                    // decidir si hay que relanzarla tal cual o convertirla en negocio.
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.ComercioInUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.MerchantManagement.ComercioDeleteFailed", ex);
                 }
             }

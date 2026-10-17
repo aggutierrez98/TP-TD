@@ -248,6 +248,143 @@ namespace TpIDS.IntegrationTests
             }
         }
 
+        [TestMethod]
+        public void ContarPorPromocion_CuentaLasNotificacionesQueLaReferencian()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                NotificacionRepositorio repositorio = new NotificacionRepositorio(accesoDatos);
+                RecordatorioCompraRepositorio recordatorios = new RecordatorioCompraRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int listaDeComprasId = InsertarListaDeComprasTest(accesoDatos, usuarioId, "ListaTestContarPorPromocion");
+                int itemListaId = InsertarItemListaTest(accesoDatos, listaDeComprasId, "ItemTestContarPorPromocion");
+                int promocionUsadaId = InsertarPromocionTest(accesoDatos, "PromocionTestContarUsada");
+                int promocionSinUsoId = InsertarPromocionTest(accesoDatos, "PromocionTestContarLibre");
+                for (int i = 0; i < 2; i++)
+                {
+                    recordatorios.InsertarYObtenerId(new BE.RecordatorioCompra
+                    {
+                        Usuario = new BE.Usuario { Id = usuarioId },
+                        Mensaje = "RecordatorioTestContarPorPromocion" + i,
+                        Fecha = new System.DateTime(2026, 2, 10),
+                        Leida = false,
+                        ItemLista = new BE.ItemLista { Id = itemListaId },
+                        Promocion = new BE.Promocion { Id = promocionUsadaId },
+                        FechaVencimiento = new System.DateTime(2026, 2, 20)
+                    });
+                }
+
+                Assert.AreEqual(2, repositorio.ContarPorPromocion(promocionUsadaId));
+                Assert.AreEqual(0, repositorio.ContarPorPromocion(promocionSinUsoId));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        private static int InsertarPromocionTest(AccesoDatosSqlServer accesoDatos, string descripcion)
+        {
+            return new PromocionRepositorio(accesoDatos).InsertarYObtenerId(new BE.Promocion
+            {
+                Descripcion = descripcion,
+                Descuento = 10m,
+                VigenciaDesde = new System.DateTime(2026, 1, 1),
+                VigenciaHasta = new System.DateTime(2026, 1, 31)
+            });
+        }
+
+        [TestMethod]
+        public void ObtenerPaginaPersonal_TresTiposYPaginado_AislaOrdenaYCuenta()
+        {
+            using (var acceso = new AccesoDatosSqlServer())
+            {
+                acceso.BeginTransactionScope();
+                int usuario = ObtenerUsuarioBasicoId(acceso);
+                int otro = ObtenerUsuarioAdminId(acceso);
+                acceso.Write("DELETE FROM Notificacion WHERE UsuarioId = " + usuario);
+                var repo = new NotificacionRepositorio(acceso);
+                int lista = InsertarListaDeComprasTest(acceso, usuario, "Personal");
+                int item = InsertarItemListaTest(acceso, lista, "Personal");
+                var ids = new System.Collections.Generic.List<int>();
+                for (int i = 0; i < 24; i++)
+                {
+                    string tipo = i % 3 == 0 ? "Notificacion" : i % 3 == 1 ? "RecordatorioCompra" : "RecordatorioInversion";
+                    ids.Add(acceso.WriteWithResult(@"INSERT INTO Notificacion
+                        (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida, ItemListaId, FechaVencimiento)
+                        OUTPUT INSERTED.Id VALUES (@Usuario, @Tipo, 'Personal', '20261014 23:59:00', 0, @Item, '20261101')",
+                        new System.Collections.Generic.List<System.Data.SqlClient.SqlParameter> {
+                            acceso.CreateParameter("@Usuario", System.Data.SqlDbType.Int, usuario),
+                            acceso.CreateParameter("@Tipo", System.Data.SqlDbType.VarChar, tipo),
+                            acceso.CreateParameter("@Item", System.Data.SqlDbType.Int, tipo == "RecordatorioCompra" ? (object)item : null) }));
+                }
+                repo.InsertarYObtenerId(new BE.Notificacion { Usuario = new BE.Usuario { Id = otro }, Mensaje = "Ajena", Fecha = new System.DateTime(2026, 10, 15) });
+                var filtro = new BE.FiltroNotificacion { FechaDesde = new System.DateTime(2026, 10, 14), FechaHasta = new System.DateTime(2026, 10, 14) };
+                var primera = repo.ObtenerPaginaPersonal(usuario, filtro, 1);
+                var segunda = repo.ObtenerPaginaPersonal(usuario, filtro, 2);
+                var tercera = repo.ObtenerPaginaPersonal(usuario, filtro, 3);
+                Assert.AreEqual(24, primera.Total);
+                Assert.AreEqual(3, primera.TotalPaginas);
+                Assert.AreEqual(10, primera.Elementos.Count);
+                Assert.AreEqual(10, segunda.Elementos.Count);
+                Assert.AreEqual(4, tercera.Elementos.Count);
+                CollectionAssert.AreEqual(ids.OrderByDescending(id => id).ToList(), primera.Elementos.Concat(segunda.Elementos).Concat(tercera.Elementos).Select(n => n.Id).ToList());
+                Assert.IsTrue(primera.Elementos.Any(n => n is BE.RecordatorioCompra));
+                Assert.IsTrue(primera.Elementos.Any(n => n is BE.RecordatorioInversion));
+                Assert.AreEqual(24, repo.ContarNoLeidas(usuario));
+                foreach (int id in ids.Take(3))
+                {
+                    BE.Notificacion antes = repo.ObtenerPersonal(id, usuario);
+                    Assert.IsTrue(repo.MarcarPersonalLeida(id, usuario));
+                    BE.Notificacion despues = repo.ObtenerPersonal(id, usuario);
+                    Assert.AreEqual(antes.GetType(), despues.GetType());
+                    Assert.AreEqual(antes.Mensaje, despues.Mensaje);
+                    Assert.AreEqual(antes.Fecha, despues.Fecha);
+                    if (antes is BE.RecordatorioCompra compra)
+                    {
+                        var otra = (BE.RecordatorioCompra)despues;
+                        Assert.AreEqual(compra.ItemLista.Id, otra.ItemLista.Id);
+                        Assert.AreEqual(compra.FechaVencimiento, otra.FechaVencimiento);
+                    }
+                }
+                Assert.AreEqual(21, repo.ContarNoLeidas(usuario));
+                Assert.AreEqual(3, repo.ObtenerPaginaPersonal(usuario, filtro, 99).Pagina);
+                var vacia = repo.ObtenerPaginaPersonal(usuario, new BE.FiltroNotificacion { FechaDesde = new System.DateTime(2026, 10, 15) }, 1);
+                Assert.AreEqual(0, vacia.Total);
+                Assert.AreEqual(0, vacia.Elementos.Count);
+                acceso.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void MarcarPersonalLeida_PropiedadIdempotenciaYRollback_ConservaMensaje()
+        {
+            int id;
+            int usuario;
+            using (var acceso = new AccesoDatosSqlServer())
+            {
+                usuario = ObtenerUsuarioBasicoId(acceso);
+                id = new NotificacionRepositorio(acceso).InsertarYObtenerId(new BE.Notificacion { Usuario = new BE.Usuario { Id = usuario }, Mensaje = "LecturaTransaccional", Fecha = new System.DateTime(2026, 10, 14) });
+            }
+            try
+            {
+                using (var acceso = new AccesoDatosSqlServer())
+                {
+                    acceso.BeginTransactionScope();
+                    var repo = new NotificacionRepositorio(acceso);
+                    int otro = ObtenerUsuarioAdminId(acceso);
+                    Assert.IsNull(repo.ObtenerPersonal(id, otro));
+                    Assert.IsFalse(repo.MarcarPersonalLeida(id, otro));
+                    Assert.IsTrue(repo.MarcarPersonalLeida(id, usuario));
+                    Assert.IsFalse(repo.MarcarPersonalLeida(id, usuario));
+                    Assert.IsTrue(repo.ObtenerPersonal(id, usuario).Leida);
+                    Assert.AreEqual("LecturaTransaccional", repo.ObtenerPersonal(id, usuario).Mensaje);
+                    acceso.RollbackTransactionScope();
+                }
+                Assert.IsFalse(new NotificacionRepositorio().ObtenerPersonal(id, usuario).Leida);
+            }
+            finally { new NotificacionRepositorio().Eliminar(id); }
+        }
+
         private static int ObtenerUsuarioBasicoId(AccesoDatosSqlServer accesoDatos)
         {
             return new UsuarioDAL().ObtenerPorUsername("user", accesoDatos).Id;

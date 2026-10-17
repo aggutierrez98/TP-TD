@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -37,12 +38,13 @@ namespace BLL
             {
                 try
                 {
+                    ValidarNombreUnico(unidad, 0, nombreNormalizado);
                     CategoriaProducto nuevaCategoria = new CategoriaProducto { Nombre = nombreNormalizado };
 
                     int id = unidad.CategoriasProducto.InsertarYObtenerId(nuevaCategoria);
                     nuevaCategoria.Id = id;
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.CategoriaProductoCreation", "FormMerchantDetail.Value.Info.CategoriaProductoCreation", "CategoriaProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductCategoryManagement.Value.Activity.Creation", "FormProductCategoryManagement.Value.Info.Creation", "CategoriaProductoBLL", unidad);
                     unidad.Save();
                     return nuevaCategoria;
                 }
@@ -71,6 +73,7 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
                     }
 
+                    ValidarNombreUnico(unidad, id, nombreNormalizado);
                     categoria.Nombre = nombreNormalizado;
                     bool actualizado = unidad.CategoriasProducto.Actualizar(categoria);
                     if (!actualizado)
@@ -78,7 +81,7 @@ namespace BLL
                         throw new ExcepcionTecnica("Error.MerchantManagement.CategoriaProductoUpdateFailed");
                     }
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.CategoriaProductoUpdate", "FormMerchantDetail.Value.Info.CategoriaProductoUpdate", "CategoriaProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductCategoryManagement.Value.Activity.Update", "FormProductCategoryManagement.Value.Info.Update", "CategoriaProductoBLL", unidad);
                     unidad.Save();
                     return true;
                 }
@@ -109,13 +112,19 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
                     }
 
+                    if (unidad.Productos.ContarPorCategoria(id) > 0
+                        || unidad.PromocionCategoriasProducto.ContarPorCategoriaProducto(id) > 0)
+                    {
+                        throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoInUse");
+                    }
+
                     bool eliminado = unidad.CategoriasProducto.Eliminar(id);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.CategoriaProductoDeleteFailed");
                     }
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.CategoriaProductoDeletion", "FormMerchantDetail.Value.Info.CategoriaProductoDeletion", "CategoriaProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductCategoryManagement.Value.Activity.Deletion", "FormProductCategoryManagement.Value.Info.Deletion", "CategoriaProductoBLL", unidad);
                     unidad.Save();
                     return true;
                 }
@@ -123,24 +132,23 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Producto (que referencia a CategoriaProducto via FK) si forma parte de esta
-                    // tanda, pero no exponemos ObtenerPorCategoriaProducto: al igual que Comercio
-                    // con Producto en la tanda anterior, se revisa el SqlException ya envuelto
-                    // como ExcepcionTecnica desde AccesoDatosSqlServer.ExecuteInTransaction.
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoInUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.MerchantManagement.CategoriaProductoDeleteFailed", ex);
                 }
+            }
+        }
+
+        private static void ValidarNombreUnico(IUnidadDeTrabajo unidad, int id, string nombre)
+        {
+            if (unidad.CategoriasProducto.ObtenerTodas().Any(categoria =>
+                categoria.Id != id && string.Equals(categoria.Nombre, nombre, StringComparison.OrdinalIgnoreCase)))
+            {
+                throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoDuplicateName");
             }
         }
 

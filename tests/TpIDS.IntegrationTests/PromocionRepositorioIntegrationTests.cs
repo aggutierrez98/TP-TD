@@ -240,6 +240,180 @@ namespace TpIDS.IntegrationTests
             }
         }
 
+        [TestMethod]
+        public void ObtenerPorId_ConTodosLosFiltros_LosCarga()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                PromocionRepositorio repositorio = new PromocionRepositorio(accesoDatos);
+                int id = InsertarPromocionTest(repositorio, "PromocionTestTodosLosFiltros");
+                FiltrosDeTest filtros = ArmarFiltros(accesoDatos, "Carga");
+                AsignarFiltros(accesoDatos, repositorio, id, filtros);
+
+                BE.Promocion obtenida = repositorio.ObtenerPorId(id);
+
+                AssertFiltros(filtros, obtenida);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ObtenerTodas_ConFiltros_LosCargaEnCadaPromocion()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                PromocionRepositorio repositorio = new PromocionRepositorio(accesoDatos);
+                int id = InsertarPromocionTest(repositorio, "PromocionTestListadoConFiltros");
+                int idSinFiltros = InsertarPromocionTest(repositorio, "PromocionTestListadoSinFiltros");
+                FiltrosDeTest filtros = ArmarFiltros(accesoDatos, "Listado");
+                AsignarFiltros(accesoDatos, repositorio, id, filtros);
+
+                List<BE.Promocion> todas = repositorio.ObtenerTodas();
+
+                AssertFiltros(filtros, todas.First(item => item.Id == id));
+                BE.Promocion sinFiltros = todas.First(item => item.Id == idSinFiltros);
+                Assert.AreEqual(0, sinFiltros.ComercioIds.Count);
+                Assert.AreEqual(0, sinFiltros.RubroComercioIds.Count);
+                Assert.AreEqual(0, sinFiltros.EntidadFinancieraIds.Count);
+                Assert.AreEqual(0, sinFiltros.MedioPagoIds.Count);
+                Assert.AreEqual(0, sinFiltros.Segmentos.Count);
+                Assert.AreEqual(0, sinFiltros.ProductoIncluidoIds.Count);
+                Assert.AreEqual(0, sinFiltros.ProductoExcluidoIds.Count);
+                Assert.AreEqual(0, sinFiltros.CategoriaIncluidaIds.Count);
+                Assert.AreEqual(0, sinFiltros.CategoriaExcluidaIds.Count);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        // La baja de una promocion no borra sola sus filtros (las FK no tienen ON DELETE): el BLL
+        // los vacia primero y despues elimina la promocion.
+        [TestMethod]
+        public void Eliminar_PromocionConFiltros_FallaHastaVaciarlosYDespuesSeElimina()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                PromocionRepositorio repositorio = new PromocionRepositorio(accesoDatos);
+                int id = InsertarPromocionTest(repositorio, "PromocionTestBajaConFiltros");
+                AsignarFiltros(accesoDatos, repositorio, id, ArmarFiltros(accesoDatos, "Baja"));
+
+                Assert.ThrowsExactly<SERVICIOS.ExcepcionTecnica>(() => repositorio.Eliminar(id));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                PromocionRepositorio repositorio = new PromocionRepositorio(accesoDatos);
+                int id = InsertarPromocionTest(repositorio, "PromocionTestBajaVaciandoFiltros");
+                AsignarFiltros(accesoDatos, repositorio, id, ArmarFiltros(accesoDatos, "BajaVacia"));
+
+                repositorio.ReemplazarDiasDePromocion(id, new List<BE.DiaSemana>());
+                new PromocionComercioRepositorio(accesoDatos).ReemplazarComerciosDePromocion(id, new List<int>());
+                new PromocionRubroComercioRepositorio(accesoDatos).ReemplazarRubrosComercioDePromocion(id, new List<int>());
+                new PromocionEntidadFinancieraRepositorio(accesoDatos).ReemplazarEntidadesFinancierasDePromocion(id, new List<int>());
+                new PromocionMedioPagoRepositorio(accesoDatos).ReemplazarMediosPagoDePromocion(id, new List<int>());
+                new PromocionSegmentoRepositorio(accesoDatos).ReemplazarSegmentosDePromocion(id, new List<string>());
+                new PromocionProductoRepositorio(accesoDatos).ReemplazarProductosDePromocion(id, new List<int>(), new List<int>());
+                new PromocionCategoriaProductoRepositorio(accesoDatos).ReemplazarCategoriasProductoDePromocion(id, new List<int>(), new List<int>());
+
+                Assert.IsTrue(repositorio.Eliminar(id));
+                Assert.IsNull(repositorio.ObtenerPorId(id));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        private sealed class FiltrosDeTest
+        {
+            public int ComercioId { get; set; }
+            public int RubroComercioId { get; set; }
+            public int EntidadFinancieraId { get; set; }
+            public int MedioPagoId { get; set; }
+            public string Segmento { get; set; }
+            public int ProductoIncluidoId { get; set; }
+            public int ProductoExcluidoId { get; set; }
+            public int CategoriaIncluidaId { get; set; }
+            public int CategoriaExcluidaId { get; set; }
+        }
+
+        private static FiltrosDeTest ArmarFiltros(AccesoDatosSqlServer accesoDatos, string sufijo)
+        {
+            int rubroId = new RubroComercioRepositorio(accesoDatos).InsertarYObtenerId(new BE.RubroComercio { Nombre = "RubroTestFiltros" + sufijo });
+            int comercioId = new ComercioRepositorio(accesoDatos).InsertarYObtenerId(new BE.Comercio
+            {
+                RubroComercio = new BE.RubroComercio { Id = rubroId },
+                Nombre = "ComercioTestFiltros" + sufijo
+            });
+            int entidadId = new EntidadFinancieraRepositorio(accesoDatos).InsertarYObtenerId(new BE.EntidadFinanciera { Nombre = "EntidadTestFiltros" + sufijo });
+            int medioPagoId = new MedioPagoRepositorio(accesoDatos).InsertarYObtenerId(new BE.MedioPago
+            {
+                Tipo = BE.TipoMedioPago.TarjetaCredito,
+                Marca = "MarcaTestFiltros" + sufijo
+            });
+            CategoriaProductoRepositorio categorias = new CategoriaProductoRepositorio(accesoDatos);
+            int categoriaIncluidaId = categorias.InsertarYObtenerId(new BE.CategoriaProducto { Nombre = "CatIncTestFiltros" + sufijo });
+            int categoriaExcluidaId = categorias.InsertarYObtenerId(new BE.CategoriaProducto { Nombre = "CatExcTestFiltros" + sufijo });
+            ProductoRepositorio productos = new ProductoRepositorio(accesoDatos);
+            int productoIncluidoId = productos.InsertarYObtenerId(new BE.Producto
+            {
+                CategoriaProducto = new BE.CategoriaProducto { Id = categoriaIncluidaId },
+                Nombre = "ProdIncTestFiltros" + sufijo
+            });
+            int productoExcluidoId = productos.InsertarYObtenerId(new BE.Producto
+            {
+                CategoriaProducto = new BE.CategoriaProducto { Id = categoriaExcluidaId },
+                Nombre = "ProdExcTestFiltros" + sufijo
+            });
+
+            return new FiltrosDeTest
+            {
+                ComercioId = comercioId,
+                RubroComercioId = rubroId,
+                EntidadFinancieraId = entidadId,
+                MedioPagoId = medioPagoId,
+                Segmento = "Seg" + sufijo,
+                ProductoIncluidoId = productoIncluidoId,
+                ProductoExcluidoId = productoExcluidoId,
+                CategoriaIncluidaId = categoriaIncluidaId,
+                CategoriaExcluidaId = categoriaExcluidaId
+            };
+        }
+
+        private static void AsignarFiltros(AccesoDatosSqlServer accesoDatos, PromocionRepositorio repositorio, int promocionId, FiltrosDeTest filtros)
+        {
+            repositorio.ReemplazarDiasDePromocion(promocionId, new List<BE.DiaSemana> { BE.DiaSemana.Sabado });
+            new PromocionComercioRepositorio(accesoDatos).ReemplazarComerciosDePromocion(promocionId, new List<int> { filtros.ComercioId });
+            new PromocionRubroComercioRepositorio(accesoDatos).ReemplazarRubrosComercioDePromocion(promocionId, new List<int> { filtros.RubroComercioId });
+            new PromocionEntidadFinancieraRepositorio(accesoDatos).ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int> { filtros.EntidadFinancieraId });
+            new PromocionMedioPagoRepositorio(accesoDatos).ReemplazarMediosPagoDePromocion(promocionId, new List<int> { filtros.MedioPagoId });
+            new PromocionSegmentoRepositorio(accesoDatos).ReemplazarSegmentosDePromocion(promocionId, new List<string> { filtros.Segmento });
+            new PromocionProductoRepositorio(accesoDatos).ReemplazarProductosDePromocion(
+                promocionId, new List<int> { filtros.ProductoIncluidoId }, new List<int> { filtros.ProductoExcluidoId });
+            new PromocionCategoriaProductoRepositorio(accesoDatos).ReemplazarCategoriasProductoDePromocion(
+                promocionId, new List<int> { filtros.CategoriaIncluidaId }, new List<int> { filtros.CategoriaExcluidaId });
+        }
+
+        private static void AssertFiltros(FiltrosDeTest filtros, BE.Promocion promocion)
+        {
+            Assert.IsNotNull(promocion);
+            CollectionAssert.AreEqual(new List<BE.DiaSemana> { BE.DiaSemana.Sabado }, promocion.DiasSemana);
+            CollectionAssert.AreEqual(new List<int> { filtros.ComercioId }, promocion.ComercioIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.RubroComercioId }, promocion.RubroComercioIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.EntidadFinancieraId }, promocion.EntidadFinancieraIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.MedioPagoId }, promocion.MedioPagoIds);
+            CollectionAssert.AreEqual(new List<string> { filtros.Segmento }, promocion.Segmentos);
+            CollectionAssert.AreEqual(new List<int> { filtros.ProductoIncluidoId }, promocion.ProductoIncluidoIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.ProductoExcluidoId }, promocion.ProductoExcluidoIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.CategoriaIncluidaId }, promocion.CategoriaIncluidaIds);
+            CollectionAssert.AreEqual(new List<int> { filtros.CategoriaExcluidaId }, promocion.CategoriaExcluidaIds);
+        }
+
         private static int InsertarPromocionTest(PromocionRepositorio repositorio, string descripcion)
         {
             return repositorio.InsertarYObtenerId(new BE.Promocion

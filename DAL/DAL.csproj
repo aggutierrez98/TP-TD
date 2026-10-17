@@ -52,6 +52,7 @@
     <Compile Include="CuentaFinancieraMedioPagoEntidadDAL.cs" />
     <Compile Include="DashboardDAL.cs" />
     <Compile Include="TarjetaDashboardDAL.cs" />
+    <Compile Include="EjecucionActualizacionTasasDAL.cs" />
     <Compile Include="TasaConversionDAL.cs" />
     <Compile Include="EntidadFinancieraDAL.cs" />
     <Compile Include="MedioPagoDAL.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="MonedaDAL.cs" />
     <Compile Include="MovimientoDAL.cs" />
     <Compile Include="NotificacionDAL.cs" />
+    <Compile Include="ComercioProductoDAL.cs" />
     <Compile Include="ProductoDAL.cs" />
     <Compile Include="PromocionDAL.cs" />
     <Compile Include="PromocionDiaSemanaDAL.cs" />
@@ -71,8 +73,12 @@
     <Compile Include="ChatbotFinancieroDAL.cs" />
     <Compile Include="ConsultaChatbotDAL.cs" />
     <Compile Include="PromocionComercioDAL.cs" />
-    <Compile Include="PromocionMedioPagoEntidadDAL.cs" />
     <Compile Include="PromocionRubroComercioDAL.cs" />
+    <Compile Include="PromocionEntidadFinancieraDAL.cs" />
+    <Compile Include="PromocionMedioPagoDAL.cs" />
+    <Compile Include="PromocionSegmentoDAL.cs" />
+    <Compile Include="PromocionProductoDAL.cs" />
+    <Compile Include="PromocionCategoriaProductoDAL.cs" />
     <Compile Include="RubroComercioDAL.cs" />
     <Compile Include="IntegridadDAL.cs" />
     <Compile Include="IdiomaDAL.cs" />

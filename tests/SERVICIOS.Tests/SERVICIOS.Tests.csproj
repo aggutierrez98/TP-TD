@@ -4,17 +4,19 @@
     <LangVersion>7.3</LangVersion>
     <IsTestProject>true</IsTestProject>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MSTest.TestFramework" Version="4.2.3" />
     <PackageReference Include="MSTest.TestAdapter" Version="4.2.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageReference Include="PdfPig" Version="0.1.11" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="System.Web.Extensions" />
-  </ItemGroup>
+  <Import Project="..\..\SERVICIOS\SystemTextJson.references.props" />
+  <Import Project="..\..\SERVICIOS\PdfSharp.references.props" />
 
   <ItemGroup>
     <ProjectReference Include="..\..\ABSTRACCIONES\ABSTRACCIONES.csproj" />

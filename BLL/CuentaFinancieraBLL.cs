@@ -9,9 +9,9 @@ using SERVICIOS;
 namespace BLL
 {
     // Agregado personal: cada CuentaFinanciera pertenece al usuario de la sesion y solo el
-    // puede verla o eliminarla. Una cuenta no se edita: se crea (con su entidad y los medios
+    // puede verla, editarla o eliminarla. Se crea o se edita (con su entidad y los medios
     // de pago contratados de su catalogo, en una sola transaccion) o se elimina.
-    // CredencialesCifradas queda fuera de alcance: Crear persiste NULL.
+    // CredencialesCifradas queda fuera de alcance: Crear persiste NULL y Actualizar la conserva.
     public class CuentaFinancieraBLL
     {
         private readonly ICuentaFinancieraRepositorio _cuentaFinancieraRepositorio;
@@ -80,6 +80,60 @@ namespace BLL
                 catch (Exception ex)
                 {
                     throw new ExcepcionTecnica("Error.FinancialAccountManagement.CreateFailed", ex);
+                }
+            }
+        }
+
+        // Mismas reglas que Crear sobre una cuenta propia. Los medios contratados se reemplazan
+        // por completo y las credenciales se conservan (el UPDATE del repositorio las sobreescribe).
+        public CuentaFinanciera Actualizar(int id, int entidadFinancieraId, string alias, TipoCuentaFinanciera tipo, List<int> medioPagoEntidadIds)
+        {
+            string aliasNormalizado = NormalizarAlias(alias);
+            ValidarTipo(tipo);
+            List<int> idsDistintos = (medioPagoEntidadIds ?? new List<int>()).Distinct().ToList();
+
+            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    CuentaFinanciera cuentaExistente = unidad.CuentasFinancieras.ObtenerPorId(id);
+                    ValidarPropiedad(cuentaExistente, usuarioActualId);
+                    ValidarEntidadExiste(unidad, entidadFinancieraId);
+                    ValidarMediosDelCatalogo(unidad, entidadFinancieraId, idsDistintos);
+
+                    CuentaFinanciera cuentaActualizada = new CuentaFinanciera
+                    {
+                        Id = id,
+                        Usuario = new Usuario { Id = usuarioActualId },
+                        EntidadFinanciera = new EntidadFinanciera { Id = entidadFinancieraId },
+                        Alias = aliasNormalizado,
+                        Tipo = tipo,
+                        CredencialesCifradas = cuentaExistente.CredencialesCifradas
+                    };
+                    if (!unidad.CuentasFinancieras.Actualizar(cuentaActualizada))
+                    {
+                        throw new ExcepcionTecnica("Error.FinancialAccountManagement.UpdateFailed");
+                    }
+
+                    unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(id, idsDistintos);
+
+                    _bitacoraBLL.RegistrarOperacionInterno("FormFinancialAccountManagement.Value.Activity.Update", "FormFinancialAccountManagement.Value.Info.Update", "CuentaFinancieraBLL", unidad);
+                    unidad.Save();
+                    return cuentaActualizada;
+                }
+                catch (ExcepcionNegocio)
+                {
+                    throw;
+                }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new ExcepcionTecnica("Error.FinancialAccountManagement.UpdateFailed", ex);
                 }
             }
         }

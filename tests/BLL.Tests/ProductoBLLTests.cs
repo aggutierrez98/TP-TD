@@ -9,73 +9,53 @@ namespace BLL.Tests
     public sealed class ProductoBLLTests
     {
         [TestMethod]
+        public void ObtenerTodos_DevuelveElCatalogoSinImportarComercio()
+        {
+            ProductoFixture fixture = new ProductoFixture();
+            fixture.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
+            fixture.ProductoRepo.Productos.Add(2, new Producto { Id = 2, Nombre = "Arroz", CategoriaProducto = new CategoriaProducto { Id = 1 } });
+            ProductoBLL sut = fixture.CreateSut();
+
+            System.Collections.Generic.List<Producto> productos = sut.ObtenerTodos();
+
+            Assert.AreEqual(2, productos.Count);
+        }
+
+        [TestMethod]
         public void Crear_NombreVacio_ThrowsExcepcionNegocioAndDoesNotCreateUow()
         {
             ProductoFixture fixture = new ProductoFixture();
             ProductoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, "   ", 1, 1, 10m));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("   ", 1));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoNameRequired", ex.Message);
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
-        }
-
-        [TestMethod]
-        public void Crear_PrecioInvalido_ThrowsExcepcionNegocioAndDoesNotCreateUow()
-        {
-            ProductoFixture fixture = new ProductoFixture();
-            ProductoBLL sut = fixture.CreateSut();
-
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, "Leche", 1, 1, 0m));
-            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
-        }
-
-        [TestMethod]
-        public void Crear_MonedaInexistente_ThrowsExcepcionNegocioAndDoesNotCreateUow()
-        {
-            ProductoFixture fixture = new ProductoFixture();
-            ProductoBLL sut = fixture.CreateSut();
-
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, "Leche", 1, 99, 10m));
-            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
-        }
-
-        [TestMethod]
-        public void Crear_ComercioInexistente_ThrowsExcepcionNegocio()
-        {
-            ProductoFixture fixture = new ProductoFixture();
-            fixture.MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS", Nombre = "Peso" });
-            ProductoBLL sut = fixture.CreateSut();
-
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(99, "Leche", 1, 1, 10m));
         }
 
         [TestMethod]
         public void Crear_CategoriaInexistente_ThrowsExcepcionNegocio()
         {
             ProductoFixture fixture = new ProductoFixture();
-            fixture.MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS", Nombre = "Peso" });
-            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             ProductoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, "Leche", 99, 1, 10m));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Leche", 99));
+
+            Assert.AreEqual("Error.MerchantManagement.CategoriaProductoNotFound", ex.Message);
         }
 
         [TestMethod]
-        public void Crear_Valido_InsertaAuditaYGuarda()
+        public void Crear_Valido_InsertaSinComercioAuditaYGuarda()
         {
             ProductoFixture fixture = new ProductoFixture();
-            fixture.MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS", Nombre = "Peso" });
-            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             fixture.Unidad.CategoriaProductoRepo.Categorias.Add(1, new CategoriaProducto { Id = 1, Nombre = "Lacteos" });
             ProductoBLL sut = fixture.CreateSut();
 
-            Producto creado = sut.Crear(1, "  Leche  ", 1, 1, 150.5m);
+            Producto creado = sut.Crear("  Leche  ", 1);
 
             Producto insertado = fixture.Unidad.ProductoRepo.Productos[creado.Id];
             Assert.AreEqual("Leche", insertado.Nombre);
-            Assert.AreEqual(1, insertado.Comercio.Id);
             Assert.AreEqual(1, insertado.CategoriaProducto.Id);
-            Assert.AreEqual(1, insertado.Moneda.Id);
-            Assert.AreEqual(150.5m, insertado.Precio);
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls[0].Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -86,40 +66,37 @@ namespace BLL.Tests
             ProductoFixture fixture = new ProductoFixture();
             ProductoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, "Nuevo", 1, 10m));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, "Nuevo", 1));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoNotFound", ex.Message);
         }
 
         [TestMethod]
         public void Actualizar_CategoriaInexistente_ThrowsExcepcionNegocio()
         {
             ProductoFixture fixture = new ProductoFixture();
-            Moneda moneda = new Moneda { Id = 1, Codigo = "ARS", Nombre = "Peso" };
-            Comercio comercio = new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } };
-            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", Comercio = comercio, Moneda = moneda, CategoriaProducto = new CategoriaProducto { Id = 1 }, Precio = 100m });
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
             ProductoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, "Leche", 99, 100m));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, "Leche", 99));
+
+            Assert.AreEqual("Error.MerchantManagement.CategoriaProductoNotFound", ex.Message);
         }
 
         [TestMethod]
-        public void Actualizar_Valido_NoCambiaComercioNiMonedaActualizaAuditaYGuarda()
+        public void Actualizar_Valido_CambiaNombreYCategoriaAuditaYGuarda()
         {
             ProductoFixture fixture = new ProductoFixture();
-            Moneda moneda = new Moneda { Id = 1, Codigo = "ARS", Nombre = "Peso" };
-            Comercio comercio = new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } };
-            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", Comercio = comercio, Moneda = moneda, CategoriaProducto = new CategoriaProducto { Id = 1 }, Precio = 100m });
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
             fixture.Unidad.CategoriaProductoRepo.Categorias.Add(2, new CategoriaProducto { Id = 2, Nombre = "Bebidas" });
             ProductoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, "  Leche Entera  ", 2, 200m);
+            bool resultado = sut.Actualizar(1, "  Leche Entera  ", 2);
 
             Assert.IsTrue(resultado);
             Producto actualizado = fixture.Unidad.ProductoRepo.Productos[1];
             Assert.AreEqual("Leche Entera", actualizado.Nombre);
             Assert.AreEqual(2, actualizado.CategoriaProducto.Id);
-            Assert.AreEqual(200m, actualizado.Precio);
-            Assert.AreEqual(1, actualizado.Comercio.Id);
-            Assert.AreEqual(1, actualizado.Moneda.Id);
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls[0].Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -130,14 +107,38 @@ namespace BLL.Tests
             ProductoFixture fixture = new ProductoFixture();
             ProductoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoNotFound", ex.Message);
         }
 
         [TestMethod]
-        public void Eliminar_Valido_EliminaAuditaYGuarda()
+        public void Eliminar_ProductoVendidoPorUnComercio_ThrowsProductoInUseYNoElimina()
         {
             ProductoFixture fixture = new ProductoFixture();
-            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", Comercio = new Comercio { Id = 1 }, Moneda = new Moneda { Id = 1 }, CategoriaProducto = new CategoriaProducto { Id = 1 }, Precio = 100m });
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
+            fixture.Unidad.ComercioProductoRepo.Asignaciones.Add(new ComercioProducto
+            {
+                Comercio = new Comercio { Id = 1 },
+                Producto = new Producto { Id = 1 },
+                Moneda = new Moneda { Id = 1 },
+                Precio = 100m
+            });
+            ProductoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoInUse", ex.Message);
+            Assert.IsTrue(fixture.Unidad.ProductoRepo.Productos.ContainsKey(1));
+            Assert.IsNull(fixture.Unidad.ProductoRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ProductoSinUso_EliminaAuditaYGuarda()
+        {
+            ProductoFixture fixture = new ProductoFixture();
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
             ProductoBLL sut = fixture.CreateSut();
 
             bool resultado = sut.Eliminar(1);
@@ -148,10 +149,39 @@ namespace BLL.Tests
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
 
+        [TestMethod]
+        public void Eliminar_IncluidoPorUnaPromocion_ThrowsProductoInUseYNoElimina()
+        {
+            ProductoFixture fixture = new ProductoFixture();
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
+            fixture.Unidad.PromocionProductoRepo.IncluidosPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
+            ProductoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ProductoRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ExcluidoPorUnaPromocion_ThrowsProductoInUseYNoElimina()
+        {
+            ProductoFixture fixture = new ProductoFixture();
+            fixture.Unidad.ProductoRepo.Productos.Add(1, new Producto { Id = 1, Nombre = "Leche", CategoriaProducto = new CategoriaProducto { Id = 1 } });
+            fixture.Unidad.PromocionProductoRepo.ExcluidosPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
+            ProductoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ProductoInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ProductoRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
         private sealed class ProductoFixture
         {
             public readonly FakeProductoRepositorio ProductoRepo = new FakeProductoRepositorio();
-            public readonly FakeMonedaRepositorio MonedaRepo = new FakeMonedaRepositorio();
             public readonly SpyBitacoraBLL Bitacora = new SpyBitacoraBLL();
             public readonly FakeUnidadDeTrabajo Unidad;
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
@@ -164,7 +194,7 @@ namespace BLL.Tests
 
             public ProductoBLL CreateSut()
             {
-                return new ProductoBLL(ProductoRepo, MonedaRepo, UnidadFactory, Bitacora);
+                return new ProductoBLL(ProductoRepo, UnidadFactory, Bitacora);
             }
         }
     }

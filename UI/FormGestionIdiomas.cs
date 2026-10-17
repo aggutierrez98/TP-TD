@@ -270,13 +270,13 @@ namespace TpIDS
             cmbIdiomas.ValueMember = "Id";
             cmbIdiomas.DataSource = idiomas;
 
-            if (idiomaSeleccionadoId.HasValue)
+            // Sin seleccion previa se abre en el idioma default (la lista viene ordenada por nombre).
+            Idioma idiomaSeleccionado = idiomaSeleccionadoId.HasValue
+                ? idiomas.FirstOrDefault(item => item.Id == idiomaSeleccionadoId.Value)
+                : idiomas.FirstOrDefault(item => item.Default);
+            if (idiomaSeleccionado != null)
             {
-                Idioma idiomaSeleccionado = idiomas.FirstOrDefault(item => item.Id == idiomaSeleccionadoId.Value);
-                if (idiomaSeleccionado != null)
-                {
-                    cmbIdiomas.SelectedItem = idiomaSeleccionado;
-                }
+                cmbIdiomas.SelectedItem = idiomaSeleccionado;
             }
 
             cargandoIdiomas = false;

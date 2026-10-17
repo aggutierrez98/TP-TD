@@ -67,6 +67,21 @@ namespace REPOSITORIO
             return _tasaConversionDAL.Actualizar(tasa, _accesoDatos);
         }
 
+        public bool ActualizarValorAutomatico(int id, decimal calculoConversion)
+        {
+            return _tasaConversionDAL.ActualizarValorAutomatico(id, calculoConversion, _accesoDatos);
+        }
+
+        public bool MarcarManual(int id, int usuarioId)
+        {
+            return _tasaConversionDAL.MarcarManual(id, usuarioId, _accesoDatos);
+        }
+
+        public bool Liberar(int id)
+        {
+            return _tasaConversionDAL.Liberar(id, _accesoDatos);
+        }
+
         public bool Eliminar(int id)
         {
             return _tasaConversionDAL.Eliminar(id, _accesoDatos);

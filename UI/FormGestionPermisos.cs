@@ -120,7 +120,7 @@ namespace TpIDS
         // reconstruir la lista (Clear + Add en RefrescarListas) WinForms deja una
         // SelectedObjectCollection cacheada e inconsistente, y SelectedItem lanza
         // IndexOutOfRangeException. SelectedIndex + Items evita ese camino.
-        private static IPermiso ObtenerSeleccion(ListBox lista)
+        private static IPermiso ObtenerSeleccion(Krypton.Toolkit.KryptonListBox lista)
         {
             int indice = lista.SelectedIndex;
             if (indice < 0 || indice >= lista.Items.Count)

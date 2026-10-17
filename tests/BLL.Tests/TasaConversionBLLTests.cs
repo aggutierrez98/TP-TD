@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BE;
 using BLL.Tests.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -158,6 +159,134 @@ namespace BLL.Tests
         }
 
         [TestMethod]
+        public void Crear_Valido_NoMarcaLaTasaComoManual()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS" });
+            fixture.MonedaRepo.Monedas.Add(2, new Moneda { Id = 2, Codigo = "USD" });
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            TasaConversion creada = sut.Crear(1, 2, 850.5m);
+
+            Assert.IsFalse(fixture.Unidad.TasaConversionRepo.Tasas[creada.Id].EsManual);
+            Assert.IsNull(fixture.Unidad.TasaConversionRepo.Tasas[creada.Id].ProtegidaPorUsuarioId);
+            Assert.AreEqual(1, fixture.Bitacora.Calls.Count);
+        }
+
+        [TestMethod]
+        public void Actualizar_ValorCambiado_MarcaManualConUsuarioActual()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(1, 1, 2, 900m);
+
+            TasaConversion tasa = fixture.Unidad.TasaConversionRepo.Tasas[1];
+            Assert.IsTrue(tasa.EsManual);
+            Assert.AreEqual(TasaConversionFixture.UsuarioId, tasa.ProtegidaPorUsuarioId);
+            Assert.IsNotNull(tasa.FechaProteccion);
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Actualizar_ValorCambiado_RegistraLaProteccionEnBitacoraDentroDeLaMismaUnidad()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(1, 1, 2, 900m);
+
+            BitacoraCall proteccion = fixture.Bitacora.Calls.SingleOrDefault(c => c.Actividad == "FormCurrencyManagement.Value.Activity.TasaMarkedManual");
+            Assert.IsNotNull(proteccion);
+            Assert.AreEqual("OperacionInterno", proteccion.Kind);
+            Assert.AreSame(fixture.Unidad, proteccion.Unidad);
+        }
+
+        [TestMethod]
+        public void Actualizar_ParCambiadoConMismoValor_MarcaManual()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            fixture.MonedaRepo.Monedas.Add(3, new Moneda { Id = 3, Codigo = "EUR" });
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(1, 1, 3, 800m);
+
+            Assert.IsTrue(fixture.Unidad.TasaConversionRepo.Tasas[1].EsManual);
+        }
+
+        [TestMethod]
+        public void Actualizar_SinCambiosReales_NoMarcaManual()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(1, 1, 2, 800m);
+
+            Assert.IsFalse(fixture.Unidad.TasaConversionRepo.Tasas[1].EsManual);
+            Assert.IsNull(fixture.Bitacora.Calls.SingleOrDefault(c => c.Actividad == "FormCurrencyManagement.Value.Activity.TasaMarkedManual"));
+        }
+
+        [TestMethod]
+        public void Actualizar_SinSesion_ThrowsAndDoesNotCreateUow()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.Sesion.CerrarSesion();
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            Assert.ThrowsExactly<InvalidOperationException>(() => sut.Actualizar(1, 1, 2, 900m));
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Liberar_TasaManual_LimpiaMarcaAuditaYGuarda()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            fixture.Unidad.TasaConversionRepo.MarcarManual(1, 99);
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            bool resultado = sut.Liberar(1);
+
+            TasaConversion tasa = fixture.Unidad.TasaConversionRepo.Tasas[1];
+            Assert.IsTrue(resultado);
+            Assert.IsFalse(tasa.EsManual);
+            Assert.IsNull(tasa.ProtegidaPorUsuarioId);
+            Assert.IsNull(tasa.FechaProteccion);
+            BitacoraCall liberacion = fixture.Bitacora.Calls.Single();
+            Assert.AreEqual("FormCurrencyManagement.Value.Activity.TasaReleased", liberacion.Actividad);
+            Assert.AreEqual("OperacionInterno", liberacion.Kind);
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Liberar_Inexistente_ThrowsExcepcionNegocio()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Liberar(99));
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Liberar_TasaQueNoEsManual_NoEscribeNiAudita()
+        {
+            TasaConversionFixture fixture = new TasaConversionFixture();
+            fixture.AgregarParExistente(800m);
+            TasaConversionBLL sut = fixture.CreateSut();
+
+            bool resultado = sut.Liberar(1);
+
+            Assert.IsTrue(resultado);
+            Assert.AreEqual(0, fixture.Bitacora.Calls.Count);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
         public void Eliminar_Inexistente_ThrowsExcepcionNegocio()
         {
             TasaConversionFixture fixture = new TasaConversionFixture();
@@ -188,16 +317,34 @@ namespace BLL.Tests
             public readonly SpyBitacoraBLL Bitacora = new SpyBitacoraBLL();
             public readonly FakeUnidadDeTrabajo Unidad;
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
+            public readonly FakeSesion Sesion = new FakeSesion();
+
+            public const int UsuarioId = 7;
 
             public TasaConversionFixture()
             {
                 Unidad = new FakeUnidadDeTrabajo { TasaConversionRepo = TasaConversionRepo, MonedaRepo = MonedaRepo };
                 UnidadFactory = new FakeUnidadDeTrabajoFactory(Unidad);
+                Sesion.IniciarSesion(new Usuario { Id = UsuarioId, Username = "operador" });
+            }
+
+            public void AgregarParExistente(decimal calculo)
+            {
+                MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS" });
+                MonedaRepo.Monedas.Add(2, new Moneda { Id = 2, Codigo = "USD" });
+                Unidad.TasaConversionRepo.Tasas.Add(1, new TasaConversion
+                {
+                    Id = 1,
+                    MonedaBase = new Moneda { Id = 1 },
+                    MonedaConversion = new Moneda { Id = 2 },
+                    CalculoConversion = calculo,
+                    FechaActualizacion = new DateTime(2026, 1, 1)
+                });
             }
 
             public TasaConversionBLL CreateSut()
             {
-                return new TasaConversionBLL(TasaConversionRepo, UnidadFactory, Bitacora);
+                return new TasaConversionBLL(TasaConversionRepo, UnidadFactory, Bitacora, Sesion);
             }
         }
     }

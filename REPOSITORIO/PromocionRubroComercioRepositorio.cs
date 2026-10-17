@@ -28,5 +28,10 @@ namespace REPOSITORIO
         {
             return _promocionRubroComercioDAL.ReemplazarRubrosComercioDePromocion(promocionId, rubroComercioIds, _accesoDatos);
         }
+
+        public int ContarPorRubroComercio(int rubroComercioId)
+        {
+            return _promocionRubroComercioDAL.ContarPorRubroComercio(rubroComercioId, _accesoDatos);
+        }
     }
 }

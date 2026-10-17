@@ -148,6 +148,173 @@ namespace TpIDS.IntegrationTests
             }
         }
 
+        [TestMethod]
+        public void InsertarYObtenerId_TasaNueva_NoEsManualYNoTieneProteccion()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int id = InsertarTasaTest(accesoDatos, repositorio, "TD1", "TD2", 10m);
+
+                BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
+
+                Assert.IsFalse(obtenida.EsManual);
+                Assert.IsNull(obtenida.ProtegidaPorUsuarioId);
+                Assert.IsNull(obtenida.FechaProteccion);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void MarcarManual_TasaExistente_PersisteMarcaUsuarioYFecha()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int id = InsertarTasaTest(accesoDatos, repositorio, "TD3", "TD4", 10m);
+                int usuarioId = ObtenerUsuarioIdTest(accesoDatos);
+                DateTime antes = DateTime.Now.AddMinutes(-1);
+
+                bool marcada = repositorio.MarcarManual(id, usuarioId);
+
+                BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
+                Assert.IsTrue(marcada);
+                Assert.IsTrue(obtenida.EsManual);
+                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuarioId);
+                Assert.IsNotNull(obtenida.FechaProteccion);
+                Assert.IsTrue(obtenida.FechaProteccion.Value >= antes);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void MarcarManual_TasaInexistente_DevuelveFalse()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+
+                Assert.IsFalse(repositorio.MarcarManual(int.MaxValue, ObtenerUsuarioIdTest(accesoDatos)));
+                Assert.IsFalse(repositorio.Liberar(int.MaxValue));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void Liberar_TasaManual_LimpiaMarcaUsuarioYFecha()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int id = InsertarTasaTest(accesoDatos, repositorio, "TD5", "TD6", 10m);
+                repositorio.MarcarManual(id, ObtenerUsuarioIdTest(accesoDatos));
+
+                bool liberada = repositorio.Liberar(id);
+
+                BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
+                Assert.IsTrue(liberada);
+                Assert.IsFalse(obtenida.EsManual);
+                Assert.IsNull(obtenida.ProtegidaPorUsuarioId);
+                Assert.IsNull(obtenida.FechaProteccion);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ActualizarValorAutomatico_TasaNoManual_ActualizaValorYFechaSinMarcarla()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int id = InsertarTasaTest(accesoDatos, repositorio, "TD7", "TD8", 10m);
+                DateTime antes = DateTime.Now.AddMinutes(-1);
+
+                bool actualizada = repositorio.ActualizarValorAutomatico(id, 1234.567891m);
+
+                BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
+                Assert.IsTrue(actualizada);
+                Assert.AreEqual(1234.567891m, obtenida.CalculoConversion);
+                Assert.IsTrue(obtenida.FechaActualizacion >= antes);
+                Assert.IsFalse(obtenida.EsManual);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ActualizarValorAutomatico_TasaManual_NoCambiaElValorNiLaMarca()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int id = InsertarTasaTest(accesoDatos, repositorio, "TD9", "TE1", 10m);
+                int usuarioId = ObtenerUsuarioIdTest(accesoDatos);
+                repositorio.MarcarManual(id, usuarioId);
+
+                bool actualizada = repositorio.ActualizarValorAutomatico(id, 999m);
+
+                BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
+                Assert.IsFalse(actualizada);
+                Assert.AreEqual(10m, obtenida.CalculoConversion);
+                Assert.IsTrue(obtenida.EsManual);
+                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuarioId);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
+        public void ObtenerTodas_IncluyeElEstadoManualDeCadaTasa()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
+                int idManual = InsertarTasaTest(accesoDatos, repositorio, "TE2", "TE3", 10m);
+                int idAutomatica = InsertarTasaTest(accesoDatos, repositorio, "TE4", "TE5", 20m);
+                repositorio.MarcarManual(idManual, ObtenerUsuarioIdTest(accesoDatos));
+
+                var tasas = repositorio.ObtenerTodas();
+
+                Assert.IsTrue(tasas.Single(item => item.Id == idManual).EsManual);
+                Assert.IsFalse(tasas.Single(item => item.Id == idAutomatica).EsManual);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        private static int InsertarTasaTest(
+            AccesoDatosSqlServer accesoDatos,
+            TasaConversionRepositorio repositorio,
+            string codigoBase,
+            string codigoConversion,
+            decimal calculo)
+        {
+            int monedaBaseId = InsertarMonedaTest(accesoDatos, codigoBase, "MonedaTestBase" + codigoBase);
+            int monedaConversionId = InsertarMonedaTest(accesoDatos, codigoConversion, "MonedaTestConversion" + codigoConversion);
+            return repositorio.InsertarYObtenerId(new BE.TasaConversion
+            {
+                MonedaBase = new BE.Moneda { Id = monedaBaseId },
+                MonedaConversion = new BE.Moneda { Id = monedaConversionId },
+                CalculoConversion = calculo
+            });
+        }
+
+        private static int ObtenerUsuarioIdTest(AccesoDatosSqlServer accesoDatos)
+        {
+            return (int)accesoDatos.Read("SELECT TOP 1 Id FROM Usuarios ORDER BY Id").Rows[0]["Id"];
+        }
+
         private static int InsertarMonedaTest(AccesoDatosSqlServer accesoDatos, string codigo, string nombre)
         {
             return new MonedaRepositorio(accesoDatos).InsertarYObtenerId(new BE.Moneda { Codigo = codigo, Nombre = nombre });

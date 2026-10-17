@@ -153,6 +153,29 @@ namespace TpIDS.IntegrationTests
         }
 
         [TestMethod]
+        public void ContarPorMedioPagoEntidad_CuentaLasCuentasQueLoTienenContratado()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                CuentaFinancieraRepositorio repositorio = new CuentaFinancieraRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int entidadFinancieraId = InsertarEntidadFinancieraTest(accesoDatos, "BancoTestContarMedio");
+                int cuentaAId = InsertarCuentaTest(repositorio, usuarioId, entidadFinancieraId, "CuentaTestContarMedioA");
+                int cuentaBId = InsertarCuentaTest(repositorio, usuarioId, entidadFinancieraId, "CuentaTestContarMedioB");
+                int medioContratadoId = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestContarMedioUsado");
+                int medioSinUsoId = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestContarMedioLibre");
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(cuentaAId, new System.Collections.Generic.List<int> { medioContratadoId });
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(cuentaBId, new System.Collections.Generic.List<int> { medioContratadoId });
+
+                Assert.AreEqual(2, repositorio.ContarPorMedioPagoEntidad(medioContratadoId));
+                Assert.AreEqual(0, repositorio.ContarPorMedioPagoEntidad(medioSinUsoId));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
         public void Actualizar_CuentaExistente_PersisteNuevoAlias()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())

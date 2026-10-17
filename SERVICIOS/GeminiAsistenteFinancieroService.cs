@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using ABSTRACCIONES;
+using System.Text.Json;
 
 namespace SERVICIOS
 {
@@ -155,7 +155,7 @@ namespace SERVICIOS
                 }
             };
 
-            return new JavaScriptSerializer().Serialize(request);
+            return JsonSerializer.Serialize(request);
         }
 
         // No lanza excepciones: cualquier JSON invalido, inesperado o con un valor de
@@ -169,10 +169,19 @@ namespace SERVICIOS
 
             try
             {
-                ClasificacionExtraida clasificacion = new JavaScriptSerializer().Deserialize<ClasificacionExtraida>(textoJsonInterno);
-                if (clasificacion != null && (clasificacion.agente == "Ahorro" || clasificacion.agente == "Inversiones"))
+                using (JsonDocument clasificacion = JsonDocument.Parse(textoJsonInterno))
                 {
-                    return clasificacion.agente;
+                    JsonElement raiz = clasificacion.RootElement;
+                    if (raiz.ValueKind == JsonValueKind.Object &&
+                        raiz.TryGetProperty("agente", out JsonElement agente) &&
+                        agente.ValueKind == JsonValueKind.String)
+                    {
+                        string valor = agente.GetString();
+                        if (valor == "Ahorro" || valor == "Inversiones")
+                        {
+                            return valor;
+                        }
+                    }
                 }
             }
             catch (Exception)
@@ -190,12 +199,5 @@ namespace SERVICIOS
             return GeminiChatClient.ArmarRequestBody(PromptSistema, pregunta, historial);
         }
 
-        // Los nombres de propiedad reproducen exactamente las claves del JSON devuelto por
-        // Gemini via responseFormat (camelCase): JavaScriptSerializer mapea por nombre
-        // exacto, sin soporte de atributos de renombrado.
-        private sealed class ClasificacionExtraida
-        {
-            public string agente { get; set; }
-        }
     }
 }

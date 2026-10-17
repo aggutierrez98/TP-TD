@@ -27,8 +27,15 @@ namespace REPOSITORIO
         private INotificacionRepositorio _notificaciones;
         private IPermisoRepositorio _permisos;
         private IProductoRepositorio _productos;
+        private IComercioProductoRepositorio _comercioProductos;
         private IPromocionRepositorio _promociones;
         private IPromocionComercioRepositorio _promocionComercio;
+        private IPromocionRubroComercioRepositorio _promocionRubrosComercio;
+        private IPromocionEntidadFinancieraRepositorio _promocionEntidadesFinancieras;
+        private IPromocionMedioPagoRepositorio _promocionMediosPago;
+        private IPromocionSegmentoRepositorio _promocionSegmentos;
+        private IPromocionProductoRepositorio _promocionProductos;
+        private IPromocionCategoriaProductoRepositorio _promocionCategoriasProducto;
         private IRecordatorioCompraRepositorio _recordatoriosCompra;
         private IRecordatorioInversionRepositorio _recordatoriosInversion;
         private IRubroComercioRepositorio _rubrosComercio;
@@ -37,6 +44,7 @@ namespace REPOSITORIO
         private ITarjetaDashboardRepositorio _tarjetasDashboard;
         private IConsultaChatbotRepositorio _consultasChatbot;
         private ITasaConversionRepositorio _tasasConversion;
+        private IEjecucionActualizacionTasasRepositorio _ejecucionesActualizacionTasas;
         private ITraduccionRepositorio _traducciones;
         private IUsuarioHistorialRepositorio _usuarioHistorial;
         private IUsuarioPermisoRepositorio _usuarioPermisos;
@@ -137,6 +145,11 @@ namespace REPOSITORIO
             get { return _productos ?? (_productos = new ProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public IComercioProductoRepositorio ComercioProductos
+        {
+            get { return _comercioProductos ?? (_comercioProductos = new ComercioProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IPromocionRepositorio Promociones
         {
             get { return _promociones ?? (_promociones = new PromocionRepositorio(ObtenerAccesoDatosTransaccional())); }
@@ -145,6 +158,36 @@ namespace REPOSITORIO
         public IPromocionComercioRepositorio PromocionComercio
         {
             get { return _promocionComercio ?? (_promocionComercio = new PromocionComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionRubroComercioRepositorio PromocionRubrosComercio
+        {
+            get { return _promocionRubrosComercio ?? (_promocionRubrosComercio = new PromocionRubroComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionEntidadFinancieraRepositorio PromocionEntidadesFinancieras
+        {
+            get { return _promocionEntidadesFinancieras ?? (_promocionEntidadesFinancieras = new PromocionEntidadFinancieraRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionMedioPagoRepositorio PromocionMediosPago
+        {
+            get { return _promocionMediosPago ?? (_promocionMediosPago = new PromocionMedioPagoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionSegmentoRepositorio PromocionSegmentos
+        {
+            get { return _promocionSegmentos ?? (_promocionSegmentos = new PromocionSegmentoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionProductoRepositorio PromocionProductos
+        {
+            get { return _promocionProductos ?? (_promocionProductos = new PromocionProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IPromocionCategoriaProductoRepositorio PromocionCategoriasProducto
+        {
+            get { return _promocionCategoriasProducto ?? (_promocionCategoriasProducto = new PromocionCategoriaProductoRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public IRecordatorioCompraRepositorio RecordatoriosCompra
@@ -185,6 +228,11 @@ namespace REPOSITORIO
         public ITasaConversionRepositorio TasasConversion
         {
             get { return _tasasConversion ?? (_tasasConversion = new TasaConversionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IEjecucionActualizacionTasasRepositorio EjecucionesActualizacionTasas
+        {
+            get { return _ejecucionesActualizacionTasas ?? (_ejecucionesActualizacionTasas = new EjecucionActualizacionTasasRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public ITraduccionRepositorio Traducciones

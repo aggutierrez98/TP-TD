@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using ABSTRACCIONES;
+using System.Text.Json;
 
 namespace SERVICIOS
 {
@@ -102,7 +102,7 @@ namespace SERVICIOS
                 contents = contents.ToArray()
             };
 
-            return new JavaScriptSerializer().Serialize(request);
+            return JsonSerializer.Serialize(request);
         }
 
         internal static string ExtraerTexto(string jsonRespuesta)
@@ -122,35 +122,33 @@ namespace SERVICIOS
         // fallback seguro (ej. la clasificacion de agente) en vez de una excepcion.
         internal static string ExtraerTextoCrudo(string jsonRespuesta)
         {
-            GeminiApiResponse respuesta = new JavaScriptSerializer().Deserialize<GeminiApiResponse>(jsonRespuesta);
-            return respuesta?.candidates != null && respuesta.candidates.Count > 0
-                ? respuesta.candidates[0]?.content?.parts != null && respuesta.candidates[0].content.parts.Count > 0
-                    ? respuesta.candidates[0].content.parts[0]?.text
-                    : null
-                : null;
-        }
+            using (JsonDocument respuesta = JsonDocument.Parse(jsonRespuesta))
+            {
+                JsonElement raiz = respuesta.RootElement;
+                if (raiz.ValueKind != JsonValueKind.Object ||
+                    !raiz.TryGetProperty("candidates", out JsonElement candidates) ||
+                    candidates.ValueKind != JsonValueKind.Array || candidates.GetArrayLength() == 0)
+                {
+                    return null;
+                }
 
-        // Los nombres de propiedad de las clases de abajo reproducen exactamente
-        // las claves del JSON de Gemini (camelCase): JavaScriptSerializer mapea
-        // por nombre exacto, sin soporte de atributos de renombrado.
-        private sealed class GeminiApiResponse
-        {
-            public List<GeminiCandidate> candidates { get; set; }
-        }
+                JsonElement primero = candidates[0];
+                if (primero.ValueKind != JsonValueKind.Object ||
+                    !primero.TryGetProperty("content", out JsonElement content) ||
+                    content.ValueKind != JsonValueKind.Object ||
+                    !content.TryGetProperty("parts", out JsonElement parts) ||
+                    parts.ValueKind != JsonValueKind.Array || parts.GetArrayLength() == 0)
+                {
+                    return null;
+                }
 
-        private sealed class GeminiCandidate
-        {
-            public GeminiContent content { get; set; }
-        }
-
-        private sealed class GeminiContent
-        {
-            public List<GeminiPart> parts { get; set; }
-        }
-
-        private sealed class GeminiPart
-        {
-            public string text { get; set; }
+                JsonElement parte = parts[0];
+                return parte.ValueKind == JsonValueKind.Object &&
+                       parte.TryGetProperty("text", out JsonElement text) &&
+                       text.ValueKind == JsonValueKind.String
+                    ? text.GetString()
+                    : null;
+            }
         }
     }
 }

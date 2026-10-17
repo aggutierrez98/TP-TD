@@ -13,5 +13,11 @@ namespace BE
         public decimal CalculoConversion { get; set; }
 
         public DateTime FechaActualizacion { get; set; }
+
+        public bool EsManual { get; set; }
+
+        public int? ProtegidaPorUsuarioId { get; set; }
+
+        public DateTime? FechaProteccion { get; set; }
     }
 }

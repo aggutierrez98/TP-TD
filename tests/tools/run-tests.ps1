@@ -133,6 +133,7 @@ try {
     & $vstest `
         "tests\SERVICIOS.Tests\bin\$Configuration\net472\SERVICIOS.Tests.dll" `
         "tests\BLL.Tests\bin\$Configuration\net472\BLL.Tests.dll" `
+        /InIsolation `
         /ResultsDirectory:$ResultsRoot `
         /Logger:"trx;LogFileName=unit-tests.trx"
     $unitExitCode = $LASTEXITCODE

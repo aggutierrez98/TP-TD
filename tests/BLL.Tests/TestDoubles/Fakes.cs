@@ -47,6 +47,7 @@ namespace BLL.Tests.TestDoubles
             CategoriaRepo = new FakeCategoriaRepositorio();
             CategoriaProductoRepo = new FakeCategoriaProductoRepositorio();
             ComercioRepo = new FakeComercioRepositorio();
+            ComercioReglaCategorizacionRepo = new FakeComercioReglaCategorizacionRepositorio();
             CuentaFinancieraRepo = new FakeCuentaFinancieraRepositorio();
             EntidadFinancieraRepo = new FakeEntidadFinancieraRepositorio();
             MedioPagoRepo = new FakeMedioPagoRepositorio();
@@ -55,6 +56,7 @@ namespace BLL.Tests.TestDoubles
             TarjetaDashboardRepo = new FakeTarjetaDashboardRepositorio();
             MonedaRepo = new FakeMonedaRepositorio();
             TasaConversionRepo = new FakeTasaConversionRepositorio();
+            EjecucionActualizacionTasasRepo = new FakeEjecucionActualizacionTasasRepositorio();
             IdiomaRepo = new FakeIdiomaRepositorio();
             IntegridadRepo = new FakeIntegridadRepositorio();
             ItemListaRepo = new FakeItemListaRepositorio();
@@ -63,8 +65,15 @@ namespace BLL.Tests.TestDoubles
             NotificacionRepo = new FakeNotificacionRepositorio();
             PermisoRepo = new FakePermisoRepositorio();
             ProductoRepo = new FakeProductoRepositorio();
+            ComercioProductoRepo = new FakeComercioProductoRepositorio();
             PromocionRepo = new FakePromocionRepositorio();
             PromocionComercioRepo = new FakePromocionComercioRepositorio();
+            PromocionRubroComercioRepo = new FakePromocionRubroComercioRepositorio();
+            PromocionEntidadFinancieraRepo = new FakePromocionEntidadFinancieraRepositorio();
+            PromocionMedioPagoRepo = new FakePromocionMedioPagoRepositorio();
+            PromocionSegmentoRepo = new FakePromocionSegmentoRepositorio();
+            PromocionProductoRepo = new FakePromocionProductoRepositorio();
+            PromocionCategoriaProductoRepo = new FakePromocionCategoriaProductoRepositorio();
             RecordatorioCompraRepo = new FakeRecordatorioCompraRepositorio();
             RecordatorioInversionRepo = new FakeRecordatorioInversionRepositorio();
             RubroComercioRepo = new FakeRubroComercioRepositorio();
@@ -100,6 +109,8 @@ namespace BLL.Tests.TestDoubles
 
         public FakeTasaConversionRepositorio TasaConversionRepo { get; set; }
 
+        public FakeEjecucionActualizacionTasasRepositorio EjecucionActualizacionTasasRepo { get; set; }
+
         public FakeIdiomaRepositorio IdiomaRepo { get; set; }
 
         public FakeIntegridadRepositorio IntegridadRepo { get; set; }
@@ -116,9 +127,23 @@ namespace BLL.Tests.TestDoubles
 
         public FakeProductoRepositorio ProductoRepo { get; set; }
 
+        public FakeComercioProductoRepositorio ComercioProductoRepo { get; set; }
+
         public FakePromocionRepositorio PromocionRepo { get; set; }
 
         public FakePromocionComercioRepositorio PromocionComercioRepo { get; set; }
+
+        public FakePromocionRubroComercioRepositorio PromocionRubroComercioRepo { get; set; }
+
+        public FakePromocionEntidadFinancieraRepositorio PromocionEntidadFinancieraRepo { get; set; }
+
+        public FakePromocionMedioPagoRepositorio PromocionMedioPagoRepo { get; set; }
+
+        public FakePromocionSegmentoRepositorio PromocionSegmentoRepo { get; set; }
+
+        public FakePromocionProductoRepositorio PromocionProductoRepo { get; set; }
+
+        public FakePromocionCategoriaProductoRepositorio PromocionCategoriaProductoRepo { get; set; }
 
         public FakeRecordatorioCompraRepositorio RecordatorioCompraRepo { get; set; }
 
@@ -188,9 +213,23 @@ namespace BLL.Tests.TestDoubles
 
         public IProductoRepositorio Productos { get { return ProductoRepo; } }
 
+        public IComercioProductoRepositorio ComercioProductos { get { return ComercioProductoRepo; } }
+
         public IPromocionRepositorio Promociones { get { return PromocionRepo; } }
 
         public IPromocionComercioRepositorio PromocionComercio { get { return PromocionComercioRepo; } }
+
+        public IPromocionRubroComercioRepositorio PromocionRubrosComercio { get { return PromocionRubroComercioRepo; } }
+
+        public IPromocionEntidadFinancieraRepositorio PromocionEntidadesFinancieras { get { return PromocionEntidadFinancieraRepo; } }
+
+        public IPromocionMedioPagoRepositorio PromocionMediosPago { get { return PromocionMedioPagoRepo; } }
+
+        public IPromocionSegmentoRepositorio PromocionSegmentos { get { return PromocionSegmentoRepo; } }
+
+        public IPromocionProductoRepositorio PromocionProductos { get { return PromocionProductoRepo; } }
+
+        public IPromocionCategoriaProductoRepositorio PromocionCategoriasProducto { get { return PromocionCategoriaProductoRepo; } }
 
         public IRecordatorioCompraRepositorio RecordatoriosCompra { get { return RecordatorioCompraRepo; } }
 
@@ -205,6 +244,8 @@ namespace BLL.Tests.TestDoubles
         public IConsultaChatbotRepositorio ConsultasChatbot { get { return ConsultaChatbotRepo; } }
 
         public ITasaConversionRepositorio TasasConversion { get { return TasaConversionRepo; } }
+
+        public IEjecucionActualizacionTasasRepositorio EjecucionesActualizacionTasas { get { return EjecucionActualizacionTasasRepo; } }
 
         public ITraduccionRepositorio Traducciones { get { return TraduccionRepo; } }
 
@@ -318,7 +359,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public RubroComercio LastInserted { get; private set; }
 
@@ -364,9 +405,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -388,7 +429,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public Comercio LastInserted { get; private set; }
 
@@ -441,9 +482,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -455,13 +496,19 @@ namespace BLL.Tests.TestDoubles
         }
     }
 
-    // Construye, via reflexion, un SqlException real con Number = 547 (violacion de FK),
-    // envuelto igual que lo hace AccesoDatosSqlServer.ExecuteInTransaction en produccion.
-    // SqlException no tiene constructor publico; esta es la tecnica estandar para
-    // instanciarlo en tests sin depender de una base de datos real.
+    // Construye, via reflexion, un SqlException real con Number = 547 (violacion de FK) para usarlo
+    // como falla tecnica de entrada en los tests de baja: los BLL ya no lo interpretan, asi que
+    // nunca debe terminar en un mensaje "en uso". SqlException no tiene constructor publico;
+    // esta es la tecnica estandar para instanciarlo en tests sin una base de datos real.
     internal static class FakeSqlExceptionFactory
     {
-        public static ExcepcionTecnica CrearExcepcionTecnicaPorViolacionForanea()
+        public static SqlException CrearViolacionForanea()
+        {
+            return CrearSqlException(547);
+        }
+
+        // Igual que lo envuelve AccesoDatosSqlServer.ExecuteInTransaction en produccion.
+        public static ExcepcionTecnica CrearViolacionForaneaEnvuelta()
         {
             return new ExcepcionTecnica("Error.Technical.SqlFailure", CrearSqlException(547));
         }
@@ -557,7 +604,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public CategoriaProducto LastInserted { get; private set; }
 
@@ -603,9 +650,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -639,11 +686,9 @@ namespace BLL.Tests.TestDoubles
             return Productos.TryGetValue(id, out producto) ? producto : null;
         }
 
-        public List<Producto> ObtenerPorComercio(int comercioId)
+        public List<Producto> ObtenerTodos()
         {
-            return Productos.Values
-                .Where(item => item.Comercio != null && item.Comercio.Id == comercioId)
-                .ToList();
+            return Productos.Values.OrderBy(item => item.Nombre).ToList();
         }
 
         public int InsertarYObtenerId(Producto producto)
@@ -680,6 +725,74 @@ namespace BLL.Tests.TestDoubles
 
             return Productos.Remove(id);
         }
+
+        public int ContarPorCategoria(int categoriaProductoId)
+        {
+            return Productos.Values.Count(item => item.CategoriaProducto != null && item.CategoriaProducto.Id == categoriaProductoId);
+        }
+    }
+
+    internal sealed class FakeComercioProductoRepositorio : IComercioProductoRepositorio
+    {
+        public List<ComercioProducto> Asignaciones { get; } = new List<ComercioProducto>();
+
+        public bool InsertarResult { get; set; } = true;
+
+        public bool ActualizarPrecioResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public ComercioProducto LastInserted { get; private set; }
+
+        public List<ComercioProducto> ObtenerPorComercio(int comercioId)
+        {
+            return Asignaciones.Where(item => item.Comercio.Id == comercioId).ToList();
+        }
+
+        public ComercioProducto ObtenerPorId(int comercioId, int productoId)
+        {
+            return Asignaciones.FirstOrDefault(item => item.Comercio.Id == comercioId && item.Producto.Id == productoId);
+        }
+
+        public bool Insertar(ComercioProducto comercioProducto)
+        {
+            LastInserted = comercioProducto;
+            if (!InsertarResult)
+            {
+                return false;
+            }
+
+            Asignaciones.Add(comercioProducto);
+            return true;
+        }
+
+        public bool ActualizarPrecio(int comercioId, int productoId, decimal precio)
+        {
+            ComercioProducto asignacion = ObtenerPorId(comercioId, productoId);
+            if (!ActualizarPrecioResult || asignacion == null)
+            {
+                return false;
+            }
+
+            asignacion.Precio = precio;
+            return true;
+        }
+
+        public bool Eliminar(int comercioId, int productoId)
+        {
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            ComercioProducto asignacion = ObtenerPorId(comercioId, productoId);
+            return asignacion != null && Asignaciones.Remove(asignacion);
+        }
+
+        public int ContarPorProducto(int productoId)
+        {
+            return Asignaciones.Count(item => item.Producto.Id == productoId);
+        }
     }
 
     internal sealed class FakePromocionRepositorio : IPromocionRepositorio
@@ -691,6 +804,10 @@ namespace BLL.Tests.TestDoubles
         public bool ActualizarResult { get; set; } = true;
 
         public bool EliminarResult { get; set; } = true;
+
+        public Exception ExcepcionEnInsertar { get; set; }
+
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public Promocion LastInserted { get; private set; }
 
@@ -711,6 +828,11 @@ namespace BLL.Tests.TestDoubles
 
         public int InsertarYObtenerId(Promocion promocion)
         {
+            if (ExcepcionEnInsertar != null)
+            {
+                throw ExcepcionEnInsertar;
+            }
+
             if (promocion.Id <= 0)
             {
                 promocion.Id = _nextId++;
@@ -736,6 +858,11 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
+            if (ExcepcionEnEliminar != null)
+            {
+                throw ExcepcionEnEliminar;
+            }
+
             if (!EliminarResult)
             {
                 return false;
@@ -753,6 +880,162 @@ namespace BLL.Tests.TestDoubles
             }
 
             promocion.DiasSemana = new List<DiaSemana>(dias ?? new List<DiaSemana>());
+            return true;
+        }
+    }
+
+    // Filtros de promocion: guardan lo que el BLL reemplaza para poder verificar la persistencia.
+    internal sealed class FakePromocionRubroComercioRepositorio : IPromocionRubroComercioRepositorio
+    {
+        public int ContarPorRubroComercio(int rubroComercioId)
+        {
+            return RubroComercioIdsPorPromocion.Values.Count(ids => ids.Contains(rubroComercioId));
+        }
+
+        public Dictionary<int, List<int>> RubroComercioIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<int> ObtenerRubroComercioIdsPorPromocion(int promocionId)
+        {
+            List<int> ids;
+            return RubroComercioIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarRubrosComercioDePromocion(int promocionId, List<int> rubroComercioIds)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            RubroComercioIdsPorPromocion[promocionId] = (rubroComercioIds ?? new List<int>()).ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakePromocionEntidadFinancieraRepositorio : IPromocionEntidadFinancieraRepositorio
+    {
+        public int ContarPorEntidadFinanciera(int entidadFinancieraId)
+        {
+            return EntidadFinancieraIdsPorPromocion.Values.Count(ids => ids.Contains(entidadFinancieraId));
+        }
+
+        public Dictionary<int, List<int>> EntidadFinancieraIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<int> ObtenerEntidadFinancieraIdsPorPromocion(int promocionId)
+        {
+            List<int> ids;
+            return EntidadFinancieraIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarEntidadesFinancierasDePromocion(int promocionId, List<int> entidadFinancieraIds)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            EntidadFinancieraIdsPorPromocion[promocionId] = (entidadFinancieraIds ?? new List<int>()).ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakePromocionMedioPagoRepositorio : IPromocionMedioPagoRepositorio
+    {
+        public int ContarPorMedioPago(int medioPagoId)
+        {
+            return MedioPagoIdsPorPromocion.Values.Count(ids => ids.Contains(medioPagoId));
+        }
+
+        public Dictionary<int, List<int>> MedioPagoIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<int> ObtenerMedioPagoIdsPorPromocion(int promocionId)
+        {
+            List<int> ids;
+            return MedioPagoIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarMediosPagoDePromocion(int promocionId, List<int> medioPagoIds)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            MedioPagoIdsPorPromocion[promocionId] = (medioPagoIds ?? new List<int>()).ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakePromocionSegmentoRepositorio : IPromocionSegmentoRepositorio
+    {
+        public Dictionary<int, List<string>> SegmentosPorPromocion { get; } = new Dictionary<int, List<string>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<string> ObtenerSegmentosPorPromocion(int promocionId)
+        {
+            List<string> segmentos;
+            return SegmentosPorPromocion.TryGetValue(promocionId, out segmentos) ? segmentos.ToList() : new List<string>();
+        }
+
+        public bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            SegmentosPorPromocion[promocionId] = (segmentos ?? new List<string>()).ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakePromocionProductoRepositorio : IPromocionProductoRepositorio
+    {
+        public int ContarPorProducto(int productoId)
+        {
+            return IncluidosPorPromocion.Values.Count(ids => ids.Contains(productoId))
+                + ExcluidosPorPromocion.Values.Count(ids => ids.Contains(productoId));
+        }
+
+        public Dictionary<int, List<int>> IncluidosPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public Dictionary<int, List<int>> ExcluidosPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<int> ObtenerProductoIdsPorPromocion(int promocionId, bool excluidos)
+        {
+            Dictionary<int, List<int>> origen = excluidos ? ExcluidosPorPromocion : IncluidosPorPromocion;
+            List<int> ids;
+            return origen.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarProductosDePromocion(int promocionId, List<int> incluidos, List<int> excluidos)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            IncluidosPorPromocion[promocionId] = (incluidos ?? new List<int>()).ToList();
+            ExcluidosPorPromocion[promocionId] = (excluidos ?? new List<int>()).ToList();
+            return true;
+        }
+    }
+
+    internal sealed class FakePromocionCategoriaProductoRepositorio : IPromocionCategoriaProductoRepositorio
+    {
+        public int ContarPorCategoriaProducto(int categoriaProductoId)
+        {
+            return IncluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProductoId))
+                + ExcluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProductoId));
+        }
+
+        public Dictionary<int, List<int>> IncluidasPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public Dictionary<int, List<int>> ExcluidasPorPromocion { get; } = new Dictionary<int, List<int>>();
+
+        public List<int> PromocionIdsReemplazados { get; } = new List<int>();
+
+        public List<int> ObtenerCategoriaProductoIdsPorPromocion(int promocionId, bool excluidos)
+        {
+            Dictionary<int, List<int>> origen = excluidos ? ExcluidasPorPromocion : IncluidasPorPromocion;
+            List<int> ids;
+            return origen.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+        }
+
+        public bool ReemplazarCategoriasProductoDePromocion(int promocionId, List<int> incluidas, List<int> excluidas)
+        {
+            PromocionIdsReemplazados.Add(promocionId);
+            IncluidasPorPromocion[promocionId] = (incluidas ?? new List<int>()).ToList();
+            ExcluidasPorPromocion[promocionId] = (excluidas ?? new List<int>()).ToList();
             return true;
         }
     }
@@ -909,6 +1192,50 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
+        public Action OnActualizarValorAutomatico { get; set; }
+
+        public bool ActualizarValorAutomatico(int id, decimal calculoConversion)
+        {
+            OnActualizarValorAutomatico?.Invoke();
+            TasaConversion tasa;
+            if (!Tasas.TryGetValue(id, out tasa) || tasa.EsManual)
+            {
+                return false;
+            }
+
+            tasa.CalculoConversion = calculoConversion;
+            tasa.FechaActualizacion = DateTime.Now;
+            return true;
+        }
+
+        public bool MarcarManual(int id, int usuarioId)
+        {
+            TasaConversion tasa;
+            if (!Tasas.TryGetValue(id, out tasa))
+            {
+                return false;
+            }
+
+            tasa.EsManual = true;
+            tasa.ProtegidaPorUsuarioId = usuarioId;
+            tasa.FechaProteccion = DateTime.Now;
+            return true;
+        }
+
+        public bool Liberar(int id)
+        {
+            TasaConversion tasa;
+            if (!Tasas.TryGetValue(id, out tasa))
+            {
+                return false;
+            }
+
+            tasa.EsManual = false;
+            tasa.ProtegidaPorUsuarioId = null;
+            tasa.FechaProteccion = null;
+            return true;
+        }
+
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
@@ -918,6 +1245,66 @@ namespace BLL.Tests.TestDoubles
             }
 
             return Tasas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeEjecucionActualizacionTasasRepositorio : IEjecucionActualizacionTasasRepositorio
+    {
+        private int _nextId = 1;
+
+        private int _nextDetalleId = 1;
+
+        public List<EjecucionActualizacionTasas> Ejecuciones { get; } = new List<EjecucionActualizacionTasas>();
+
+        public List<ActualizacionTasaDetalle> Detalles { get; } = new List<ActualizacionTasaDetalle>();
+
+        public int ObtenerUltimaExitosaConBloqueoCalls { get; private set; }
+
+        public int InsertarYObtenerId(EjecucionActualizacionTasas ejecucion)
+        {
+            ejecucion.Id = _nextId++;
+            Ejecuciones.Add(ejecucion);
+            return ejecucion.Id;
+        }
+
+        public int InsertarDetalleYObtenerId(ActualizacionTasaDetalle detalle)
+        {
+            detalle.Id = _nextDetalleId++;
+            Detalles.Add(detalle);
+            return detalle.Id;
+        }
+
+        public List<EjecucionActualizacionTasas> ObtenerRecientes(int cantidad)
+        {
+            return Ejecuciones.OrderByDescending(item => item.FechaInicio).ThenByDescending(item => item.Id).Take(cantidad).ToList();
+        }
+
+        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(int ejecucionId)
+        {
+            return Detalles.Where(item => item.EjecucionId == ejecucionId).ToList();
+        }
+
+        public EjecucionActualizacionTasas ObtenerUltimaExitosa()
+        {
+            return Ejecuciones
+                .Where(item => item.Resultado == ResultadoActualizacionTasas.Exitosa)
+                .OrderByDescending(item => item.FechaInicio)
+                .ThenByDescending(item => item.Id)
+                .FirstOrDefault();
+        }
+
+        public EjecucionActualizacionTasas ObtenerUltimaExitosaConBloqueo()
+        {
+            ObtenerUltimaExitosaConBloqueoCalls++;
+            return ObtenerUltimaExitosa();
+        }
+
+        public int ContarRequestsDelMes(DateTime referencia)
+        {
+            return Ejecuciones.Count(item =>
+                item.ConsumioRequest &&
+                item.FechaInicio.Year == referencia.Year &&
+                item.FechaInicio.Month == referencia.Month);
         }
     }
 
@@ -1053,6 +1440,34 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeNotificacionRepositorio : INotificacionRepositorio
     {
+        public Notificacion ObtenerPersonal(int id, int usuarioId)
+        {
+            var n = ObtenerPorId(id);
+            if (n == null || n.Usuario.Id != usuarioId) return null;
+            Notificacion copia = n is RecordatorioCompra ? (Notificacion)new RecordatorioCompra() : n is RecordatorioInversion ? new RecordatorioInversion() : new Notificacion();
+            copia.Id = n.Id; copia.Usuario = n.Usuario; copia.Mensaje = n.Mensaje; copia.Fecha = n.Fecha; copia.Leida = n.Leida;
+            return copia;
+        }
+
+        public bool MarcarPersonalLeida(int id, int usuarioId)
+        {
+            var n = ObtenerPersonal(id, usuarioId);
+            if (n == null || n.Leida || !ActualizarResult) return false;
+            n.Leida = true;
+            Notificaciones[id] = n;
+            return true;
+        }
+
+        public PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina)
+        {
+            var lista = ObtenerPorUsuario(usuarioId).Where(n => !filtro.FechaDesde.HasValue || n.Fecha.Date >= filtro.FechaDesde.Value.Date)
+                .Where(n => !filtro.FechaHasta.HasValue || n.Fecha.Date <= filtro.FechaHasta.Value.Date)
+                .OrderByDescending(n => n.Fecha).ThenByDescending(n => n.Id).ToList();
+            return new PaginaNotificaciones { Total = lista.Count, Pagina = pagina, Elementos = lista.Skip((pagina - 1) * 10).Take(10).ToList() };
+        }
+
+        public int ContarNoLeidas(int usuarioId) => ObtenerPorUsuario(usuarioId).Count(n => !n.Leida);
+
         private int _nextId = 1;
 
         public Dictionary<int, Notificacion> Notificaciones { get; } = new Dictionary<int, Notificacion>();
@@ -1066,6 +1481,16 @@ namespace BLL.Tests.TestDoubles
         public Notificacion LastUpdated { get; private set; }
 
         public int? LastDeletedId { get; private set; }
+
+        // Cantidad de notificaciones/recordatorios que referencian a cada promocion (el fake de
+        // Notificacion no guarda PromocionId).
+        public Dictionary<int, int> NotificacionesPorPromocion { get; } = new Dictionary<int, int>();
+
+        public int ContarPorPromocion(int promocionId)
+        {
+            int cantidad;
+            return NotificacionesPorPromocion.TryGetValue(promocionId, out cantidad) ? cantidad : 0;
+        }
 
         public Notificacion ObtenerPorId(int id)
         {
@@ -1333,6 +1758,26 @@ namespace BLL.Tests.TestDoubles
             return ObtenerTotalesPorMesResult;
         }
 
+        public List<TotalPorComercio> ObtenerTotalesPorComercioResult { get; set; } = new List<TotalPorComercio>();
+
+        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorComercioArgs { get; private set; }
+
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            LastObtenerTotalesPorComercioArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            return ObtenerTotalesPorComercioResult;
+        }
+
+        public List<TotalPorDia> ObtenerTotalesPorDiaResult { get; set; } = new List<TotalPorDia>();
+
+        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorDiaArgs { get; private set; }
+
+        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            LastObtenerTotalesPorDiaArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            return ObtenerTotalesPorDiaResult;
+        }
+
         public ResumenMovimientos ObtenerResumenResult { get; set; } = new ResumenMovimientos();
 
         public Tuple<int, DateTime, DateTime> LastObtenerResumenArgs { get; private set; }
@@ -1376,6 +1821,11 @@ namespace BLL.Tests.TestDoubles
             }
 
             return Movimientos.Remove(id);
+        }
+
+        public int ContarPorComercio(int comercioId)
+        {
+            return Movimientos.Values.Count(item => item.Comercio != null && item.Comercio.Id == comercioId);
         }
     }
 
@@ -2327,6 +2777,11 @@ namespace BLL.Tests.TestDoubles
             ComerciosPorRegla[reglaCategorizacionId] = comercioIds == null ? new List<int>() : new List<int>(comercioIds);
             return true;
         }
+
+        public int ContarPorComercio(int comercioId)
+        {
+            return ComerciosPorRegla.Values.Count(ids => ids.Contains(comercioId));
+        }
     }
 
     internal sealed class FakeConsultaChatbotRepositorio : IConsultaChatbotRepositorio
@@ -2512,7 +2967,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public MedioPago LastInserted { get; private set; }
 
@@ -2558,9 +3013,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -2582,7 +3037,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public MedioPagoEntidad LastInserted { get; private set; }
 
@@ -2605,6 +3060,16 @@ namespace BLL.Tests.TestDoubles
         {
             return MediosPagoEntidad.Values
                 .Where(item => item.MedioPago != null && item.MedioPago.Id == medioPagoId)
+                .ToList();
+        }
+
+        public List<string> ObtenerSegmentosDistintos()
+        {
+            return MediosPagoEntidad.Values
+                .Select(item => item.Segmento)
+                .Where(segmento => !string.IsNullOrWhiteSpace(segmento))
+                .Distinct()
+                .OrderBy(segmento => segmento)
                 .ToList();
         }
 
@@ -2634,9 +3099,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -2658,7 +3123,7 @@ namespace BLL.Tests.TestDoubles
 
         public bool EliminarResult { get; set; } = true;
 
-        public bool ThrowForeignKeyOnEliminar { get; set; }
+        public Exception ExcepcionEnEliminar { get; set; }
 
         public EntidadFinanciera LastInserted { get; private set; }
 
@@ -2704,9 +3169,9 @@ namespace BLL.Tests.TestDoubles
         public bool Eliminar(int id)
         {
             LastDeletedId = id;
-            if (ThrowForeignKeyOnEliminar)
+            if (ExcepcionEnEliminar != null)
             {
-                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+                throw ExcepcionEnEliminar;
             }
 
             if (!EliminarResult)
@@ -2738,6 +3203,8 @@ namespace BLL.Tests.TestDoubles
         public int? LastDeletedId { get; private set; }
 
         public int ReemplazarCallCount { get; private set; }
+
+        public bool ThrowOnReemplazar { get; set; }
 
         public CuentaFinanciera ObtenerPorId(int id)
         {
@@ -2797,8 +3264,18 @@ namespace BLL.Tests.TestDoubles
         public bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds)
         {
             ReemplazarCallCount++;
+            if (ThrowOnReemplazar)
+            {
+                throw new InvalidOperationException("Fallo simulado al reemplazar medios de pago.");
+            }
+
             MedioPagoEntidadIdsPorCuenta[cuentaFinancieraId] = new List<int>(medioPagoEntidadIds);
             return true;
+        }
+
+        public int ContarPorMedioPagoEntidad(int medioPagoEntidadId)
+        {
+            return MedioPagoEntidadIdsPorCuenta.Values.Count(ids => ids.Contains(medioPagoEntidadId));
         }
     }
 }

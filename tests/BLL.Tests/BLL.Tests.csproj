@@ -14,6 +14,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\ABSTRACCIONES\ABSTRACCIONES.csproj" />
+    <Compile Include="..\..\UI\ActualizadorContadorNotificaciones.cs" Link="UI\ActualizadorContadorNotificaciones.cs" />
+    <Compile Include="..\..\UI\ArchivoPdf.cs" Link="UI\ArchivoPdf.cs" />
+    <Compile Include="..\..\UI\Tema\MenuNotificacionesItem.cs" Link="UI\MenuNotificacionesItem.cs" />
+    <Compile Include="..\..\UI\CoordinadorBusquedaUbicacion.cs" Link="UI\CoordinadorBusquedaUbicacion.cs" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
     <ProjectReference Include="..\..\BE\BE.csproj" />
     <ProjectReference Include="..\..\SERVICIOS\SERVICIOS.csproj" />
     <ProjectReference Include="..\..\REPOSITORIO\REPOSITORIO.csproj" />

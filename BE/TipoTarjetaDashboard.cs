@@ -5,6 +5,8 @@ namespace BE
         GastosPorCategoria,
         IngresosPorCategoria,
         ComparativoMensual,
-        EvolucionBalance
+        EvolucionBalance,
+        GastosPorComercio,
+        GastoAcumuladoMensual
     }
 }

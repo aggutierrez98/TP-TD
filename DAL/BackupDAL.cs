@@ -15,8 +15,6 @@ namespace DAL
     // su propia SqlConnection en autocommit, fuera de ese mecanismo.
     public class BackupDAL
     {
-        private static readonly string[] ConnectionStringNames = { "TpIDS", "TpIDS-UAI" };
-
         // Los backups/restores pueden tardar mas que cualquier otra operacion del sistema.
         private const int SinLimiteDeTiempo = 0;
 
@@ -138,17 +136,14 @@ namespace DAL
 
         private static string ResolverConnectionString()
         {
-            foreach (string connectionStringName in ConnectionStringNames)
+            ConnectionStringSettings connectionSettings = ConfigurationManager.ConnectionStrings["TpIDS"];
+            if (connectionSettings == null || string.IsNullOrWhiteSpace(connectionSettings.ConnectionString))
             {
-                ConnectionStringSettings connectionSettings = ConfigurationManager.ConnectionStrings[connectionStringName];
-                if (connectionSettings != null && !string.IsNullOrWhiteSpace(connectionSettings.ConnectionString))
-                {
-                    return connectionSettings.ConnectionString;
-                }
+                throw new System.InvalidOperationException(
+                    "No se encontro una connection string TpIDS valida en la configuracion.");
             }
 
-            throw new System.InvalidOperationException(
-                "No se encontro ninguna connection string valida en la configuracion.");
+            return connectionSettings.ConnectionString;
         }
     }
 }

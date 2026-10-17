@@ -1,12 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using ABSTRACCIONES;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SERVICIOS
 {
@@ -129,7 +129,7 @@ namespace SERVICIOS
                 }
             };
 
-            return new JavaScriptSerializer().Serialize(request);
+            return JsonSerializer.Serialize(request);
         }
 
         private static string ObtenerMimeType(byte[] imagenBytes)
@@ -147,17 +147,9 @@ namespace SERVICIOS
                 : "image/jpeg";
         }
 
-        // Los nombres de propiedad de las clases de abajo reproducen exactamente
-        // las claves del JSON de Gemini (camelCase): JavaScriptSerializer mapea
-        // por nombre exacto, sin soporte de atributos de renombrado.
-        private static TicketEscaneado ExtraerTicket(string jsonRespuesta)
+        internal static TicketEscaneado ExtraerTicket(string jsonRespuesta)
         {
-            GeminiApiResponse respuesta = new JavaScriptSerializer().Deserialize<GeminiApiResponse>(jsonRespuesta);
-            string textoJsonInterno = respuesta?.candidates != null && respuesta.candidates.Count > 0
-                ? respuesta.candidates[0]?.content?.parts != null && respuesta.candidates[0].content.parts.Count > 0
-                    ? respuesta.candidates[0].content.parts[0]?.text
-                    : null
-                : null;
+            string textoJsonInterno = GeminiChatClient.ExtraerTextoCrudo(jsonRespuesta);
 
             if (string.IsNullOrWhiteSpace(textoJsonInterno))
             {
@@ -168,7 +160,7 @@ namespace SERVICIOS
             TicketExtraido extraido;
             try
             {
-                extraido = new JavaScriptSerializer().Deserialize<TicketExtraido>(textoJsonInterno);
+                extraido = JsonSerializer.Deserialize<TicketExtraido>(textoJsonInterno);
             }
             catch (Exception ex)
             {
@@ -177,10 +169,10 @@ namespace SERVICIOS
 
             return new TicketEscaneado
             {
-                Monto = extraido?.monto,
-                Fecha = ParsearFecha(extraido?.fecha),
-                Descripcion = extraido?.descripcion,
-                TextoCrudo = extraido?.textoDetectado ?? string.Empty
+                Monto = extraido?.Monto,
+                Fecha = ParsearFecha(extraido?.Fecha),
+                Descripcion = extraido?.Descripcion,
+                TextoCrudo = extraido?.TextoDetectado ?? string.Empty
             };
         }
 
@@ -196,35 +188,23 @@ namespace SERVICIOS
                 : (DateTime?)null;
         }
 
-        private sealed class GeminiApiResponse
-        {
-            public List<GeminiCandidate> candidates { get; set; }
-        }
-
-        private sealed class GeminiCandidate
-        {
-            public GeminiContent content { get; set; }
-        }
-
-        private sealed class GeminiContent
-        {
-            public List<GeminiPart> parts { get; set; }
-        }
-
-        private sealed class GeminiPart
-        {
-            public string text { get; set; }
-        }
-
         private sealed class TicketExtraido
         {
-            public decimal? monto { get; set; }
+            public TicketExtraido()
+            {
+            }
 
-            public string fecha { get; set; }
+            [JsonPropertyName("monto")]
+            public decimal? Monto { get; set; }
 
-            public string descripcion { get; set; }
+            [JsonPropertyName("fecha")]
+            public string Fecha { get; set; }
 
-            public string textoDetectado { get; set; }
+            [JsonPropertyName("descripcion")]
+            public string Descripcion { get; set; }
+
+            [JsonPropertyName("textoDetectado")]
+            public string TextoDetectado { get; set; }
         }
     }
 }

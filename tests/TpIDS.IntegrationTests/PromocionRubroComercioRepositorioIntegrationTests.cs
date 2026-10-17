@@ -59,6 +59,27 @@ namespace TpIDS.IntegrationTests
             }
         }
 
+        [TestMethod]
+        public void ContarPorRubroComercio_CuentaLasPromocionesQueLoReferencian()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                PromocionRubroComercioRepositorio repositorio = new PromocionRubroComercioRepositorio(accesoDatos);
+                int rubroUsadoId = InsertarRubroComercioTest(accesoDatos, "RubroTestContarUsado");
+                int rubroSinUsoId = InsertarRubroComercioTest(accesoDatos, "RubroTestContarSinUso");
+                int promocionAId = InsertarPromocionTest(accesoDatos, "PromocionTestContarRubroA");
+                int promocionBId = InsertarPromocionTest(accesoDatos, "PromocionTestContarRubroB");
+                repositorio.ReemplazarRubrosComercioDePromocion(promocionAId, new List<int> { rubroUsadoId });
+                repositorio.ReemplazarRubrosComercioDePromocion(promocionBId, new List<int> { rubroUsadoId });
+
+                Assert.AreEqual(2, repositorio.ContarPorRubroComercio(rubroUsadoId));
+                Assert.AreEqual(0, repositorio.ContarPorRubroComercio(rubroSinUsoId));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
         private static int InsertarPromocionTest(AccesoDatosSqlServer accesoDatos, string descripcion)
         {
             return new PromocionRepositorio(accesoDatos).InsertarYObtenerId(new BE.Promocion

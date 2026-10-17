@@ -18,5 +18,7 @@ namespace REPOSITORIO
         bool Eliminar(int id);
 
         bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds);
+
+        int ContarPorMedioPagoEntidad(int medioPagoEntidadId);
     }
 }

@@ -74,5 +74,34 @@ namespace DAL
                 }
             }
         }
+
+        public int ContarPorRubroComercio(int rubroComercioId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT COUNT(*) AS Total
+                FROM PromocionRubroComercio
+                WHERE RubroComercioId = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, rubroComercioId)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return (int)dataTable.Rows[0]["Total"];
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
     }
 }

@@ -4,11 +4,66 @@ using System.Linq;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace BLL
 {
     public class NotificacionBLL
     {
+        private readonly ISesion _sesion;
+
+        private int ObtenerDestinatarioActual()
+        {
+            int? id = _sesion.GetUsuarioActualId();
+            if (!id.HasValue) throw new ExcepcionNegocio("Error.Notification.SessionRequired");
+            return id.Value;
+        }
+
+        public PaginaNotificaciones BuscarPersonales(FiltroNotificacion filtro, int pagina)
+        {
+            int usuarioId = ObtenerDestinatarioActual();
+            filtro = filtro ?? new FiltroNotificacion();
+            if (pagina < 1) throw new ExcepcionNegocio("Error.Notification.InvalidPage");
+            if (filtro.FechaDesde.HasValue && filtro.FechaHasta.HasValue && filtro.FechaDesde.Value.Date > filtro.FechaHasta.Value.Date)
+                throw new ExcepcionNegocio("Error.Notification.InvalidDateRange");
+            return _notificacionRepositorio.ObtenerPaginaPersonal(usuarioId, filtro, pagina);
+        }
+
+        public int ContarPersonalesNoLeidas() => _notificacionRepositorio.ContarNoLeidas(ObtenerDestinatarioActual());
+
+        public Notificacion LeerPersonal(int id)
+        {
+            int usuarioId = ObtenerDestinatarioActual();
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    Notificacion n = unidad.Notificaciones.ObtenerPersonal(id, usuarioId);
+                    if (n == null) throw new ExcepcionNegocio("Error.Notification.NotFound");
+                    if (!n.Leida)
+                    {
+                        bool cambio = unidad.Notificaciones.MarcarPersonalLeida(id, usuarioId);
+                        if (!cambio)
+                        {
+                            n = unidad.Notificaciones.ObtenerPersonal(id, usuarioId);
+                            if (n == null || !n.Leida) throw new ExcepcionTecnica("Error.Notification.UpdateFailed");
+                        }
+                        else
+                        {
+                            _bitacoraBLL.RegistrarOperacionInterno("FormMyNotifications.Value.Activity.Read", "FormMyNotifications.Value.Info.Read", "NotificacionBLL", unidad);
+                            n.Leida = true;
+                        }
+                    }
+                    unidad.Save();
+                    return n;
+                }
+                catch (ExcepcionNegocio) { throw; }
+                catch (ExcepcionTecnica) { throw; }
+                catch (Exception ex) { throw new ExcepcionTecnica("Error.Notification.UpdateFailed", ex); }
+            }
+        }
+
+        public void MarcarPersonalLeida(int id) { LeerPersonal(id); }
         private readonly INotificacionRepositorio _notificacionRepositorio;
         private readonly IRecordatorioCompraRepositorio _recordatorioCompraRepositorio;
         private readonly IRecordatorioInversionRepositorio _recordatorioInversionRepositorio;
@@ -20,13 +75,15 @@ namespace BLL
             IRecordatorioCompraRepositorio recordatorioCompraRepositorio,
             IRecordatorioInversionRepositorio recordatorioInversionRepositorio,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
-            IBitacoraBLL bitacoraBLL)
+            IBitacoraBLL bitacoraBLL,
+            ISesion sesion)
         {
             _notificacionRepositorio = notificacionRepositorio;
             _recordatorioCompraRepositorio = recordatorioCompraRepositorio;
             _recordatorioInversionRepositorio = recordatorioInversionRepositorio;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
             _bitacoraBLL = bitacoraBLL;
+            _sesion = sesion;
         }
 
         // Pantalla de operador: notificaciones de todos los usuarios, de las 3 subclases mezcladas.

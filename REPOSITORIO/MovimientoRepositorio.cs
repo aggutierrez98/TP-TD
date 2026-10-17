@@ -42,6 +42,16 @@ namespace REPOSITORIO
             return _movimientoDAL.ObtenerTotalesPorCategoria(usuarioId, tipo, desde, hasta, _accesoDatos);
         }
 
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            return _movimientoDAL.ObtenerTotalesPorComercio(usuarioId, tipo, desde, hasta, _accesoDatos);
+        }
+
+        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            return _movimientoDAL.ObtenerTotalesPorDia(usuarioId, tipo, desde, hasta, _accesoDatos);
+        }
+
         public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta)
         {
             return _movimientoDAL.ObtenerTotalesPorMes(usuarioId, desde, hasta, _accesoDatos);
@@ -80,6 +90,11 @@ namespace REPOSITORIO
         public bool Eliminar(int id)
         {
             return _movimientoDAL.Eliminar(id, _accesoDatos);
+        }
+
+        public int ContarPorComercio(int comercioId)
+        {
+            return _movimientoDAL.ContarPorComercio(comercioId, _accesoDatos);
         }
     }
 }

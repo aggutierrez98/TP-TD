@@ -5,6 +5,14 @@ namespace REPOSITORIO
 {
     public interface INotificacionRepositorio
     {
+        PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina);
+
+        int ContarNoLeidas(int usuarioId);
+
+        Notificacion ObtenerPersonal(int id, int usuarioId);
+
+        bool MarcarPersonalLeida(int id, int usuarioId);
+
         Notificacion ObtenerPorId(int id);
 
         List<Notificacion> ObtenerPorUsuario(int usuarioId);
@@ -16,5 +24,7 @@ namespace REPOSITORIO
         bool Actualizar(Notificacion notificacion);
 
         bool Eliminar(int id);
+
+        int ContarPorPromocion(int promocionId);
     }
 }

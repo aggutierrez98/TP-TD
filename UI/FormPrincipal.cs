@@ -2,6 +2,8 @@ using System;
 using System.Windows.Forms;
 using ABSTRACCIONES;
 using BLL;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace TpIDS
 {
@@ -26,20 +28,73 @@ namespace TpIDS
         private const string PermisoGestionMediosPago = "gestionmediospago";
         private const string PermisoGestionEntidadesFinancieras = "gestionentidadesfinancieras";
         private const string PermisoGestionCuentasFinancieras = "gestioncuentasfinancieras";
+        private const string PermisoGestionProductos = "gestionproductos";
+        private const string PermisoGestionPromociones = "gestionpromociones";
+        private const string PermisoGestionActualizacionTasas = "gestionactualizaciontasas";
 
         private readonly IAutorizacion autorizacion = CompositionRoot.Autorizacion;
         private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
+        private readonly ISesion sesion = CompositionRoot.Sesion;
+        private readonly NotificacionBLL notificacionBLL = CompositionRoot.Notificacion;
+        private readonly Timer timerNotificaciones;
+        private readonly ActualizadorContadorNotificaciones actualizadorNotificaciones;
+        private int? contadorNoLeidas;
 
         public FormPrincipal()
         {
             InitializeComponent();
+            timerNotificaciones = new Timer(components) { Interval = 30000 };
+            timerNotificaciones.Tick += timerNotificaciones_Tick;
+            actualizadorNotificaciones = new ActualizadorContadorNotificaciones(
+                () => IsDisposed || Disposing ? null : sesion.GetUsuarioActualId(),
+                () => Task.Run(() => notificacionBLL.ContarPersonalesNoLeidas()),
+                cantidad => { contadorNoLeidas = cantidad; ActualizarBadgeNotificaciones(); },
+                ex => Trace.TraceError("Error al actualizar contador de notificaciones: {0}", ex));
             Load += FormPrincipal_Load;
         }
 
-        private void FormPrincipal_Load(object sender, EventArgs e)
+        private async void FormPrincipal_Load(object sender, EventArgs e)
         {
             AplicarPermisosMenu();
             AbrirPantallaInicial();
+            timerNotificaciones.Start();
+            await actualizadorNotificaciones.ActualizarAsync();
+        }
+
+        private async void timerNotificaciones_Tick(object sender, EventArgs e)
+        {
+            await actualizadorNotificaciones.ActualizarAsync();
+        }
+
+        private async void notificaciones_NotificacionLeida(object sender, EventArgs e)
+        {
+            await actualizadorNotificaciones.ActualizarAsync(true);
+        }
+
+        private void ActualizarBadgeNotificaciones()
+        {
+            mnuMisNotificaciones.ActualizarCantidad(contadorNoLeidas ?? 0);
+            mnuMisNotificaciones.AccessibleDescription = contadorNoLeidas.HasValue
+                ? UiDialogHelper.Traducir("FormMainShell.MyNotifications.UnreadCount", contadorNoLeidas.Value)
+                : UiDialogHelper.Traducir("FormMainShell.MyNotifications.PendingCount");
+        }
+
+        public override void Actualizar(IObservado observado)
+        {
+            base.Actualizar(observado);
+            ActualizarBadgeNotificaciones();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            timerNotificaciones.Stop();
+            actualizadorNotificaciones.Detener();
+            base.OnFormClosed(e);
+        }
+
+        private void mnuMisNotificaciones_Click(object sender, EventArgs e)
+        {
+            if (sesion.HaySesionActiva()) AbrirHijoMdiUnico<FormMisNotificaciones>();
         }
 
         private void AplicarPermisosMenu()
@@ -63,8 +118,12 @@ namespace TpIDS
             bool puedeMediosPago = autorizacion.TienePermiso(PermisoGestionMediosPago);
             bool puedeEntidadesFinancieras = autorizacion.TienePermiso(PermisoGestionEntidadesFinancieras);
             bool puedeCuentasFinancieras = autorizacion.TienePermiso(PermisoGestionCuentasFinancieras);
+            bool puedeProductos = autorizacion.TienePermiso(PermisoGestionProductos);
+            bool puedePromociones = autorizacion.TienePermiso(PermisoGestionPromociones);
+            bool puedeActualizacionTasas = autorizacion.TienePermiso(PermisoGestionActualizacionTasas);
 
             mnuMiConfiguracion.Enabled = puedeConfigurar;
+            mnuMisNotificaciones.Enabled = sesion.HaySesionActiva();
 
             mnuMovimientos.Enabled = puedeMovimientos;
             mnuCategorias.Enabled = puedeCategorias;
@@ -85,7 +144,11 @@ namespace TpIDS
             mnuMonedas.Enabled = puedeMonedas;
             mnuOperadorMediosPago.Enabled = puedeMediosPago;
             mnuOperadorEntidadesFinancieras.Enabled = puedeEntidadesFinancieras;
-            mnuOperador.Enabled = puedeNotificaciones || puedeComercios || puedeMonedas || puedeMediosPago || puedeEntidadesFinancieras;
+            mnuOperadorProductos.Enabled = puedeProductos;
+            mnuOperadorCategoriasProducto.Enabled = puedeProductos;
+            mnuOperadorPromociones.Enabled = puedePromociones;
+            mnuOperadorActualizacionTasas.Enabled = puedeActualizacionTasas;
+            mnuOperador.Enabled = puedeNotificaciones || puedeComercios || puedeMonedas || puedeMediosPago || puedeEntidadesFinancieras || puedeProductos || puedePromociones || puedeActualizacionTasas;
 
             mnuAsistentePersonalAbrir.Enabled = puedeAsistentePersonal;
             mnuAsistentePersonal.Enabled = puedeAsistentePersonal;
@@ -120,6 +183,8 @@ namespace TpIDS
                 return;
             }
 
+            timerNotificaciones.Stop();
+            actualizadorNotificaciones.Detener();
             usuarioBLL.CerrarSesionActual();
             Close();
         }
@@ -184,6 +249,11 @@ namespace TpIDS
             AbrirHijoMdiUnico<FormGestionMonedas>();
         }
 
+        private void mnuOperadorActualizacionTasas_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormActualizacionTasas>();
+        }
+
         private void mnuOperadorMediosPago_Click(object sender, EventArgs e)
         {
             AbrirHijoMdiUnico<FormGestionMediosPago>();
@@ -192,6 +262,21 @@ namespace TpIDS
         private void mnuOperadorEntidadesFinancieras_Click(object sender, EventArgs e)
         {
             AbrirHijoMdiUnico<FormGestionEntidadesFinancieras>();
+        }
+
+        private void mnuOperadorProductos_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionProductos>();
+        }
+
+        private void mnuOperadorCategoriasProducto_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionCategoriasProducto>();
+        }
+
+        private void mnuOperadorPromociones_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionPromociones>();
         }
 
         private void mnuFinanzasCuentasFinancieras_Click(object sender, EventArgs e)
@@ -236,6 +321,8 @@ namespace TpIDS
             {
                 MdiParent = this
             };
+            if (nuevo is FormMisNotificaciones notificaciones)
+                notificaciones.NotificacionLeida += notificaciones_NotificacionLeida;
             nuevo.Show();
         }
     }

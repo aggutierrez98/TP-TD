@@ -11,6 +11,9 @@ namespace REPOSITORIO
 
         List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId);
 
+        // Segmentos ya cargados (sin repetir ni nulos): catalogo del filtro de segmentos de promociones.
+        List<string> ObtenerSegmentosDistintos();
+
         int InsertarYObtenerId(MedioPagoEntidad medioPagoEntidad);
 
         bool Actualizar(MedioPagoEntidad medioPagoEntidad);

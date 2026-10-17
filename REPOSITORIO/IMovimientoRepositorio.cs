@@ -14,6 +14,10 @@ namespace REPOSITORIO
 
         List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
 
+        List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
+
+        List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
+
         List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta);
 
         ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta);
@@ -23,5 +27,7 @@ namespace REPOSITORIO
         bool Actualizar(Movimiento movimiento);
 
         bool Eliminar(int id);
+
+        int ContarPorComercio(int comercioId);
     }
 }

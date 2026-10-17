@@ -65,6 +65,16 @@ namespace TpIDS.UiTests.Infrastructure
                 .FirstOrDefault(ventana => CoincideAutomationId(ventana, automationId));
         }
 
+        public Window EsperarVentanaPorTitulo(string titulo)
+        {
+            var resultado = Retry.WhileNull(
+                () => VentanasDelProceso().FirstOrDefault(ventana => ventana.Name == titulo),
+                DefaultTimeout, TimeSpan.FromMilliseconds(250));
+            if (resultado.Result == null)
+                throw new InvalidOperationException("No aparecio la ventana '" + titulo + "'.");
+            return resultado.Result;
+        }
+
         // Recorrer todo el arbol (no solo ControlType.Window) para llegar a los hijos MDI
         // expone tambien elementos Window "internos" (p. ej. del propio MdiClient) que no
         // soportan AutomationId via UIA: se descartan en vez de cortar la busqueda.
@@ -98,7 +108,7 @@ namespace TpIDS.UiTests.Infrastructure
         public MessageBoxWindow EsperarMessageBox(TimeSpan timeout)
         {
             RetryResult<Window> resultado = Retry.WhileNull(
-                () => VentanasDelProceso().FirstOrDefault(ventana => ventana.ClassName == "#32770"),
+                () => VentanasDelProceso().FirstOrDefault(EsMessageBox),
                 timeout,
                 TimeSpan.FromMilliseconds(250));
 
@@ -112,7 +122,21 @@ namespace TpIDS.UiTests.Infrastructure
 
         public bool SinMessageBoxAbierto()
         {
-            return VentanasDelProceso().All(ventana => ventana.ClassName != "#32770");
+            return !VentanasDelProceso().Any(EsMessageBox);
+        }
+
+        // UIA puede negar ClassName de una ventana que se esta creando o cerrando justo al enumerar:
+        // esa ventana todavia no cuenta como MessageBox y se vuelve a mirar en el proximo intento.
+        private static bool EsMessageBox(Window ventana)
+        {
+            try
+            {
+                return ventana.ClassName == "#32770";
+            }
+            catch (FlaUI.Core.Exceptions.PropertyNotSupportedException)
+            {
+                return false;
+            }
         }
 
         public string CapturarPantalla(string nombreArchivo)

@@ -36,17 +36,9 @@ namespace TpIDS
         {
             dgvBalance.CellFormatting += dgvBalance_CellFormatting;
 
-            // Ventana normal (misma barra de titulo/botones que el resto de pantallas MDI
-            // del proyecto), solo que abre ya ocupando el area util del contenedor MDI en
-            // vez del tamaño de diseño fijo. WindowState=Maximized fusiona la barra de
-            // titulo/botones con la ventana principal (no es lo que se pidio), por eso se
-            // toma el tamaño real del MdiClient en su lugar.
-            MdiClient mdiClient = MdiParent?.Controls.OfType<MdiClient>().FirstOrDefault();
-            if (mdiClient != null)
-            {
-                Location = Point.Empty;
-                Size = mdiClient.ClientSize;
-            }
+            // Abre ocupando el area de trabajo con su propia barra de titulo: el mismo
+            // maximizado que el boton de la barra (ver FormTraducibleBase).
+            MaximizarEnAreaMdi();
 
             CargarTipos();
             InicializarFechasPorDefecto();
@@ -217,7 +209,7 @@ namespace TpIDS
             e.FormattingApplied = true;
         }
 
-        private static TipoMovimiento? ObtenerTipoSeleccionado(ComboBox combo)
+        private static TipoMovimiento? ObtenerTipoSeleccionado(Krypton.Toolkit.KryptonComboBox combo)
         {
             OpcionTraducible opcion = combo.SelectedItem as OpcionTraducible;
             string valor = opcion?.Valor as string;

@@ -45,6 +45,11 @@ namespace REPOSITORIO
             return mediosPagoEntidad;
         }
 
+        public List<string> ObtenerSegmentosDistintos()
+        {
+            return _medioPagoEntidadDAL.ObtenerSegmentosDistintos(_accesoDatos);
+        }
+
         // Compone DALs directamente (no EntidadFinancieraRepositorio): la entidad queda
         // liviana (Id + Nombre, sin su catalogo MediosPagoEntidad) para no recursar.
         private void Hidratar(MedioPagoEntidad medioPagoEntidad)

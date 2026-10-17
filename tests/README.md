@@ -2,15 +2,58 @@
 
 ## Dos soluciones, a proposito
 
-- **`TpIDS.sln` (raiz)**: solo los 7 proyectos productivos. No usa ningun paquete NuGet,
-  por lo que compila y corre en cualquier maquina copiando el repo, sin internet ni
-  pasos extra en Visual Studio.
+- **`TpIDS.sln` (raiz)**: solo los 7 proyectos productivos. Debe compilar desde el
+  codigo fuente y ejecutarse en el laboratorio con .NET Framework 4.7.2, sin instalar
+  ni restaurar paquetes NuGet y sin cache previo. Es una restriccion inviolable de
+  `AGENTS.md`; el estado actual de dependencias indicado abajo todavia no la cumple.
 - **`tests/TpIDS.Tests.sln`**: productivos + proyectos de test. Los tests usan NuGet
   (MSTest, FlaUI), asi que esta solucion se compila solo en maquinas de desarrollo
   con acceso a NuGet (o cache local). **Nunca** referenciar proyectos de test ni FlaUI
   desde los proyectos productivos.
 
+### Dependencias productivas declaradas
+
+| Proyecto | Paquete NuGet directo | Version |
+| --- | --- | --- |
+| `UI` | GMap.NET.Core | 2.1.7 |
+| `UI` | GMap.NET.WinForms | 2.1.7 |
+| `UI` | Krypton.Toolkit | 105.26.7.201 |
+| `UI` | LiveChartsCore.SkiaSharpView.WinForms | 2.0.5 |
+
+Ademas, `UI/UI.csproj` copia `libSkiaSharp.dll` desde el cache NuGet de
+`SkiaSharp.NativeAssets.Win32` 3.119.0. La tabla enumera referencias directas;
+no es un inventario completo de dependencias transitivas.
+
+Los tests tienen permitido usar MSTest, Microsoft.NET.Test.Sdk y FlaUI mediante
+NuGet. La serializacion JSON de servicios y tests usa `System.Text.Json` mediante
+referencias directas, sin un paquete NuGet de JSON.
+Esta excepcion no se extiende a los proyectos productivos que compila la solucion
+de tests. Compilar con el cache de la maquina de desarrollo o ejecutar binarios
+ya compilados no demuestra que `TpIDS.sln` pueda compilarse en el laboratorio.
+
+### Referencias de System.Text.Json
+
+`SERVICIOS/SystemTextJson.references.props` resuelve los ensamblados compatibles
+con .NET Framework desde `$(MSBuildToolsPath)` y los copia al output. La misma
+referencia se aplica a los consumidores y tests para mantener versiones coherentes.
+En la maquina de desarrollo se verifico con MSBuild de Visual Studio 18 Community.
+No se agregaron DLL al repositorio ni pasos de restore para JSON.
+
+Si otra instalacion de MSBuild no contiene esos ensamblados, el directorio puede
+indicarse con `/p:SystemTextJsonAssemblyDirectory="C:\ruta\ensamblados-netfx"`.
+Debe contener `System.Text.Json`, `System.Text.Encodings.Web` y sus dependencias
+compatibles con .NET Framework; no usar las DLL de un runtime .NET moderno.
+La disponibilidad concreta de estos ensamblados en el laboratorio aun no fue
+verificada.
+
 ## Proyectos
+
+La exportación PDF se verifica con tests de contenido y paginación en
+`SERVICIOS.Tests/ReporteTabularPdfServiceTests.cs`, validaciones en `MovimientoBLLTests`,
+guardado atómico en `ArchivoPdfTests` y recorridos FlaUI en `FIN_MovimientosPdfTests`.
+Los lectores PDF de tests usan PdfPig (NuGet solo de desarrollo). Las muestras generadas
+por los unit tests quedan en `TestResults/pdf-samples/`. Los recorridos FlaUI requieren
+autorización previa porque toman el control del escritorio.
 
 | Proyecto | Que prueba | BD |
 | --- | --- | --- |

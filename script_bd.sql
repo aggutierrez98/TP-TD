@@ -137,6 +137,9 @@ DECLARE @PermisoVerBalanceGeneralId INT;
 DECLARE @PermisoGestionMediosPagoId INT;
 DECLARE @PermisoGestionEntidadesFinancierasId INT;
 DECLARE @PermisoGestionCuentasFinancierasId INT;
+DECLARE @PermisoGestionProductosId INT;
+DECLARE @PermisoGestionPromocionesId INT;
+DECLARE @PermisoGestionActualizacionTasasId INT;
 DECLARE @GrupoAdminId INT;
 DECLARE @GrupoBasicoId INT;
 DECLARE @GrupoOperadorId INT;
@@ -224,6 +227,20 @@ SET @PermisoGestionEntidadesFinancierasId = SCOPE_IDENTITY();
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestioncuentasfinancieras', 0);
 SET @PermisoGestionCuentasFinancierasId = SCOPE_IDENTITY();
 
+-- Productos (back-office): catalogo global del rol "operador", y admin lo tiene desde el
+-- arranque (igual que Comercios/Monedas).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionproductos', 0);
+SET @PermisoGestionProductosId = SCOPE_IDENTITY();
+
+-- Promociones (back-office): ABM global del rol "operador"; admin lo tiene desde el arranque.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionpromociones', 0);
+SET @PermisoGestionPromocionesId = SCOPE_IDENTITY();
+
+-- Actualizacion de tasas (back-office): pantalla de historial y "Actualizar ahora", rol
+-- "operador"; admin lo tiene desde el arranque.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionactualizaciontasas', 0);
+SET @PermisoGestionActualizacionTasasId = SCOPE_IDENTITY();
+
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
 SET @GrupoAdminId = SCOPE_IDENTITY();
 
@@ -255,6 +272,9 @@ VALUES
     (@GrupoAdminId, @PermisoGestionMediosPagoId),
     (@GrupoAdminId, @PermisoGestionEntidadesFinancierasId),
     (@GrupoAdminId, @PermisoGestionCuentasFinancierasId),
+    (@GrupoAdminId, @PermisoGestionProductosId),
+    (@GrupoAdminId, @PermisoGestionPromocionesId),
+    (@GrupoAdminId, @PermisoGestionActualizacionTasasId),
     (@GrupoBasicoId, @PermisoConfiguracionUsuarioId),
     (@GrupoBasicoId, @PermisoGestionMovimientosId),
     (@GrupoBasicoId, @PermisoGestionCategoriasId),
@@ -268,7 +288,10 @@ VALUES
     (@GrupoOperadorId, @PermisoGestionComerciosId),
     (@GrupoOperadorId, @PermisoGestionMonedasId),
     (@GrupoOperadorId, @PermisoGestionMediosPagoId),
-    (@GrupoOperadorId, @PermisoGestionEntidadesFinancierasId);
+    (@GrupoOperadorId, @PermisoGestionEntidadesFinancierasId),
+    (@GrupoOperadorId, @PermisoGestionProductosId),
+    (@GrupoOperadorId, @PermisoGestionPromocionesId),
+    (@GrupoOperadorId, @PermisoGestionActualizacionTasasId);
 
 INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
 VALUES
@@ -542,30 +565,44 @@ CREATE INDEX IX_Movimiento_ComercioId
     ON dbo.Movimiento (ComercioId);
 GO
 
+-- Producto es un catalogo independiente de los comercios (nombre y categoria). Que comercio lo
+-- vende, y con que precio y moneda, vive en ComercioProducto (clave compuesta: un producto una
+-- sola vez por comercio).
 CREATE TABLE dbo.Producto
 (
     Id INT IDENTITY(1,1) NOT NULL,
-    ComercioId INT NOT NULL,
     CategoriaProductoId INT NOT NULL,
-    MonedaId INT NOT NULL,
     Nombre VARCHAR(150) NOT NULL,
-    Precio DECIMAL(18,2) NOT NULL,
     CONSTRAINT PK_Producto PRIMARY KEY CLUSTERED (Id),
-    CONSTRAINT FK_Producto_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id),
-    CONSTRAINT FK_Producto_CategoriaProducto FOREIGN KEY (CategoriaProductoId) REFERENCES dbo.CategoriaProducto(Id),
-    CONSTRAINT FK_Producto_Moneda FOREIGN KEY (MonedaId) REFERENCES dbo.Moneda(Id),
-    CONSTRAINT CK_Producto_Precio CHECK (Precio > 0)
+    CONSTRAINT FK_Producto_CategoriaProducto FOREIGN KEY (CategoriaProductoId) REFERENCES dbo.CategoriaProducto(Id)
 );
 GO
 
-CREATE INDEX IX_Producto_ComercioId
-    ON dbo.Producto (ComercioId);
+CREATE TABLE dbo.ComercioProducto
+(
+    ComercioId INT NOT NULL,
+    ProductoId INT NOT NULL,
+    MonedaId INT NOT NULL,
+    Precio DECIMAL(18,2) NOT NULL,
+    CONSTRAINT PK_ComercioProducto PRIMARY KEY CLUSTERED (ComercioId, ProductoId),
+    CONSTRAINT FK_ComercioProducto_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id),
+    CONSTRAINT FK_ComercioProducto_Producto FOREIGN KEY (ProductoId) REFERENCES dbo.Producto(Id),
+    CONSTRAINT FK_ComercioProducto_Moneda FOREIGN KEY (MonedaId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT CK_ComercioProducto_Precio CHECK (Precio > 0)
+);
 GO
 
--- Promocion sobre el modelo de dominio de FINAZAPP (G00). Las relaciones de Promocion son
--- todas N:M (aplica a uno o varios medios de pago de entidad / comercios / rubros / dias de
--- semana), resueltas con tablas intermedias sin columna Id propia (mismo patron que
--- UsuarioPermiso). PromocionDiaSemana sin filas = la promocion aplica todos los dias.
+CREATE INDEX IX_ComercioProducto_ProductoId
+    ON dbo.ComercioProducto (ProductoId);
+GO
+
+-- Promocion sobre el modelo de dominio de FINAZAPP (G00). Los filtros de Promocion son
+-- todos N:M y opcionales (comercios / rubros / entidades / medios de pago / segmentos /
+-- productos / categorias / dias de semana), resueltos con tablas intermedias sin columna Id
+-- propia (mismo patron que UsuarioPermiso). Un filtro sin filas = la promocion no lo restringe
+-- (ej. PromocionDiaSemana sin filas = todos los dias). PromocionProducto y
+-- PromocionCategoriaProducto llevan Excluido: la PK no lo incluye, asi un producto o categoria
+-- no puede estar incluido y excluido a la vez en la misma promocion.
 CREATE TABLE dbo.Promocion
 (
     Id INT IDENTITY(1,1) NOT NULL,
@@ -591,13 +628,54 @@ CREATE TABLE dbo.PromocionDiaSemana
 );
 GO
 
-CREATE TABLE dbo.PromocionMedioPagoEntidad
+CREATE TABLE dbo.PromocionEntidadFinanciera
 (
     PromocionId INT NOT NULL,
-    MedioPagoEntidadId INT NOT NULL,
-    CONSTRAINT PK_PromocionMedioPagoEntidad PRIMARY KEY CLUSTERED (PromocionId, MedioPagoEntidadId),
-    CONSTRAINT FK_PromocionMedioPagoEntidad_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
-    CONSTRAINT FK_PromocionMedioPagoEntidad_MedioPagoEntidad FOREIGN KEY (MedioPagoEntidadId) REFERENCES dbo.MedioPagoEntidad(Id)
+    EntidadFinancieraId INT NOT NULL,
+    CONSTRAINT PK_PromocionEntidadFinanciera PRIMARY KEY CLUSTERED (PromocionId, EntidadFinancieraId),
+    CONSTRAINT FK_PromocionEntidadFinanciera_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionEntidadFinanciera_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionMedioPago
+(
+    PromocionId INT NOT NULL,
+    MedioPagoId INT NOT NULL,
+    CONSTRAINT PK_PromocionMedioPago PRIMARY KEY CLUSTERED (PromocionId, MedioPagoId),
+    CONSTRAINT FK_PromocionMedioPago_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionMedioPago_MedioPago FOREIGN KEY (MedioPagoId) REFERENCES dbo.MedioPago(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionSegmento
+(
+    PromocionId INT NOT NULL,
+    Segmento VARCHAR(50) NOT NULL,
+    CONSTRAINT PK_PromocionSegmento PRIMARY KEY CLUSTERED (PromocionId, Segmento),
+    CONSTRAINT FK_PromocionSegmento_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionProducto
+(
+    PromocionId INT NOT NULL,
+    ProductoId INT NOT NULL,
+    Excluido BIT NOT NULL,
+    CONSTRAINT PK_PromocionProducto PRIMARY KEY CLUSTERED (PromocionId, ProductoId),
+    CONSTRAINT FK_PromocionProducto_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionProducto_Producto FOREIGN KEY (ProductoId) REFERENCES dbo.Producto(Id)
+);
+GO
+
+CREATE TABLE dbo.PromocionCategoriaProducto
+(
+    PromocionId INT NOT NULL,
+    CategoriaProductoId INT NOT NULL,
+    Excluido BIT NOT NULL,
+    CONSTRAINT PK_PromocionCategoriaProducto PRIMARY KEY CLUSTERED (PromocionId, CategoriaProductoId),
+    CONSTRAINT FK_PromocionCategoriaProducto_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionCategoriaProducto_CategoriaProducto FOREIGN KEY (CategoriaProductoId) REFERENCES dbo.CategoriaProducto(Id)
 );
 GO
 
@@ -789,7 +867,7 @@ CREATE TABLE dbo.TarjetaDashboard
     Orden INT NOT NULL,
     CONSTRAINT PK_TarjetaDashboard PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT FK_TarjetaDashboard_Dashboard FOREIGN KEY (DashboardId) REFERENCES dbo.Dashboard(Id),
-    CONSTRAINT CK_TarjetaDashboard_Tipo CHECK (Tipo IN ('GastosPorCategoria', 'IngresosPorCategoria', 'ComparativoMensual', 'EvolucionBalance')),
+    CONSTRAINT CK_TarjetaDashboard_Tipo CHECK (Tipo IN ('GastosPorCategoria', 'IngresosPorCategoria', 'ComparativoMensual', 'EvolucionBalance', 'GastosPorComercio', 'GastoAcumuladoMensual')),
     CONSTRAINT UQ_TarjetaDashboard_DashboardId_Tipo UNIQUE (DashboardId, Tipo)
 );
 GO
@@ -807,7 +885,11 @@ CREATE TABLE dbo.TasaConversion
     MonedaConversionId INT NOT NULL,
     CalculoConversion DECIMAL(18,6) NOT NULL,
     FechaActualizacion DATETIME NOT NULL CONSTRAINT DF_TasaConversion_FechaActualizacion DEFAULT (GETDATE()),
+    EsManual BIT NOT NULL CONSTRAINT DF_TasaConversion_EsManual DEFAULT (0),
+    ProtegidaPorUsuarioId INT NULL,
+    FechaProteccion DATETIME NULL,
     CONSTRAINT PK_TasaConversion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_TasaConversion_ProtegidaPorUsuario FOREIGN KEY (ProtegidaPorUsuarioId) REFERENCES dbo.Usuarios(Id),
     CONSTRAINT FK_TasaConversion_MonedaBase FOREIGN KEY (MonedaBaseId) REFERENCES dbo.Moneda(Id),
     CONSTRAINT FK_TasaConversion_MonedaConversion FOREIGN KEY (MonedaConversionId) REFERENCES dbo.Moneda(Id),
     CONSTRAINT CK_TasaConversion_MonedasDistintas CHECK (MonedaBaseId <> MonedaConversionId),
@@ -861,6 +943,48 @@ ELSE
         1511.2481,
         @FechaTasaSeed
     );
+GO
+
+-- Historial de la actualizacion automatica de tasas. Una fila por ejecucion (programada o
+-- manual) y una fila de detalle por par evaluado. El par se guarda por monedas y no por
+-- TasaConversionId para que eliminar una tasa no rompa el historial.
+CREATE TABLE dbo.EjecucionActualizacionTasas
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    FechaInicio DATETIME NOT NULL CONSTRAINT DF_EjecucionActualizacionTasas_FechaInicio DEFAULT (GETDATE()),
+    Origen VARCHAR(20) NOT NULL,
+    Resultado VARCHAR(20) NOT NULL,
+    ConsumioRequest BIT NOT NULL CONSTRAINT DF_EjecucionActualizacionTasas_ConsumioRequest DEFAULT (0),
+    Mensaje NVARCHAR(500) NULL,
+    CONSTRAINT PK_EjecucionActualizacionTasas PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT CK_EjecucionActualizacionTasas_Origen CHECK (Origen IN ('Programada', 'Manual')),
+    CONSTRAINT CK_EjecucionActualizacionTasas_Resultado CHECK (Resultado IN ('Exitosa', 'Fallida', 'Omitida'))
+);
+GO
+
+CREATE INDEX IX_EjecucionActualizacionTasas_FechaInicio
+    ON dbo.EjecucionActualizacionTasas (FechaInicio DESC);
+GO
+
+CREATE TABLE dbo.ActualizacionTasaDetalle
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    EjecucionId INT NOT NULL,
+    MonedaBaseId INT NOT NULL,
+    MonedaConversionId INT NOT NULL,
+    ValorAnterior DECIMAL(18,6) NOT NULL,
+    ValorNuevo DECIMAL(18,6) NULL,
+    Estado VARCHAR(30) NOT NULL,
+    CONSTRAINT PK_ActualizacionTasaDetalle PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ActualizacionTasaDetalle_Ejecucion FOREIGN KEY (EjecucionId) REFERENCES dbo.EjecucionActualizacionTasas(Id),
+    CONSTRAINT FK_ActualizacionTasaDetalle_MonedaBase FOREIGN KEY (MonedaBaseId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT FK_ActualizacionTasaDetalle_MonedaConversion FOREIGN KEY (MonedaConversionId) REFERENCES dbo.Moneda(Id),
+    CONSTRAINT CK_ActualizacionTasaDetalle_Estado CHECK (Estado IN ('Actualizado', 'SaltadoManual', 'SaltadoSinDato'))
+);
+GO
+
+CREATE INDEX IX_ActualizacionTasaDetalle_EjecucionId
+    ON dbo.ActualizacionTasaDetalle (EjecucionId);
 GO
 
 -- BEGIN AUTO-GENERATED I18N BASE SEED
@@ -933,6 +1057,42 @@ INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor)
 SELECT p.Id, @IdiomaBaseId, s.Valor
 FROM @Seed s
 INNER JOIN dbo.Palabra p ON p.[Key] = s.[Key];
+
+-- Idioma ingles (no default) desde translation-seeds/base.in.json. Solo se cargan las keys que existen
+-- en el idioma base: base.es.json sigue siendo la fuente de verdad de las Palabras.
+DECLARE @IdiomaInglesId INT;
+INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'English', 0);
+SET @IdiomaInglesId = SCOPE_IDENTITY();
+
+DECLARE @RutaTraduccionesIngles NVARCHAR(4000) = N'C:\Users\Public\Documents\TpIDS\SqlSeed\base.in.json';
+DECLARE @TraduccionesInglesJson NVARCHAR(MAX);
+
+SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn
+FROM OPENROWSET(
+    BULK ''' + REPLACE(@RutaTraduccionesIngles, '''', '''''') + ''',
+    SINGLE_NCLOB
+) AS JsonFile;';
+
+BEGIN TRY
+    EXEC sys.sp_executesql
+        @SqlCargaJson,
+        N'@JsonOut NVARCHAR(MAX) OUTPUT',
+        @JsonOut = @TraduccionesInglesJson OUTPUT;
+END TRY
+BEGIN CATCH
+    THROW 50004, 'No se pudo leer translation-seeds/base.in.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;
+END CATCH
+
+IF NULLIF(LTRIM(RTRIM(@TraduccionesInglesJson)), N'') IS NULL
+BEGIN
+    THROW 50005, 'El archivo translation-seeds/base.in.json esta vacio o no pudo leerse correctamente.', 1;
+END
+
+INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor)
+SELECT p.Id, @IdiomaInglesId, TRY_CAST(j.[value] AS NVARCHAR(300))
+FROM OPENJSON(@TraduccionesInglesJson) j
+INNER JOIN dbo.Palabra p ON p.[Key] = j.[key] COLLATE DATABASE_DEFAULT
+WHERE j.[type] IN (1, 2) AND TRY_CAST(j.[value] AS NVARCHAR(300)) IS NOT NULL;
 
 -- END AUTO-GENERATED I18N BASE SEED
 GO

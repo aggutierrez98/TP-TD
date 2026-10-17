@@ -6,63 +6,38 @@ using SERVICIOS;
 
 namespace BLL
 {
-    // Pantalla de operador (back-office): sin validacion de "dueno". Comercio y
-    // CategoriaProducto se validan dentro de la transaccion (forman parte de la Unidad de
-    // Trabajo); Moneda no forma parte de la Unidad de Trabajo (no tiene BLL/CRUD propio en
-    // esta tanda), por eso se valida con un repositorio inyectado aparte, mismo criterio que
-    // usa MovimientoBLL con su CategoriaRepositorio para validaciones cruzadas fuera de la UoW.
+    // Pantalla de operador (back-office): catalogo de productos independiente de los comercios
+    // (nombre y categoria). Que comercio lo vende y a que precio lo resuelve ComercioProductoBLL.
+    // La baja se bloquea con un chequeo explicito de uso (no se espera a que falle una FK).
     public class ProductoBLL
     {
         private readonly IProductoRepositorio _productoRepositorio;
-        private readonly IMonedaRepositorio _monedaRepositorio;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly IBitacoraBLL _bitacoraBLL;
 
         internal ProductoBLL(
             IProductoRepositorio productoRepositorio,
-            IMonedaRepositorio monedaRepositorio,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
             IBitacoraBLL bitacoraBLL)
         {
             _productoRepositorio = productoRepositorio;
-            _monedaRepositorio = monedaRepositorio;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
             _bitacoraBLL = bitacoraBLL;
         }
 
-        public List<Producto> ObtenerPorComercio(int comercioId)
+        public List<Producto> ObtenerTodos()
         {
-            return _productoRepositorio.ObtenerPorComercio(comercioId);
+            return _productoRepositorio.ObtenerTodos();
         }
 
-        // La UI no puede referenciar REPOSITORIO directamente (limite de capas); expone
-        // el catalogo de Moneda a traves del BLL, mismo criterio que ObtenerPorComercio.
-        public List<Moneda> ObtenerMonedas()
-        {
-            return _monedaRepositorio.ObtenerTodas();
-        }
-
-        public Producto Crear(int comercioId, string nombre, int categoriaProductoId, int monedaId, decimal precio)
+        public Producto Crear(string nombre, int categoriaProductoId)
         {
             string nombreNormalizado = NormalizarNombre(nombre);
-            ValidarPrecio(precio);
-
-            Moneda moneda = _monedaRepositorio.ObtenerPorId(monedaId);
-            if (moneda == null)
-            {
-                throw new ExcepcionNegocio("Error.MerchantManagement.MonedaNotFound");
-            }
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Comercio comercio = unidad.Comercios.ObtenerPorId(comercioId);
-                    if (comercio == null)
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.ComercioNotFound");
-                    }
-
                     CategoriaProducto categoria = unidad.CategoriasProducto.ObtenerPorId(categoriaProductoId);
                     if (categoria == null)
                     {
@@ -71,17 +46,14 @@ namespace BLL
 
                     Producto nuevoProducto = new Producto
                     {
-                        Comercio = comercio,
                         CategoriaProducto = categoria,
-                        Moneda = moneda,
-                        Nombre = nombreNormalizado,
-                        Precio = precio
+                        Nombre = nombreNormalizado
                     };
 
                     int id = unidad.Productos.InsertarYObtenerId(nuevoProducto);
                     nuevoProducto.Id = id;
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.ProductoCreation", "FormMerchantDetail.Value.Info.ProductoCreation", "ProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductManagement.Value.Activity.ProductoCreation", "FormProductManagement.Value.Info.ProductoCreation", "ProductoBLL", unidad);
                     unidad.Save();
                     return nuevoProducto;
                 }
@@ -96,12 +68,9 @@ namespace BLL
             }
         }
 
-        // No acepta comercioId ni monedaId: una vez creado el producto, ni el comercio
-        // duenio ni la moneda se vuelven a editar.
-        public bool Actualizar(int id, string nombre, int categoriaProductoId, decimal precio)
+        public bool Actualizar(int id, string nombre, int categoriaProductoId)
         {
             string nombreNormalizado = NormalizarNombre(nombre);
-            ValidarPrecio(precio);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
@@ -121,7 +90,6 @@ namespace BLL
 
                     producto.Nombre = nombreNormalizado;
                     producto.CategoriaProducto = categoria;
-                    producto.Precio = precio;
 
                     bool actualizado = unidad.Productos.Actualizar(producto);
                     if (!actualizado)
@@ -129,7 +97,7 @@ namespace BLL
                         throw new ExcepcionTecnica("Error.MerchantManagement.ProductoUpdateFailed");
                     }
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.ProductoUpdate", "FormMerchantDetail.Value.Info.ProductoUpdate", "ProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductManagement.Value.Activity.ProductoUpdate", "FormProductManagement.Value.Info.ProductoUpdate", "ProductoBLL", unidad);
                     unidad.Save();
                     return true;
                 }
@@ -160,13 +128,21 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.MerchantManagement.ProductoNotFound");
                     }
 
+                    // Un producto que algun comercio vende, o que una promocion incluye o
+                    // excluye, no se puede dar de baja: hay que quitarlo antes de esos usos.
+                    if (unidad.ComercioProductos.ContarPorProducto(id) > 0
+                        || unidad.PromocionProductos.ContarPorProducto(id) > 0)
+                    {
+                        throw new ExcepcionNegocio("Error.MerchantManagement.ProductoInUse");
+                    }
+
                     bool eliminado = unidad.Productos.Eliminar(id);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.ProductoDeleteFailed");
                     }
 
-                    _bitacoraBLL.RegistrarOperacionInterno("FormMerchantDetail.Value.Activity.ProductoDeletion", "FormMerchantDetail.Value.Info.ProductoDeletion", "ProductoBLL", unidad);
+                    _bitacoraBLL.RegistrarOperacionInterno("FormProductManagement.Value.Activity.ProductoDeletion", "FormProductManagement.Value.Info.ProductoDeletion", "ProductoBLL", unidad);
                     unidad.Save();
                     return true;
                 }
@@ -194,14 +170,6 @@ namespace BLL
             }
 
             return nombreNormalizado;
-        }
-
-        private static void ValidarPrecio(decimal precio)
-        {
-            if (precio <= 0)
-            {
-                throw new ExcepcionNegocio("Error.MerchantManagement.ProductoPriceInvalid");
-            }
         }
     }
 }

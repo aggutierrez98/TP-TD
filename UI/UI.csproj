@@ -12,16 +12,10 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
-    <!-- Requerido para que SkiaSharp (motor de render de LiveCharts2) copie su nativo
-         Windows (runtimes\win-x64\native\libSkiaSharp.dll) al output: sin RuntimeIdentifier
-         su logica de copia condicional en SkiaSharp.NativeAssets.Win32.targets no dispara.
-         RuntimeIdentifiers (plural) hace falta para el grafo de compatibilidad en restore;
-         RuntimeIdentifier (singular) selecciona cual usar en build. -->
-    <RuntimeIdentifiers>win;win-x64</RuntimeIdentifiers>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -32,6 +26,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -39,11 +34,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="GMap.NET.Core" Version="2.1.7" />
-    <PackageReference Include="GMap.NET.WinForms" Version="2.1.7" />
-    <PackageReference Include="LiveChartsCore.SkiaSharpView.WinForms" Version="2.0.5" />
-  </ItemGroup>
   <ItemGroup>
     <Reference Include="System">
       <HintPath>..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
@@ -154,11 +144,35 @@
       <DependentUpon>FormGestionCuentasFinancieras.cs</DependentUpon>
     </Compile>
     <Compile Include="EtiquetasFinanzas.cs" />
+    <Compile Include="FormGestionProductos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionCategoriasProducto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionCategoriasProducto.Designer.cs">
+      <DependentUpon>FormGestionCategoriasProducto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormGestionProductos.Designer.cs">
+      <DependentUpon>FormGestionProductos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormGestionPromociones.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionPromociones.Designer.cs">
+      <DependentUpon>FormGestionPromociones.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormGestionMonedas.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FormGestionMonedas.Designer.cs">
       <DependentUpon>FormGestionMonedas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormActualizacionTasas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormActualizacionTasas.Designer.cs">
+      <DependentUpon>FormActualizacionTasas.cs</DependentUpon>
     </Compile>
     <Compile Include="FormGestionIdiomas.cs">
       <SubType>Form</SubType>
@@ -166,6 +180,7 @@
     <Compile Include="FormGestionIdiomas.Designer.cs">
       <DependentUpon>FormGestionIdiomas.cs</DependentUpon>
     </Compile>
+    <Compile Include="ArchivoPdf.cs" />
     <Compile Include="FormMovimientos.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -205,6 +220,20 @@
     <Compile Include="FormPrincipal.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="FormMisNotificaciones.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ActualizadorContadorNotificaciones.cs" />
+    <Compile Include="CoordinadorBusquedaUbicacion.cs" />
+    <Compile Include="Tema\MenuNotificacionesItem.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="FormMisNotificaciones.Designer.cs">
+      <DependentUpon>FormMisNotificaciones.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormDetalleNotificacion.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="FormPrincipal.Designer.cs">
       <DependentUpon>FormPrincipal.cs</DependentUpon>
     </Compile>
@@ -242,6 +271,11 @@
     <Compile Include="OpcionTraducible.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tema\CheckBoxAccesible.cs" />
+    <Compile Include="Tema\DateTimePickerAccesible.cs" />
+    <Compile Include="Tema\FinanzappPaleta.cs" />
+    <Compile Include="Tema\TemaFinanzapp.cs" />
+    <Compile Include="LayoutHelper.cs" />
     <Compile Include="UiDialogHelper.cs" />
     <Compile Include="UiExceptionHandler.cs" />
     <EmbeddedResource Include="FormContingenciaIntegridad.resx">
@@ -258,6 +292,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\logo_reporte_finanzapp.png">
+      <LogicalName>TpIDS.Resources.logo_reporte_finanzapp.png</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormMovimientos.resx">
+      <DependentUpon>FormMovimientos.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -281,16 +321,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <!-- Fallback manual: el copy-to-output automatico de SkiaSharp.NativeAssets.Win32 (via
-       Link=x64\libSkiaSharp.dll en su .targets) no funciona en este csproj de formato
-       clasico (bug conocido: Link con subcarpeta no se copia en proyectos no-SDK, probado
-       tanto con el mecanismo automatico del paquete como con un item manual equivalente).
-       Se copia el nativo directo desde el cache global de NuGet, plano en la raiz del
-       output, que es donde SkiaSharp SI lo encuentra en tiempo de ejecucion (verificado). -->
-  <ItemGroup>
-    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.win32\3.119.0\runtimes\win-x64\native\libSkiaSharp.dll" Condition="Exists('$(NuGetPackageRoot)skiasharp.nativeassets.win32\3.119.0\runtimes\win-x64\native\libSkiaSharp.dll')">
-      <Link>libSkiaSharp.dll</Link>
+    <None Include="secrets.config.example" />
+    <!-- Local secrets (ignored by git): copied next to the exe only when present, so a fresh clone still builds. -->
+    <None Include="secrets.config" Condition="Exists('secrets.config')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
@@ -312,5 +345,6 @@
       <Name>SERVICIOS</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="Ui.references.props" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

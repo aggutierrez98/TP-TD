@@ -107,6 +107,37 @@ namespace DAL
             }
         }
 
+        public List<string> ObtenerSegmentosDistintos(AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT DISTINCT Segmento
+                FROM MedioPagoEntidad
+                WHERE Segmento IS NOT NULL
+                ORDER BY Segmento";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                DataTable dataTable = accesoDatos.Read(query, new List<SqlParameter>());
+                List<string> segmentos = new List<string>();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    segmentos.Add(row["Segmento"].ToString());
+                }
+
+                return segmentos;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
         public int InsertarYObtenerId(MedioPagoEntidad medioPagoEntidad, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"

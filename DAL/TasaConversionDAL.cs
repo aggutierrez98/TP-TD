@@ -15,14 +15,18 @@ namespace DAL
                 MonedaBase = new Moneda { Id = (int)row["MonedaBaseId"] },
                 MonedaConversion = new Moneda { Id = (int)row["MonedaConversionId"] },
                 CalculoConversion = (decimal)row["CalculoConversion"],
-                FechaActualizacion = (System.DateTime)row["FechaActualizacion"]
+                FechaActualizacion = (System.DateTime)row["FechaActualizacion"],
+                EsManual = (bool)row["EsManual"],
+                ProtegidaPorUsuarioId = row["ProtegidaPorUsuarioId"] == System.DBNull.Value ? (int?)null : (int)row["ProtegidaPorUsuarioId"],
+                FechaProteccion = row["FechaProteccion"] == System.DBNull.Value ? (System.DateTime?)null : (System.DateTime)row["FechaProteccion"]
             };
         }
 
         public TasaConversion ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion
+                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion,
+                       EsManual, ProtegidaPorUsuarioId, FechaProteccion
                 FROM TasaConversion
                 WHERE Id = @Id";
 
@@ -51,7 +55,8 @@ namespace DAL
         public List<TasaConversion> ObtenerTodas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion
+                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion,
+                       EsManual, ProtegidaPorUsuarioId, FechaProteccion
                 FROM TasaConversion
                 ORDER BY FechaActualizacion DESC";
 
@@ -81,7 +86,8 @@ namespace DAL
         public TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion
+                SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion,
+                       EsManual, ProtegidaPorUsuarioId, FechaProteccion
                 FROM TasaConversion
                 WHERE MonedaBaseId = @MonedaBaseId AND MonedaConversionId = @MonedaConversionId";
 
@@ -155,6 +161,99 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@CalculoConversion", SqlDbType.Decimal, tasa.CalculoConversion),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, tasa.Id)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        // Escritura de la actualizacion automatica: no toca EsManual y, por defensa ante una
+        // carrera con la edicion del operador, no modifica una tasa que ya quedo manual.
+        public bool ActualizarValorAutomatico(int id, decimal calculoConversion, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                UPDATE TasaConversion
+                SET CalculoConversion = @CalculoConversion,
+                    FechaActualizacion = GETDATE()
+                WHERE Id = @Id AND EsManual = 0";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@CalculoConversion", SqlDbType.Decimal, calculoConversion),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public bool MarcarManual(int id, int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                UPDATE TasaConversion
+                SET EsManual = 1,
+                    ProtegidaPorUsuarioId = @UsuarioId,
+                    FechaProteccion = GETDATE()
+                WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                };
+
+                return accesoDatos.Write(query, parametros) > 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public bool Liberar(int id, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                UPDATE TasaConversion
+                SET EsManual = 0,
+                    ProtegidaPorUsuarioId = NULL,
+                    FechaProteccion = NULL
+                WHERE Id = @Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

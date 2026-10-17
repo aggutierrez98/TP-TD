@@ -15,6 +15,12 @@ namespace REPOSITORIO
 
         bool Actualizar(TasaConversion tasa);
 
+        bool ActualizarValorAutomatico(int id, decimal calculoConversion);
+
+        bool MarcarManual(int id, int usuarioId);
+
+        bool Liberar(int id);
+
         bool Eliminar(int id);
     }
 }

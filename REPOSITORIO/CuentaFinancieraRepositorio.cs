@@ -89,5 +89,10 @@ namespace REPOSITORIO
         {
             return _cuentaFinancieraMedioPagoEntidadDAL.ReemplazarMediosPagoEntidadDeCuenta(cuentaFinancieraId, medioPagoEntidadIds, _accesoDatos);
         }
+
+        public int ContarPorMedioPagoEntidad(int medioPagoEntidadId)
+        {
+            return _cuentaFinancieraMedioPagoEntidadDAL.ContarPorMedioPagoEntidad(medioPagoEntidadId, _accesoDatos);
+        }
     }
 }

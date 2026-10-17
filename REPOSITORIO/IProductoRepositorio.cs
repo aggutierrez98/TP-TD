@@ -7,12 +7,14 @@ namespace REPOSITORIO
     {
         Producto ObtenerPorId(int id);
 
-        List<Producto> ObtenerPorComercio(int comercioId);
+        List<Producto> ObtenerTodos();
 
         int InsertarYObtenerId(Producto producto);
 
         bool Actualizar(Producto producto);
 
         bool Eliminar(int id);
+
+        int ContarPorCategoria(int categoriaProductoId);
     }
 }

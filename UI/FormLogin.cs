@@ -13,6 +13,9 @@ namespace TpIDS
         public FormLogin()
         {
             InitializeComponent();
+
+            // El bloque crece con la ventana hasta el doble de su ancho de diseño y despues queda centrado.
+            LayoutHelper.CentrarConAnchoMaximo(pnlBloqueLogin, pnlBloqueLogin.Width * 2);
         }
 
         private void btnIngreso_Click(object sender, EventArgs e)

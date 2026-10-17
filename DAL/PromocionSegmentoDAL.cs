@@ -5,15 +5,15 @@ using System.Linq;
 
 namespace DAL
 {
-    public class PromocionMedioPagoEntidadDAL
+    public class PromocionSegmentoDAL
     {
-        public List<int> ObtenerMedioPagoEntidadIdsPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<string> ObtenerSegmentosPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT MedioPagoEntidadId
-                FROM PromocionMedioPagoEntidad
+                SELECT Segmento
+                FROM PromocionSegmento
                 WHERE PromocionId = @PromocionId
-                ORDER BY MedioPagoEntidadId";
+                ORDER BY Segmento";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -27,7 +27,7 @@ namespace DAL
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["MedioPagoEntidadId"])
+                    .Select(row => (string)row["Segmento"])
                     .ToList();
             }
             finally
@@ -39,7 +39,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarMediosPagoEntidadDePromocion(int promocionId, List<int> medioPagoEntidadIds, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -52,16 +52,16 @@ namespace DAL
                 };
 
                 string query = @"
-                    DELETE FROM PromocionMedioPagoEntidad
+                    DELETE FROM PromocionSegmento
                     WHERE PromocionId = @PromocionId;";
 
-                for (int i = 0; i < medioPagoEntidadIds.Count; i++)
+                for (int i = 0; i < segmentos.Count; i++)
                 {
                     query += string.Format(@"
-                        INSERT INTO PromocionMedioPagoEntidad (PromocionId, MedioPagoEntidadId)
-                        VALUES (@PromocionId, @MedioPagoEntidadId{0});", i);
+                        INSERT INTO PromocionSegmento (PromocionId, Segmento)
+                        VALUES (@PromocionId, @Segmento{0});", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@MedioPagoEntidadId" + i, SqlDbType.Int, medioPagoEntidadIds[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@Segmento" + i, SqlDbType.VarChar, segmentos[i]));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;

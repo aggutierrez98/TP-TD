@@ -118,10 +118,12 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.NotFound");
                     }
 
-                    // Validacion proactiva: no se borra una entidad con catalogo propio o con
-                    // cuentas de usuarios asociadas (hay que quitarlos primero).
+                    // Validacion proactiva: no se borra una entidad con catalogo propio, con
+                    // cuentas de usuarios asociadas o referenciada por una promocion (hay que
+                    // quitarlos primero).
                     if (unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(id).Count > 0
-                        || unidad.CuentasFinancieras.ObtenerPorEntidadFinanciera(id).Count > 0)
+                        || unidad.CuentasFinancieras.ObtenerPorEntidadFinanciera(id).Count > 0
+                        || unidad.PromocionEntidadesFinancieras.ContarPorEntidadFinanciera(id) > 0)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.InUse");
                     }
@@ -139,19 +141,12 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Red de seguridad ante condicion de carrera (mismo criterio que RubroComercioBLL).
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.FinancialEntityManagement.InUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.FinancialEntityManagement.DeleteFailed", ex);
                 }
             }
@@ -219,6 +214,13 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.EntityPaymentMethodNotFound");
                     }
 
+                    // No se quita un medio de pago de la entidad si hay cuentas de usuarios que
+                    // lo tienen contratado.
+                    if (unidad.CuentasFinancieras.ContarPorMedioPagoEntidad(medioPagoEntidadId) > 0)
+                    {
+                        throw new ExcepcionNegocio("Error.FinancialEntityManagement.EntityPaymentMethodInUse");
+                    }
+
                     if (!unidad.MediosPagoEntidad.Eliminar(medioPagoEntidadId))
                     {
                         throw new ExcepcionTecnica("Error.FinancialEntityManagement.PaymentMethodRemoveFailed");
@@ -232,20 +234,12 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Sin validacion proactiva: el medio puede estar contratado en cuentas de
-                    // usuarios o referenciado por promociones; la FK real es la fuente de verdad.
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.FinancialEntityManagement.EntityPaymentMethodInUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.FinancialEntityManagement.PaymentMethodRemoveFailed", ex);
                 }
             }

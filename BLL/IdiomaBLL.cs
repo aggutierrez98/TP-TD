@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Web.Script.Serialization;
 using ABSTRACCIONES;
 using REPOSITORIO;
 using SERVICIOS;
@@ -252,28 +249,7 @@ namespace BLL
 
         public void ImportarJson(int idiomaId, string rutaArchivo)
         {
-            if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
-            {
-                throw new ExcepcionNegocio("Error.Language.JsonFileNotFound");
-            }
-
-            string contenido = File.ReadAllText(rutaArchivo);
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            Dictionary<string, string> traducciones;
-
-            try
-            {
-                traducciones = serializer.Deserialize<Dictionary<string, string>>(contenido);
-            }
-            catch (InvalidOperationException ex)
-            {
-                throw new ExcepcionTecnica("Error.Language.JsonInvalidFormat", ex);
-            }
-
-            if (traducciones == null || traducciones.Count == 0)
-            {
-                throw new ExcepcionNegocio("Error.Language.JsonEmpty");
-            }
+            Dictionary<string, string> traducciones = _idiomaCatalogoService.LeerCatalogoJson(rutaArchivo);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
@@ -289,10 +265,7 @@ namespace BLL
 
         public void ExportarJson(int idiomaId, string rutaArchivo)
         {
-            if (string.IsNullOrWhiteSpace(rutaArchivo))
-            {
-                throw new ExcepcionNegocio("Error.Language.ExportPathRequired");
-            }
+            _idiomaCatalogoService.ValidarRutaExportacion(rutaArchivo);
 
             Idioma idioma = _idiomaRepositorio.ObtenerIdiomaCompleto(idiomaId);
             if (idioma == null)
@@ -300,17 +273,8 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.Language.NotFound");
             }
 
-            Dictionary<string, string> traducciones = idioma.Traducciones
-                .Where(item => item.Palabra != null && !string.IsNullOrWhiteSpace(item.Palabra.Key))
-                .OrderBy(item => item.Palabra.Key)
-                .ToDictionary(
-                    item => item.Palabra.Key,
-                    item => item.Valor ?? string.Empty,
-                    StringComparer.Ordinal);
-
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
-            string contenido = serializer.Serialize(traducciones);
-            File.WriteAllText(rutaArchivo, contenido, new UTF8Encoding(false));
+            Dictionary<string, string> traducciones = _idiomaCatalogoService.ConstruirCatalogoExportable(idioma);
+            _idiomaCatalogoService.EscribirCatalogoJson(traducciones, rutaArchivo);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {

@@ -44,6 +44,7 @@
     <Compile Include="DigitoVerificadorAttribute.cs" />
     <Compile Include="TipoMovimiento.cs" />
     <Compile Include="IAutorizacion.cs" />
+    <Compile Include="IReporteTabularPdfService.cs" />
     <Compile Include="IBitacora.cs" />
     <Compile Include="IIntegrable.cs" />
     <Compile Include="IIntegridadService.cs" />
@@ -63,6 +64,16 @@
     <Compile Include="IServicioHistorialEstados.cs" />
     <Compile Include="ITraduccion.cs" />
     <Compile Include="TicketEscaneado.cs" />
+    <Compile Include="IBusquedaUbicacionesService.cs" />
+    <Compile Include="ConsultaUbicacion.cs" />
+    <Compile Include="ResultadoBusquedaUbicacion.cs" />
+    <Compile Include="LimitesGeograficos.cs" />
+    <Compile Include="EstadoBusquedaUbicacion.cs" />
+    <Compile Include="BusquedaUbicacionException.cs" />
+    <Compile Include="EstadoProveedorTasas.cs" />
+    <Compile Include="IProveedorTasasCambio.cs" />
+    <Compile Include="ProveedorTasasException.cs" />
+    <Compile Include="TasasCambioObtenidas.cs" />
     <Compile Include="IUsuarioAutenticado.cs" />
     <Compile Include="IUsuarioSnapshot.cs" />
     <Compile Include="IUsuarioPreferencia.cs" />

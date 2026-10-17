@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return producto;
         }
 
-        public List<Producto> ObtenerPorComercio(int comercioId)
+        public List<Producto> ObtenerTodos()
         {
-            List<Producto> productos = _productoDAL.ObtenerPorComercio(comercioId, _accesoDatos);
+            List<Producto> productos = _productoDAL.ObtenerTodos(_accesoDatos);
             productos.ForEach(Hidratar);
             return productos;
         }
@@ -41,9 +41,7 @@ namespace REPOSITORIO
                 return;
             }
 
-            producto.Comercio = new ComercioRepositorio(_accesoDatos).ObtenerPorId(producto.Comercio.Id);
             producto.CategoriaProducto = new CategoriaProductoRepositorio(_accesoDatos).ObtenerPorId(producto.CategoriaProducto.Id);
-            producto.Moneda = new MonedaRepositorio(_accesoDatos).ObtenerPorId(producto.Moneda.Id);
         }
 
         public int InsertarYObtenerId(Producto producto)
@@ -59,6 +57,11 @@ namespace REPOSITORIO
         public bool Eliminar(int id)
         {
             return _productoDAL.Eliminar(id, _accesoDatos);
+        }
+
+        public int ContarPorCategoria(int categoriaProductoId)
+        {
+            return _productoDAL.ContarPorCategoria(categoriaProductoId, _accesoDatos);
         }
     }
 }

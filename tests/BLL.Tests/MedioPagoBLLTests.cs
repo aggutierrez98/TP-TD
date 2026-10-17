@@ -152,20 +152,36 @@ namespace BLL.Tests
 
             Assert.AreEqual("Error.PaymentMethodManagement.InUse", ex.Message);
             Assert.IsTrue(fixture.MedioPagoRepo.MediosPago.ContainsKey(1));
+            Assert.IsNull(fixture.MedioPagoRepo.LastDeletedId);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         [TestMethod]
-        public void Eliminar_ViolacionDeIntegridadReferencialEnElRepositorio_ThrowsExcepcionNegocio()
+        public void Eliminar_FallaDelBorradoConViolacionForanea_InformaDeleteFailed()
         {
             MedioPagoFixture fixture = new MedioPagoFixture();
             fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
-            fixture.MedioPagoRepo.ThrowForeignKeyOnEliminar = true;
+            fixture.MedioPagoRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
 
-            Assert.AreEqual("Error.PaymentMethodManagement.InUse", ex.Message);
+            Assert.AreEqual("Error.PaymentMethodManagement.DeleteFailed", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_FallaTecnicaConViolacionForaneaEnvuelta_NoSeConvierteEnUso()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
+            fixture.MedioPagoRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
+            MedioPagoBLL sut = fixture.CreateSut();
+
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         [TestMethod]
@@ -181,6 +197,21 @@ namespace BLL.Tests
             Assert.IsFalse(fixture.MedioPagoRepo.MediosPago.ContainsKey(1));
             Assert.AreEqual("FormPaymentMethodManagement.Value.Activity.Deletion", fixture.Bitacora.Calls[0].Actividad);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ReferenciadoPorUnaPromocion_ThrowsExcepcionNegocioYNoElimina()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
+            fixture.Unidad.PromocionMedioPagoRepo.MedioPagoIdsPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
+            MedioPagoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.PaymentMethodManagement.InUse", ex.Message);
+            Assert.IsNull(fixture.MedioPagoRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         private sealed class MedioPagoFixture

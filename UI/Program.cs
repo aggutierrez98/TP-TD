@@ -19,6 +19,9 @@ namespace TpIDS
             CompositionRoot.Inicializar();
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            // Tema visual (paleta Krypton propia): antes de crear cualquier formulario,
+            // incluido FormContingenciaIntegridad.
+            TemaFinanzapp.Aplicar();
 
             try
             {

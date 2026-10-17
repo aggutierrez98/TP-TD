@@ -10,9 +10,11 @@ using SERVICIOS;
 namespace TpIDS
 {
     // Lista personal: las cuentas financieras del usuario de la sesion (el scope lo resuelve
-    // CuentaFinancieraBLL). Una cuenta no se edita: solo se crea (entidad + alias + tipo +
-    // medios de pago contratados del catalogo de esa entidad, en una sola transaccion) o se
-    // elimina. CredencialesCifradas queda fuera de alcance (no se muestra ni se carga).
+    // CuentaFinancieraBLL). Una cuenta se crea (entidad + alias + tipo + medios de pago
+    // contratados del catalogo de esa entidad, en una sola transaccion), se edita o se elimina.
+    // Seleccionar una fila carga sus datos en el formulario; Actualizar los aplica a esa cuenta
+    // y Agregar siempre crea una cuenta nueva. CredencialesCifradas queda fuera de alcance
+    // (no se muestra ni se carga).
     public partial class FormGestionCuentasFinancieras : FormTraducibleBase
     {
         private readonly CuentaFinancieraBLL cuentaFinancieraBLL = CompositionRoot.CuentaFinanciera;
@@ -20,6 +22,10 @@ namespace TpIDS
 
         // Evita recargar el catalogo cuando el combo de entidad se mueve por codigo.
         private bool _suspenderCambioEntidad;
+
+        // Evita cargar el formulario mientras se rearma la grilla (el rebind selecciona la
+        // primera fila sin que el usuario haya elegido nada).
+        private bool _cargandoGrilla;
 
         public FormGestionCuentasFinancieras()
         {
@@ -33,6 +39,7 @@ namespace TpIDS
         {
             public int Id { get; set; }
             public string Alias { get; set; }
+            public int EntidadId { get; set; }
             public string Entidad { get; set; }
             public TipoCuentaFinanciera Tipo { get; set; }
             public List<MedioPagoEntidad> MediosPago { get; set; }
@@ -108,6 +115,7 @@ namespace TpIDS
             {
                 List<CuentaFinanciera> cuentas = cuentaFinancieraBLL.ObtenerMisCuentas();
 
+                _cargandoGrilla = true;
                 dgvCuentasFinancieras.DataSource = null;
                 dgvCuentasFinancieras.DataSource = cuentas
                     .OrderBy(item => item.Alias)
@@ -123,10 +131,68 @@ namespace TpIDS
                     dgvCuentasFinancieras.ClearSelection();
                     dgvCuentasFinancieras.CurrentCell = null;
                 }
+
+                _cargandoGrilla = false;
+                CargarFormularioDesdeSeleccion();
             }
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Carga de cuentas financieras");
+            }
+            finally
+            {
+                _cargandoGrilla = false;
+            }
+        }
+
+        private void dgvCuentasFinancieras_SelectionChanged(object sender, EventArgs e)
+        {
+            if (_cargandoGrilla)
+            {
+                return;
+            }
+
+            CargarFormularioDesdeSeleccion();
+        }
+
+        // Entidad (sin disparar la recarga del catalogo), alias, tipo y medios contratados
+        // marcados dentro del catalogo de la entidad de la cuenta seleccionada.
+        private void CargarFormularioDesdeSeleccion()
+        {
+            if (dgvCuentasFinancieras.SelectedRows.Count == 0
+                || !ObtenerFilaSeleccionada(dgvCuentasFinancieras, out FilaCuentaFinanciera fila))
+            {
+                return;
+            }
+
+            try
+            {
+                EntidadFinanciera entidad = entidadFinancieraBLL.ObtenerPorId(fila.EntidadId);
+
+                _suspenderCambioEntidad = true;
+                try
+                {
+                    cmbEntidadFinancieraCuenta.SelectedItem = cmbEntidadFinancieraCuenta.Items
+                        .OfType<EntidadFinanciera>()
+                        .FirstOrDefault(item => item.Id == fila.EntidadId);
+                }
+                finally
+                {
+                    _suspenderCambioEntidad = false;
+                }
+
+                txtbAliasCuenta.Text = fila.Alias;
+                cmbTipoCuentaFinanciera.SelectedItem = cmbTipoCuentaFinanciera.Items
+                    .OfType<OpcionTraducible>()
+                    .FirstOrDefault(item => item.Valor is TipoCuentaFinanciera tipo && tipo == fila.Tipo);
+
+                CargarSelectorMediosPago(
+                    entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>(),
+                    new HashSet<int>(fila.MediosPago.Select(item => item.Id)));
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Carga de la cuenta financiera seleccionada");
             }
         }
 
@@ -136,6 +202,7 @@ namespace TpIDS
             {
                 Id = cuenta.Id,
                 Alias = cuenta.Alias,
+                EntidadId = cuenta.EntidadFinanciera?.Id ?? 0,
                 Entidad = cuenta.EntidadFinanciera?.Nombre ?? string.Empty,
                 Tipo = cuenta.Tipo,
                 MediosPago = cuenta.MediosPagoEntidad ?? new List<MedioPagoEntidad>()
@@ -176,7 +243,7 @@ namespace TpIDS
             {
                 // La cuenta todavia no existe: el catalogo sale de la entidad elegida.
                 EntidadFinanciera entidad = entidadFinancieraBLL.ObtenerPorId(entidadSeleccionada.Id);
-                CargarSelectorMediosPago(entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>());
+                CargarSelectorMediosPago(entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>(), null);
             }
             catch (Exception ex)
             {
@@ -185,7 +252,7 @@ namespace TpIDS
             }
         }
 
-        private void CargarSelectorMediosPago(List<MedioPagoEntidad> catalogo)
+        private void CargarSelectorMediosPago(List<MedioPagoEntidad> catalogo, HashSet<int> contratadosIds)
         {
             clbMediosPagoContratados.BeginUpdate();
             clbMediosPagoContratados.Items.Clear();
@@ -195,7 +262,8 @@ namespace TpIDS
                 .ThenBy(item => item.MedioPago.Marca)
                 .ThenBy(item => item.Segmento))
             {
-                clbMediosPagoContratados.Items.Add(new OpcionMedioPagoEntidad(medioPagoEntidad), false);
+                bool contratado = contratadosIds != null && contratadosIds.Contains(medioPagoEntidad.Id);
+                clbMediosPagoContratados.Items.Add(new OpcionMedioPagoEntidad(medioPagoEntidad), contratado);
             }
 
             clbMediosPagoContratados.EndUpdate();
@@ -238,6 +306,38 @@ namespace TpIDS
             }
         }
 
+        private void btnActualizarCuenta_Click(object sender, EventArgs e)
+        {
+            if (!ObtenerFilaSeleccionada(dgvCuentasFinancieras, out FilaCuentaFinanciera fila))
+            {
+                UiDialogHelper.MostrarWarning("FormFinancialAccountManagement.Warning.SelectAccount");
+                return;
+            }
+
+            if (!(cmbEntidadFinancieraCuenta.SelectedItem is EntidadFinanciera entidad))
+            {
+                UiDialogHelper.MostrarWarning("FormFinancialAccountManagement.Warning.SelectEntity");
+                return;
+            }
+
+            if (!ObtenerTipoSeleccionado(out TipoCuentaFinanciera tipo))
+            {
+                UiDialogHelper.MostrarWarning("FormFinancialAccountManagement.Warning.SelectType");
+                return;
+            }
+
+            try
+            {
+                CuentaFinanciera actualizada = cuentaFinancieraBLL.Actualizar(fila.Id, entidad.Id, txtbAliasCuenta.Text, tipo, ObtenerMediosPagoMarcados());
+                CargarCuentas(actualizada.Id);
+                UiDialogHelper.MostrarInfo("FormFinancialAccountManagement.Success.Updated");
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Modificacion de cuenta financiera");
+            }
+        }
+
         private void btnEliminarCuenta_Click(object sender, EventArgs e)
         {
             if (!ObtenerFilaSeleccionada(dgvCuentasFinancieras, out FilaCuentaFinanciera fila))
@@ -263,6 +363,7 @@ namespace TpIDS
                 if (eliminada)
                 {
                     CargarCuentas(null);
+                    LimpiarFormulario();
                     UiDialogHelper.MostrarInfo("FormFinancialAccountManagement.Success.Deleted");
                 }
             }

@@ -109,9 +109,10 @@ namespace BLL
                         throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
                     }
 
-                    // Validacion proactiva: evita depender solo de la FK real, ya que aca
-                    // si tenemos visibilidad completa de Comercio dentro de esta tanda.
-                    if (unidad.Comercios.ObtenerPorRubro(id).Count > 0)
+                    // Validacion proactiva: un rubro con comercios o referenciado por una
+                    // promocion no se da de baja.
+                    if (unidad.Comercios.ObtenerPorRubro(id).Count > 0
+                        || unidad.PromocionRubrosComercio.ContarPorRubroComercio(id) > 0)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.RubroInUse");
                     }
@@ -130,23 +131,12 @@ namespace BLL
                 {
                     throw;
                 }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
-                    // Red de seguridad ante una condicion de carrera entre la validacion
-                    // proactiva y el delete real (otro proceso inserta un Comercio en el medio).
-                    // El SqlException original ya llega envuelto como ExcepcionTecnica desde
-                    // AccesoDatosSqlServer.ExecuteInTransaction, por eso se revisa antes de
-                    // decidir si hay que relanzarla tal cual o convertirla en negocio.
-                    if (ViolacionIntegridadReferencialHelper.EsViolacionRestriccionForanea(ex))
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.RubroInUse");
-                    }
-
-                    if (ex is ExcepcionTecnica)
-                    {
-                        throw;
-                    }
-
                     throw new ExcepcionTecnica("Error.MerchantManagement.RubroDeleteFailed", ex);
                 }
             }

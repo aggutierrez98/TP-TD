@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
-using System.Web.Script.Serialization;
 using ABSTRACCIONES;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SERVICIOS;
@@ -14,13 +15,13 @@ namespace SERVICIOS.Tests
         public void ArmarRequestBody_SinHistorial_IncluyeSoloLaPreguntaActualComoUser()
         {
             string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Como ahorro mejor?", null);
-            var serializer = new JavaScriptSerializer();
-            var request = (Dictionary<string, object>)serializer.DeserializeObject(json);
-            var contents = (object[])request["contents"];
+            using (JsonDocument request = JsonDocument.Parse(json))
+            {
+                JsonElement contents = request.RootElement.GetProperty("contents");
 
-            Assert.AreEqual(1, contents.Length);
-            var primero = (Dictionary<string, object>)contents[0];
-            Assert.AreEqual("user", primero["role"]);
+                Assert.AreEqual(1, contents.GetArrayLength());
+                Assert.AreEqual("user", contents[0].GetProperty("role").GetString());
+            }
         }
 
         [TestMethod]
@@ -32,27 +33,25 @@ namespace SERVICIOS.Tests
             };
 
             string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Y ahora?", historial);
-            var serializer = new JavaScriptSerializer();
-            var request = (Dictionary<string, object>)serializer.DeserializeObject(json);
-            var contents = (object[])request["contents"];
+            using (JsonDocument request = JsonDocument.Parse(json))
+            {
+                JsonElement contents = request.RootElement.GetProperty("contents");
 
-            Assert.AreEqual(3, contents.Length);
-            var primero = (Dictionary<string, object>)contents[0];
-            var segundo = (Dictionary<string, object>)contents[1];
-            var tercero = (Dictionary<string, object>)contents[2];
-            Assert.AreEqual("user", primero["role"]);
-            Assert.AreEqual("model", segundo["role"]);
-            Assert.AreEqual("user", tercero["role"]);
+                Assert.AreEqual(3, contents.GetArrayLength());
+                Assert.AreEqual("user", contents[0].GetProperty("role").GetString());
+                Assert.AreEqual("model", contents[1].GetProperty("role").GetString());
+                Assert.AreEqual("user", contents[2].GetProperty("role").GetString());
+            }
         }
 
         [TestMethod]
         public void ArmarRequestBody_IncluyeSystemInstruction()
         {
             string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Hola", null);
-            var serializer = new JavaScriptSerializer();
-            var request = (Dictionary<string, object>)serializer.DeserializeObject(json);
-
-            Assert.IsTrue(request.ContainsKey("systemInstruction"));
+            using (JsonDocument request = JsonDocument.Parse(json))
+            {
+                Assert.IsTrue(request.RootElement.TryGetProperty("systemInstruction", out _));
+            }
         }
 
         [TestMethod]
@@ -60,24 +59,19 @@ namespace SERVICIOS.Tests
         {
             string json = GeminiAsistenteFinancieroService.ArmarRequestBodyClasificacion("Como invierto mis ahorros?");
 
-            var serializer = new JavaScriptSerializer();
-            var request = (Dictionary<string, object>)serializer.DeserializeObject(json);
-            var contents = (object[])request["contents"];
-            var primerContenido = (Dictionary<string, object>)contents[0];
-            var partes = (object[])primerContenido["parts"];
-            var primeraParte = (Dictionary<string, object>)partes[0];
-            string texto = (string)primeraParte["text"];
+            using (JsonDocument request = JsonDocument.Parse(json))
+            {
+                JsonElement raiz = request.RootElement;
+                string texto = raiz.GetProperty("contents")[0].GetProperty("parts")[0]
+                    .GetProperty("text").GetString();
+                JsonElement agente = raiz.GetProperty("generationConfig").GetProperty("responseFormat")
+                    .GetProperty("text").GetProperty("schema").GetProperty("properties").GetProperty("agente");
+                string[] valoresPosibles = agente.GetProperty("enum").EnumerateArray()
+                    .Select(valor => valor.GetString()).ToArray();
 
-            var generationConfig = (Dictionary<string, object>)request["generationConfig"];
-            var responseFormat = (Dictionary<string, object>)generationConfig["responseFormat"];
-            var textFormat = (Dictionary<string, object>)responseFormat["text"];
-            var schema = (Dictionary<string, object>)textFormat["schema"];
-            var properties = (Dictionary<string, object>)schema["properties"];
-            var agente = (Dictionary<string, object>)properties["agente"];
-            var valoresPosibles = (object[])agente["enum"];
-
-            StringAssert.Contains(texto, "Como invierto mis ahorros?");
-            CollectionAssert.AreEquivalent(new[] { "Ahorro", "Inversiones", "General" }, valoresPosibles);
+                StringAssert.Contains(texto, "Como invierto mis ahorros?");
+                CollectionAssert.AreEquivalent(new[] { "Ahorro", "Inversiones", "General" }, valoresPosibles);
+            }
         }
 
         [TestMethod]

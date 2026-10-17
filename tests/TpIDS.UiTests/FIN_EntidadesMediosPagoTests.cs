@@ -10,9 +10,9 @@ namespace TpIDS.UiTests
 {
     /// <summary>
     /// FIN - Entidades financieras, medios de pago y cuentas financieras (proceso de negocio
-    /// sin codigo N0X asignado todavia; ver ESTADO-ACTUAL-Y-PROXIMOS-PASOS.md seccion 8).
+    /// sin codigo N0X asignado todavia).
     /// Operador &gt; Medios de pago / Entidades financieras (+ detalle de MedioPagoEntidad) y
-    /// Finanzas &gt; Mis cuentas financieras (solo alta y baja, scoped al usuario logueado).
+    /// Finanzas &gt; Mis cuentas financieras (alta, edicion y baja, scoped al usuario logueado).
     /// Los datos previos se arman por SQL directo: MedioPago, EntidadFinanciera,
     /// MedioPagoEntidad, CuentaFinanciera y su tabla puente no tienen firmas DVH/DVV.
     /// </summary>
@@ -293,7 +293,7 @@ namespace TpIDS.UiTests
 
         [TestMethod]
         [TestCategory("UI")]
-        public void FIN_CuentasFinancieras_Pantalla_SoloPermiteAltaYBaja()
+        public void FIN_CuentasFinancieras_Pantalla_OfreceAltaEdicionYBaja()
         {
             Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
             Window cuentas = AbrirGestionCuentasFinancieras(principal);
@@ -301,18 +301,128 @@ namespace TpIDS.UiTests
             // Espera a que el formulario termine de cargar antes de inventariar sus botones.
             UiFind.Boton(cuentas, "btnAgregarCuenta");
 
+            // KryptonButton se expone por UIA como Pane: se inventaria por AutomationId, no por ControlType.
             string[] botonesDelFormulario = cuentas
-                .FindAllDescendants(condicion => condicion.ByControlType(ControlType.Button))
+                .FindAllDescendants()
                 .Select(boton => LeerAutomationId(boton))
                 .Where(id => id.StartsWith("btn", StringComparison.Ordinal))
                 .OrderBy(id => id, StringComparer.Ordinal)
                 .ToArray();
 
             CollectionAssert.AreEqual(
-                new[] { "btnAgregarCuenta", "btnEliminarCuenta" },
+                new[] { "btnActualizarCuenta", "btnAgregarCuenta", "btnEliminarCuenta" },
                 botonesDelFormulario,
-                "Una cuenta financiera solo se crea o se elimina: no debe haber accion de edicion. Botones: " +
+                "Una cuenta financiera se crea, se edita o se elimina. Botones: " +
                 string.Join(", ", botonesDelFormulario));
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
+        public void FIN_CuentasFinancieras_SeleccionarFila_CargaElAliasEnElFormulario()
+        {
+            string entidad = NombreUnico("uient_sel");
+            string alias = NombreUnico("uialias_sel");
+            int entidadId = InsertarEntidad(entidad);
+            InsertarCuenta(TestConfig.BasicUsername, entidadId, alias, TipoCuentaCajaAhorro);
+
+            Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
+            Window cuentas = AbrirGestionCuentasFinancieras(principal);
+
+            UiFind.ClickFilaGrilla(cuentas, "dgvCuentasFinancieras", alias);
+
+            Assert.AreEqual(
+                alias,
+                UiFind.LeerTexto(cuentas, "txtbAliasCuenta"),
+                "Al seleccionar una cuenta, su alias debe cargarse en el formulario.");
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
+        public void FIN_CuentasFinancieras_SeleccionarFila_CargaEntidadTipoYMediosContratados()
+        {
+            string entidad = NombreUnico("uient_selc");
+            string alias = NombreUnico("uialias_selc");
+            string marcaContratada = NombreUnico("uimsc");
+            string marcaNoContratada = NombreUnico("uimsn");
+            int entidadId = InsertarEntidad(entidad);
+            int contratadoId = InsertarMedioPagoEntidad(
+                entidadId, InsertarMedioPago(TipoMedioPagoCredito, marcaContratada), null);
+            InsertarMedioPagoEntidad(entidadId, InsertarMedioPago(TipoMedioPagoCredito, marcaNoContratada), null);
+            int cuentaId = InsertarCuenta(TestConfig.BasicUsername, entidadId, alias, TipoCuentaCajaAhorro);
+            TestDatabase.EjecutarSql(
+                "INSERT INTO dbo.CuentaFinancieraMedioPagoEntidad (CuentaFinancieraId, MedioPagoEntidadId) VALUES (@c, @m)",
+                new SqlParameter("@c", cuentaId),
+                new SqlParameter("@m", contratadoId));
+
+            Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
+            Window cuentas = AbrirGestionCuentasFinancieras(principal);
+
+            UiFind.ClickFilaGrilla(cuentas, "dgvCuentasFinancieras", alias);
+
+            Assert.AreEqual(entidad, UiFind.LeerItemSeleccionadoCombo(cuentas, "cmbEntidadFinancieraCuenta"), "La entidad de la cuenta no se cargo en el selector.");
+            Assert.AreEqual(
+                TestDatabase.ObtenerTraduccion("FormFinancialAccountManagement.Value.Type.CajaAhorro"),
+                UiFind.LeerItemSeleccionadoCombo(cuentas, "cmbTipoCuentaFinanciera"),
+                "El tipo de la cuenta no se cargo en el selector.");
+            Assert.AreEqual(true, UiFind.EstadoItemListaChequeable(cuentas, "clbMediosPagoContratados", marcaContratada), "El medio contratado deberia aparecer marcado.");
+            Assert.AreEqual(false, UiFind.EstadoItemListaChequeable(cuentas, "clbMediosPagoContratados", marcaNoContratada), "El medio no contratado deberia aparecer desmarcado.");
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
+        public void FIN_CuentasFinancieras_CambiarEntidadConFilaSeleccionada_MuestraElCatalogoNuevoDesmarcado()
+        {
+            string entidadOrigen = NombreUnico("uient_orig");
+            string entidadDestino = NombreUnico("uient_dest");
+            string alias = NombreUnico("uialias_cent");
+            string marcaOrigen = NombreUnico("uimo");
+            string marcaDestino = NombreUnico("uimd");
+            int origenId = InsertarEntidad(entidadOrigen);
+            int destinoId = InsertarEntidad(entidadDestino);
+            int medioOrigenId = InsertarMedioPagoEntidad(
+                origenId, InsertarMedioPago(TipoMedioPagoCredito, marcaOrigen), null);
+            InsertarMedioPagoEntidad(destinoId, InsertarMedioPago(TipoMedioPagoCredito, marcaDestino), null);
+            int cuentaId = InsertarCuenta(TestConfig.BasicUsername, origenId, alias, TipoCuentaCajaAhorro);
+            TestDatabase.EjecutarSql(
+                "INSERT INTO dbo.CuentaFinancieraMedioPagoEntidad (CuentaFinancieraId, MedioPagoEntidadId) VALUES (@c, @m)",
+                new SqlParameter("@c", cuentaId),
+                new SqlParameter("@m", medioOrigenId));
+
+            Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
+            Window cuentas = AbrirGestionCuentasFinancieras(principal);
+
+            UiFind.ClickFilaGrilla(cuentas, "dgvCuentasFinancieras", alias);
+            UiFind.SeleccionarItemComboConTeclado(cuentas, "cmbEntidadFinancieraCuenta", entidadDestino);
+
+            Assert.AreEqual(false, UiFind.EstadoItemListaChequeable(cuentas, "clbMediosPagoContratados", marcaDestino), "El catalogo de la entidad nueva deberia mostrarse con sus medios desmarcados.");
+            Assert.IsNull(UiFind.EstadoItemListaChequeable(cuentas, "clbMediosPagoContratados", marcaOrigen), "Los medios de la entidad anterior no deberian seguir en el selector.");
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
+        public void FIN_CuentasFinancieras_Actualizar_CambiaElAliasDeLaCuentaSeleccionada()
+        {
+            string entidad = NombreUnico("uient_upd");
+            string alias = NombreUnico("uialias_upd");
+            string aliasNuevo = NombreUnico("uialias_nuevo");
+            int entidadId = InsertarEntidad(entidad);
+            int cuentaId = InsertarCuenta(TestConfig.BasicUsername, entidadId, alias, TipoCuentaCajaAhorro);
+
+            Window principal = LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword);
+            Window cuentas = AbrirGestionCuentasFinancieras(principal);
+
+            UiFind.ClickFilaGrilla(cuentas, "dgvCuentasFinancieras", alias);
+            UiFind.EscribirTexto(cuentas, "txtbAliasCuenta", aliasNuevo);
+            UiFind.Click(cuentas, "btnActualizarCuenta");
+            EsperarAvisoYCerrar("FormFinancialAccountManagement.Success.Updated");
+
+            Assert.AreEqual(
+                1,
+                TestDatabase.Contar(
+                    "SELECT COUNT(*) FROM dbo.CuentaFinanciera WHERE Id = @c AND Alias = @a",
+                    new SqlParameter("@c", cuentaId),
+                    new SqlParameter("@a", aliasNuevo)),
+                "La cuenta no quedo con el alias nuevo (o se creo otra en lugar de editar).");
         }
 
         // --- Permisos ---

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -11,15 +11,15 @@ using SERVICIOS;
 namespace TpIDS
 {
     // Pantalla de operador (back-office) abierta en modo modal desde FormGestionComercios,
-    // igual patron de constructor que FormHistorialUsuario. Tres secciones independientes
-    // sobre un mismo comercio: Productos (CRUD completo), Categorias de producto (CRUD
-    // completo, catalogo global no exclusivo del comercio) y Promociones del comercio
-    // (solo lectura: las genera un proceso automatico fuera de esta tanda).
+    // igual patron de constructor que FormHistorialUsuario. Dos secciones independientes
+    // sobre un mismo comercio: Productos (se eligen del catalogo y se les pone precio y moneda
+    // para este comercio; el catalogo se administra en FormGestionProductos) y Promociones del
+    // comercio (solo lectura: las genera un proceso automatico fuera de esta tanda).
     public partial class FormDetalleComercio : FormTraducibleBase
     {
         private readonly int _comercioId;
         private readonly ProductoBLL _productoBLL = CompositionRoot.Producto;
-        private readonly CategoriaProductoBLL _categoriaProductoBLL = CompositionRoot.CategoriaProducto;
+        private readonly ComercioProductoBLL _comercioProductoBLL = CompositionRoot.ComercioProducto;
         private readonly PromocionBLL _promocionBLL = CompositionRoot.Promocion;
 
         public FormDetalleComercio(int comercioId, string nombreComercio)
@@ -39,15 +39,11 @@ namespace TpIDS
         private sealed class FilaProducto
         {
             public int Id { get; set; }
+            public int MonedaId { get; set; }
             public string Nombre { get; set; }
             public string Categoria { get; set; }
             public decimal Precio { get; set; }
-        }
-
-        private sealed class FilaCategoriaProducto
-        {
-            public int Id { get; set; }
-            public string Nombre { get; set; }
+            public string Moneda { get; set; }
         }
 
         private sealed class FilaPromocion
@@ -69,23 +65,23 @@ namespace TpIDS
         {
             dgvPromociones.CellFormatting += dgvPromociones_CellFormatting;
             CargarMonedas();
-            CargarCategorias(null);
+            CargarCatalogoProductos();
             CargarProductos(null);
             CargarPromociones();
-            MostrarSeccionMonedaProducto(true);
+            ModoEdicionProducto(false);
         }
 
-        // --- Productos ---
+        // --- Productos del comercio ---
 
         private void CargarProductos(int? productoSeleccionadoId)
         {
             try
             {
-                List<Producto> productos = _productoBLL.ObtenerPorComercio(_comercioId);
+                List<ComercioProducto> asignaciones = _comercioProductoBLL.ObtenerPorComercio(_comercioId);
 
                 dgvProductos.DataSource = null;
-                dgvProductos.DataSource = productos
-                    .OrderBy(item => item.Nombre)
+                dgvProductos.DataSource = asignaciones
+                    .OrderBy(item => item.Producto.Nombre)
                     .Select(ProyectarFilaProducto)
                     .ToList();
 
@@ -100,22 +96,44 @@ namespace TpIDS
             }
         }
 
-        private static FilaProducto ProyectarFilaProducto(Producto producto)
+        private static FilaProducto ProyectarFilaProducto(ComercioProducto asignacion)
         {
             return new FilaProducto
             {
-                Id = producto.Id,
-                Nombre = producto.Nombre,
-                Categoria = producto.CategoriaProducto?.Nombre ?? string.Empty,
-                Precio = producto.Precio
+                Id = asignacion.Producto.Id,
+                MonedaId = asignacion.Moneda?.Id ?? 0,
+                Nombre = asignacion.Producto.Nombre,
+                Categoria = asignacion.Producto.CategoriaProducto?.Nombre ?? string.Empty,
+                Precio = asignacion.Precio,
+                Moneda = asignacion.Moneda?.Codigo ?? string.Empty
             };
+        }
+
+        private void CargarCatalogoProductos()
+        {
+            try
+            {
+                List<Producto> catalogo = _productoBLL.ObtenerTodos()
+                    .OrderBy(item => item.Nombre)
+                    .ToList();
+
+                cmbProductoCatalogo.DataSource = null;
+                cmbProductoCatalogo.DisplayMember = "Nombre";
+                cmbProductoCatalogo.ValueMember = "Id";
+                cmbProductoCatalogo.DataSource = catalogo;
+                cmbProductoCatalogo.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Carga del catalogo de productos");
+            }
         }
 
         private void CargarMonedas()
         {
             try
             {
-                List<Moneda> monedas = _productoBLL.ObtenerMonedas()
+                List<Moneda> monedas = _comercioProductoBLL.ObtenerMonedas()
                     .OrderBy(item => item.Nombre)
                     .ToList();
 
@@ -132,9 +150,9 @@ namespace TpIDS
 
         private void btnAgregarProducto_Click(object sender, EventArgs e)
         {
-            if (!(cmbCategoriaProducto.SelectedItem is CategoriaProducto categoriaSeleccionada))
+            if (!(cmbProductoCatalogo.SelectedItem is Producto productoSeleccionado))
             {
-                UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.SelectCategoria");
+                UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.SelectProductoCatalogo");
                 return;
             }
 
@@ -152,14 +170,14 @@ namespace TpIDS
 
             try
             {
-                Producto creado = _productoBLL.Crear(_comercioId, txtbNombreProducto.Text, categoriaSeleccionada.Id, monedaSeleccionada.Id, precioParseado);
+                _comercioProductoBLL.Asignar(_comercioId, productoSeleccionado.Id, monedaSeleccionada.Id, precioParseado);
                 LimpiarFormularioProducto();
-                CargarProductos(creado.Id);
-                UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoCreated");
+                CargarProductos(productoSeleccionado.Id);
+                UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoAssigned");
             }
             catch (Exception ex)
             {
-                UiExceptionHandler.Mostrar(ex, "Alta de producto");
+                UiExceptionHandler.Mostrar(ex, "Asignacion de producto al comercio");
             }
         }
 
@@ -171,12 +189,6 @@ namespace TpIDS
                 return;
             }
 
-            if (!(cmbCategoriaProducto.SelectedItem is CategoriaProducto categoriaSeleccionada))
-            {
-                UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.SelectCategoria");
-                return;
-            }
-
             if (!decimal.TryParse(txtbPrecioProducto.Text, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal precioParseado) || precioParseado <= 0)
             {
                 UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.InvalidPrecio");
@@ -185,7 +197,7 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = _productoBLL.Actualizar(fila.Id, txtbNombreProducto.Text, categoriaSeleccionada.Id, precioParseado);
+                bool actualizado = _comercioProductoBLL.ActualizarPrecio(_comercioId, fila.Id, precioParseado);
                 if (actualizado)
                 {
                     CargarProductos(fila.Id);
@@ -194,11 +206,11 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                UiExceptionHandler.Mostrar(ex, "Edicion de producto");
+                UiExceptionHandler.Mostrar(ex, "Edicion de precio de producto");
             }
         }
 
-        private void btnEliminarProducto_Click(object sender, EventArgs e)
+        private void btnQuitarProducto_Click(object sender, EventArgs e)
         {
             if (!ObtenerFilaSeleccionada(dgvProductos, out FilaProducto fila))
             {
@@ -207,8 +219,8 @@ namespace TpIDS
             }
 
             DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormMerchantDetail.Confirm.DeleteProductoMessage",
-                "FormMerchantDetail.Confirm.DeleteProductoTitle",
+                "FormMerchantDetail.Confirm.RemoveProductoMessage",
+                "FormMerchantDetail.Confirm.RemoveProductoTitle",
                 MessageBoxIcon.Warning,
                 fila.Nombre);
 
@@ -219,17 +231,17 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = _productoBLL.Eliminar(fila.Id);
-                if (eliminado)
+                bool quitado = _comercioProductoBLL.Quitar(_comercioId, fila.Id);
+                if (quitado)
                 {
                     LimpiarFormularioProducto();
                     CargarProductos(null);
-                    UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoDeleted");
+                    UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoRemoved");
                 }
             }
             catch (Exception ex)
             {
-                UiExceptionHandler.Mostrar(ex, "Baja de producto");
+                UiExceptionHandler.Mostrar(ex, "Baja de producto del comercio");
             }
         }
 
@@ -242,163 +254,42 @@ namespace TpIDS
 
             if (ObtenerFilaSeleccionada(dgvProductos, out FilaProducto fila))
             {
-                txtbNombreProducto.Text = fila.Nombre;
+                SeleccionarEnCombo(cmbProductoCatalogo, item => item is Producto producto && producto.Id == fila.Id);
+                SeleccionarEnCombo(cmbMonedaProducto, item => item is Moneda moneda && moneda.Id == fila.MonedaId);
                 txtbPrecioProducto.Text = fila.Precio.ToString(CultureInfo.InvariantCulture);
-                SeleccionarCategoriaEnCombo(fila.Categoria);
 
-                // Una vez creado el producto, la Moneda no se vuelve a editar.
-                MostrarSeccionMonedaProducto(false);
+                // Una vez asignado el producto, solo se edita el precio: ni el producto ni la
+                // moneda se vuelven a cambiar (para otra moneda, se quita y se vuelve a asignar).
+                ModoEdicionProducto(true);
             }
         }
 
-        private void SeleccionarCategoriaEnCombo(string nombreCategoria)
+        private static void SeleccionarEnCombo(Krypton.Toolkit.KryptonComboBox combo, Func<object, bool> predicado)
         {
-            for (int i = 0; i < cmbCategoriaProducto.Items.Count; i++)
+            for (int i = 0; i < combo.Items.Count; i++)
             {
-                if (cmbCategoriaProducto.Items[i] is CategoriaProducto categoria && string.Equals(categoria.Nombre, nombreCategoria, StringComparison.Ordinal))
+                if (predicado(combo.Items[i]))
                 {
-                    cmbCategoriaProducto.SelectedIndex = i;
+                    combo.SelectedIndex = i;
                     return;
                 }
             }
+
+            combo.SelectedIndex = -1;
         }
 
-        private void MostrarSeccionMonedaProducto(bool mostrar)
+        private void ModoEdicionProducto(bool editando)
         {
-            lblMonedaProducto.Visible = mostrar;
-            cmbMonedaProducto.Visible = mostrar;
-            cmbMonedaProducto.Enabled = mostrar;
+            cmbProductoCatalogo.Enabled = !editando;
+            cmbMonedaProducto.Enabled = !editando;
         }
 
         private void LimpiarFormularioProducto()
         {
-            txtbNombreProducto.Clear();
+            cmbProductoCatalogo.SelectedIndex = -1;
             txtbPrecioProducto.Clear();
             dgvProductos.ClearSelection();
-            MostrarSeccionMonedaProducto(true);
-        }
-
-        // --- Categorias de producto ---
-
-        private void CargarCategorias(int? categoriaSeleccionadaId)
-        {
-            try
-            {
-                List<CategoriaProducto> categorias = _categoriaProductoBLL.ObtenerTodas()
-                    .OrderBy(item => item.Nombre)
-                    .ToList();
-
-                cmbCategoriaProducto.DataSource = null;
-                cmbCategoriaProducto.DisplayMember = "Nombre";
-                cmbCategoriaProducto.ValueMember = "Id";
-                cmbCategoriaProducto.DataSource = categorias;
-
-                dgvCategoriasProducto.DataSource = null;
-                dgvCategoriasProducto.DataSource = categorias.Select(ProyectarFilaCategoria).ToList();
-
-                if (categoriaSeleccionadaId.HasValue)
-                {
-                    SeleccionarFila<FilaCategoriaProducto>(dgvCategoriasProducto, fila => fila.Id == categoriaSeleccionadaId.Value);
-                }
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Carga de categorias de producto");
-            }
-        }
-
-        private static FilaCategoriaProducto ProyectarFilaCategoria(CategoriaProducto categoria)
-        {
-            return new FilaCategoriaProducto { Id = categoria.Id, Nombre = categoria.Nombre };
-        }
-
-        private void btnAgregarCategoriaProducto_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                CategoriaProducto creada = _categoriaProductoBLL.Crear(txtbNombreCategoriaProducto.Text);
-                txtbNombreCategoriaProducto.Clear();
-                CargarCategorias(creada.Id);
-                CargarProductos(null);
-                UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.CategoriaCreated");
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Alta de categoria de producto");
-            }
-        }
-
-        private void btnActualizarCategoriaProducto_Click(object sender, EventArgs e)
-        {
-            if (!ObtenerFilaSeleccionada(dgvCategoriasProducto, out FilaCategoriaProducto fila))
-            {
-                UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.SelectCategoria");
-                return;
-            }
-
-            try
-            {
-                bool actualizado = _categoriaProductoBLL.Actualizar(fila.Id, txtbNombreCategoriaProducto.Text);
-                if (actualizado)
-                {
-                    CargarCategorias(fila.Id);
-                    CargarProductos(null);
-                    UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.CategoriaUpdated");
-                }
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Edicion de categoria de producto");
-            }
-        }
-
-        private void btnEliminarCategoriaProducto_Click(object sender, EventArgs e)
-        {
-            if (!ObtenerFilaSeleccionada(dgvCategoriasProducto, out FilaCategoriaProducto fila))
-            {
-                UiDialogHelper.MostrarWarning("FormMerchantDetail.Warning.SelectCategoria");
-                return;
-            }
-
-            DialogResult confirmacion = UiDialogHelper.Confirmar(
-                "FormMerchantDetail.Confirm.DeleteCategoriaMessage",
-                "FormMerchantDetail.Confirm.DeleteCategoriaTitle",
-                MessageBoxIcon.Warning,
-                fila.Nombre);
-
-            if (confirmacion != DialogResult.Yes)
-            {
-                return;
-            }
-
-            try
-            {
-                bool eliminado = _categoriaProductoBLL.Eliminar(fila.Id);
-                if (eliminado)
-                {
-                    txtbNombreCategoriaProducto.Clear();
-                    CargarCategorias(null);
-                    CargarProductos(null);
-                    UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.CategoriaDeleted");
-                }
-            }
-            catch (Exception ex)
-            {
-                UiExceptionHandler.Mostrar(ex, "Baja de categoria de producto");
-            }
-        }
-
-        private void dgvCategoriasProducto_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0)
-            {
-                return;
-            }
-
-            if (ObtenerFilaSeleccionada(dgvCategoriasProducto, out FilaCategoriaProducto fila))
-            {
-                txtbNombreCategoriaProducto.Text = fila.Nombre;
-            }
+            ModoEdicionProducto(false);
         }
 
         // --- Promociones del comercio (solo lectura) ---

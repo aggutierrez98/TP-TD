@@ -1,6 +1,10 @@
 using System;
+using System.Drawing;
+using System.Globalization;
 using System.Linq;
+using System.Threading;
 using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
 
 namespace TpIDS.UiTests.Infrastructure
@@ -172,10 +176,93 @@ namespace TpIDS.UiTests.Infrastructure
             EstablecerValor(Elemento(contenedor, "txtbInput"), valor);
         }
 
+        /// <summary>
+        /// Establece el valor de un NumericUpDown. Primero intenta RangeValuePattern (setea Value
+        /// directo); si el spinner no lo expone, escribe en su caja interna con el teclado y
+        /// confirma con TAB, que es cuando el control toma el texto como valor.
+        /// </summary>
+        public static void EstablecerNumero(Window ventana, string automationId, int valor)
+        {
+            AutomationElement control = Elemento(ventana, automationId);
+
+            var rango = control.Patterns.RangeValue.PatternOrDefault;
+            if (rango != null && !rango.IsReadOnly.ValueOrDefault)
+            {
+                rango.SetValue(valor);
+                return;
+            }
+
+            AutomationElement caja = control.FindFirstDescendant(
+                condicion => condicion.ByControlType(FlaUI.Core.Definitions.ControlType.Edit));
+            if (caja == null)
+            {
+                throw new InvalidOperationException(
+                    "El control '" + automationId + "' no expone RangeValuePattern ni una caja de texto interna.");
+            }
+
+            try
+            {
+                ventana.SetForeground();
+            }
+            catch
+            {
+                // Si no se puede traer al frente se intenta igual.
+            }
+
+            caja.Focus();
+            FlaUI.Core.Input.Keyboard.TypeSimultaneously(
+                FlaUI.Core.WindowsAPI.VirtualKeyShort.CONTROL,
+                FlaUI.Core.WindowsAPI.VirtualKeyShort.KEY_A);
+            FlaUI.Core.Input.Keyboard.Type(valor.ToString(CultureInfo.InvariantCulture));
+            FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.TAB);
+        }
+
         /// <summary>Establece la fecha de un DateTimePicker (control Win32, sin ValuePattern por UIA).</summary>
         public static void EstablecerFecha(AutomationElement raiz, string automationId, DateTime valor)
         {
-            Elemento(raiz, automationId).AsDateTimePicker().SelectedDate = valor;
+            AutomationElement selector = Elemento(raiz, automationId);
+
+            try
+            {
+                selector.AsDateTimePicker().SelectedDate = valor;
+                return;
+            }
+            catch (Exception)
+            {
+                // KryptonDateTimePicker no expone el patron que usa FlaUI: se escribe por teclado.
+            }
+
+            EscribirFechaPorTeclado(selector, valor);
+        }
+
+        /// <summary>
+        /// Escribe la fecha como un usuario: clic en el primer segmento y digitos segmento a
+        /// segmento (RIGHT entre ellos), respetando el orden dia/mes/anio de la cultura actual.
+        /// </summary>
+        private static void EscribirFechaPorTeclado(AutomationElement selector, DateTime valor)
+        {
+            var rectangulo = selector.BoundingRectangle;
+            FlaUI.Core.Input.Mouse.Click(new System.Drawing.Point(rectangulo.Left + 10, rectangulo.Top + rectangulo.Height / 2));
+            Thread.Sleep(250);
+
+            string patron = CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
+            string orden = new string(patron.Where(c => c == 'd' || c == 'M' || c == 'y').Distinct().ToArray());
+
+            for (int i = 0; i < orden.Length; i++)
+            {
+                string segmento = orden[i] == 'd' ? valor.Day.ToString("00")
+                    : orden[i] == 'M' ? valor.Month.ToString("00")
+                    : valor.Year.ToString("0000");
+
+                FlaUI.Core.Input.Keyboard.Type(segmento);
+                Thread.Sleep(200);
+
+                if (i < orden.Length - 1)
+                {
+                    FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.RIGHT);
+                    Thread.Sleep(150);
+                }
+            }
         }
 
         /// <summary>Lee la fecha actual de un DateTimePicker.</summary>
@@ -222,7 +309,7 @@ namespace TpIDS.UiTests.Infrastructure
                 return;
             }
 
-            resultado.Result.Click();
+            ClickEnFila(resultado.Result);
         }
 
         /// <summary>Click de mouse real sobre una fila (da foco de teclado a la grilla).</summary>
@@ -252,43 +339,147 @@ namespace TpIDS.UiTests.Infrastructure
                 // Si no se puede traer al frente se intenta el click igual.
             }
 
-            resultado.Result.Click();
+            ClickEnFila(resultado.Result);
+        }
+
+        /// <summary>
+        /// Clic de mouse sobre una fila. Las filas del DataGridView nativo se clickean directo;
+        /// las de KryptonDataGridView no exponen SelectionItem y el clic sobre el elemento fila
+        /// no selecciona, asi que se clickea una de sus celdas.
+        /// </summary>
+        private static void ClickEnFila(AutomationElement fila)
+        {
+            if (fila.Patterns.SelectionItem.IsSupported)
+            {
+                fila.Click();
+                return;
+            }
+
+            AutomationElement celda = fila.FindAllChildren().FirstOrDefault(hijo => hijo.Patterns.Value.IsSupported);
+            (celda ?? fila).Click();
         }
 
         private static void ScrollFilaALaVista(AutomationElement fila)
         {
             var scroll = fila.Patterns.ScrollItem.PatternOrDefault;
-            if (scroll == null)
+            if (scroll != null)
+            {
+                try
+                {
+                    scroll.ScrollIntoView();
+                }
+                catch
+                {
+                    // Si el scroll falla, la seleccion/click posterior lo delata.
+                }
+            }
+
+            ScrollConRuedaHastaQueSeaClickeable(fila);
+        }
+
+        /// <summary>
+        /// ScrollIntoView del bridge UIA de WinForms no siempre trae la fila a la zona visible de una
+        /// grilla con muchas filas (la fila existe en el arbol pero no tiene punto clickeable). Si la
+        /// fila ya es clickeable no hace nada; si no, mueve la rueda del mouse sobre la grilla en pasos
+        /// chicos, hacia la direccion donde esta la fila, hasta que quede dentro de su area visible.
+        /// </summary>
+        private static void ScrollConRuedaHastaQueSeaClickeable(AutomationElement fila)
+        {
+            const int MaximoPasos = 40;
+
+            if (EsClickeableDentroDeGrilla(fila))
             {
                 return;
             }
 
+            AutomationElement grilla = fila.Parent;
+            if (grilla == null)
+            {
+                return;
+            }
+
+            for (int paso = 0; paso < MaximoPasos; paso++)
+            {
+                Rectangle area = grilla.BoundingRectangle;
+                if (area.IsEmpty)
+                {
+                    return;
+                }
+
+                Rectangle filaRect = fila.BoundingRectangle;
+                bool filaAbajo = filaRect.IsEmpty || filaRect.Top >= area.Bottom || filaRect.Bottom > area.Bottom;
+
+                Mouse.MoveTo(new Point(area.Left + (area.Width / 2), area.Top + (area.Height / 2)));
+                Mouse.Scroll(filaAbajo ? -3 : 3);
+                Thread.Sleep(120);
+
+                if (EsClickeableDentroDeGrilla(fila))
+                {
+                    return;
+                }
+            }
+        }
+
+        private static bool EsClickeableDentroDeGrilla(AutomationElement fila)
+        {
+            AutomationElement grilla = fila.Parent;
+            Rectangle filaRect;
             try
             {
-                scroll.ScrollIntoView();
+                filaRect = fila.BoundingRectangle;
             }
             catch
             {
-                // Si el scroll falla, la seleccion/click posterior lo delata.
+                return false;
             }
+
+            if (filaRect.IsEmpty || fila.IsOffscreen)
+            {
+                return false;
+            }
+
+            if (grilla != null)
+            {
+                Rectangle area = grilla.BoundingRectangle;
+                if (!area.IsEmpty)
+                {
+                    int centroY = filaRect.Top + (filaRect.Height / 2);
+                    if (centroY <= area.Top || centroY >= area.Bottom)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return fila.TryGetClickablePoint(out Point _);
         }
 
         private static AutomationElement BuscarFilaPorTexto(AutomationElement grilla, string texto)
         {
-            foreach (AutomationElement fila in grilla.FindAllChildren(
+            AutomationElement[] filas = grilla.FindAllChildren(
                 condicion => condicion.ByControlType(FlaUI.Core.Definitions.ControlType.Custom)
-                    .Or(condicion.ByControlType(FlaUI.Core.Definitions.ControlType.DataItem))))
+                    .Or(condicion.ByControlType(FlaUI.Core.Definitions.ControlType.DataItem)));
+
+            // Primero por valor de celda. KryptonDataGridView nombra las filas y sus encabezados
+            // con base 0 ('Fila 1' es la segunda), asi que comparar por Name puede elegir la fila equivocada.
+            foreach (AutomationElement fila in filas)
             {
                 foreach (AutomationElement celda in fila.FindAllChildren())
                 {
-                    string valor = null;
                     var pattern = celda.Patterns.Value.PatternOrDefault;
-                    if (pattern != null)
+                    if (pattern != null && pattern.Value.ValueOrDefault == texto)
                     {
-                        valor = pattern.Value.ValueOrDefault;
+                        return fila;
                     }
+                }
+            }
 
-                    if (valor == texto || celda.Name == texto)
+            // Respaldo: por Name de la celda (comportamiento original).
+            foreach (AutomationElement fila in filas)
+            {
+                foreach (AutomationElement celda in fila.FindAllChildren())
+                {
+                    if (celda.Name == texto)
                     {
                         return fila;
                     }
@@ -348,7 +539,7 @@ namespace TpIDS.UiTests.Infrastructure
 
             using (FlaUI.Core.Input.Keyboard.Pressing(FlaUI.Core.WindowsAPI.VirtualKeyShort.CONTROL))
             {
-                fila.Click();
+                ClickEnFila(fila);
             }
         }
 
@@ -437,7 +628,7 @@ namespace TpIDS.UiTests.Infrastructure
         /// <summary>Selecciona un item de ComboBox por su texto visible.</summary>
         public static void SeleccionarItemCombo(AutomationElement raiz, string automationId, string texto)
         {
-            ComboBox combo = Elemento(raiz, automationId).AsComboBox();
+            ComboBox combo = ResolverCombo(Elemento(raiz, automationId));
             combo.Expand();
 
             RetryResult<ComboBoxItem> resultado = Retry.WhileNull(
@@ -471,7 +662,14 @@ namespace TpIDS.UiTests.Infrastructure
         /// </summary>
         public static void SeleccionarItemComboConTeclado(AutomationElement raiz, string automationId, string texto)
         {
-            ComboBox combo = Elemento(raiz, automationId).AsComboBox();
+            AutomationElement elemento = Elemento(raiz, automationId);
+            if (!elemento.Patterns.ExpandCollapse.IsSupported)
+            {
+                SeleccionarItemComboKryptonConTeclado(elemento, automationId, texto);
+                return;
+            }
+
+            ComboBox combo = elemento.AsComboBox();
             int cantidad = combo.Items.Length;
             combo.Focus();
             FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.HOME);
@@ -485,6 +683,57 @@ namespace TpIDS.UiTests.Infrastructure
                     return;
                 }
 
+                FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.DOWN);
+            }
+
+            throw new InvalidOperationException(
+                "No se encontro el item '" + texto + "' en el combo '" + automationId + "'.");
+        }
+
+        /// <summary>
+        /// KryptonComboBox envuelve un ComboBox nativo como hijo UIA (el wrapper solo expone Value):
+        /// si el elemento no soporta ExpandCollapse se usa ese hijo, donde corre la logica nativa.
+        /// </summary>
+        private static ComboBox ResolverCombo(AutomationElement elemento)
+        {
+            if (elemento.Patterns.ExpandCollapse.IsSupported)
+            {
+                return elemento.AsComboBox();
+            }
+
+            AutomationElement interno = elemento.FindFirstDescendant(
+                condicion => condicion.ByControlType(FlaUI.Core.Definitions.ControlType.ComboBox));
+
+            return (interno ?? elemento).AsComboBox();
+        }
+
+        /// <summary>
+        /// Variante por teclado para KryptonComboBox: HOME y flecha abajo leyendo el texto por
+        /// ValuePattern hasta dar con el item; si el texto deja de cambiar, llego al final.
+        /// </summary>
+        private static void SeleccionarItemComboKryptonConTeclado(AutomationElement combo, string automationId, string texto)
+        {
+            combo.Focus();
+            FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.HOME);
+
+            string anterior = null;
+            for (int paso = 0; paso < 500; paso++)
+            {
+                FlaUI.Core.Input.Wait.UntilInputIsProcessed();
+                var valor = combo.Patterns.Value.PatternOrDefault;
+                string actual = valor == null ? null : valor.Value.ValueOrDefault;
+
+                if (actual == texto)
+                {
+                    return;
+                }
+
+                if (paso > 0 && actual == anterior)
+                {
+                    break;
+                }
+
+                anterior = actual;
                 FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.DOWN);
             }
 
@@ -601,6 +850,42 @@ namespace TpIDS.UiTests.Infrastructure
 
             itemLista.Click();
             FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.SPACE);
+        }
+
+        /// <summary>
+        /// Estado de marca del item de un CheckedListBox cuyo texto visible contiene el texto dado:
+        /// true/false segun este marcado, null si la lista no tiene ese item.
+        /// </summary>
+        public static bool? EstadoItemListaChequeable(AutomationElement raiz, string automationId, string textoContenido)
+        {
+            AutomationElement lista = Elemento(raiz, automationId);
+            AutomationElement itemLista = lista.FindAllDescendants().FirstOrDefault(item => NombreContiene(item, textoContenido));
+            if (itemLista == null)
+            {
+                return null;
+            }
+
+            var toggle = itemLista.Patterns.Toggle.PatternOrDefault;
+            if (toggle != null)
+            {
+                return toggle.ToggleState.ValueOrDefault == FlaUI.Core.Definitions.ToggleState.On;
+            }
+
+            var legacy = itemLista.Patterns.LegacyIAccessible.PatternOrDefault;
+            if (legacy != null)
+            {
+                return (legacy.State.ValueOrDefault & FlaUI.Core.WindowsAPI.AccessibilityState.STATE_SYSTEM_CHECKED) != 0;
+            }
+
+            throw new InvalidOperationException(
+                "El item '" + textoContenido + "' de la lista '" + automationId + "' no expone su estado de marca.");
+        }
+
+        /// <summary>Texto del item seleccionado de un ComboBox (vacio si no hay seleccion).</summary>
+        public static string LeerItemSeleccionadoCombo(AutomationElement raiz, string automationId)
+        {
+            ComboBox combo = ResolverCombo(Elemento(raiz, automationId));
+            return combo.SelectedItem?.Text ?? string.Empty;
         }
 
         private static bool NombreContiene(AutomationElement elemento, string texto)

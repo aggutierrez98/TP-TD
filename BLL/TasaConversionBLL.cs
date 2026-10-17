@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ABSTRACCIONES;
 using BE;
 using REPOSITORIO;
 using SERVICIOS;
@@ -15,15 +16,61 @@ namespace BLL
         private readonly ITasaConversionRepositorio _tasaConversionRepositorio;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly IBitacoraBLL _bitacoraBLL;
+        private readonly ISesion _sesion;
 
         internal TasaConversionBLL(
             ITasaConversionRepositorio tasaConversionRepositorio,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
-            IBitacoraBLL bitacoraBLL)
+            IBitacoraBLL bitacoraBLL,
+            ISesion sesion)
         {
             _tasaConversionRepositorio = tasaConversionRepositorio;
             _unidadDeTrabajoFactory = unidadDeTrabajoFactory;
             _bitacoraBLL = bitacoraBLL;
+            _sesion = sesion;
+        }
+
+        // Devuelve la tasa a la actualizacion automatica. Si ya no era manual no hay nada
+        // que escribir ni auditar: la operacion es idempotente.
+        public bool Liberar(int id)
+        {
+            using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
+            {
+                try
+                {
+                    TasaConversion tasa = unidad.TasasConversion.ObtenerPorId(id);
+                    if (tasa == null)
+                    {
+                        throw new ExcepcionNegocio("Error.CurrencyManagement.TasaNotFound");
+                    }
+
+                    if (!tasa.EsManual)
+                    {
+                        return true;
+                    }
+
+                    if (!unidad.TasasConversion.Liberar(id))
+                    {
+                        throw new ExcepcionTecnica("Error.CurrencyManagement.TasaReleaseFailed");
+                    }
+
+                    _bitacoraBLL.RegistrarOperacionInterno("FormCurrencyManagement.Value.Activity.TasaReleased", "FormCurrencyManagement.Value.Info.TasaReleased", "TasaConversionBLL", unidad);
+                    unidad.Save();
+                    return true;
+                }
+                catch (ExcepcionNegocio)
+                {
+                    throw;
+                }
+                catch (ExcepcionTecnica)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    throw new ExcepcionTecnica("Error.CurrencyManagement.TasaReleaseFailed", ex);
+                }
+            }
         }
 
         public List<TasaConversion> ObtenerTodas()
@@ -76,6 +123,8 @@ namespace BLL
             ValidarMonedasDistintas(monedaBaseId, monedaConversionId);
             ValidarCalculo(calculoConversion);
 
+            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
@@ -91,6 +140,12 @@ namespace BLL
 
                     ValidarParNoDuplicado(unidad, monedaBaseId, monedaConversionId, id);
 
+                    // Solo un cambio real fija la tasa a mano: guardar sin tocar nada no debe
+                    // sacarla de la actualizacion automatica.
+                    bool huboCambio = tasa.CalculoConversion != calculoConversion
+                        || tasa.MonedaBase == null || tasa.MonedaBase.Id != monedaBaseId
+                        || tasa.MonedaConversion == null || tasa.MonedaConversion.Id != monedaConversionId;
+
                     tasa.MonedaBase = monedaBase;
                     tasa.MonedaConversion = monedaConversion;
                     tasa.CalculoConversion = calculoConversion;
@@ -103,6 +158,17 @@ namespace BLL
                     }
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormCurrencyManagement.Value.Activity.TasaUpdate", "FormCurrencyManagement.Value.Info.TasaUpdate", "TasaConversionBLL", unidad);
+
+                    if (huboCambio)
+                    {
+                        if (!unidad.TasasConversion.MarcarManual(id, usuarioActualId))
+                        {
+                            throw new ExcepcionTecnica("Error.CurrencyManagement.TasaUpdateFailed");
+                        }
+
+                        _bitacoraBLL.RegistrarOperacionInterno("FormCurrencyManagement.Value.Activity.TasaMarkedManual", "FormCurrencyManagement.Value.Info.TasaMarkedManual", "TasaConversionBLL", unidad);
+                    }
+
                     unidad.Save();
                     return true;
                 }

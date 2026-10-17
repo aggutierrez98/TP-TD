@@ -133,7 +133,7 @@ namespace BLL.Tests
         }
 
         [TestMethod]
-        public void ObtenerTiposDisponibles_DashboardVacio_DevuelveLosCuatroTipos()
+        public void ObtenerTiposDisponibles_DashboardVacio_DevuelveLosSeisTipos()
         {
             DashboardFixture fixture = new DashboardFixture(usuarioActualId: 4);
             Dashboard existente = new Dashboard { Id = 1, Usuario = new Usuario { Id = 4 }, Tarjetas = new List<TarjetaDashboard>() };
@@ -142,7 +142,7 @@ namespace BLL.Tests
             DashboardBLL sut = fixture.CreateSut();
             IReadOnlyList<TipoTarjetaDashboard> disponibles = sut.ObtenerTiposDisponibles();
 
-            Assert.AreEqual(4, disponibles.Count);
+            Assert.AreEqual(6, disponibles.Count);
         }
 
         [TestMethod]
@@ -157,11 +157,13 @@ namespace BLL.Tests
             DashboardBLL sut = fixture.CreateSut();
             IReadOnlyList<TipoTarjetaDashboard> disponibles = sut.ObtenerTiposDisponibles();
 
-            Assert.AreEqual(2, disponibles.Count);
+            Assert.AreEqual(4, disponibles.Count);
             Assert.IsFalse(disponibles.Contains(TipoTarjetaDashboard.GastosPorCategoria));
             Assert.IsFalse(disponibles.Contains(TipoTarjetaDashboard.EvolucionBalance));
             Assert.IsTrue(disponibles.Contains(TipoTarjetaDashboard.IngresosPorCategoria));
             Assert.IsTrue(disponibles.Contains(TipoTarjetaDashboard.ComparativoMensual));
+            Assert.IsTrue(disponibles.Contains(TipoTarjetaDashboard.GastosPorComercio));
+            Assert.IsTrue(disponibles.Contains(TipoTarjetaDashboard.GastoAcumuladoMensual));
         }
 
         private sealed class DashboardFixture

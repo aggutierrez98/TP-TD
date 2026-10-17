@@ -62,6 +62,29 @@ namespace TpIDS.IntegrationTests
             }
         }
 
+        [TestMethod]
+        public void ContarPorComercio_CuentaLasReglasQueLoReferencian()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                ComercioReglaCategorizacionRepositorio repositorio = new ComercioReglaCategorizacionRepositorio(accesoDatos);
+                int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
+                int categoriaId = InsertarCategoriaTest(accesoDatos, usuarioId, "CategoriaTestContarComercio");
+                int reglaAId = InsertarReglaCategorizacionTest(accesoDatos, usuarioId, categoriaId, "ReglaTestContarComercioA");
+                int reglaBId = InsertarReglaCategorizacionTest(accesoDatos, usuarioId, categoriaId, "ReglaTestContarComercioB");
+                int comercioUsadoId = InsertarComercioTest(accesoDatos, "ComercioTestContarReglaUsado");
+                int comercioSinUsoId = InsertarComercioTest(accesoDatos, "ComercioTestContarReglaLibre");
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaAId, new List<int> { comercioUsadoId });
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaBId, new List<int> { comercioUsadoId });
+
+                Assert.AreEqual(2, repositorio.ContarPorComercio(comercioUsadoId));
+                Assert.AreEqual(0, repositorio.ContarPorComercio(comercioSinUsoId));
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
         private static int ObtenerUsuarioBasicoId(AccesoDatosSqlServer accesoDatos)
         {
             return new UsuarioDAL().ObtenerPorUsername("user", accesoDatos).Id;

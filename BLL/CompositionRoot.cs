@@ -1,3 +1,4 @@
+using System;
 using ABSTRACCIONES;
 using REPOSITORIO;
 
@@ -16,6 +17,8 @@ namespace BLL
         private static IObservado _servicioIdioma;
         private static IEscaneoTicketService _escaneoTicketService;
         private static IAsistenteFinancieroService _asistenteFinancieroService;
+        private static IReporteTabularPdfService _reportePdfService;
+        private static IBusquedaUbicacionesService _busquedaUbicacionesService;
 
         // BLL de caso de uso: una sola instancia de cada uno, compartida por referencia.
         private static BitacoraBLL _bitacoraBLL;
@@ -27,9 +30,11 @@ namespace BLL
         private static EntidadFinancieraBLL _entidadFinancieraBLL;
         private static CuentaFinancieraBLL _cuentaFinancieraBLL;
         private static ProductoBLL _productoBLL;
+        private static ComercioProductoBLL _comercioProductoBLL;
         private static PromocionBLL _promocionBLL;
         private static MonedaBLL _monedaBLL;
         private static TasaConversionBLL _tasaConversionBLL;
+        private static ActualizacionTasasBLL _actualizacionTasasBLL;
         private static MovimientoBLL _movimientoBLL;
         private static DashboardBLL _dashboardBLL;
         private static ReglaCategorizacionBLL _reglaCategorizacionBLL;
@@ -62,6 +67,10 @@ namespace BLL
             _servicioIdioma = SERVICIOS.IdiomaService.GetInstance();
             _escaneoTicketService = new SERVICIOS.GeminiEscaneoTicketService();
             _asistenteFinancieroService = new SERVICIOS.GeminiAsistenteFinancieroService();
+            _reportePdfService = new SERVICIOS.ReporteTabularPdfService();
+            // Una sola instancia: serializacion, separacion de un segundo, cooldown y cache son por instancia.
+            // No lee ni valida el endpoint al construirse: una configuracion invalida solo afecta a la busqueda.
+            _busquedaUbicacionesService = new SERVICIOS.NominatimBusquedaUbicacionesService();
 
             UnidadDeTrabajoFactory uow = new UnidadDeTrabajoFactory();
 
@@ -81,15 +90,26 @@ namespace BLL
 
             _categoriaProductoBLL = new CategoriaProductoBLL(new CategoriaProductoRepositorio(), uow, _bitacoraBLL);
 
-            _productoBLL = new ProductoBLL(new ProductoRepositorio(), new MonedaRepositorio(), uow, _bitacoraBLL);
+            _productoBLL = new ProductoBLL(new ProductoRepositorio(), uow, _bitacoraBLL);
 
-            _promocionBLL = new PromocionBLL(new PromocionRepositorio(), new PromocionComercioRepositorio());
+            _comercioProductoBLL = new ComercioProductoBLL(new ComercioProductoRepositorio(), new MonedaRepositorio(), uow, _bitacoraBLL);
+
+            _promocionBLL = new PromocionBLL(
+                new PromocionRepositorio(),
+                new ComercioRepositorio(),
+                new MedioPagoRepositorio(),
+                new MedioPagoEntidadRepositorio(),
+                uow,
+                _bitacoraBLL);
 
             _monedaBLL = new MonedaBLL(new MonedaRepositorio(), uow, _bitacoraBLL);
 
-            _tasaConversionBLL = new TasaConversionBLL(new TasaConversionRepositorio(), uow, _bitacoraBLL);
+            _tasaConversionBLL = new TasaConversionBLL(new TasaConversionRepositorio(), uow, _bitacoraBLL, _sesion);
 
-            _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), new ComercioRepositorio(), uow, _sesion, _bitacoraBLL, _escaneoTicketService);
+            // El proveedor se construye aca y no se expone: lee su clave de configuracion recien al consultar.
+            _actualizacionTasasBLL = new ActualizacionTasasBLL(uow, new SERVICIOS.OpenExchangeRatesProveedor(), () => DateTime.Now);
+
+            _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), new ComercioRepositorio(), uow, _sesion, _bitacoraBLL, _escaneoTicketService, _reportePdfService);
 
             _dashboardBLL = new DashboardBLL(new DashboardRepositorio(), new TarjetaDashboardRepositorio(), uow, _sesion, _bitacoraBLL);
 
@@ -117,7 +137,8 @@ namespace BLL
                 new RecordatorioCompraRepositorio(),
                 new RecordatorioInversionRepositorio(),
                 uow,
-                _bitacoraBLL);
+                _bitacoraBLL,
+                _sesion);
 
             _usuarioEstadoBLL = new UsuarioEstadoBLL(
                 new UsuarioRepositorio(),
@@ -212,6 +233,11 @@ namespace BLL
             get { Inicializar(); return _asistenteFinancieroService; }
         }
 
+        public static IBusquedaUbicacionesService BusquedaUbicaciones
+        {
+            get { Inicializar(); return _busquedaUbicacionesService; }
+        }
+
         public static UsuarioBLL Usuario
         {
             get { Inicializar(); return _usuarioBLL; }
@@ -277,6 +303,11 @@ namespace BLL
             get { Inicializar(); return _productoBLL; }
         }
 
+        public static ComercioProductoBLL ComercioProducto
+        {
+            get { Inicializar(); return _comercioProductoBLL; }
+        }
+
         public static PromocionBLL Promocion
         {
             get { Inicializar(); return _promocionBLL; }
@@ -290,6 +321,11 @@ namespace BLL
         public static TasaConversionBLL TasaConversion
         {
             get { Inicializar(); return _tasaConversionBLL; }
+        }
+
+        public static ActualizacionTasasBLL ActualizacionTasas
+        {
+            get { Inicializar(); return _actualizacionTasasBLL; }
         }
 
         public static MovimientoBLL Movimiento

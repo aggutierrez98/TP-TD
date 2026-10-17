@@ -75,20 +75,36 @@ namespace BLL.Tests
             RubroComercioBLL sut = fixture.CreateSut();
 
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeletedId);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         [TestMethod]
-        public void Eliminar_ViolacionDeIntegridadReferencialEnElRepositorio_ThrowsExcepcionNegocio()
+        public void Eliminar_FallaDelBorradoConViolacionForanea_InformaDeleteFailed()
         {
-            // Red de seguridad: aunque la validacion proactiva no encontro nada, el
-            // repositorio real puede seguir rechazando el delete por FK (condicion de carrera).
             RubroComercioFixture fixture = new RubroComercioFixture();
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
-            fixture.Unidad.RubroComercioRepo.ThrowForeignKeyOnEliminar = true;
+            fixture.Unidad.RubroComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.RubroDeleteFailed", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_FallaTecnicaConViolacionForaneaEnvuelta_NoSeConvierteEnUso()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
+            fixture.Unidad.RubroComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         [TestMethod]
@@ -117,6 +133,21 @@ namespace BLL.Tests
             List<RubroComercio> todas = sut.ObtenerTodas();
 
             Assert.AreEqual(2, todas.Count);
+        }
+
+        [TestMethod]
+        public void Eliminar_ReferenciadoPorUnaPromocion_ThrowsExcepcionNegocioYNoElimina()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
+            fixture.Unidad.PromocionRubroComercioRepo.RubroComercioIdsPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.RubroInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         private sealed class RubroComercioFixture

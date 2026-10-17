@@ -151,17 +151,97 @@ namespace BLL.Tests
         }
 
         [TestMethod]
-        public void Eliminar_ConProductosAsociados_ThrowsExcepcionNegocio()
+        public void Eliminar_ConProductosAsignados_ThrowsExcepcionNegocioYNoElimina()
         {
-            // Producto esta fuera de esta tanda: se simula la violacion de FK que la base
-            // real levantaria (FK_Producto_Comercio) para verificar que el BLL la convierte
-            // en un error de negocio en vez de dejarla explotar como ExcepcionTecnica.
             ComercioFixture fixture = new ComercioFixture();
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
-            fixture.Unidad.ComercioRepo.ThrowForeignKeyOnEliminar = true;
+            fixture.Unidad.ComercioProductoRepo.Asignaciones.Add(new ComercioProducto
+            {
+                Comercio = new Comercio { Id = 1 },
+                Producto = new Producto { Id = 5 },
+                Moneda = new Moneda { Id = 1 },
+                Precio = 10m
+            });
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ConMovimientosAsociados_ThrowsExcepcionNegocioYNoElimina()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(30, new Movimiento { Id = 30, Comercio = new Comercio { Id = 1 } });
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ConPromocionesAsociadas_ThrowsExcepcionNegocioYNoElimina()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
+            fixture.Unidad.PromocionComercioRepo.PromocionIdsPorComercio[1] = new List<int> { 7 };
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_ConReglasDeCategorizacionAsociadas_ThrowsExcepcionNegocioYNoElimina()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
+            fixture.Unidad.ComercioReglaCategorizacionRepo.ComerciosPorRegla[4] = new List<int> { 1 };
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_FallaDelBorradoConViolacionForanea_InformaDeleteFailed()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
+            fixture.Unidad.ComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioDeleteFailed", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Eliminar_FallaTecnicaConViolacionForaneaEnvuelta_NoSeConvierteEnUso()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
+            fixture.Unidad.ComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+
+            Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         [TestMethod]

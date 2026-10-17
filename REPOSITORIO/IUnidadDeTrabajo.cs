@@ -40,9 +40,23 @@ namespace REPOSITORIO
 
         IProductoRepositorio Productos { get; }
 
+        IComercioProductoRepositorio ComercioProductos { get; }
+
         IPromocionRepositorio Promociones { get; }
 
         IPromocionComercioRepositorio PromocionComercio { get; }
+
+        IPromocionRubroComercioRepositorio PromocionRubrosComercio { get; }
+
+        IPromocionEntidadFinancieraRepositorio PromocionEntidadesFinancieras { get; }
+
+        IPromocionMedioPagoRepositorio PromocionMediosPago { get; }
+
+        IPromocionSegmentoRepositorio PromocionSegmentos { get; }
+
+        IPromocionProductoRepositorio PromocionProductos { get; }
+
+        IPromocionCategoriaProductoRepositorio PromocionCategoriasProducto { get; }
 
         IRecordatorioCompraRepositorio RecordatoriosCompra { get; }
 
@@ -59,6 +73,8 @@ namespace REPOSITORIO
         ITarjetaDashboardRepositorio TarjetasDashboard { get; }
 
         ITasaConversionRepositorio TasasConversion { get; }
+
+        IEjecucionActualizacionTasasRepositorio EjecucionesActualizacionTasas { get; }
 
         ITraduccionRepositorio Traducciones { get; }
 

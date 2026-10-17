@@ -169,6 +169,7 @@ namespace BLL.Tests
 
         private sealed class NotificacionFixture
         {
+            public readonly FakeSesion Sesion = new FakeSesion();
             public readonly FakeNotificacionRepositorio NotificacionRepo = new FakeNotificacionRepositorio();
             public readonly FakeRecordatorioCompraRepositorio RecordatorioCompraRepo = new FakeRecordatorioCompraRepositorio();
             public readonly FakeRecordatorioInversionRepositorio RecordatorioInversionRepo = new FakeRecordatorioInversionRepositorio();
@@ -178,19 +179,76 @@ namespace BLL.Tests
 
             public NotificacionFixture()
             {
-                Unidad = new FakeUnidadDeTrabajo
-                {
-                    NotificacionRepo = NotificacionRepo,
-                    RecordatorioCompraRepo = RecordatorioCompraRepo,
-                    RecordatorioInversionRepo = RecordatorioInversionRepo
-                };
+                Unidad = new FakeUnidadDeTrabajo { NotificacionRepo = NotificacionRepo, RecordatorioCompraRepo = RecordatorioCompraRepo, RecordatorioInversionRepo = RecordatorioInversionRepo };
                 UnidadFactory = new FakeUnidadDeTrabajoFactory(Unidad);
             }
 
             public NotificacionBLL CreateSut()
             {
-                return new NotificacionBLL(NotificacionRepo, RecordatorioCompraRepo, RecordatorioInversionRepo, UnidadFactory, Bitacora);
+                return new NotificacionBLL(NotificacionRepo, RecordatorioCompraRepo, RecordatorioInversionRepo, UnidadFactory, Bitacora, Sesion);
             }
         }
+
+        [TestMethod]
+        public void BuscarPersonales_SesionActiva_AislaDestinatarioYCuentaSoloNoLeidas()
+        {
+            var f = new NotificacionFixture();
+            f.Sesion.IniciarSesion(new Usuario { Id = 5 });
+            f.NotificacionRepo.Notificaciones[1] = new BE.RecordatorioInversion { Id = 1, Usuario = new Usuario { Id = 5 }, Fecha = DateTime.Today };
+            f.NotificacionRepo.Notificaciones[2] = new Notificacion { Id = 2, Usuario = new Usuario { Id = 5 }, Leida = true };
+            f.NotificacionRepo.Notificaciones[3] = new Notificacion { Id = 3, Usuario = new Usuario { Id = 7 } };
+            var sut = f.CreateSut();
+            Assert.AreEqual(2, sut.BuscarPersonales(new FiltroNotificacion(), 1).Total);
+            Assert.AreEqual(1, sut.ContarPersonalesNoLeidas());
+        }
+
+        [TestMethod]
+        public void BuscarPersonales_SinSesionORangoInvalido_RechazaConsulta()
+        {
+            var f = new NotificacionFixture();
+            f.Sesion.CerrarSesion();
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().ContarPersonalesNoLeidas());
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().BuscarPersonales(null, 1));
+            f.Sesion.IniciarSesion(new Usuario { Id = 5 });
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().BuscarPersonales(new FiltroNotificacion { FechaDesde = DateTime.Today, FechaHasta = DateTime.Today.AddDays(-1) }, 1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().BuscarPersonales(null, 0));
+        }
+
+        [TestMethod]
+        [DataRow(0)]
+        [DataRow(1)]
+        [DataRow(2)]
+        public void LeerPersonal_TresTipos_AuditaSoloLaTransicionYGuarda(int tipo)
+        {
+            var f = new NotificacionFixture();
+            f.Sesion.IniciarSesion(new Usuario { Id = 5 });
+            Notificacion n = tipo == 0 ? new Notificacion() : tipo == 1 ? (Notificacion)new RecordatorioCompra() : new RecordatorioInversion();
+            n.Id = 1; n.Usuario = new Usuario { Id = 5 }; n.Mensaje = "Mensaje completo";
+            f.NotificacionRepo.Notificaciones[1] = n;
+            var sut = f.CreateSut();
+            Assert.IsTrue(sut.LeerPersonal(1).Leida);
+            Assert.IsTrue(f.Unidad.SaveCalled);
+            Assert.AreEqual(1, f.Bitacora.Calls.Count);
+            sut.MarcarPersonalLeida(1);
+            Assert.AreEqual(1, f.Bitacora.Calls.Count);
+            Assert.AreEqual(0, sut.ContarPersonalesNoLeidas());
+        }
+
+        [TestMethod]
+        public void LeerPersonal_AjenaInexistenteOFallo_NoConfirmaLectura()
+        {
+            var f = new NotificacionFixture();
+            f.Sesion.IniciarSesion(new Usuario { Id = 5 });
+            f.NotificacionRepo.Notificaciones[1] = new Notificacion { Id = 1, Usuario = new Usuario { Id = 7 } };
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().LeerPersonal(1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().MarcarPersonalLeida(999));
+            f.NotificacionRepo.Notificaciones[1].Usuario.Id = 5;
+            f.NotificacionRepo.ActualizarResult = false;
+            Assert.ThrowsExactly<ExcepcionTecnica>(() => f.CreateSut().LeerPersonal(1));
+            Assert.IsFalse(f.NotificacionRepo.Notificaciones[1].Leida);
+            Assert.IsFalse(f.Unidad.SaveCalled);
+            Assert.AreEqual(0, f.Bitacora.Calls.Count);
+        }
+
     }
 }

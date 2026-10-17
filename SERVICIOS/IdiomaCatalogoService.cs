@@ -1,10 +1,20 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace SERVICIOS
 {
     public class IdiomaCatalogoService
     {
+        private static readonly JsonSerializerOptions OpcionesExportacion = new JsonSerializerOptions
+        {
+            // Los catalogos se escriben en disco, conservando acentos literales.
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+
         /// <summary>
         /// Metodo para normalizar el nombre de un idioma antes de validarlo o persistirlo.
         /// Elimina espacios sobrantes y rechaza nombres vacios.
@@ -81,6 +91,84 @@ namespace SERVICIOS
             {
                 throw new ExcepcionNegocio("Error.Language.IncompleteSelection");
             }
+        }
+
+        /// <summary>
+        /// Metodo para leer y validar un archivo JSON de traducciones (clave/valor).
+        /// </summary>
+        /// <param name="rutaArchivo">La ruta del archivo JSON a leer.</param>
+        /// <returns>El diccionario de traducciones leido, nunca vacio.</returns>
+        /// <exception cref="ExcepcionNegocio">No hay ruta, el archivo no existe o no contiene traducciones.</exception>
+        /// <exception cref="ExcepcionTecnica">El contenido no tiene un formato JSON valido.</exception>
+        public Dictionary<string, string> LeerCatalogoJson(string rutaArchivo)
+        {
+            if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
+            {
+                throw new ExcepcionNegocio("Error.Language.JsonFileNotFound");
+            }
+
+            string contenido = File.ReadAllText(rutaArchivo);
+            Dictionary<string, string> traducciones;
+
+            try
+            {
+                traducciones = JsonSerializer.Deserialize<Dictionary<string, string>>(contenido);
+            }
+            catch (JsonException ex)
+            {
+                throw new ExcepcionTecnica("Error.Language.JsonInvalidFormat", ex);
+            }
+
+            if (traducciones == null || traducciones.Count == 0)
+            {
+                throw new ExcepcionNegocio("Error.Language.JsonEmpty");
+            }
+
+            return traducciones;
+        }
+
+        /// <summary>
+        /// Metodo para validar que se haya indicado una ruta de exportacion.
+        /// </summary>
+        /// <param name="rutaArchivo">La ruta de destino ingresada.</param>
+        /// <exception cref="ExcepcionNegocio">La ruta esta vacia.</exception>
+        public void ValidarRutaExportacion(string rutaArchivo)
+        {
+            if (string.IsNullOrWhiteSpace(rutaArchivo))
+            {
+                throw new ExcepcionNegocio("Error.Language.ExportPathRequired");
+            }
+        }
+
+        /// <summary>
+        /// Metodo para armar el catalogo exportable de un idioma, ordenado por key de forma ordinal.
+        /// Omite traducciones sin palabra o con key vacia y reemplaza valores nulos por cadena vacia.
+        /// </summary>
+        /// <param name="idioma">El idioma completo con sus traducciones.</param>
+        /// <returns>El diccionario key/valor ordenado.</returns>
+        public Dictionary<string, string> ConstruirCatalogoExportable(Idioma idioma)
+        {
+            return idioma.Traducciones
+                .Where(item => item.Palabra != null && !string.IsNullOrWhiteSpace(item.Palabra.Key))
+                .OrderBy(item => item.Palabra.Key)
+                .ToDictionary(
+                    item => item.Palabra.Key,
+                    item => item.Valor ?? string.Empty,
+                    System.StringComparer.Ordinal);
+        }
+
+        /// <summary>
+        /// Metodo para serializar un catalogo de traducciones a JSON y escribirlo en disco como UTF-8 sin BOM.
+        /// </summary>
+        /// <param name="traducciones">El catalogo key/valor a escribir.</param>
+        /// <param name="rutaArchivo">La ruta de destino.</param>
+        /// <exception cref="ExcepcionNegocio">La ruta esta vacia.</exception>
+        public void EscribirCatalogoJson(Dictionary<string, string> traducciones, string rutaArchivo)
+        {
+            ValidarRutaExportacion(rutaArchivo);
+
+            string contenido = JsonSerializer.Serialize(traducciones, OpcionesExportacion);
+            File.WriteAllText(rutaArchivo, contenido, new UTF8Encoding(false));
         }
     }
 }
