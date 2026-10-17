@@ -1,0 +1,56 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Bibliotecas externas de UI, incluidas en lib/ (ver lib/README.md). El laboratorio compila sin NuGet:
+       no agregar PackageReference. Las System.* compartidas (Memory, Buffers, Unsafe, Json...) las aporta
+       SERVICIOS/SystemTextJson.references.props y no se repiten aca. -->
+  <PropertyGroup>
+    <UiLibDirectory>$(MSBuildThisFileDirectory)..\lib</UiLibDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <_UiReference Include="GMap.NET.Core"><HintPath>$(UiLibDirectory)\gmap.net.core\2.1.7\GMap.NET.Core.dll</HintPath></_UiReference>
+    <_UiReference Include="GMap.NET.WindowsForms"><HintPath>$(UiLibDirectory)\gmap.net.winforms\2.1.7\GMap.NET.WindowsForms.dll</HintPath></_UiReference>
+    <_UiReference Include="System.Data.SQLite"><HintPath>$(UiLibDirectory)\system.data.sqlite.core\1.0.115.5\System.Data.SQLite.dll</HintPath></_UiReference>
+    <_UiReference Include="Newtonsoft.Json"><HintPath>$(UiLibDirectory)\newtonsoft.json\13.0.1\Newtonsoft.Json.dll</HintPath></_UiReference>
+    <_UiReference Include="Krypton.Toolkit"><HintPath>$(UiLibDirectory)\krypton.toolkit\105.26.7.201\Krypton.Toolkit.dll</HintPath></_UiReference>
+    <_UiReference Include="System.Resources.Extensions"><HintPath>$(UiLibDirectory)\system.resources.extensions\9.0.10\System.Resources.Extensions.dll</HintPath></_UiReference>
+    <_UiReference Include="System.Formats.Nrbf"><HintPath>$(UiLibDirectory)\system.formats.nrbf\9.0.10\System.Formats.Nrbf.dll</HintPath></_UiReference>
+    <_UiReference Include="System.Reflection.Metadata"><HintPath>$(UiLibDirectory)\system.reflection.metadata\9.0.10\System.Reflection.Metadata.dll</HintPath></_UiReference>
+    <_UiReference Include="System.Collections.Immutable"><HintPath>$(UiLibDirectory)\system.collections.immutable\9.0.10\System.Collections.Immutable.dll</HintPath></_UiReference>
+    <_UiReference Include="Microsoft.Bcl.HashCode"><HintPath>$(UiLibDirectory)\microsoft.bcl.hashcode\1.1.1\Microsoft.Bcl.HashCode.dll</HintPath></_UiReference>
+    <_UiReference Include="LiveChartsCore"><HintPath>$(UiLibDirectory)\livechartscore\2.0.5\LiveChartsCore.dll</HintPath></_UiReference>
+    <_UiReference Include="LiveChartsCore.SkiaSharpView"><HintPath>$(UiLibDirectory)\livechartscore.skiasharpview\2.0.5\LiveChartsCore.SkiaSharpView.dll</HintPath></_UiReference>
+    <_UiReference Include="LiveChartsCore.SkiaSharpView.WinForms"><HintPath>$(UiLibDirectory)\livechartscore.skiasharpview.winforms\2.0.5\LiveChartsCore.SkiaSharpView.WinForms.dll</HintPath></_UiReference>
+    <_UiReference Include="SkiaSharp"><HintPath>$(UiLibDirectory)\skiasharp\3.119.0\SkiaSharp.dll</HintPath></_UiReference>
+    <_UiReference Include="SkiaSharp.HarfBuzz"><HintPath>$(UiLibDirectory)\skiasharp.harfbuzz\3.119.0\SkiaSharp.HarfBuzz.dll</HintPath></_UiReference>
+    <_UiReference Include="SkiaSharp.Views.Desktop.Common"><HintPath>$(UiLibDirectory)\skiasharp.views.desktop.common\3.119.0\SkiaSharp.Views.Desktop.Common.dll</HintPath></_UiReference>
+    <_UiReference Include="SkiaSharp.Views.WindowsForms"><HintPath>$(UiLibDirectory)\skiasharp.views.windowsforms\3.119.0\SkiaSharp.Views.WindowsForms.dll</HintPath></_UiReference>
+    <_UiReference Include="HarfBuzzSharp"><HintPath>$(UiLibDirectory)\harfbuzzsharp\8.3.1.1\HarfBuzzSharp.dll</HintPath></_UiReference>
+    <_UiReference Include="OpenTK"><HintPath>$(UiLibDirectory)\opentk\3.1.0\OpenTK.dll</HintPath></_UiReference>
+    <_UiReference Include="OpenTK.GLControl"><HintPath>$(UiLibDirectory)\opentk.glcontrol\3.1.0\OpenTK.GLControl.dll</HintPath></_UiReference>
+    <Reference Include="@(_UiReference)">
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="System.Design" />
+  </ItemGroup>
+  <!-- Nativas x64 planas en la raiz del output: ahi las busca SkiaSharp. -->
+  <ItemGroup>
+    <None Include="$(UiLibDirectory)\skiasharp.nativeassets.win32\3.119.0\libSkiaSharp.dll">
+      <Link>libSkiaSharp.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(UiLibDirectory)\harfbuzzsharp.nativeassets.win32\8.3.1.1\libHarfBuzzSharp.dll">
+      <Link>libHarfBuzzSharp.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <!-- Interop nativa de SQLite (la usa GMap.NET): x86/x64 junto a System.Data.SQLite.dll, donde la busca el runtime. -->
+  <ItemGroup>
+    <None Include="$(UiLibDirectory)\system.data.sqlite.core\1.0.115.5\x86\SQLite.Interop.dll">
+      <Link>x86\SQLite.Interop.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="$(UiLibDirectory)\system.data.sqlite.core\1.0.115.5\x64\SQLite.Interop.dll">
+      <Link>x64\SQLite.Interop.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

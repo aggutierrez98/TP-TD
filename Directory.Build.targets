@@ -1,4 +1,6 @@
 <Project>
+  <Import Project="$(MSBuildThisFileDirectory)SERVICIOS\SystemTextJson.references.props"
+          Condition="'$(MSBuildProjectName)' == 'UI' or '$(MSBuildProjectName)' == 'ActualizadorTasas' or '$(MSBuildProjectName)' == 'BLL.Tests' or '$(MSBuildProjectName)' == 'TpIDS.IntegrationTests' or '$(MSBuildProjectName)' == 'TpIDS.UiTests'" />
   <PropertyGroup>
     <ArchitectureGuardEnabled Condition="'$(ArchitectureGuardEnabled)' == ''">true</ArchitectureGuardEnabled>
   </PropertyGroup>

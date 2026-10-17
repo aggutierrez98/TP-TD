@@ -1,0 +1,41 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Ensamblados netfx de MSBuild, sin restore NuGet.
+         Se puede indicar otra ubicacion compatible con /p:SystemTextJsonAssemblyDirectory=... -->
+    <SystemTextJsonAssemblyDirectory Condition="'$(SystemTextJsonAssemblyDirectory)' == ''">$(MSBuildToolsPath)</SystemTextJsonAssemblyDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <_SystemTextJsonReference Include="System.Text.Json;System.Text.Encodings.Web;System.Memory;System.Buffers;System.Runtime.CompilerServices.Unsafe;System.Threading.Tasks.Extensions;Microsoft.Bcl.AsyncInterfaces;System.Numerics.Vectors">
+      <HintPath>$(SystemTextJsonAssemblyDirectory)\%(Identity).dll</HintPath>
+      <Private>true</Private>
+    </_SystemTextJsonReference>
+    <_SystemTextJsonReference Include="System.IO.Pipelines" Condition="Exists('$(SystemTextJsonAssemblyDirectory)\System.IO.Pipelines.dll')">
+      <HintPath>$(SystemTextJsonAssemblyDirectory)\System.IO.Pipelines.dll</HintPath>
+      <Private>true</Private>
+    </_SystemTextJsonReference>
+    <_SystemTextJsonReference Include="System.ValueTuple" Condition="Exists('$(SystemTextJsonAssemblyDirectory)\System.ValueTuple.dll')">
+      <HintPath>$(SystemTextJsonAssemblyDirectory)\System.ValueTuple.dll</HintPath>
+      <Private>true</Private>
+    </_SystemTextJsonReference>
+    <Reference Include="@(_SystemTextJsonReference)" />
+  </ItemGroup>
+  <!-- El SDK agrega dependencias de paquetes despues de evaluar el proyecto.
+       Conservar las referencias directas para no mezclar sus versiones. -->
+  <Target Name="UnifySystemTextJsonReferences" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'System.Text.Json' or '%(Reference.Filename)' == 'System.Text.Encodings.Web' or '%(Reference.Filename)' == 'System.Memory' or '%(Reference.Filename)' == 'System.Buffers' or '%(Reference.Filename)' == 'System.Runtime.CompilerServices.Unsafe' or '%(Reference.Filename)' == 'System.Threading.Tasks.Extensions' or '%(Reference.Filename)' == 'Microsoft.Bcl.AsyncInterfaces' or '%(Reference.Filename)' == 'System.Numerics.Vectors' or '%(Reference.Filename)' == 'System.IO.Pipelines' or ('%(Reference.Filename)' == 'System.ValueTuple' and Exists('$(SystemTextJsonAssemblyDirectory)\System.ValueTuple.dll'))" />
+      <Reference Include="@(_SystemTextJsonReference)" />
+    </ItemGroup>
+  </Target>
+  <!-- NuGet agrega assets de ejecucion a ReferenceCopyLocalPaths por separado
+       de Reference. Evitar dos fuentes para la misma DLL en la copia de salida. -->
+  <Target Name="UnifySystemTextJsonCopyLocalPaths" BeforeTargets="_CopyFilesMarkedCopyLocal">
+    <ItemGroup>
+      <_SystemTextJsonCopyLocalPath Include="@(_SystemTextJsonReference->'%(HintPath)')" />
+      <ReferenceCopyLocalPaths Remove="@(_SystemTextJsonCopyLocalPath)"
+                               MatchOnMetadata="Filename;Extension"
+                               MatchOnMetadataOptions="CaseInsensitive" />
+      <ReferenceCopyLocalPaths Include="@(_SystemTextJsonCopyLocalPath)" />
+    </ItemGroup>
+  </Target>
+</Project>

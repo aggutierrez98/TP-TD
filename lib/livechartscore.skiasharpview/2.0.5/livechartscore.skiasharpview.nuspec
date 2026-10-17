@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>LiveChartsCore.SkiaSharpView</id>
+    <version>2.0.5</version>
+    <authors>BetoRodriguez</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <icon>icon.png</icon>
+    <readme>README.md</readme>
+    <description>Simple, stunning, interactive and powerful data visualization for .Net. This package renders charts using SkiaSharp, this is enough if you only need to render images otherwise you probably need another package that is compatible with your UI framework.</description>
+    <repository type="git" url="https://github.com/beto-rodriguez/LiveCharts2" commit="e8a67f59bae283d2e88b1e8d30ef1bf7bcf5b5d5" />
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.2">
+        <dependency id="LiveChartsCore" version="2.0.5" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net8.0">
+        <dependency id="LiveChartsCore" version="2.0.5" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework="net8.0-windows7.0">
+        <dependency id="LiveChartsCore" version="2.0.5" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="LiveChartsCore" version="2.0.5" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp" version="2.88.9" exclude="Build,Analyzers" />
+        <dependency id="SkiaSharp.HarfBuzz" version="2.88.9" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

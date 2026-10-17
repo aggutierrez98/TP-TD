@@ -1,0 +1,25 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PdfSharpAssemblyDirectory>$(MSBuildThisFileDirectory)..\lib\pdfsharp-migradoc\6.2.4</PdfSharpAssemblyDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <_PdfSharpReference Include="MigraDoc.DocumentObjectModel;MigraDoc.Rendering-gdi;MigraDoc.RtfRendering-gdi;PdfSharp-gdi;PdfSharp.System;PdfSharp.Charting-gdi;PdfSharp.Cryptography;PdfSharp.Shared;PdfSharp.WPFonts;Microsoft.Extensions.Logging.Abstractions;Microsoft.Extensions.DependencyInjection.Abstractions;System.Security.Cryptography.Pkcs">
+      <HintPath>$(PdfSharpAssemblyDirectory)\%(Identity).dll</HintPath>
+      <Private>true</Private>
+    </_PdfSharpReference>
+    <_PdfSharpReference Include="Microsoft.Bcl.AsyncInterfaces;System.Memory;System.Buffers;System.Numerics.Vectors;System.Threading.Tasks.Extensions;System.Runtime.CompilerServices.Unsafe" Condition="'$(SystemTextJsonAssemblyDirectory)' == ''">
+      <HintPath>$(PdfSharpAssemblyDirectory)\%(Identity).dll</HintPath>
+      <Private>true</Private>
+    </_PdfSharpReference>
+    <!-- Fachada net47: reenvia las tuplas a mscorlib del framework. MigraDoc
+         referencia una version anterior; no usar el binario net462 aqui. -->
+    <_PdfSharpReference Include="System.ValueTuple" Condition="!Exists('$(SystemTextJsonAssemblyDirectory)\System.ValueTuple.dll')">
+      <HintPath>$(PdfSharpAssemblyDirectory)\%(Identity).dll</HintPath>
+      <Private>true</Private>
+    </_PdfSharpReference>
+    <Reference Include="@(_PdfSharpReference)" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Security" />
+  </ItemGroup>
+</Project>
