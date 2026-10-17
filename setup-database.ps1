@@ -37,7 +37,7 @@ if ("$existe".Trim() -eq "1" -and -not $Force) {
     throw "La base '$DatabaseName' ya existe en $SqlServer y este script la BORRA y recrea desde cero. Ejecute con -Force para confirmar."
 }
 
-# El helper copia translation-seeds\base.es.json a una carpeta publica legible por
+# El helper copia translation-seeds\base.es.json y base.in.json a una carpeta publica legible por
 # la cuenta de servicio de SQL Server (lo que haria la linea "!!" del script).
 & powershell -NoProfile -ExecutionPolicy Bypass -File $seedHelper -RepoRoot $RepoRoot -OutputFile "NUL"
 if ($LASTEXITCODE -ne 0) {
