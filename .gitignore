@@ -23,6 +23,9 @@ mono_crash.*
 [Rr]eleases/
 x64/
 x86/
+# Nativas de SQLite incluidas en lib/ (ver lib/README.md): no son salida de build.
+!lib/system.data.sqlite.core/*/x64/
+!lib/system.data.sqlite.core/*/x86/
 [Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
@@ -361,3 +364,26 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Local secrets (template: UI/secrets.config.example)
+UI/secrets.config
+ActualizadorTasas/secrets.config
+
+# Resultados de tests y verificaciones (TRX, capturas UI, PDF/Excel exportados por los tests)
+TestResults/
+**/TestResults/
+_build_verify/
+*.trx
+ui-screenshots/
+
+# Artefactos locales de herramientas / agentes (no son parte del producto)
+.claude/
+.codegraph/
+.omo/
+.atl/
+
+# Claves privadas y credenciales: nunca al repositorio
+*.pem
+*_rsa
+*_ed25519
+id_rsa*
+id_ed25519*
