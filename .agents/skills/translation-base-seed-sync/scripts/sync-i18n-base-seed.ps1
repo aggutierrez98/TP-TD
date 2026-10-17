@@ -19,6 +19,8 @@ $markerEnd = "-- END AUTO-GENERATED I18N BASE SEED"
 $idiomaBaseNombre = "Espa$([char]0x00F1)ol"
 $seedPathResolverScript = ".agents\skills\translation-base-seed-sync\scripts\emit-seed-json-sqlcmd-path.ps1"
 $publicSeedJsonPath = "C:\Users\Public\Documents\TpIDS\SqlSeed\base.es.json"
+$idiomaInglesNombre = "English"
+$publicSeedInglesJsonPath = "C:\Users\Public\Documents\TpIDS\SqlSeed\base.in.json"
 
 function Find-ControlText {
     param(
@@ -260,6 +262,44 @@ $sqlLines.Add("INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor)")
 $sqlLines.Add("SELECT p.Id, @IdiomaBaseId, s.Valor")
 $sqlLines.Add("FROM @Seed s")
 $sqlLines.Add("INNER JOIN dbo.Palabra p ON p.[Key] = s.[Key];")
+$sqlLines.Add("")
+$sqlLines.Add("-- Idioma ingles (no default) desde translation-seeds/base.in.json. Solo se cargan las keys que existen")
+$sqlLines.Add("-- en el idioma base: base.es.json sigue siendo la fuente de verdad de las Palabras.")
+$sqlLines.Add("DECLARE @IdiomaInglesId INT;")
+$idiomaInglesNombreSql = Escape-SqlLiteral $idiomaInglesNombre
+$sqlLines.Add("INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'$idiomaInglesNombreSql', 0);")
+$sqlLines.Add("SET @IdiomaInglesId = SCOPE_IDENTITY();")
+$sqlLines.Add("")
+$publicSeedInglesJsonPathSql = Escape-SqlLiteral $publicSeedInglesJsonPath
+$sqlLines.Add("DECLARE @RutaTraduccionesIngles NVARCHAR(4000) = N'$publicSeedInglesJsonPathSql';")
+$sqlLines.Add("DECLARE @TraduccionesInglesJson NVARCHAR(MAX);")
+$sqlLines.Add("")
+$sqlLines.Add("SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn")
+$sqlLines.Add("FROM OPENROWSET(")
+$sqlLines.Add("    BULK ''' + REPLACE(@RutaTraduccionesIngles, '''', '''''') + ''',")
+$sqlLines.Add("    SINGLE_NCLOB")
+$sqlLines.Add(") AS JsonFile;';")
+$sqlLines.Add("")
+$sqlLines.Add("BEGIN TRY")
+$sqlLines.Add("    EXEC sys.sp_executesql")
+$sqlLines.Add("        @SqlCargaJson,")
+$sqlLines.Add("        N'@JsonOut NVARCHAR(MAX) OUTPUT',")
+$sqlLines.Add("        @JsonOut = @TraduccionesInglesJson OUTPUT;")
+$sqlLines.Add("END TRY")
+$sqlLines.Add("BEGIN CATCH")
+$sqlLines.Add("    THROW 50004, 'No se pudo leer translation-seeds/base.in.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;")
+$sqlLines.Add("END CATCH")
+$sqlLines.Add("")
+$sqlLines.Add("IF NULLIF(LTRIM(RTRIM(@TraduccionesInglesJson)), N'') IS NULL")
+$sqlLines.Add("BEGIN")
+$sqlLines.Add("    THROW 50005, 'El archivo translation-seeds/base.in.json esta vacio o no pudo leerse correctamente.', 1;")
+$sqlLines.Add("END")
+$sqlLines.Add("")
+$sqlLines.Add("INSERT INTO dbo.Traduccion (PalabraId, IdiomaId, Valor)")
+$sqlLines.Add("SELECT p.Id, @IdiomaInglesId, TRY_CAST(j.[value] AS NVARCHAR(300))")
+$sqlLines.Add("FROM OPENJSON(@TraduccionesInglesJson) j")
+$sqlLines.Add("INNER JOIN dbo.Palabra p ON p.[Key] = j.[key] COLLATE DATABASE_DEFAULT")
+$sqlLines.Add("WHERE j.[type] IN (1, 2) AND TRY_CAST(j.[value] AS NVARCHAR(300)) IS NOT NULL;")
 $sqlLines.Add("")
 
 $sqlLines.Add($markerEnd)

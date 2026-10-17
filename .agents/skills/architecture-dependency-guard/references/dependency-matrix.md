@@ -3,6 +3,7 @@
 ## Allowed project references
 
 - `TpIDS` -> `ABSTRACCIONES`, `BLL`, `BE`, `SERVICIOS`
+- `ActualizadorTasas` (consola, capa de presentacion como `TpIDS`) -> `ABSTRACCIONES`, `BLL`, `BE`, `SERVICIOS`
 - `BLL` -> `ABSTRACCIONES`, `REPOSITORIO`, `BE`, `SERVICIOS`
 - `REPOSITORIO` -> `ABSTRACCIONES`, `DAL`, `BE`, `SERVICIOS`
 - `DAL` -> `ABSTRACCIONES`, `BE`, `SERVICIOS`

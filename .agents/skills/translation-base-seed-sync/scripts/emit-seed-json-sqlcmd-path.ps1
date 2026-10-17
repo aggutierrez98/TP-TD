@@ -1,6 +1,7 @@
 param(
     [string]$RepoRoot = ".",
-    [string]$RelativeJsonPath = "translation-seeds\base.es.json",
+    # Catalogos que lee el seed de script_bd.sql: espanol (idioma base) e ingles.
+    [string[]]$RelativeJsonPaths = @("translation-seeds\base.es.json", "translation-seeds\base.in.json"),
     [Parameter(Mandatory = $true)]
     [string]$OutputFile
 )
@@ -13,7 +14,6 @@ $ErrorActionPreference = "Stop"
 # ("Microsoft.PowerShell.Core\FileSystem::\\host\..."), que herramientas como
 # vstest.console rechazan.
 $resolvedRepoRoot = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $RepoRoot).ProviderPath).TrimEnd('\')
-$resolvedJsonPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath (Join-Path $resolvedRepoRoot $RelativeJsonPath)).ProviderPath)
 $outputDirectory = Split-Path -Parent $OutputFile
 $stagingDirectory = Join-Path $env:PUBLIC "Documents\TpIDS\SqlSeed"
 $stagingJsonPath = Join-Path $stagingDirectory "base.es.json"
@@ -32,8 +32,11 @@ if (-not (Test-Path $stagingDirectory)) {
 # antes de llegar a OPENJSON.
 $utf8Strict = New-Object System.Text.UTF8Encoding($false, $true)
 $utf16LittleEndian = New-Object System.Text.UnicodeEncoding($false, $true)
-$json = [System.IO.File]::ReadAllText($resolvedJsonPath, $utf8Strict)
-[System.IO.File]::WriteAllText($stagingJsonPath, $json, $utf16LittleEndian)
+foreach ($relativeJsonPath in $RelativeJsonPaths) {
+    $resolvedJsonPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath (Join-Path $resolvedRepoRoot $relativeJsonPath)).ProviderPath)
+    $json = [System.IO.File]::ReadAllText($resolvedJsonPath, $utf8Strict)
+    [System.IO.File]::WriteAllText((Join-Path $stagingDirectory (Split-Path -Leaf $resolvedJsonPath)), $json, $utf16LittleEndian)
+}
 
 # Expone una copia temporal en una ubicacion publica para evitar bloqueos de lectura
 # cuando SQL Server corre bajo una cuenta de servicio sin acceso al perfil del usuario.

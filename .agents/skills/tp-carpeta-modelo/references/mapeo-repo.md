@@ -17,8 +17,7 @@ Carpeta: `diagramas/G00-descripcion-global-producto/`
   G02 Alcance, **G03 Planificacion del proyecto**, G04 Definiciones, G05 Roles, G06 Otros
   Requisitos): el documento del repo no tiene una seccion G03 Planificacion propia y el resto
   queda corrido en uno. Esta carpeta esta explicitamente fuera de alcance de la reconciliacion de
-  esta sesion (quedo cerrada y aprobada por el usuario el 26/08/2026, ver
-  `diagramas/TODO-actualizacion-diagramas.md`); queda como nota para una futura decision del
+  esta sesion (quedo cerrada y aprobada por el usuario el 26/08/2026); queda como nota para una futura decision del
   usuario, no como algo a corregir automaticamente.
 - A diferencia de G07/G08, este documento describe **el producto completo** (FINAZAPP terminado),
   no solo lo ya implementado. No anticipar en G07/G08 clases o entidades que no existan todavia en

@@ -26,6 +26,7 @@ Mantener alineados estos artefactos:
 
 - `translation-seeds/base.es.json` es la fuente de verdad del idioma base; el bloque auto-generado de `script_bd.sql` solo debe apuntar a ese archivo via `OPENROWSET`, sin hardcodear el JSON completo.
 - `script_bd.sql` no debe editarse a mano dentro del bloque auto-generado.
+- El bloque crea dos idiomas: `Español` (default, desde `base.es.json`) e `English` (desde `translation-seeds/base.in.json`, solo con las keys que existen en `base.es.json`). Toda key nueva va a los dos JSON.
 - Si una key nueva aparece en UI/BLL/SERVICIOS, debe terminar en `translation-seeds/base.es.json` en el mismo cambio. El SQL generado solo debe cambiar si cambia la estructura del bloque o la ruta resuelta al archivo.
 - Para que el script sea portable entre clones, `script_bd.sql` se ejecuta desde SSMS 19/22 en SQLCMD Mode (ajustando `RepoRoot`) o con `setup-database.ps1` desde la raiz del repo. NO ejecutarlo directo con `sqlcmd` ODBC 15.x: esa version corta el procesamiento en silencio (exit 0) al encontrar la linea `!!` y la BD queda sin traducciones; el wrapper lo evita ejecutando el helper desde PowerShell y quitando la linea `!!` de una copia temporal.
 - El script SQL de base debe asumir recreacion completa de la BD. No debe intentar completar esquemas existentes ni agregar constraints faltantes en caliente.

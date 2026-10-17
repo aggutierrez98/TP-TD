@@ -1,0 +1,61 @@
+schema: spec-driven
+
+# Permanent project context: OpenSpec injects it into every planning request
+# (proposal, specs, design, tasks). Only stable facts go here; change progress
+# lives in each change's tasks.md and accepted behavior in openspec/specs/.
+context: |
+  Idioma: los artefactos se escriben en espanol. Los encabezados estructurales de OpenSpec
+  (## ADDED Requirements, ### Requirement:, #### Scenario:) y las palabras SHALL/MUST van en ingles.
+
+  Proyecto: TpIDS-TD es el Trabajo de Campo / Trabajo de Diploma (TC/TD) de Agustin Gutierrez
+  (UAI, Facultad de Tecnologia Informatica). La catedra exige seguir la "Carpeta Modelo" (2023),
+  que agrupa los items en G0X (descripcion global y diagramas de integracion), N0X (procesos de
+  negocio y casos de uso), T0X (aspectos tecnicos transversales), A0X (instalador, exportacion
+  PDF, serializacion) y D0X (manual, ayuda en linea, guias). Resumen operativo de que exige cada
+  item: .agents/skills/tp-uml-y-casos-de-uso/references/catalogo-requisitos.md; texto oficial:
+  skill tp-carpeta-modelo.
+
+  Producto: FINAZAPP, plataforma de gestion de finanzas personales (PFM): centraliza movimientos,
+  categorias, cuentas, comercios y descuentos, con asistencia de IA. Los modulos T0X (login,
+  usuarios, permisos, idiomas, bitacora, digitos verificadores, backup) son pantallas de
+  administracion dentro de un shell MDI (FormPrincipal); el usuario final aterriza en Movimientos.
+  Alcance de codigo: carga manual de movimientos, categorias, escaneo de tickets con Gemini (con
+  confirmacion manual antes de persistir) y modulos de negocio posteriores. Fuera del codigo
+  (solo vision de producto en G02): sincronizacion bancaria real y scraping de descuentos.
+
+  Numeracion T0X propia del repo: T07 = digitos verificadores y T08 = backup (la carpeta modelo
+  los numera al reves). Es una decision acordada; no "corregirla" sin consultar al usuario.
+
+  Reglas tecnicas (stack, arquitectura por capas, TDD, build, tests, nomenclatura): no se repiten
+  aca. Viven en AGENTS.md y en .agents/, que son la unica fuente.
+
+  Artefactos del TP: diagramas PlantUML bajo diagramas/ (G00 descripcion global, G07 clases por
+  capa, G08 DER integrado, una carpeta T0X-<slug> por requisito tecnico) y especificaciones de
+  casos de uso consolidadas en diagramas/TP-especificaciones-casos-de-uso.{docx,md}. G07/G08 muestran
+  solo lo implementado; G00-G05, el producto completo. El documento formal para la catedra
+  vive fuera del repo (C:\Users\agust\Desktop\Trabajo Final TD Gutierrez.docx): se edita con
+  python-docx desde un venv, con Word cerrado, respetando sus estilos (Heading 2 por modulo,
+  tabla Table1, vinetas numId=6); nunca pegar Markdown crudo. La autoria de esta etapa es solo
+  de Agustin Gutierrez (la caratula vieja menciona a otro alumno; no tocarla sin pedido).
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always state what is out of scope
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

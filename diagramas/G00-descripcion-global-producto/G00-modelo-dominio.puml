@@ -10,8 +10,8 @@
 ' multiplicidades muchos-a-muchos espurias) y decisiones de alcance tomadas con el usuario:
 '   - EntidadFinanciera + ConexionFinanciera + TipoCuenta del relevamiento se COLAPSAN en la
 '     ya existente CuentaFinanciera <<Vision>>: modelar el detalle de conexion real (URL,
-'     llave) insinuaria sincronizacion bancaria real, ya descartada como inviable (ver
-'     ESTADO-ACTUAL-Y-PROXIMOS-PASOS.md).
+'     llave) insinuaria sincronizacion bancaria real, ya descartada como inviable (ver el
+'     alcance en openspec/config.yaml).
 '   - EntradaChat del relevamiento se fusiona con la ya existente ConsultaChatbot (mismo
 '     concepto, evita clase duplicada).
 '   - TipoTarjetaDashboard del relevamiento se colapsa a un atributo enumerado de

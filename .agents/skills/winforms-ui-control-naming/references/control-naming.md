@@ -9,6 +9,35 @@
 - `Button` -> `btn`
 - `PictureBox` -> `pb`
 - `ComboBox` -> `cmb`
+- `CheckBox` -> `chkb`
+- `DateTimePicker` -> `dtp`
+- `GroupBox` -> `groupBox`
+- `TreeView` -> `tvw`
+- `CheckedListBox` -> `clb`
+- `NumericUpDown` -> `nud`
+- `RichTextBox` -> `rtb`
+- `FlowLayoutPanel` -> `flp`
+- `Panel` -> `pnl`
+- `TableLayoutPanel` -> `tlp`
+- `ProgressBar` -> `prgb`
+
+## Controles Krypton (tema de la UI)
+
+La UI usa Krypton Toolkit: el prefijo es el del control equivalente, no cambia con el tipo.
+
+| Se usa | En lugar de | Prefijo |
+|--------|-------------|---------|
+| `KryptonLabel` | `Label` | `lbl` |
+| `KryptonButton` (con `ButtonStyle = Custom1`) | `Button` | `btn` |
+| `KryptonTextBox` | `TextBox` | `txtb` |
+| `KryptonComboBox` | `ComboBox` | `cmb` |
+| `KryptonDataGridView` | `DataGridView` | `dgv` |
+| `KryptonGroupBox` (hijos en `.Panel.Controls`) | `GroupBox` | `groupBox` |
+| `KryptonListBox` | `ListBox` | `lstb` |
+| `TpIDS.CheckBoxAccesible` | `CheckBox` | `chkb` |
+| `TpIDS.DateTimePickerAccesible` | `DateTimePicker` | `dtp` |
+
+Quedan nativos (tematizados por `TemaFinanzapp`): `TreeView`, `CheckedListBox`, `NumericUpDown`, `RichTextBox` y `MenuStrip`.
 
 ## Repository rule
 
