@@ -16,21 +16,21 @@ namespace TpIDS
 
         private void InitializeComponent()
         {
-            this.lblTituloBitacora = new System.Windows.Forms.Label();
-            this.groupBoxFiltrosBitacora = new System.Windows.Forms.GroupBox();
-            this.chkbFechaDesdeBitacora = new System.Windows.Forms.CheckBox();
-            this.dtpFechaDesdeBitacora = new System.Windows.Forms.DateTimePicker();
-            this.chkbFechaHastaBitacora = new System.Windows.Forms.CheckBox();
-            this.dtpFechaHastaBitacora = new System.Windows.Forms.DateTimePicker();
-            this.lblUsuarioBitacora = new System.Windows.Forms.Label();
-            this.txtbUsuarioBitacora = new System.Windows.Forms.TextBox();
-            this.lblActividadBitacora = new System.Windows.Forms.Label();
-            this.txtbActividadBitacora = new System.Windows.Forms.TextBox();
-            this.lblNivelBitacora = new System.Windows.Forms.Label();
-            this.cmbNivelBitacora = new System.Windows.Forms.ComboBox();
-            this.chkbSoloTecnicaBitacora = new System.Windows.Forms.CheckBox();
-            this.btnBuscarBitacora = new System.Windows.Forms.Button();
-            this.dgvBitacora = new System.Windows.Forms.DataGridView();
+            this.lblTituloBitacora = new Krypton.Toolkit.KryptonLabel();
+            this.groupBoxFiltrosBitacora = new Krypton.Toolkit.KryptonGroupBox();
+            this.chkbFechaDesdeBitacora = new TpIDS.CheckBoxAccesible();
+            this.dtpFechaDesdeBitacora = new TpIDS.DateTimePickerAccesible();
+            this.chkbFechaHastaBitacora = new TpIDS.CheckBoxAccesible();
+            this.dtpFechaHastaBitacora = new TpIDS.DateTimePickerAccesible();
+            this.lblUsuarioBitacora = new Krypton.Toolkit.KryptonLabel();
+            this.txtbUsuarioBitacora = new Krypton.Toolkit.KryptonTextBox();
+            this.lblActividadBitacora = new Krypton.Toolkit.KryptonLabel();
+            this.txtbActividadBitacora = new Krypton.Toolkit.KryptonTextBox();
+            this.lblNivelBitacora = new Krypton.Toolkit.KryptonLabel();
+            this.cmbNivelBitacora = new Krypton.Toolkit.KryptonComboBox();
+            this.chkbSoloTecnicaBitacora = new TpIDS.CheckBoxAccesible();
+            this.btnBuscarBitacora = new Krypton.Toolkit.KryptonButton();
+            this.dgvBitacora = new Krypton.Toolkit.KryptonDataGridView();
             this.colBitacoraId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colBitacoraDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colBitacoraUserId = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -40,14 +40,21 @@ namespace TpIDS
             this.colBitacoraLevel = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colBitacoraSource = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colBitacoraIsTechnical = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltrosBitacora)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltrosBitacora.Panel)).BeginInit();
+            this.groupBoxFiltrosBitacora.Panel.SuspendLayout();
             this.groupBoxFiltrosBitacora.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBitacora)).BeginInit();
+            this.tlpFechasBitacora = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpFechasBitacora.SuspendLayout();
+            this.tlpCamposBitacora = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpCamposBitacora.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTituloBitacora
             // 
             this.lblTituloBitacora.AutoSize = true;
-            this.lblTituloBitacora.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblTituloBitacora.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.lblTituloBitacora.Location = new System.Drawing.Point(15, 15);
             this.lblTituloBitacora.Name = "lblTituloBitacora";
             this.lblTituloBitacora.Size = new System.Drawing.Size(0, 25);
@@ -56,18 +63,10 @@ namespace TpIDS
             // 
             // groupBoxFiltrosBitacora
             // 
-            this.groupBoxFiltrosBitacora.Controls.Add(this.chkbFechaDesdeBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.dtpFechaDesdeBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.chkbFechaHastaBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.dtpFechaHastaBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.lblUsuarioBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.txtbUsuarioBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.lblActividadBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.txtbActividadBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.lblNivelBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.cmbNivelBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.chkbSoloTecnicaBitacora);
-            this.groupBoxFiltrosBitacora.Controls.Add(this.btnBuscarBitacora);
+            this.groupBoxFiltrosBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxFiltrosBitacora.Panel.Controls.Add(this.tlpFechasBitacora);
+            this.groupBoxFiltrosBitacora.Panel.Controls.Add(this.tlpCamposBitacora);
+            this.groupBoxFiltrosBitacora.Panel.Controls.Add(this.btnBuscarBitacora);
             this.groupBoxFiltrosBitacora.Location = new System.Drawing.Point(18, 50);
             this.groupBoxFiltrosBitacora.Name = "groupBoxFiltrosBitacora";
             this.groupBoxFiltrosBitacora.Size = new System.Drawing.Size(944, 110);
@@ -77,107 +76,121 @@ namespace TpIDS
             // 
             // chkbFechaDesdeBitacora
             // 
-            this.chkbFechaDesdeBitacora.Location = new System.Drawing.Point(15, 28);
+            this.chkbFechaDesdeBitacora.Location = new System.Drawing.Point(0, 2);
             this.chkbFechaDesdeBitacora.Name = "chkbFechaDesdeBitacora";
             this.chkbFechaDesdeBitacora.Size = new System.Drawing.Size(110, 20);
             this.chkbFechaDesdeBitacora.Tag = "FormAuditLog.FromCheck";
             this.chkbFechaDesdeBitacora.TabIndex = 0;
-            this.chkbFechaDesdeBitacora.UseVisualStyleBackColor = true;
+            this.chkbFechaDesdeBitacora.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
             // 
             // dtpFechaDesdeBitacora
             // 
+            this.dtpFechaDesdeBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dtpFechaDesdeBitacora.CustomFormat = "dd/MM/yyyy HH:mm";
             this.dtpFechaDesdeBitacora.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpFechaDesdeBitacora.Location = new System.Drawing.Point(130, 26);
+            this.dtpFechaDesdeBitacora.Location = new System.Drawing.Point(115, 0);
             this.dtpFechaDesdeBitacora.Name = "dtpFechaDesdeBitacora";
             this.dtpFechaDesdeBitacora.Size = new System.Drawing.Size(185, 20);
             this.dtpFechaDesdeBitacora.TabIndex = 1;
+            this.dtpFechaDesdeBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 25, 0);
             // 
             // chkbFechaHastaBitacora
             // 
-            this.chkbFechaHastaBitacora.Location = new System.Drawing.Point(340, 28);
+            this.chkbFechaHastaBitacora.Location = new System.Drawing.Point(325, 2);
             this.chkbFechaHastaBitacora.Name = "chkbFechaHastaBitacora";
             this.chkbFechaHastaBitacora.Size = new System.Drawing.Size(110, 20);
             this.chkbFechaHastaBitacora.Tag = "FormAuditLog.ToCheck";
             this.chkbFechaHastaBitacora.TabIndex = 2;
-            this.chkbFechaHastaBitacora.UseVisualStyleBackColor = true;
+            this.chkbFechaHastaBitacora.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
             // 
             // dtpFechaHastaBitacora
             // 
+            this.dtpFechaHastaBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dtpFechaHastaBitacora.CustomFormat = "dd/MM/yyyy HH:mm";
             this.dtpFechaHastaBitacora.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpFechaHastaBitacora.Location = new System.Drawing.Point(455, 26);
+            this.dtpFechaHastaBitacora.Location = new System.Drawing.Point(440, 0);
             this.dtpFechaHastaBitacora.Name = "dtpFechaHastaBitacora";
             this.dtpFechaHastaBitacora.Size = new System.Drawing.Size(185, 20);
             this.dtpFechaHastaBitacora.TabIndex = 3;
+            this.dtpFechaHastaBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             // 
             // lblUsuarioBitacora
             // 
             this.lblUsuarioBitacora.AutoSize = true;
-            this.lblUsuarioBitacora.Location = new System.Drawing.Point(15, 63);
+            this.lblUsuarioBitacora.Location = new System.Drawing.Point(0, 0);
             this.lblUsuarioBitacora.Name = "lblUsuarioBitacora";
             this.lblUsuarioBitacora.Size = new System.Drawing.Size(0, 13);
             this.lblUsuarioBitacora.Tag = "FormAuditLog.UserLabel";
             this.lblUsuarioBitacora.TabIndex = 4;
+            this.lblUsuarioBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             // 
             // txtbUsuarioBitacora
             // 
-            this.txtbUsuarioBitacora.Location = new System.Drawing.Point(18, 79);
+            this.txtbUsuarioBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbUsuarioBitacora.Location = new System.Drawing.Point(3, 20);
             this.txtbUsuarioBitacora.Name = "txtbUsuarioBitacora";
             this.txtbUsuarioBitacora.Size = new System.Drawing.Size(180, 20);
             this.txtbUsuarioBitacora.TabIndex = 5;
+            this.txtbUsuarioBitacora.Margin = new System.Windows.Forms.Padding(3, 0, 22, 0);
             // 
             // lblActividadBitacora
             // 
             this.lblActividadBitacora.AutoSize = true;
-            this.lblActividadBitacora.Location = new System.Drawing.Point(220, 63);
+            this.lblActividadBitacora.Location = new System.Drawing.Point(205, 0);
             this.lblActividadBitacora.Name = "lblActividadBitacora";
             this.lblActividadBitacora.Size = new System.Drawing.Size(0, 13);
             this.lblActividadBitacora.Tag = "FormAuditLog.ActivityLabel";
             this.lblActividadBitacora.TabIndex = 6;
+            this.lblActividadBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             // 
             // txtbActividadBitacora
             // 
-            this.txtbActividadBitacora.Location = new System.Drawing.Point(223, 79);
+            this.txtbActividadBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbActividadBitacora.Location = new System.Drawing.Point(208, 20);
             this.txtbActividadBitacora.Name = "txtbActividadBitacora";
             this.txtbActividadBitacora.Size = new System.Drawing.Size(220, 20);
             this.txtbActividadBitacora.TabIndex = 7;
+            this.txtbActividadBitacora.Margin = new System.Windows.Forms.Padding(3, 0, 22, 0);
             // 
             // lblNivelBitacora
             // 
             this.lblNivelBitacora.AutoSize = true;
-            this.lblNivelBitacora.Location = new System.Drawing.Point(465, 63);
+            this.lblNivelBitacora.Location = new System.Drawing.Point(450, 0);
             this.lblNivelBitacora.Name = "lblNivelBitacora";
             this.lblNivelBitacora.Size = new System.Drawing.Size(0, 13);
             this.lblNivelBitacora.Tag = "FormAuditLog.LevelLabel";
             this.lblNivelBitacora.TabIndex = 8;
+            this.lblNivelBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             // 
             // cmbNivelBitacora
             // 
+            this.cmbNivelBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.cmbNivelBitacora.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbNivelBitacora.FormattingEnabled = true;
-            this.cmbNivelBitacora.Location = new System.Drawing.Point(468, 79);
+            this.cmbNivelBitacora.Location = new System.Drawing.Point(453, 20);
             this.cmbNivelBitacora.Name = "cmbNivelBitacora";
             this.cmbNivelBitacora.Size = new System.Drawing.Size(160, 21);
             this.cmbNivelBitacora.TabIndex = 9;
+            this.cmbNivelBitacora.Margin = new System.Windows.Forms.Padding(3, 0, 22, 0);
             // 
             // chkbSoloTecnicaBitacora
             // 
-            this.chkbSoloTecnicaBitacora.Location = new System.Drawing.Point(650, 79);
+            this.chkbSoloTecnicaBitacora.Location = new System.Drawing.Point(635, 20);
             this.chkbSoloTecnicaBitacora.Name = "chkbSoloTecnicaBitacora";
             this.chkbSoloTecnicaBitacora.Size = new System.Drawing.Size(140, 20);
             this.chkbSoloTecnicaBitacora.Tag = "FormAuditLog.OnlyTechnicalCheck";
             this.chkbSoloTecnicaBitacora.TabIndex = 10;
-            this.chkbSoloTecnicaBitacora.UseVisualStyleBackColor = true;
+            this.chkbSoloTecnicaBitacora.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             // 
             // btnBuscarBitacora
             // 
-            this.btnBuscarBitacora.Location = new System.Drawing.Point(800, 72);
+            this.btnBuscarBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnBuscarBitacora.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnBuscarBitacora.Location = new System.Drawing.Point(800, 56);
             this.btnBuscarBitacora.Name = "btnBuscarBitacora";
             this.btnBuscarBitacora.Size = new System.Drawing.Size(125, 30);
             this.btnBuscarBitacora.Tag = "FormAuditLog.SearchButton";
             this.btnBuscarBitacora.TabIndex = 11;
-            this.btnBuscarBitacora.UseVisualStyleBackColor = true;
             this.btnBuscarBitacora.Click += new System.EventHandler(this.btnBuscarBitacora_Click);
             // 
             // dgvBitacora
@@ -186,6 +199,7 @@ namespace TpIDS
             this.dgvBitacora.AllowUserToDeleteRows = false;
             this.dgvBitacora.AutoGenerateColumns = false;
             this.dgvBitacora.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvBitacora.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colBitacoraId,
             this.colBitacoraDateTime,
@@ -269,6 +283,48 @@ namespace TpIDS
             this.colBitacoraIsTechnical.HeaderText = "Tecnica";
             this.colBitacoraIsTechnical.Name = "IsTechnical";
             this.colBitacoraIsTechnical.ReadOnly = true;
+            // 
+            // tlpFechasBitacora
+            // 
+            this.tlpFechasBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.tlpFechasBitacora.Controls.Add(this.chkbFechaDesdeBitacora, 0, 0);
+            this.tlpFechasBitacora.Controls.Add(this.dtpFechaDesdeBitacora, 1, 0);
+            this.tlpFechasBitacora.Controls.Add(this.chkbFechaHastaBitacora, 2, 0);
+            this.tlpFechasBitacora.Controls.Add(this.dtpFechaHastaBitacora, 3, 0);
+            this.tlpFechasBitacora.Location = new System.Drawing.Point(15, 10);
+            this.tlpFechasBitacora.Name = "tlpFechasBitacora";
+            this.tlpFechasBitacora.Size = new System.Drawing.Size(625, 26);
+            this.tlpFechasBitacora.ColumnCount = 4;
+            this.tlpFechasBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115F));
+            this.tlpFechasBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 53.16F));
+            this.tlpFechasBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115F));
+            this.tlpFechasBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 46.84F));
+            this.tlpFechasBitacora.RowCount = 1;
+            this.tlpFechasBitacora.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26F));
+            this.tlpFechasBitacora.TabIndex = 0;
+            // 
+            // tlpCamposBitacora
+            // 
+            this.tlpCamposBitacora.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.tlpCamposBitacora.Controls.Add(this.lblUsuarioBitacora, 0, 0);
+            this.tlpCamposBitacora.Controls.Add(this.txtbUsuarioBitacora, 0, 1);
+            this.tlpCamposBitacora.Controls.Add(this.lblActividadBitacora, 1, 0);
+            this.tlpCamposBitacora.Controls.Add(this.txtbActividadBitacora, 1, 1);
+            this.tlpCamposBitacora.Controls.Add(this.lblNivelBitacora, 2, 0);
+            this.tlpCamposBitacora.Controls.Add(this.cmbNivelBitacora, 2, 1);
+            this.tlpCamposBitacora.Controls.Add(this.chkbSoloTecnicaBitacora, 3, 1);
+            this.tlpCamposBitacora.Location = new System.Drawing.Point(15, 43);
+            this.tlpCamposBitacora.Name = "tlpCamposBitacora";
+            this.tlpCamposBitacora.Size = new System.Drawing.Size(775, 45);
+            this.tlpCamposBitacora.ColumnCount = 4;
+            this.tlpCamposBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 32.28F));
+            this.tlpCamposBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 38.58F));
+            this.tlpCamposBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 29.13F));
+            this.tlpCamposBitacora.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 140F));
+            this.tlpCamposBitacora.RowCount = 2;
+            this.tlpCamposBitacora.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tlpCamposBitacora.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 25F));
+            this.tlpCamposBitacora.TabIndex = 4;
             //
             // FormBitacora
             //
@@ -278,33 +334,39 @@ namespace TpIDS
             this.Controls.Add(this.dgvBitacora);
             this.Controls.Add(this.groupBoxFiltrosBitacora);
             this.Controls.Add(this.lblTituloBitacora);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
             this.Name = "FormBitacora";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Tag = "FormAuditLog.Title";
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltrosBitacora.Panel)).EndInit();
+            this.groupBoxFiltrosBitacora.Panel.ResumeLayout(false);
+            this.groupBoxFiltrosBitacora.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltrosBitacora)).EndInit();
             this.groupBoxFiltrosBitacora.ResumeLayout(false);
             this.groupBoxFiltrosBitacora.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBitacora)).EndInit();
+            this.tlpFechasBitacora.ResumeLayout(false);
+            this.tlpFechasBitacora.PerformLayout();
+            this.tlpCamposBitacora.ResumeLayout(false);
+            this.tlpCamposBitacora.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
-        private System.Windows.Forms.Label lblTituloBitacora;
-        private System.Windows.Forms.GroupBox groupBoxFiltrosBitacora;
-        private System.Windows.Forms.CheckBox chkbFechaDesdeBitacora;
-        private System.Windows.Forms.DateTimePicker dtpFechaDesdeBitacora;
-        private System.Windows.Forms.CheckBox chkbFechaHastaBitacora;
-        private System.Windows.Forms.DateTimePicker dtpFechaHastaBitacora;
-        private System.Windows.Forms.Label lblUsuarioBitacora;
-        private System.Windows.Forms.TextBox txtbUsuarioBitacora;
-        private System.Windows.Forms.Label lblActividadBitacora;
-        private System.Windows.Forms.TextBox txtbActividadBitacora;
-        private System.Windows.Forms.Label lblNivelBitacora;
-        private System.Windows.Forms.ComboBox cmbNivelBitacora;
-        private System.Windows.Forms.CheckBox chkbSoloTecnicaBitacora;
-        private System.Windows.Forms.Button btnBuscarBitacora;
-        private System.Windows.Forms.DataGridView dgvBitacora;
+        private Krypton.Toolkit.KryptonLabel lblTituloBitacora;
+        private Krypton.Toolkit.KryptonGroupBox groupBoxFiltrosBitacora;
+        private TpIDS.CheckBoxAccesible chkbFechaDesdeBitacora;
+        private TpIDS.DateTimePickerAccesible dtpFechaDesdeBitacora;
+        private TpIDS.CheckBoxAccesible chkbFechaHastaBitacora;
+        private TpIDS.DateTimePickerAccesible dtpFechaHastaBitacora;
+        private Krypton.Toolkit.KryptonLabel lblUsuarioBitacora;
+        private Krypton.Toolkit.KryptonTextBox txtbUsuarioBitacora;
+        private Krypton.Toolkit.KryptonLabel lblActividadBitacora;
+        private Krypton.Toolkit.KryptonTextBox txtbActividadBitacora;
+        private Krypton.Toolkit.KryptonLabel lblNivelBitacora;
+        private Krypton.Toolkit.KryptonComboBox cmbNivelBitacora;
+        private TpIDS.CheckBoxAccesible chkbSoloTecnicaBitacora;
+        private Krypton.Toolkit.KryptonButton btnBuscarBitacora;
+        private Krypton.Toolkit.KryptonDataGridView dgvBitacora;
         private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraDateTime;
         private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraUserId;
@@ -314,5 +376,7 @@ namespace TpIDS
         private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraLevel;
         private System.Windows.Forms.DataGridViewTextBoxColumn colBitacoraSource;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colBitacoraIsTechnical;
+        private System.Windows.Forms.TableLayoutPanel tlpFechasBitacora;
+        private System.Windows.Forms.TableLayoutPanel tlpCamposBitacora;
     }
 }

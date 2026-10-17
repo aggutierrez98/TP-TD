@@ -16,104 +16,113 @@ namespace TpIDS
 
         private void InitializeComponent()
         {
-            this.lblTituloListaDeCompras = new System.Windows.Forms.Label();
-            this.groupBoxItem = new System.Windows.Forms.GroupBox();
-            this.btnEliminarItem = new System.Windows.Forms.Button();
-            this.btnAgregarItem = new System.Windows.Forms.Button();
-            this.txtbCantidadItem = new System.Windows.Forms.TextBox();
-            this.lblCantidadItem = new System.Windows.Forms.Label();
-            this.txtbDescripcionItem = new System.Windows.Forms.TextBox();
-            this.lblDescripcionItem = new System.Windows.Forms.Label();
-            this.dgvItems = new System.Windows.Forms.DataGridView();
+            this.lblTituloListaDeCompras = new Krypton.Toolkit.KryptonLabel();
+            this.groupBoxItem = new Krypton.Toolkit.KryptonGroupBox();
+            this.btnEliminarItem = new Krypton.Toolkit.KryptonButton();
+            this.btnAgregarItem = new Krypton.Toolkit.KryptonButton();
+            this.txtbCantidadItem = new Krypton.Toolkit.KryptonTextBox();
+            this.lblCantidadItem = new Krypton.Toolkit.KryptonLabel();
+            this.txtbDescripcionItem = new Krypton.Toolkit.KryptonTextBox();
+            this.lblDescripcionItem = new Krypton.Toolkit.KryptonLabel();
+            this.dgvItems = new Krypton.Toolkit.KryptonDataGridView();
             this.colItemDescripcion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colItemCantidad = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colItemComprado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxItem)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxItem.Panel)).BeginInit();
+            this.groupBoxItem.Panel.SuspendLayout();
             this.groupBoxItem.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvItems)).BeginInit();
+            this.tlpCamposItem = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpCamposItem.SuspendLayout();
             this.SuspendLayout();
             //
             // lblTituloListaDeCompras
             //
             this.lblTituloListaDeCompras.AutoSize = true;
-            this.lblTituloListaDeCompras.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblTituloListaDeCompras.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.lblTituloListaDeCompras.Location = new System.Drawing.Point(18, 15);
             this.lblTituloListaDeCompras.Name = "lblTituloListaDeCompras";
             this.lblTituloListaDeCompras.Size = new System.Drawing.Size(219, 25);
             this.lblTituloListaDeCompras.TabIndex = 0;
             this.lblTituloListaDeCompras.Tag = "FormShoppingList.TitleLabel";
-            this.lblTituloListaDeCompras.Text = "Lista de compras";
+            this.lblTituloListaDeCompras.Values.Text = "Lista de compras";
             //
             // groupBoxItem
             //
-            this.groupBoxItem.Controls.Add(this.btnEliminarItem);
-            this.groupBoxItem.Controls.Add(this.btnAgregarItem);
-            this.groupBoxItem.Controls.Add(this.txtbCantidadItem);
-            this.groupBoxItem.Controls.Add(this.lblCantidadItem);
-            this.groupBoxItem.Controls.Add(this.txtbDescripcionItem);
-            this.groupBoxItem.Controls.Add(this.lblDescripcionItem);
+            this.groupBoxItem.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxItem.Panel.Controls.Add(this.btnEliminarItem);
+            this.groupBoxItem.Panel.Controls.Add(this.btnAgregarItem);
+            this.groupBoxItem.Panel.Controls.Add(this.tlpCamposItem);
             this.groupBoxItem.Location = new System.Drawing.Point(23, 52);
             this.groupBoxItem.Name = "groupBoxItem";
             this.groupBoxItem.Size = new System.Drawing.Size(454, 116);
             this.groupBoxItem.TabIndex = 1;
             this.groupBoxItem.TabStop = false;
             this.groupBoxItem.Tag = "FormShoppingList.ItemGroup";
-            this.groupBoxItem.Text = "Datos del item";
+            this.groupBoxItem.Values.Heading = "Datos del item";
             //
             // btnEliminarItem
             //
-            this.btnEliminarItem.Location = new System.Drawing.Point(294, 79);
+            this.btnEliminarItem.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnEliminarItem.Location = new System.Drawing.Point(294, 63);
             this.btnEliminarItem.Name = "btnEliminarItem";
             this.btnEliminarItem.Size = new System.Drawing.Size(135, 30);
             this.btnEliminarItem.TabIndex = 5;
             this.btnEliminarItem.Tag = "FormShoppingList.DeleteButton";
-            this.btnEliminarItem.Text = "Eliminar item";
-            this.btnEliminarItem.UseVisualStyleBackColor = true;
+            this.btnEliminarItem.Values.Text = "Eliminar item";
             this.btnEliminarItem.Click += new System.EventHandler(this.btnEliminarItem_Click);
             //
             // btnAgregarItem
             //
-            this.btnAgregarItem.Location = new System.Drawing.Point(14, 79);
+            this.btnAgregarItem.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnAgregarItem.Location = new System.Drawing.Point(14, 63);
             this.btnAgregarItem.Name = "btnAgregarItem";
             this.btnAgregarItem.Size = new System.Drawing.Size(135, 30);
             this.btnAgregarItem.TabIndex = 4;
             this.btnAgregarItem.Tag = "FormShoppingList.AddButton";
-            this.btnAgregarItem.Text = "Agregar item";
-            this.btnAgregarItem.UseVisualStyleBackColor = true;
+            this.btnAgregarItem.Values.Text = "Agregar item";
             this.btnAgregarItem.Click += new System.EventHandler(this.btnAgregarItem_Click);
             //
             // txtbCantidadItem
             //
-            this.txtbCantidadItem.Location = new System.Drawing.Point(340, 44);
+            this.txtbCantidadItem.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbCantidadItem.Location = new System.Drawing.Point(329, 20);
             this.txtbCantidadItem.Name = "txtbCantidadItem";
             this.txtbCantidadItem.Size = new System.Drawing.Size(89, 20);
             this.txtbCantidadItem.TabIndex = 3;
+            this.txtbCantidadItem.Margin = new System.Windows.Forms.Padding(3, 0, 0, 0);
             //
             // lblCantidadItem
             //
             this.lblCantidadItem.AutoSize = true;
-            this.lblCantidadItem.Location = new System.Drawing.Point(337, 28);
+            this.lblCantidadItem.Location = new System.Drawing.Point(326, 0);
             this.lblCantidadItem.Name = "lblCantidadItem";
             this.lblCantidadItem.Size = new System.Drawing.Size(60, 13);
             this.lblCantidadItem.TabIndex = 2;
             this.lblCantidadItem.Tag = "FormShoppingList.QuantityLabel";
-            this.lblCantidadItem.Text = "Cantidad:";
+            this.lblCantidadItem.Values.Text = "Cantidad:";
+            this.lblCantidadItem.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             //
             // txtbDescripcionItem
             //
-            this.txtbDescripcionItem.Location = new System.Drawing.Point(14, 44);
+            this.txtbDescripcionItem.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbDescripcionItem.Location = new System.Drawing.Point(3, 20);
             this.txtbDescripcionItem.Name = "txtbDescripcionItem";
             this.txtbDescripcionItem.Size = new System.Drawing.Size(310, 20);
             this.txtbDescripcionItem.TabIndex = 1;
+            this.txtbDescripcionItem.Margin = new System.Windows.Forms.Padding(3, 0, 13, 0);
             //
             // lblDescripcionItem
             //
             this.lblDescripcionItem.AutoSize = true;
-            this.lblDescripcionItem.Location = new System.Drawing.Point(11, 28);
+            this.lblDescripcionItem.Location = new System.Drawing.Point(0, 0);
             this.lblDescripcionItem.Name = "lblDescripcionItem";
             this.lblDescripcionItem.Size = new System.Drawing.Size(115, 13);
             this.lblDescripcionItem.TabIndex = 0;
             this.lblDescripcionItem.Tag = "FormShoppingList.DescriptionLabel";
-            this.lblDescripcionItem.Text = "Descripcion:";
+            this.lblDescripcionItem.Values.Text = "Descripcion:";
+            this.lblDescripcionItem.Margin = new System.Windows.Forms.Padding(0, 0, 0, 0);
             //
             // dgvItems
             //
@@ -121,6 +130,7 @@ namespace TpIDS
             this.dgvItems.AllowUserToDeleteRows = false;
             this.dgvItems.AutoGenerateColumns = false;
             this.dgvItems.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvItems.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvItems.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvItems.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colItemDescripcion,
@@ -154,6 +164,24 @@ namespace TpIDS
             this.colItemComprado.DataPropertyName = "Comprado";
             this.colItemComprado.HeaderText = "Comprado";
             this.colItemComprado.Name = "Comprado";
+            // 
+            // tlpCamposItem
+            // 
+            this.tlpCamposItem.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.tlpCamposItem.Controls.Add(this.txtbCantidadItem, 1, 1);
+            this.tlpCamposItem.Controls.Add(this.lblCantidadItem, 1, 0);
+            this.tlpCamposItem.Controls.Add(this.txtbDescripcionItem, 0, 1);
+            this.tlpCamposItem.Controls.Add(this.lblDescripcionItem, 0, 0);
+            this.tlpCamposItem.Location = new System.Drawing.Point(11, 8);
+            this.tlpCamposItem.Name = "tlpCamposItem";
+            this.tlpCamposItem.Size = new System.Drawing.Size(418, 44);
+            this.tlpCamposItem.ColumnCount = 2;
+            this.tlpCamposItem.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 77.99F));
+            this.tlpCamposItem.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 22.01F));
+            this.tlpCamposItem.RowCount = 2;
+            this.tlpCamposItem.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.tlpCamposItem.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24F));
+            this.tlpCamposItem.TabIndex = 0;
             //
             // FormListaDeCompras
             //
@@ -163,31 +191,36 @@ namespace TpIDS
             this.Controls.Add(this.dgvItems);
             this.Controls.Add(this.groupBoxItem);
             this.Controls.Add(this.lblTituloListaDeCompras);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
             this.Name = "FormListaDeCompras";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Tag = "FormShoppingList.Title";
             this.Text = "Lista de compras";
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxItem.Panel)).EndInit();
+            this.groupBoxItem.Panel.ResumeLayout(false);
+            this.groupBoxItem.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxItem)).EndInit();
             this.groupBoxItem.ResumeLayout(false);
             this.groupBoxItem.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvItems)).EndInit();
+            this.tlpCamposItem.ResumeLayout(false);
+            this.tlpCamposItem.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
-        private System.Windows.Forms.Label lblTituloListaDeCompras;
-        private System.Windows.Forms.GroupBox groupBoxItem;
-        private System.Windows.Forms.Button btnEliminarItem;
-        private System.Windows.Forms.Button btnAgregarItem;
-        private System.Windows.Forms.TextBox txtbCantidadItem;
-        private System.Windows.Forms.Label lblCantidadItem;
-        private System.Windows.Forms.TextBox txtbDescripcionItem;
-        private System.Windows.Forms.Label lblDescripcionItem;
-        private System.Windows.Forms.DataGridView dgvItems;
+        private Krypton.Toolkit.KryptonLabel lblTituloListaDeCompras;
+        private Krypton.Toolkit.KryptonGroupBox groupBoxItem;
+        private Krypton.Toolkit.KryptonButton btnEliminarItem;
+        private Krypton.Toolkit.KryptonButton btnAgregarItem;
+        private Krypton.Toolkit.KryptonTextBox txtbCantidadItem;
+        private Krypton.Toolkit.KryptonLabel lblCantidadItem;
+        private Krypton.Toolkit.KryptonTextBox txtbDescripcionItem;
+        private Krypton.Toolkit.KryptonLabel lblDescripcionItem;
+        private Krypton.Toolkit.KryptonDataGridView dgvItems;
         private System.Windows.Forms.DataGridViewTextBoxColumn colItemDescripcion;
         private System.Windows.Forms.DataGridViewTextBoxColumn colItemCantidad;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colItemComprado;
+        private System.Windows.Forms.TableLayoutPanel tlpCamposItem;
     }
 }

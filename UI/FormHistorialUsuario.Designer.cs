@@ -16,12 +16,12 @@ namespace TpIDS
 
         private void InitializeComponent()
         {
-            this.lblTituloHistorialUsuario = new System.Windows.Forms.Label();
+            this.lblTituloHistorialUsuario = new Krypton.Toolkit.KryptonLabel();
             this.pnlUsuarioHistorial = new System.Windows.Forms.FlowLayoutPanel();
-            this.lblUsuarioHistorial = new System.Windows.Forms.Label();
-            this.lblUsuarioHistorialNombre = new System.Windows.Forms.Label();
-            this.dgvHistorialUsuario = new System.Windows.Forms.DataGridView();
-            this.dgvCambiosEstado = new System.Windows.Forms.DataGridView();
+            this.lblUsuarioHistorial = new Krypton.Toolkit.KryptonLabel();
+            this.lblUsuarioHistorialNombre = new Krypton.Toolkit.KryptonLabel();
+            this.dgvHistorialUsuario = new Krypton.Toolkit.KryptonDataGridView();
+            this.dgvCambiosEstado = new Krypton.Toolkit.KryptonDataGridView();
             this.colHistorialHistoryId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colHistorialUserId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colHistorialDateTime = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -35,17 +35,19 @@ namespace TpIDS
             this.colCambiosField = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colCambiosPreviousValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colCambiosNewValue = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.btnRestaurarVersion = new System.Windows.Forms.Button();
-            this.btnRefrescarHistorial = new System.Windows.Forms.Button();
+            this.btnRestaurarVersion = new Krypton.Toolkit.KryptonButton();
+            this.btnRefrescarHistorial = new Krypton.Toolkit.KryptonButton();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHistorialUsuario)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvCambiosEstado)).BeginInit();
             this.pnlUsuarioHistorial.SuspendLayout();
+            this.tlpGrillasHistorial = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpGrillasHistorial.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTituloHistorialUsuario
             // 
             this.lblTituloHistorialUsuario.AutoSize = true;
-            this.lblTituloHistorialUsuario.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblTituloHistorialUsuario.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.lblTituloHistorialUsuario.Location = new System.Drawing.Point(15, 15);
             this.lblTituloHistorialUsuario.Name = "lblTituloHistorialUsuario";
             this.lblTituloHistorialUsuario.Size = new System.Drawing.Size(0, 25);
@@ -71,7 +73,7 @@ namespace TpIDS
             this.lblUsuarioHistorial.Size = new System.Drawing.Size(49, 13);
             this.lblUsuarioHistorial.TabIndex = 0;
             this.lblUsuarioHistorial.Tag = "FormUserHistory.UserPrefix";
-            this.lblUsuarioHistorial.Text = "Usuario:";
+            this.lblUsuarioHistorial.Values.Text = "Usuario:";
             //
             // lblUsuarioHistorialNombre
             //
@@ -80,7 +82,7 @@ namespace TpIDS
             this.lblUsuarioHistorialNombre.Name = "lblUsuarioHistorialNombre";
             this.lblUsuarioHistorialNombre.Size = new System.Drawing.Size(10, 13);
             this.lblUsuarioHistorialNombre.TabIndex = 1;
-            this.lblUsuarioHistorialNombre.Text = "-";
+            this.lblUsuarioHistorialNombre.Values.Text = "-";
             //
             // dgvHistorialUsuario
             // 
@@ -88,6 +90,7 @@ namespace TpIDS
             this.dgvHistorialUsuario.AllowUserToDeleteRows = false;
             this.dgvHistorialUsuario.AutoGenerateColumns = false;
             this.dgvHistorialUsuario.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvHistorialUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvHistorialUsuario.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvHistorialUsuario.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colHistorialHistoryId,
@@ -100,7 +103,7 @@ namespace TpIDS
             this.colHistorialUsername,
             this.colHistorialActive,
             this.colHistorialLanguageId});
-            this.dgvHistorialUsuario.Location = new System.Drawing.Point(20, 75);
+            this.dgvHistorialUsuario.Location = new System.Drawing.Point(0, 0);
             this.dgvHistorialUsuario.MultiSelect = false;
             this.dgvHistorialUsuario.Name = "dgvHistorialUsuario";
             this.dgvHistorialUsuario.ReadOnly = true;
@@ -110,6 +113,7 @@ namespace TpIDS
             this.dgvHistorialUsuario.Tag = "FormUserHistory.Grid";
             this.dgvHistorialUsuario.TabIndex = 2;
             this.dgvHistorialUsuario.SelectionChanged += new System.EventHandler(this.dgvHistorialUsuario_SelectionChanged);
+            this.dgvHistorialUsuario.Margin = new System.Windows.Forms.Padding(0, 0, 0, 15);
             // 
             // dgvCambiosEstado
             // 
@@ -117,12 +121,13 @@ namespace TpIDS
             this.dgvCambiosEstado.AllowUserToDeleteRows = false;
             this.dgvCambiosEstado.AutoGenerateColumns = false;
             this.dgvCambiosEstado.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvCambiosEstado.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvCambiosEstado.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvCambiosEstado.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colCambiosField,
             this.colCambiosPreviousValue,
             this.colCambiosNewValue});
-            this.dgvCambiosEstado.Location = new System.Drawing.Point(20, 330);
+            this.dgvCambiosEstado.Location = new System.Drawing.Point(0, 255);
             this.dgvCambiosEstado.MultiSelect = false;
             this.dgvCambiosEstado.Name = "dgvCambiosEstado";
             this.dgvCambiosEstado.ReadOnly = true;
@@ -131,25 +136,28 @@ namespace TpIDS
             this.dgvCambiosEstado.Size = new System.Drawing.Size(760, 180);
             this.dgvCambiosEstado.Tag = "FormUserHistory.DiffGrid";
             this.dgvCambiosEstado.TabIndex = 3;
+            this.dgvCambiosEstado.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
             // 
             // btnRestaurarVersion
             // 
+            this.btnRestaurarVersion.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnRestaurarVersion.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
             this.btnRestaurarVersion.Location = new System.Drawing.Point(570, 525);
             this.btnRestaurarVersion.Name = "btnRestaurarVersion";
             this.btnRestaurarVersion.Size = new System.Drawing.Size(210, 30);
             this.btnRestaurarVersion.Tag = "FormUserHistory.RestoreButton";
             this.btnRestaurarVersion.TabIndex = 5;
-            this.btnRestaurarVersion.UseVisualStyleBackColor = true;
             this.btnRestaurarVersion.Click += new System.EventHandler(this.btnRestaurarVersion_Click);
             // 
             // btnRefrescarHistorial
             // 
+            this.btnRefrescarHistorial.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnRefrescarHistorial.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
             this.btnRefrescarHistorial.Location = new System.Drawing.Point(20, 525);
             this.btnRefrescarHistorial.Name = "btnRefrescarHistorial";
             this.btnRefrescarHistorial.Size = new System.Drawing.Size(210, 30);
             this.btnRefrescarHistorial.Tag = "FormUserHistory.RefreshButton";
             this.btnRefrescarHistorial.TabIndex = 4;
-            this.btnRefrescarHistorial.UseVisualStyleBackColor = true;
             this.btnRefrescarHistorial.Click += new System.EventHandler(this.btnRefrescarHistorial_Click);
             //
             // colHistorialHistoryId
@@ -242,6 +250,21 @@ namespace TpIDS
             this.colCambiosNewValue.HeaderText = "Valor nuevo";
             this.colCambiosNewValue.Name = "NewValue";
             this.colCambiosNewValue.ReadOnly = true;
+            // 
+            // tlpGrillasHistorial
+            // 
+            this.tlpGrillasHistorial.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.tlpGrillasHistorial.Controls.Add(this.dgvCambiosEstado, 0, 1);
+            this.tlpGrillasHistorial.Controls.Add(this.dgvHistorialUsuario, 0, 0);
+            this.tlpGrillasHistorial.Location = new System.Drawing.Point(20, 75);
+            this.tlpGrillasHistorial.Name = "tlpGrillasHistorial";
+            this.tlpGrillasHistorial.Size = new System.Drawing.Size(760, 439);
+            this.tlpGrillasHistorial.ColumnCount = 1;
+            this.tlpGrillasHistorial.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpGrillasHistorial.RowCount = 2;
+            this.tlpGrillasHistorial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 58.09F));
+            this.tlpGrillasHistorial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 41.91F));
+            this.tlpGrillasHistorial.TabIndex = 2;
             //
             // FormHistorialUsuario
             //
@@ -250,12 +273,9 @@ namespace TpIDS
             this.ClientSize = new System.Drawing.Size(800, 575);
             this.Controls.Add(this.btnRefrescarHistorial);
             this.Controls.Add(this.btnRestaurarVersion);
-            this.Controls.Add(this.dgvCambiosEstado);
-            this.Controls.Add(this.dgvHistorialUsuario);
+            this.Controls.Add(this.tlpGrillasHistorial);
             this.Controls.Add(this.pnlUsuarioHistorial);
             this.Controls.Add(this.lblTituloHistorialUsuario);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
             this.Name = "FormHistorialUsuario";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Tag = "FormUserHistory.Title";
@@ -263,18 +283,20 @@ namespace TpIDS
             ((System.ComponentModel.ISupportInitialize)(this.dgvCambiosEstado)).EndInit();
             this.pnlUsuarioHistorial.ResumeLayout(false);
             this.pnlUsuarioHistorial.PerformLayout();
+            this.tlpGrillasHistorial.ResumeLayout(false);
+            this.tlpGrillasHistorial.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
 
-        private System.Windows.Forms.Label lblTituloHistorialUsuario;
+        private Krypton.Toolkit.KryptonLabel lblTituloHistorialUsuario;
         private System.Windows.Forms.FlowLayoutPanel pnlUsuarioHistorial;
-        private System.Windows.Forms.Label lblUsuarioHistorial;
-        private System.Windows.Forms.Label lblUsuarioHistorialNombre;
-        private System.Windows.Forms.DataGridView dgvHistorialUsuario;
-        private System.Windows.Forms.DataGridView dgvCambiosEstado;
-        private System.Windows.Forms.Button btnRestaurarVersion;
-        private System.Windows.Forms.Button btnRefrescarHistorial;
+        private Krypton.Toolkit.KryptonLabel lblUsuarioHistorial;
+        private Krypton.Toolkit.KryptonLabel lblUsuarioHistorialNombre;
+        private Krypton.Toolkit.KryptonDataGridView dgvHistorialUsuario;
+        private Krypton.Toolkit.KryptonDataGridView dgvCambiosEstado;
+        private Krypton.Toolkit.KryptonButton btnRestaurarVersion;
+        private Krypton.Toolkit.KryptonButton btnRefrescarHistorial;
         private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialHistoryId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialUserId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colHistorialDateTime;
@@ -288,5 +310,6 @@ namespace TpIDS
         private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosField;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosPreviousValue;
         private System.Windows.Forms.DataGridViewTextBoxColumn colCambiosNewValue;
+        private System.Windows.Forms.TableLayoutPanel tlpGrillasHistorial;
     }
 }

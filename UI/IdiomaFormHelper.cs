@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Windows.Forms;
 using ABSTRACCIONES;
+using Krypton.Toolkit;
 
 namespace TpIDS
 {
@@ -46,6 +47,19 @@ namespace TpIDS
                 return;
             }
 
+            // KryptonComboBox no hereda de ComboBox (lo envuelve): se trata aparte.
+            if (control is KryptonComboBox comboKrypton && TieneOpcionesTraducibles(comboKrypton))
+            {
+                AplicarComboBox(comboKrypton, idioma);
+                return;
+            }
+
+            // Los items de un MenuStrip/ToolStrip no estan en Controls: se recorren aparte.
+            if (control is ToolStrip barra)
+            {
+                AplicarItems(barra.Items, idioma);
+            }
+
             if (control.Tag is string key)
             {
                 control.Text = idioma.ObtenerTraduccion(key);
@@ -57,6 +71,22 @@ namespace TpIDS
                 foreach (Control item in control.Controls)
                 {
                     Aplicar(item, idioma);
+                }
+            }
+        }
+
+        private static void AplicarItems(ToolStripItemCollection items, IIdioma idioma)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                if (item.Tag is string key)
+                {
+                    item.Text = idioma.ObtenerTraduccion(key);
+                }
+
+                if (item is ToolStripDropDownItem desplegable && desplegable.HasDropDownItems)
+                {
+                    AplicarItems(desplegable.DropDownItems, idioma);
                 }
             }
         }
@@ -93,7 +123,34 @@ namespace TpIDS
             return combo.Items.Count > 0 && combo.Items[0] is OpcionTraducible;
         }
 
+        private static bool TieneOpcionesTraducibles(KryptonComboBox combo)
+        {
+            return combo.Items.Count > 0 && combo.Items[0] is OpcionTraducible;
+        }
+
         private static void AplicarComboBox(ComboBox combo, IIdioma idioma)
+        {
+            int seleccion = combo.SelectedIndex;
+            object[] items = combo.Items.Cast<object>().ToArray();
+
+            foreach (OpcionTraducible opcion in items.OfType<OpcionTraducible>())
+            {
+                opcion.Texto = idioma.ObtenerTraduccion(opcion.Clave);
+            }
+
+            // Re-agregar los items fuerza a que el combo recalcule el texto mostrado.
+            combo.BeginUpdate();
+            combo.Items.Clear();
+            combo.Items.AddRange(items);
+            if (seleccion >= 0 && seleccion < combo.Items.Count)
+            {
+                combo.SelectedIndex = seleccion;
+            }
+
+            combo.EndUpdate();
+        }
+
+        private static void AplicarComboBox(KryptonComboBox combo, IIdioma idioma)
         {
             int seleccion = combo.SelectedIndex;
             object[] items = combo.Items.Cast<object>().ToArray();

@@ -19,6 +19,7 @@ namespace TpIDS
             this.components = new System.ComponentModel.Container();
             this.menuStripPrincipal = new System.Windows.Forms.MenuStrip();
             this.mnuSesion = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuMisNotificaciones = new MenuNotificacionesItem();
             this.mnuMiConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparatorSesion = new System.Windows.Forms.ToolStripSeparator();
             this.mnuCerrarSesion = new System.Windows.Forms.ToolStripMenuItem();
@@ -39,6 +40,10 @@ namespace TpIDS
             this.mnuMonedas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuOperadorMediosPago = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuOperadorEntidadesFinancieras = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorProductos = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorCategoriasProducto = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorPromociones = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorActualizacionTasas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFinanzasCuentasFinancieras = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuAsistentePersonal = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuAsistentePersonalAbrir = new System.Windows.Forms.ToolStripMenuItem();
@@ -52,6 +57,7 @@ namespace TpIDS
             //
             this.menuStripPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuSesion,
+            this.mnuMisNotificaciones,
             this.mnuFinanzas,
             this.mnuAdministracion,
             this.mnuOperador,
@@ -72,6 +78,10 @@ namespace TpIDS
             this.mnuSesion.Size = new System.Drawing.Size(58, 20);
             this.mnuSesion.Tag = "FormMainShell.Menu.Session";
             this.mnuSesion.Text = "Sesion";
+            this.mnuMisNotificaciones.Name = "mnuMisNotificaciones";
+            this.mnuMisNotificaciones.Tag = "FormMainShell.Menu.MyNotifications";
+            this.mnuMisNotificaciones.Text = "Mis notificaciones";
+            this.mnuMisNotificaciones.Click += new System.EventHandler(this.mnuMisNotificaciones_Click);
             //
             // mnuMiConfiguracion
             //
@@ -207,7 +217,11 @@ namespace TpIDS
             this.mnuComercios,
             this.mnuMonedas,
             this.mnuOperadorMediosPago,
-            this.mnuOperadorEntidadesFinancieras});
+            this.mnuOperadorEntidadesFinancieras,
+            this.mnuOperadorProductos,
+            this.mnuOperadorCategoriasProducto,
+            this.mnuOperadorPromociones,
+            this.mnuOperadorActualizacionTasas});
             this.mnuOperador.Name = "mnuOperador";
             this.mnuOperador.Size = new System.Drawing.Size(76, 20);
             this.mnuOperador.Tag = "FormMainShell.Menu.Operator";
@@ -252,6 +266,36 @@ namespace TpIDS
             this.mnuOperadorEntidadesFinancieras.Tag = "FormMainShell.Menu.FinancialEntities";
             this.mnuOperadorEntidadesFinancieras.Text = "Entidades financieras";
             this.mnuOperadorEntidadesFinancieras.Click += new System.EventHandler(this.mnuOperadorEntidadesFinancieras_Click);
+            //
+            // mnuOperadorProductos
+            //
+            this.mnuOperadorProductos.Name = "mnuOperadorProductos";
+            this.mnuOperadorProductos.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorProductos.Tag = "FormMainShell.Menu.Products";
+            this.mnuOperadorProductos.Text = "Productos";
+            this.mnuOperadorProductos.Click += new System.EventHandler(this.mnuOperadorProductos_Click);
+            // mnuOperadorCategoriasProducto
+            this.mnuOperadorCategoriasProducto.Name = "mnuOperadorCategoriasProducto";
+            this.mnuOperadorCategoriasProducto.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorCategoriasProducto.Tag = "FormMainShell.Menu.ProductCategories";
+            this.mnuOperadorCategoriasProducto.Text = "Categorias de producto";
+            this.mnuOperadorCategoriasProducto.Click += new System.EventHandler(this.mnuOperadorCategoriasProducto_Click);
+            //
+            // mnuOperadorPromociones
+            //
+            this.mnuOperadorPromociones.Name = "mnuOperadorPromociones";
+            this.mnuOperadorPromociones.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorPromociones.Tag = "FormMainShell.Menu.Promotions";
+            this.mnuOperadorPromociones.Text = "Promociones";
+            this.mnuOperadorPromociones.Click += new System.EventHandler(this.mnuOperadorPromociones_Click);
+            //
+            // mnuOperadorActualizacionTasas
+            //
+            this.mnuOperadorActualizacionTasas.Name = "mnuOperadorActualizacionTasas";
+            this.mnuOperadorActualizacionTasas.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorActualizacionTasas.Tag = "FormMainShell.Menu.ExchangeRateUpdate";
+            this.mnuOperadorActualizacionTasas.Text = "Actualizacion de tasas";
+            this.mnuOperadorActualizacionTasas.Click += new System.EventHandler(this.mnuOperadorActualizacionTasas_Click);
             //
             // mnuAsistentePersonal
             //
@@ -336,10 +380,15 @@ namespace TpIDS
         private System.Windows.Forms.ToolStripMenuItem mnuBackup;
         private System.Windows.Forms.ToolStripMenuItem mnuOperador;
         private System.Windows.Forms.ToolStripMenuItem mnuNotificaciones;
+        private MenuNotificacionesItem mnuMisNotificaciones;
         private System.Windows.Forms.ToolStripMenuItem mnuComercios;
         private System.Windows.Forms.ToolStripMenuItem mnuMonedas;
         private System.Windows.Forms.ToolStripMenuItem mnuOperadorMediosPago;
         private System.Windows.Forms.ToolStripMenuItem mnuOperadorEntidadesFinancieras;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorProductos;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorCategoriasProducto;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorPromociones;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorActualizacionTasas;
         private System.Windows.Forms.ToolStripMenuItem mnuFinanzasCuentasFinancieras;
         private System.Windows.Forms.ToolStripMenuItem mnuAsistentePersonal;
         private System.Windows.Forms.ToolStripMenuItem mnuAsistentePersonalAbrir;

@@ -16,45 +16,55 @@ namespace TpIDS
 
         private void InitializeComponent()
         {
-            this.lblTituloGestionUsuarios = new System.Windows.Forms.Label();
+            this.lblTituloGestionUsuarios = new Krypton.Toolkit.KryptonLabel();
             this.pnlSesionActual = new System.Windows.Forms.FlowLayoutPanel();
-            this.lblSesionActual = new System.Windows.Forms.Label();
-            this.lblSesionActualUsuario = new System.Windows.Forms.Label();
-            this.dgvUsuarios = new System.Windows.Forms.DataGridView();
-            this.groupBoxGestion = new System.Windows.Forms.GroupBox();
-            this.lblPasswordUsuario = new System.Windows.Forms.Label();
-            this.txtbPasswordUsuario = new System.Windows.Forms.TextBox();
-            this.chkbUsuarioActivo = new System.Windows.Forms.CheckBox();
-            this.lblNombreUsuario = new System.Windows.Forms.Label();
-            this.txtbNombreUsuario = new System.Windows.Forms.TextBox();
-            this.btnAgregarUsuario = new System.Windows.Forms.Button();
-            this.btnEditarUsuario = new System.Windows.Forms.Button();
-            this.btnEliminarUsuario = new System.Windows.Forms.Button();
-            this.btnDesbloquearUsuario = new System.Windows.Forms.Button();
-            this.groupBoxPermisosUsuario = new System.Windows.Forms.GroupBox();
+            this.lblSesionActual = new Krypton.Toolkit.KryptonLabel();
+            this.lblSesionActualUsuario = new Krypton.Toolkit.KryptonLabel();
+            this.dgvUsuarios = new Krypton.Toolkit.KryptonDataGridView();
+            this.groupBoxGestion = new Krypton.Toolkit.KryptonGroupBox();
+            this.lblPasswordUsuario = new Krypton.Toolkit.KryptonLabel();
+            this.txtbPasswordUsuario = new Krypton.Toolkit.KryptonTextBox();
+            this.chkbUsuarioActivo = new TpIDS.CheckBoxAccesible();
+            this.lblNombreUsuario = new Krypton.Toolkit.KryptonLabel();
+            this.txtbNombreUsuario = new Krypton.Toolkit.KryptonTextBox();
+            this.btnAgregarUsuario = new Krypton.Toolkit.KryptonButton();
+            this.btnEditarUsuario = new Krypton.Toolkit.KryptonButton();
+            this.btnEliminarUsuario = new Krypton.Toolkit.KryptonButton();
+            this.btnDesbloquearUsuario = new Krypton.Toolkit.KryptonButton();
+            this.groupBoxPermisosUsuario = new Krypton.Toolkit.KryptonGroupBox();
             this.tvwPermisosUsuario = new System.Windows.Forms.TreeView();
-            this.btnGuardarPermisosUsuario = new System.Windows.Forms.Button();
-            this.btnHistorialUsuario = new System.Windows.Forms.Button();
+            this.btnGuardarPermisosUsuario = new Krypton.Toolkit.KryptonButton();
+            this.btnHistorialUsuario = new Krypton.Toolkit.KryptonButton();
             this.colUsuariosId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colUsuariosUsername = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colUsuariosActive = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.colUsuariosBloqueado = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.pnlSesionActual.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxGestion)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxGestion.Panel)).BeginInit();
+            this.groupBoxGestion.Panel.SuspendLayout();
             this.groupBoxGestion.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxPermisosUsuario)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxPermisosUsuario.Panel)).BeginInit();
+            this.groupBoxPermisosUsuario.Panel.SuspendLayout();
             this.groupBoxPermisosUsuario.SuspendLayout();
+            this.pnlZonaUsuarios = new System.Windows.Forms.Panel();
+            this.pnlZonaUsuarios.SuspendLayout();
+            this.tlpZonasUsuarios = new System.Windows.Forms.TableLayoutPanel();
+            this.tlpZonasUsuarios.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTituloGestionUsuarios
             // 
             this.lblTituloGestionUsuarios.AutoSize = true;
-            this.lblTituloGestionUsuarios.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
+            this.lblTituloGestionUsuarios.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold);
             this.lblTituloGestionUsuarios.Location = new System.Drawing.Point(12, 15);
             this.lblTituloGestionUsuarios.Name = "lblTituloGestionUsuarios";
             this.lblTituloGestionUsuarios.Size = new System.Drawing.Size(189, 25);
             this.lblTituloGestionUsuarios.TabIndex = 0;
             this.lblTituloGestionUsuarios.Tag = "FormUserManagement.TitleLabel";
-            this.lblTituloGestionUsuarios.Text = "Gestion de Usuarios";
+            this.lblTituloGestionUsuarios.Values.Text = "Gestion de Usuarios";
             // 
             // pnlSesionActual
             // 
@@ -70,43 +80,42 @@ namespace TpIDS
             // lblSesionActual
             // 
             this.lblSesionActual.AutoSize = true;
-            this.lblSesionActual.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-            this.lblSesionActual.ForeColor = System.Drawing.Color.DimGray;
+            this.lblSesionActual.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+            this.lblSesionActual.StateCommon.ShortText.Color1 = System.Drawing.Color.DimGray;
             this.lblSesionActual.Location = new System.Drawing.Point(0, 0);
             this.lblSesionActual.Margin = new System.Windows.Forms.Padding(0);
             this.lblSesionActual.Name = "lblSesionActual";
             this.lblSesionActual.Size = new System.Drawing.Size(78, 15);
             this.lblSesionActual.TabIndex = 0;
             this.lblSesionActual.Tag = "FormUserManagement.SessionLabelPrefix";
-            this.lblSesionActual.Text = "Sesion activa:";
+            this.lblSesionActual.Values.Text = "Sesion activa:";
             // 
             // lblSesionActualUsuario
             // 
             this.lblSesionActualUsuario.AutoSize = true;
-            this.lblSesionActualUsuario.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
-            this.lblSesionActualUsuario.ForeColor = System.Drawing.Color.DimGray;
+            this.lblSesionActualUsuario.StateCommon.ShortText.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+            this.lblSesionActualUsuario.StateCommon.ShortText.Color1 = System.Drawing.Color.DimGray;
             this.lblSesionActualUsuario.Location = new System.Drawing.Point(82, 0);
             this.lblSesionActualUsuario.Margin = new System.Windows.Forms.Padding(4, 0, 0, 0);
             this.lblSesionActualUsuario.Name = "lblSesionActualUsuario";
             this.lblSesionActualUsuario.Size = new System.Drawing.Size(12, 15);
             this.lblSesionActualUsuario.TabIndex = 1;
-            this.lblSesionActualUsuario.Text = "-";
+            this.lblSesionActualUsuario.Values.Text = "-";
             // 
             // dgvUsuarios
             // 
             this.dgvUsuarios.AllowUserToAddRows = false;
             this.dgvUsuarios.AllowUserToDeleteRows = false;
             this.dgvUsuarios.AutoGenerateColumns = false;
-            this.dgvUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvUsuarios.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.dgvUsuarios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvUsuarios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colUsuariosId,
             this.colUsuariosUsername,
             this.colUsuariosActive,
             this.colUsuariosBloqueado});
-            this.dgvUsuarios.Location = new System.Drawing.Point(15, 70);
+            this.dgvUsuarios.Location = new System.Drawing.Point(0, 0);
             this.dgvUsuarios.MultiSelect = false;
             this.dgvUsuarios.Name = "dgvUsuarios";
             this.dgvUsuarios.ReadOnly = true;
@@ -119,38 +128,38 @@ namespace TpIDS
             // 
             // groupBoxGestion
             // 
-            this.groupBoxGestion.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBoxGestion.Controls.Add(this.lblPasswordUsuario);
-            this.groupBoxGestion.Controls.Add(this.txtbPasswordUsuario);
-            this.groupBoxGestion.Controls.Add(this.chkbUsuarioActivo);
-            this.groupBoxGestion.Controls.Add(this.lblNombreUsuario);
-            this.groupBoxGestion.Controls.Add(this.txtbNombreUsuario);
-            this.groupBoxGestion.Controls.Add(this.btnAgregarUsuario);
-            this.groupBoxGestion.Controls.Add(this.btnEditarUsuario);
-            this.groupBoxGestion.Controls.Add(this.btnEliminarUsuario);
-            this.groupBoxGestion.Controls.Add(this.btnDesbloquearUsuario);
-            this.groupBoxGestion.Location = new System.Drawing.Point(15, 315);
+            this.groupBoxGestion.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxGestion.Panel.Controls.Add(this.lblPasswordUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.txtbPasswordUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.chkbUsuarioActivo);
+            this.groupBoxGestion.Panel.Controls.Add(this.lblNombreUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.txtbNombreUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.btnAgregarUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.btnEditarUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.btnEliminarUsuario);
+            this.groupBoxGestion.Panel.Controls.Add(this.btnDesbloquearUsuario);
+            this.groupBoxGestion.Location = new System.Drawing.Point(0, 245);
             this.groupBoxGestion.Name = "groupBoxGestion";
             this.groupBoxGestion.Size = new System.Drawing.Size(530, 190);
             this.groupBoxGestion.TabIndex = 3;
             this.groupBoxGestion.TabStop = false;
             this.groupBoxGestion.Tag = "FormUserManagement.UserDataGroup";
-            this.groupBoxGestion.Text = "Datos del usuario";
+            this.groupBoxGestion.Values.Heading = "Datos del usuario";
             // 
             // lblPasswordUsuario
             // 
             this.lblPasswordUsuario.AutoSize = true;
-            this.lblPasswordUsuario.Location = new System.Drawing.Point(10, 75);
+            this.lblPasswordUsuario.Location = new System.Drawing.Point(10, 55);
             this.lblPasswordUsuario.Name = "lblPasswordUsuario";
             this.lblPasswordUsuario.Size = new System.Drawing.Size(257, 13);
             this.lblPasswordUsuario.TabIndex = 2;
             this.lblPasswordUsuario.Tag = "FormUserManagement.PasswordLabel";
-            this.lblPasswordUsuario.Text = "Contrasena (obligatoria al agregar, opcional al editar):";
+            this.lblPasswordUsuario.Values.Text = "Contrasena (obligatoria al agregar, opcional al editar):";
             // 
             // txtbPasswordUsuario
             // 
-            this.txtbPasswordUsuario.Location = new System.Drawing.Point(10, 92);
+            this.txtbPasswordUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbPasswordUsuario.Location = new System.Drawing.Point(10, 76);
             this.txtbPasswordUsuario.Name = "txtbPasswordUsuario";
             this.txtbPasswordUsuario.PasswordChar = '*';
             this.txtbPasswordUsuario.Size = new System.Drawing.Size(514, 20);
@@ -159,116 +168,121 @@ namespace TpIDS
             // chkbUsuarioActivo
             // 
             this.chkbUsuarioActivo.AutoSize = true;
-            this.chkbUsuarioActivo.Location = new System.Drawing.Point(10, 118);
+            this.chkbUsuarioActivo.Location = new System.Drawing.Point(10, 102);
             this.chkbUsuarioActivo.Name = "chkbUsuarioActivo";
             this.chkbUsuarioActivo.Size = new System.Drawing.Size(94, 17);
             this.chkbUsuarioActivo.TabIndex = 4;
             this.chkbUsuarioActivo.Tag = "FormUserManagement.ActiveCheckbox";
-            this.chkbUsuarioActivo.Text = "Usuario activo";
-            this.chkbUsuarioActivo.UseVisualStyleBackColor = true;
+            this.chkbUsuarioActivo.Values.Text = "Usuario activo";
             // 
             // lblNombreUsuario
             // 
             this.lblNombreUsuario.AutoSize = true;
-            this.lblNombreUsuario.Location = new System.Drawing.Point(10, 28);
+            this.lblNombreUsuario.Location = new System.Drawing.Point(10, 8);
             this.lblNombreUsuario.Name = "lblNombreUsuario";
             this.lblNombreUsuario.Size = new System.Drawing.Size(99, 13);
             this.lblNombreUsuario.TabIndex = 0;
             this.lblNombreUsuario.Tag = "FormUserManagement.UsernameLabel";
-            this.lblNombreUsuario.Text = "Nombre de usuario:";
+            this.lblNombreUsuario.Values.Text = "Nombre de usuario:";
             // 
             // txtbNombreUsuario
             // 
-            this.txtbNombreUsuario.Location = new System.Drawing.Point(10, 45);
+            this.txtbNombreUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.txtbNombreUsuario.Location = new System.Drawing.Point(10, 29);
             this.txtbNombreUsuario.Name = "txtbNombreUsuario";
             this.txtbNombreUsuario.Size = new System.Drawing.Size(514, 20);
             this.txtbNombreUsuario.TabIndex = 1;
             // 
             // btnAgregarUsuario
             // 
-            this.btnAgregarUsuario.Location = new System.Drawing.Point(10, 145);
+            this.btnAgregarUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnAgregarUsuario.Location = new System.Drawing.Point(10, 129);
             this.btnAgregarUsuario.Name = "btnAgregarUsuario";
             this.btnAgregarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnAgregarUsuario.TabIndex = 5;
             this.btnAgregarUsuario.Tag = "FormUserManagement.AddButton";
-            this.btnAgregarUsuario.Text = "Agregar usuario";
-            this.btnAgregarUsuario.UseVisualStyleBackColor = true;
+            this.btnAgregarUsuario.Values.Text = "Agregar usuario";
             this.btnAgregarUsuario.Click += new System.EventHandler(this.btnAgregarUsuario_Click);
             //
             // btnEditarUsuario
             //
-            this.btnEditarUsuario.Location = new System.Drawing.Point(140, 145);
+            this.btnEditarUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnEditarUsuario.Location = new System.Drawing.Point(140, 129);
             this.btnEditarUsuario.Name = "btnEditarUsuario";
             this.btnEditarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnEditarUsuario.TabIndex = 6;
             this.btnEditarUsuario.Tag = "FormUserManagement.EditButton";
-            this.btnEditarUsuario.Text = "Editar usuario";
-            this.btnEditarUsuario.UseVisualStyleBackColor = true;
+            this.btnEditarUsuario.Values.Text = "Editar usuario";
             this.btnEditarUsuario.Click += new System.EventHandler(this.btnEditarUsuario_Click);
             //
             // btnEliminarUsuario
             //
-            this.btnEliminarUsuario.Location = new System.Drawing.Point(270, 145);
+            this.btnEliminarUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnEliminarUsuario.Location = new System.Drawing.Point(270, 129);
             this.btnEliminarUsuario.Name = "btnEliminarUsuario";
             this.btnEliminarUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnEliminarUsuario.TabIndex = 7;
             this.btnEliminarUsuario.Tag = "FormUserManagement.DeleteButton";
-            this.btnEliminarUsuario.Text = "Eliminar usuario";
-            this.btnEliminarUsuario.UseVisualStyleBackColor = true;
+            this.btnEliminarUsuario.Values.Text = "Eliminar usuario";
             this.btnEliminarUsuario.Click += new System.EventHandler(this.btnEliminarUsuario_Click);
             //
             // btnDesbloquearUsuario
             //
-            this.btnDesbloquearUsuario.Location = new System.Drawing.Point(400, 145);
+            this.btnDesbloquearUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnDesbloquearUsuario.Location = new System.Drawing.Point(400, 129);
             this.btnDesbloquearUsuario.Name = "btnDesbloquearUsuario";
             this.btnDesbloquearUsuario.Size = new System.Drawing.Size(124, 30);
             this.btnDesbloquearUsuario.TabIndex = 8;
             this.btnDesbloquearUsuario.Tag = "FormUserManagement.UnlockButton";
-            this.btnDesbloquearUsuario.Text = "Desbloquear";
-            this.btnDesbloquearUsuario.UseVisualStyleBackColor = true;
+            this.btnDesbloquearUsuario.Values.Text = "Desbloquear";
             this.btnDesbloquearUsuario.Click += new System.EventHandler(this.btnDesbloquearUsuario_Click);
             //
             // groupBoxPermisosUsuario
             // 
-            this.groupBoxPermisosUsuario.Controls.Add(this.tvwPermisosUsuario);
-            this.groupBoxPermisosUsuario.Controls.Add(this.btnGuardarPermisosUsuario);
-            this.groupBoxPermisosUsuario.Location = new System.Drawing.Point(555, 70);
+            this.groupBoxPermisosUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxPermisosUsuario.Panel.Controls.Add(this.tvwPermisosUsuario);
+            this.groupBoxPermisosUsuario.Panel.Controls.Add(this.btnGuardarPermisosUsuario);
+            this.groupBoxPermisosUsuario.Location = new System.Drawing.Point(540, 0);
             this.groupBoxPermisosUsuario.Name = "groupBoxPermisosUsuario";
-            this.groupBoxPermisosUsuario.Size = new System.Drawing.Size(465, 460);
+            this.groupBoxPermisosUsuario.Size = new System.Drawing.Size(570, 460);
             this.groupBoxPermisosUsuario.TabIndex = 6;
             this.groupBoxPermisosUsuario.TabStop = false;
             this.groupBoxPermisosUsuario.Tag = "FormUserManagement.PermissionTreeGroup";
-            this.groupBoxPermisosUsuario.Text = "Permisos y grupos asignados";
+            this.groupBoxPermisosUsuario.Values.Heading = "Permisos y grupos asignados";
+            this.groupBoxPermisosUsuario.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
             // 
             // tvwPermisosUsuario
             // 
+            this.tvwPermisosUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
             this.tvwPermisosUsuario.CheckBoxes = true;
             this.tvwPermisosUsuario.HideSelection = false;
-            this.tvwPermisosUsuario.Location = new System.Drawing.Point(10, 25);
+            this.tvwPermisosUsuario.Location = new System.Drawing.Point(10, 9);
             this.tvwPermisosUsuario.Name = "tvwPermisosUsuario";
-            this.tvwPermisosUsuario.Size = new System.Drawing.Size(533, 385);
+            this.tvwPermisosUsuario.Size = new System.Drawing.Size(545, 385);
             this.tvwPermisosUsuario.TabIndex = 0;
             // 
             // btnGuardarPermisosUsuario
             // 
-            this.btnGuardarPermisosUsuario.Location = new System.Drawing.Point(10, 420);
+            this.btnGuardarPermisosUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGuardarPermisosUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
+            this.btnGuardarPermisosUsuario.Location = new System.Drawing.Point(10, 404);
             this.btnGuardarPermisosUsuario.Name = "btnGuardarPermisosUsuario";
-            this.btnGuardarPermisosUsuario.Size = new System.Drawing.Size(533, 30);
+            this.btnGuardarPermisosUsuario.Size = new System.Drawing.Size(545, 30);
             this.btnGuardarPermisosUsuario.TabIndex = 1;
             this.btnGuardarPermisosUsuario.Tag = "FormUserManagement.SavePermissionsButton";
-            this.btnGuardarPermisosUsuario.Text = "Guardar permisos del usuario";
-            this.btnGuardarPermisosUsuario.UseVisualStyleBackColor = true;
+            this.btnGuardarPermisosUsuario.Values.Text = "Guardar permisos del usuario";
             this.btnGuardarPermisosUsuario.Click += new System.EventHandler(this.btnGuardarPermisosUsuario_Click);
             //
             // btnHistorialUsuario
             //
+            this.btnHistorialUsuario.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btnHistorialUsuario.ButtonStyle = Krypton.Toolkit.ButtonStyle.Custom1;
             this.btnHistorialUsuario.Location = new System.Drawing.Point(15, 540);
             this.btnHistorialUsuario.Name = "btnHistorialUsuario";
             this.btnHistorialUsuario.Size = new System.Drawing.Size(170, 30);
             this.btnHistorialUsuario.TabIndex = 7;
             this.btnHistorialUsuario.Tag = "FormUserManagement.HistoryButton";
-            this.btnHistorialUsuario.Text = "Historial de usuario";
-            this.btnHistorialUsuario.UseVisualStyleBackColor = true;
+            this.btnHistorialUsuario.Values.Text = "Historial de usuario";
             this.btnHistorialUsuario.Click += new System.EventHandler(this.btnHistorialUsuario_Click);
             //
             // colUsuariosId
@@ -298,6 +312,31 @@ namespace TpIDS
             this.colUsuariosBloqueado.HeaderText = "Bloqueado";
             this.colUsuariosBloqueado.Name = "Bloqueado";
             this.colUsuariosBloqueado.ReadOnly = true;
+            // 
+            // pnlZonaUsuarios
+            // 
+            this.pnlZonaUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlZonaUsuarios.Controls.Add(this.dgvUsuarios);
+            this.pnlZonaUsuarios.Controls.Add(this.groupBoxGestion);
+            this.pnlZonaUsuarios.Location = new System.Drawing.Point(0, 0);
+            this.pnlZonaUsuarios.Name = "pnlZonaUsuarios";
+            this.pnlZonaUsuarios.Size = new System.Drawing.Size(530, 435);
+            this.pnlZonaUsuarios.Margin = new System.Windows.Forms.Padding(0, 0, 10, 29);
+            // 
+            // tlpZonasUsuarios
+            // 
+            this.tlpZonasUsuarios.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) | System.Windows.Forms.AnchorStyles.Left) | System.Windows.Forms.AnchorStyles.Right)));
+            this.tlpZonasUsuarios.Controls.Add(this.groupBoxPermisosUsuario, 1, 0);
+            this.tlpZonasUsuarios.Controls.Add(this.pnlZonaUsuarios, 0, 0);
+            this.tlpZonasUsuarios.Location = new System.Drawing.Point(15, 70);
+            this.tlpZonasUsuarios.Name = "tlpZonasUsuarios";
+            this.tlpZonasUsuarios.Size = new System.Drawing.Size(1110, 464);
+            this.tlpZonasUsuarios.ColumnCount = 2;
+            this.tlpZonasUsuarios.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 48.65F));
+            this.tlpZonasUsuarios.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 51.35F));
+            this.tlpZonasUsuarios.RowCount = 1;
+            this.tlpZonasUsuarios.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpZonasUsuarios.TabIndex = 6;
             //
             // FormGestionUsuarios
             //
@@ -305,13 +344,9 @@ namespace TpIDS
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1140, 585);
             this.Controls.Add(this.btnHistorialUsuario);
-            this.Controls.Add(this.groupBoxPermisosUsuario);
+            this.Controls.Add(this.tlpZonasUsuarios);
             this.Controls.Add(this.lblTituloGestionUsuarios);
             this.Controls.Add(this.pnlSesionActual);
-            this.Controls.Add(this.dgvUsuarios);
-            this.Controls.Add(this.groupBoxGestion);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
             this.Name = "FormGestionUsuarios";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Tag = "FormUserManagement.Title";
@@ -320,36 +355,49 @@ namespace TpIDS
             this.pnlSesionActual.ResumeLayout(false);
             this.pnlSesionActual.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUsuarios)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxGestion.Panel)).EndInit();
+            this.groupBoxGestion.Panel.ResumeLayout(false);
+            this.groupBoxGestion.Panel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxGestion)).EndInit();
             this.groupBoxGestion.ResumeLayout(false);
             this.groupBoxGestion.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxPermisosUsuario.Panel)).EndInit();
+            this.groupBoxPermisosUsuario.Panel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.groupBoxPermisosUsuario)).EndInit();
             this.groupBoxPermisosUsuario.ResumeLayout(false);
+            this.pnlZonaUsuarios.ResumeLayout(false);
+            this.pnlZonaUsuarios.PerformLayout();
+            this.tlpZonasUsuarios.ResumeLayout(false);
+            this.tlpZonasUsuarios.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
-        private System.Windows.Forms.Label lblTituloGestionUsuarios;
+        private Krypton.Toolkit.KryptonLabel lblTituloGestionUsuarios;
         private System.Windows.Forms.FlowLayoutPanel pnlSesionActual;
-        private System.Windows.Forms.Label lblSesionActual;
-        private System.Windows.Forms.Label lblSesionActualUsuario;
-        private System.Windows.Forms.DataGridView dgvUsuarios;
-        private System.Windows.Forms.GroupBox groupBoxGestion;
-        private System.Windows.Forms.Label lblPasswordUsuario;
-        private System.Windows.Forms.TextBox txtbPasswordUsuario;
-        private System.Windows.Forms.CheckBox chkbUsuarioActivo;
-        private System.Windows.Forms.Label lblNombreUsuario;
-        private System.Windows.Forms.TextBox txtbNombreUsuario;
-        private System.Windows.Forms.Button btnAgregarUsuario;
-        private System.Windows.Forms.Button btnEditarUsuario;
-        private System.Windows.Forms.Button btnEliminarUsuario;
-        private System.Windows.Forms.Button btnDesbloquearUsuario;
-        private System.Windows.Forms.GroupBox groupBoxPermisosUsuario;
+        private Krypton.Toolkit.KryptonLabel lblSesionActual;
+        private Krypton.Toolkit.KryptonLabel lblSesionActualUsuario;
+        private Krypton.Toolkit.KryptonDataGridView dgvUsuarios;
+        private Krypton.Toolkit.KryptonGroupBox groupBoxGestion;
+        private Krypton.Toolkit.KryptonLabel lblPasswordUsuario;
+        private Krypton.Toolkit.KryptonTextBox txtbPasswordUsuario;
+        private TpIDS.CheckBoxAccesible chkbUsuarioActivo;
+        private Krypton.Toolkit.KryptonLabel lblNombreUsuario;
+        private Krypton.Toolkit.KryptonTextBox txtbNombreUsuario;
+        private Krypton.Toolkit.KryptonButton btnAgregarUsuario;
+        private Krypton.Toolkit.KryptonButton btnEditarUsuario;
+        private Krypton.Toolkit.KryptonButton btnEliminarUsuario;
+        private Krypton.Toolkit.KryptonButton btnDesbloquearUsuario;
+        private Krypton.Toolkit.KryptonGroupBox groupBoxPermisosUsuario;
         private System.Windows.Forms.TreeView tvwPermisosUsuario;
-        private System.Windows.Forms.Button btnGuardarPermisosUsuario;
-        private System.Windows.Forms.Button btnHistorialUsuario;
+        private Krypton.Toolkit.KryptonButton btnGuardarPermisosUsuario;
+        private Krypton.Toolkit.KryptonButton btnHistorialUsuario;
         private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colUsuariosUsername;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuariosActive;
         private System.Windows.Forms.DataGridViewCheckBoxColumn colUsuariosBloqueado;
+        private System.Windows.Forms.Panel pnlZonaUsuarios;
+        private System.Windows.Forms.TableLayoutPanel tlpZonasUsuarios;
     }
 }
