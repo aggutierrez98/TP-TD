@@ -135,8 +135,17 @@ namespace TpIDS.UiTests.Infrastructure
         internal void SeleccionarUsuarioEnGestion(Window gestion, string username)
         {
             // Camino rapido: seleccion por SelectionItemPattern (funciona con filas visibles).
-            UiFind.SeleccionarFilaGrilla(gestion, "dgvUsuarios", username);
-            if (SeleccionReflejada(gestion, username, TimeSpan.FromSeconds(2)))
+            bool requiereFallbackTeclado = false;
+            try
+            {
+                UiFind.SeleccionarFilaGrilla(gestion, "dgvUsuarios", username);
+            }
+            catch (FlaUI.Core.Exceptions.NoClickablePointException)
+            {
+                requiereFallbackTeclado = true;
+            }
+
+            if (!requiereFallbackTeclado && SeleccionReflejada(gestion, username, TimeSpan.FromSeconds(2)))
             {
                 return;
             }

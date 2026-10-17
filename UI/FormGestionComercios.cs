@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
 using BE;
@@ -17,6 +18,12 @@ namespace TpIDS
         private readonly ComercioBLL comercioBLL = CompositionRoot.Comercio;
         private readonly RubroComercioBLL rubroComercioBLL = CompositionRoot.RubroComercio;
 
+        // Coordenadas elegidas en FormSeleccionarUbicacionComercio para el alta/edicion
+        // en curso. Se guardan aparte porque no hay control de texto atado a ellas: el
+        // dialogo del mapa las devuelve y aca solo se muestran en lblCoordenadasComercio.
+        private decimal? _latitudSeleccionada;
+        private decimal? _longitudSeleccionada;
+
         public FormGestionComercios()
         {
             InitializeComponent();
@@ -29,6 +36,11 @@ namespace TpIDS
             public int Id { get; set; }
             public string Nombre { get; set; }
             public string Rubro { get; set; }
+            public string Direccion { get; set; }
+            public string Localidad { get; set; }
+            public string Provincia { get; set; }
+            public decimal? Latitud { get; set; }
+            public decimal? Longitud { get; set; }
         }
 
         private sealed class FilaRubro
@@ -41,6 +53,7 @@ namespace TpIDS
         {
             CargarRubros(null);
             CargarComercios(null);
+            ActualizarLabelCoordenadas();
         }
 
         // --- Comercios ---
@@ -74,7 +87,12 @@ namespace TpIDS
             {
                 Id = comercio.Id,
                 Nombre = comercio.Nombre,
-                Rubro = comercio.RubroComercio?.Nombre ?? string.Empty
+                Rubro = comercio.RubroComercio?.Nombre ?? string.Empty,
+                Direccion = comercio.Direccion,
+                Localidad = comercio.Localidad,
+                Provincia = comercio.Provincia,
+                Latitud = comercio.Latitud,
+                Longitud = comercio.Longitud
             };
         }
 
@@ -88,7 +106,14 @@ namespace TpIDS
 
             try
             {
-                Comercio creado = comercioBLL.Crear(txtbNombreComercio.Text, rubroSeleccionado.Id, txtbUbicacionComercio.Text);
+                Comercio creado = comercioBLL.Crear(
+                    txtbNombreComercio.Text,
+                    rubroSeleccionado.Id,
+                    txtbDireccionComercio.Text,
+                    txtbLocalidadComercio.Text,
+                    txtbProvinciaComercio.Text,
+                    _latitudSeleccionada,
+                    _longitudSeleccionada);
                 LimpiarFormularioComercio();
                 CargarComercios(creado.Id);
                 UiDialogHelper.MostrarInfo("FormMerchantManagement.Success.ComercioCreated");
@@ -115,7 +140,15 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = comercioBLL.Actualizar(fila.Id, txtbNombreComercio.Text, rubroSeleccionado.Id);
+                bool actualizado = comercioBLL.Actualizar(
+                    fila.Id,
+                    txtbNombreComercio.Text,
+                    rubroSeleccionado.Id,
+                    txtbDireccionComercio.Text,
+                    txtbLocalidadComercio.Text,
+                    txtbProvinciaComercio.Text,
+                    _latitudSeleccionada,
+                    _longitudSeleccionada);
                 if (actualizado)
                 {
                     CargarComercios(fila.Id);
@@ -177,6 +210,26 @@ namespace TpIDS
             }
         }
 
+        private void btnUbicarComercioEnMapa_Click(object sender, EventArgs e)
+        {
+            using (FormSeleccionarUbicacionComercio formMapa = new FormSeleccionarUbicacionComercio(_latitudSeleccionada, _longitudSeleccionada))
+            {
+                if (formMapa.ShowDialog(this) == DialogResult.OK)
+                {
+                    _latitudSeleccionada = formMapa.LatitudSeleccionada;
+                    _longitudSeleccionada = formMapa.LongitudSeleccionada;
+                    ActualizarLabelCoordenadas();
+                }
+            }
+        }
+
+        private void ActualizarLabelCoordenadas()
+        {
+            lblCoordenadasComercio.Text = (_latitudSeleccionada.HasValue && _longitudSeleccionada.HasValue)
+                ? string.Format(CultureInfo.InvariantCulture, "{0:0.000000}, {1:0.000000}", _latitudSeleccionada.Value, _longitudSeleccionada.Value)
+                : UiDialogHelper.Traducir("FormMerchantManagement.SinUbicarLabel");
+        }
+
         private void dgvComercios_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0)
@@ -187,7 +240,13 @@ namespace TpIDS
             if (ObtenerFilaSeleccionada(dgvComercios, out FilaComercio fila))
             {
                 txtbNombreComercio.Text = fila.Nombre;
+                txtbDireccionComercio.Text = fila.Direccion;
+                txtbLocalidadComercio.Text = fila.Localidad;
+                txtbProvinciaComercio.Text = fila.Provincia;
                 SeleccionarRubroEnCombo(fila.Rubro);
+                _latitudSeleccionada = fila.Latitud;
+                _longitudSeleccionada = fila.Longitud;
+                ActualizarLabelCoordenadas();
             }
         }
 
@@ -206,7 +265,12 @@ namespace TpIDS
         private void LimpiarFormularioComercio()
         {
             txtbNombreComercio.Clear();
-            txtbUbicacionComercio.Clear();
+            txtbDireccionComercio.Clear();
+            txtbLocalidadComercio.Clear();
+            txtbProvinciaComercio.Clear();
+            _latitudSeleccionada = null;
+            _longitudSeleccionada = null;
+            ActualizarLabelCoordenadas();
         }
 
         // --- Rubros ---

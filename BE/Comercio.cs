@@ -8,6 +8,14 @@ namespace BE
 
         public string Nombre { get; set; }
 
-        public string Ubicacion { get; set; }
+        public string Direccion { get; set; }
+
+        public string Localidad { get; set; }
+
+        public string Provincia { get; set; }
+
+        public decimal? Latitud { get; set; }
+
+        public decimal? Longitud { get; set; }
     }
 }

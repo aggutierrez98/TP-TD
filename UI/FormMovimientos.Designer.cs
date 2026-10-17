@@ -31,9 +31,13 @@ namespace TpIDS
             this.colMovimientosFecha = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMovimientosTipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMovimientosCategoria = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colMovimientosComercio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMovimientosMonto = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMovimientosDescripcion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBoxEdicion = new System.Windows.Forms.GroupBox();
+            this.btnSugerirCategoriaMovimiento = new System.Windows.Forms.Button();
+            this.cmbComercioMovimiento = new System.Windows.Forms.ComboBox();
+            this.lblComercioMovimiento = new System.Windows.Forms.Label();
             this.btnEliminarMovimiento = new System.Windows.Forms.Button();
             this.btnActualizarMovimiento = new System.Windows.Forms.Button();
             this.btnAgregarMovimiento = new System.Windows.Forms.Button();
@@ -47,9 +51,14 @@ namespace TpIDS
             this.lblTipoMovimiento = new System.Windows.Forms.Label();
             this.cmbCategoriaMovimiento = new System.Windows.Forms.ComboBox();
             this.lblCategoriaMovimiento = new System.Windows.Forms.Label();
+            this.btnEscanearTicket = new System.Windows.Forms.Button();
+            this.pnlEscaneoTicket = new System.Windows.Forms.Panel();
+            this.prgbEscaneoTicket = new System.Windows.Forms.ProgressBar();
+            this.lblEscaneoTicketEnCurso = new System.Windows.Forms.Label();
             this.groupBoxFiltros.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMovimientos)).BeginInit();
             this.groupBoxEdicion.SuspendLayout();
+            this.pnlEscaneoTicket.SuspendLayout();
             this.SuspendLayout();
             //
             // lblTituloMovimientos
@@ -180,6 +189,7 @@ namespace TpIDS
             this.colMovimientosFecha,
             this.colMovimientosTipo,
             this.colMovimientosCategoria,
+            this.colMovimientosComercio,
             this.colMovimientosMonto,
             this.colMovimientosDescripcion});
             this.dgvMovimientos.Location = new System.Drawing.Point(23, 152);
@@ -214,6 +224,13 @@ namespace TpIDS
             this.colMovimientosCategoria.Name = "Categoria";
             this.colMovimientosCategoria.ReadOnly = true;
             //
+            // colMovimientosComercio
+            //
+            this.colMovimientosComercio.DataPropertyName = "Comercio";
+            this.colMovimientosComercio.HeaderText = "Comercio";
+            this.colMovimientosComercio.Name = "Comercio";
+            this.colMovimientosComercio.ReadOnly = true;
+            //
             // colMovimientosMonto
             //
             this.colMovimientosMonto.DataPropertyName = "Monto";
@@ -230,6 +247,10 @@ namespace TpIDS
             //
             // groupBoxEdicion
             //
+            this.groupBoxEdicion.Controls.Add(this.btnSugerirCategoriaMovimiento);
+            this.groupBoxEdicion.Controls.Add(this.cmbComercioMovimiento);
+            this.groupBoxEdicion.Controls.Add(this.lblComercioMovimiento);
+            this.groupBoxEdicion.Controls.Add(this.btnEscanearTicket);
             this.groupBoxEdicion.Controls.Add(this.btnEliminarMovimiento);
             this.groupBoxEdicion.Controls.Add(this.btnActualizarMovimiento);
             this.groupBoxEdicion.Controls.Add(this.btnAgregarMovimiento);
@@ -243,9 +264,9 @@ namespace TpIDS
             this.groupBoxEdicion.Controls.Add(this.lblTipoMovimiento);
             this.groupBoxEdicion.Controls.Add(this.cmbCategoriaMovimiento);
             this.groupBoxEdicion.Controls.Add(this.lblCategoriaMovimiento);
-            this.groupBoxEdicion.Location = new System.Drawing.Point(23, 382);
+            this.groupBoxEdicion.Location = new System.Drawing.Point(23, 380);
             this.groupBoxEdicion.Name = "groupBoxEdicion";
-            this.groupBoxEdicion.Size = new System.Drawing.Size(714, 140);
+            this.groupBoxEdicion.Size = new System.Drawing.Size(714, 155);
             this.groupBoxEdicion.TabIndex = 3;
             this.groupBoxEdicion.TabStop = false;
             this.groupBoxEdicion.Tag = "FormMovements.MovementGroup";
@@ -253,10 +274,10 @@ namespace TpIDS
             //
             // btnEliminarMovimiento
             //
-            this.btnEliminarMovimiento.Location = new System.Drawing.Point(334, 100);
+            this.btnEliminarMovimiento.Location = new System.Drawing.Point(334, 112);
             this.btnEliminarMovimiento.Name = "btnEliminarMovimiento";
             this.btnEliminarMovimiento.Size = new System.Drawing.Size(150, 30);
-            this.btnEliminarMovimiento.TabIndex = 12;
+            this.btnEliminarMovimiento.TabIndex = 15;
             this.btnEliminarMovimiento.Tag = "FormMovements.DeleteButton";
             this.btnEliminarMovimiento.Text = "Eliminar movimiento";
             this.btnEliminarMovimiento.UseVisualStyleBackColor = true;
@@ -264,10 +285,10 @@ namespace TpIDS
             //
             // btnActualizarMovimiento
             //
-            this.btnActualizarMovimiento.Location = new System.Drawing.Point(174, 100);
+            this.btnActualizarMovimiento.Location = new System.Drawing.Point(174, 112);
             this.btnActualizarMovimiento.Name = "btnActualizarMovimiento";
             this.btnActualizarMovimiento.Size = new System.Drawing.Size(150, 30);
-            this.btnActualizarMovimiento.TabIndex = 11;
+            this.btnActualizarMovimiento.TabIndex = 14;
             this.btnActualizarMovimiento.Tag = "FormMovements.UpdateButton";
             this.btnActualizarMovimiento.Text = "Actualizar movimiento";
             this.btnActualizarMovimiento.UseVisualStyleBackColor = true;
@@ -275,97 +296,174 @@ namespace TpIDS
             //
             // btnAgregarMovimiento
             //
-            this.btnAgregarMovimiento.Location = new System.Drawing.Point(14, 100);
+            this.btnAgregarMovimiento.Location = new System.Drawing.Point(14, 112);
             this.btnAgregarMovimiento.Name = "btnAgregarMovimiento";
             this.btnAgregarMovimiento.Size = new System.Drawing.Size(150, 30);
-            this.btnAgregarMovimiento.TabIndex = 10;
+            this.btnAgregarMovimiento.TabIndex = 13;
             this.btnAgregarMovimiento.Tag = "FormMovements.AddButton";
             this.btnAgregarMovimiento.Text = "Agregar movimiento";
             this.btnAgregarMovimiento.UseVisualStyleBackColor = true;
             this.btnAgregarMovimiento.Click += new System.EventHandler(this.btnAgregarMovimiento_Click);
             //
+            // btnEscanearTicket
+            //
+            this.btnEscanearTicket.Location = new System.Drawing.Point(494, 112);
+            this.btnEscanearTicket.Name = "btnEscanearTicket";
+            this.btnEscanearTicket.Size = new System.Drawing.Size(150, 30);
+            this.btnEscanearTicket.TabIndex = 16;
+            this.btnEscanearTicket.Tag = "FormMovements.ScanButton";
+            this.btnEscanearTicket.Text = "Escanear ticket";
+            this.btnEscanearTicket.UseVisualStyleBackColor = true;
+            this.btnEscanearTicket.Click += new System.EventHandler(this.btnEscanearTicket_Click);
+            //
+            // pnlEscaneoTicket
+            //
+            this.pnlEscaneoTicket.BackColor = System.Drawing.SystemColors.Control;
+            this.pnlEscaneoTicket.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnlEscaneoTicket.Controls.Add(this.prgbEscaneoTicket);
+            this.pnlEscaneoTicket.Controls.Add(this.lblEscaneoTicketEnCurso);
+            this.pnlEscaneoTicket.Location = new System.Drawing.Point(190, 215);
+            this.pnlEscaneoTicket.Name = "pnlEscaneoTicket";
+            this.pnlEscaneoTicket.Size = new System.Drawing.Size(380, 92);
+            this.pnlEscaneoTicket.TabIndex = 4;
+            this.pnlEscaneoTicket.Visible = false;
+            //
+            // prgbEscaneoTicket
+            //
+            this.prgbEscaneoTicket.Location = new System.Drawing.Point(25, 51);
+            this.prgbEscaneoTicket.MarqueeAnimationSpeed = 30;
+            this.prgbEscaneoTicket.Name = "prgbEscaneoTicket";
+            this.prgbEscaneoTicket.Size = new System.Drawing.Size(328, 18);
+            this.prgbEscaneoTicket.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
+            this.prgbEscaneoTicket.TabIndex = 1;
+            //
+            // lblEscaneoTicketEnCurso
+            //
+            this.lblEscaneoTicketEnCurso.AutoSize = true;
+            this.lblEscaneoTicketEnCurso.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblEscaneoTicketEnCurso.Location = new System.Drawing.Point(116, 19);
+            this.lblEscaneoTicketEnCurso.Name = "lblEscaneoTicketEnCurso";
+            this.lblEscaneoTicketEnCurso.Size = new System.Drawing.Size(143, 19);
+            this.lblEscaneoTicketEnCurso.TabIndex = 0;
+            this.lblEscaneoTicketEnCurso.Tag = "FormMovements.Scan.ProgressLabel";
+            this.lblEscaneoTicketEnCurso.Text = "Analizando ticket...";
+            //
             // txtbDescripcionMovimiento
             //
-            this.txtbDescripcionMovimiento.Location = new System.Drawing.Point(14, 68);
+            // 
+            // btnSugerirCategoriaMovimiento
+            // 
+            this.btnSugerirCategoriaMovimiento.Location = new System.Drawing.Point(590, 71);
+            this.btnSugerirCategoriaMovimiento.Name = "btnSugerirCategoriaMovimiento";
+            this.btnSugerirCategoriaMovimiento.Size = new System.Drawing.Size(110, 25);
+            this.btnSugerirCategoriaMovimiento.TabIndex = 7;
+            this.btnSugerirCategoriaMovimiento.Tag = "FormMovements.SuggestCategoryButton";
+            this.btnSugerirCategoriaMovimiento.Text = "Sugerir cat.";
+            this.btnSugerirCategoriaMovimiento.UseVisualStyleBackColor = true;
+            this.btnSugerirCategoriaMovimiento.Click += new System.EventHandler(this.btnSugerirCategoriaMovimiento_Click);
+            // 
+            // cmbComercioMovimiento
+            // 
+            this.cmbComercioMovimiento.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbComercioMovimiento.FormattingEnabled = true;
+            this.cmbComercioMovimiento.Location = new System.Drawing.Point(14, 73);
+            this.cmbComercioMovimiento.Name = "cmbComercioMovimiento";
+            this.cmbComercioMovimiento.Size = new System.Drawing.Size(190, 21);
+            this.cmbComercioMovimiento.TabIndex = 5;
+            // 
+            // lblComercioMovimiento
+            // 
+            this.lblComercioMovimiento.AutoSize = true;
+            this.lblComercioMovimiento.Location = new System.Drawing.Point(11, 57);
+            this.lblComercioMovimiento.Name = "lblComercioMovimiento";
+            this.lblComercioMovimiento.Size = new System.Drawing.Size(107, 13);
+            this.lblComercioMovimiento.TabIndex = 4;
+            this.lblComercioMovimiento.Tag = "FormMovements.CommerceLabel";
+            this.lblComercioMovimiento.Text = "Comercio (opcional):";
+            // 
+            // txtbDescripcionMovimiento
+            // 
+            this.txtbDescripcionMovimiento.Location = new System.Drawing.Point(220, 73);
             this.txtbDescripcionMovimiento.Name = "txtbDescripcionMovimiento";
-            this.txtbDescripcionMovimiento.Size = new System.Drawing.Size(686, 20);
-            this.txtbDescripcionMovimiento.TabIndex = 9;
-            //
+            this.txtbDescripcionMovimiento.Size = new System.Drawing.Size(355, 20);
+            this.txtbDescripcionMovimiento.TabIndex = 6;
+            this.txtbDescripcionMovimiento.Leave += new System.EventHandler(this.txtbDescripcionMovimiento_Leave);
+            // 
             // lblDescripcionMovimiento
-            //
+            // 
             this.lblDescripcionMovimiento.AutoSize = true;
-            this.lblDescripcionMovimiento.Location = new System.Drawing.Point(11, 52);
+            this.lblDescripcionMovimiento.Location = new System.Drawing.Point(217, 57);
             this.lblDescripcionMovimiento.Name = "lblDescripcionMovimiento";
             this.lblDescripcionMovimiento.Size = new System.Drawing.Size(66, 13);
-            this.lblDescripcionMovimiento.TabIndex = 8;
+            this.lblDescripcionMovimiento.TabIndex = 5;
             this.lblDescripcionMovimiento.Tag = "FormMovements.DescriptionLabel";
             this.lblDescripcionMovimiento.Text = "Descripcion:";
-            //
+            // 
             // dtpFechaMovimiento
-            //
+            // 
             this.dtpFechaMovimiento.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dtpFechaMovimiento.Location = new System.Drawing.Point(560, 31);
+            this.dtpFechaMovimiento.Location = new System.Drawing.Point(540, 31);
             this.dtpFechaMovimiento.Name = "dtpFechaMovimiento";
-            this.dtpFechaMovimiento.Size = new System.Drawing.Size(140, 20);
-            this.dtpFechaMovimiento.TabIndex = 7;
-            //
+            this.dtpFechaMovimiento.Size = new System.Drawing.Size(160, 20);
+            this.dtpFechaMovimiento.TabIndex = 3;
+            // 
             // lblFechaMovimiento
-            //
+            // 
             this.lblFechaMovimiento.AutoSize = true;
-            this.lblFechaMovimiento.Location = new System.Drawing.Point(557, 15);
+            this.lblFechaMovimiento.Location = new System.Drawing.Point(537, 15);
             this.lblFechaMovimiento.Name = "lblFechaMovimiento";
             this.lblFechaMovimiento.Size = new System.Drawing.Size(41, 13);
-            this.lblFechaMovimiento.TabIndex = 6;
+            this.lblFechaMovimiento.TabIndex = 2;
             this.lblFechaMovimiento.Tag = "FormMovements.DateLabel";
             this.lblFechaMovimiento.Text = "Fecha:";
-            //
+            // 
             // txtbMontoMovimiento
-            //
-            this.txtbMontoMovimiento.Location = new System.Drawing.Point(400, 31);
+            // 
+            this.txtbMontoMovimiento.Location = new System.Drawing.Point(380, 31);
             this.txtbMontoMovimiento.Name = "txtbMontoMovimiento";
             this.txtbMontoMovimiento.Size = new System.Drawing.Size(140, 20);
-            this.txtbMontoMovimiento.TabIndex = 5;
-            //
+            this.txtbMontoMovimiento.TabIndex = 2;
+            // 
             // lblMontoMovimiento
-            //
+            // 
             this.lblMontoMovimiento.AutoSize = true;
-            this.lblMontoMovimiento.Location = new System.Drawing.Point(397, 15);
+            this.lblMontoMovimiento.Location = new System.Drawing.Point(377, 15);
             this.lblMontoMovimiento.Name = "lblMontoMovimiento";
             this.lblMontoMovimiento.Size = new System.Drawing.Size(41, 13);
-            this.lblMontoMovimiento.TabIndex = 4;
+            this.lblMontoMovimiento.TabIndex = 1;
             this.lblMontoMovimiento.Tag = "FormMovements.AmountLabel";
             this.lblMontoMovimiento.Text = "Monto:";
-            //
+            // 
             // cmbTipoMovimiento
-            //
+            // 
             this.cmbTipoMovimiento.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbTipoMovimiento.FormattingEnabled = true;
-            this.cmbTipoMovimiento.Location = new System.Drawing.Point(230, 31);
+            this.cmbTipoMovimiento.Location = new System.Drawing.Point(220, 31);
             this.cmbTipoMovimiento.Name = "cmbTipoMovimiento";
-            this.cmbTipoMovimiento.Size = new System.Drawing.Size(150, 21);
-            this.cmbTipoMovimiento.TabIndex = 3;
-            //
+            this.cmbTipoMovimiento.Size = new System.Drawing.Size(140, 21);
+            this.cmbTipoMovimiento.TabIndex = 1;
+            // 
             // lblTipoMovimiento
-            //
+            // 
             this.lblTipoMovimiento.AutoSize = true;
-            this.lblTipoMovimiento.Location = new System.Drawing.Point(227, 15);
+            this.lblTipoMovimiento.Location = new System.Drawing.Point(217, 15);
             this.lblTipoMovimiento.Name = "lblTipoMovimiento";
             this.lblTipoMovimiento.Size = new System.Drawing.Size(33, 13);
-            this.lblTipoMovimiento.TabIndex = 2;
+            this.lblTipoMovimiento.TabIndex = 0;
             this.lblTipoMovimiento.Tag = "FormMovements.TypeLabel";
             this.lblTipoMovimiento.Text = "Tipo:";
-            //
+            // 
             // cmbCategoriaMovimiento
-            //
+            // 
             this.cmbCategoriaMovimiento.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbCategoriaMovimiento.FormattingEnabled = true;
             this.cmbCategoriaMovimiento.Location = new System.Drawing.Point(14, 31);
             this.cmbCategoriaMovimiento.Name = "cmbCategoriaMovimiento";
-            this.cmbCategoriaMovimiento.Size = new System.Drawing.Size(200, 21);
-            this.cmbCategoriaMovimiento.TabIndex = 1;
-            //
+            this.cmbCategoriaMovimiento.Size = new System.Drawing.Size(190, 21);
+            this.cmbCategoriaMovimiento.TabIndex = 0;
+            // 
             // lblCategoriaMovimiento
-            //
+            // 
             this.lblCategoriaMovimiento.AutoSize = true;
             this.lblCategoriaMovimiento.Location = new System.Drawing.Point(11, 15);
             this.lblCategoriaMovimiento.Name = "lblCategoriaMovimiento";
@@ -373,12 +471,13 @@ namespace TpIDS
             this.lblCategoriaMovimiento.TabIndex = 0;
             this.lblCategoriaMovimiento.Tag = "FormMovements.CategoryLabel";
             this.lblCategoriaMovimiento.Text = "Categoria:";
-            //
+            // 
             // FormMovimientos
-            //
+            // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(760, 538);
+            this.ClientSize = new System.Drawing.Size(760, 550);
+            this.Controls.Add(this.pnlEscaneoTicket);
             this.Controls.Add(this.groupBoxEdicion);
             this.Controls.Add(this.dgvMovimientos);
             this.Controls.Add(this.groupBoxFiltros);
@@ -394,6 +493,8 @@ namespace TpIDS
             ((System.ComponentModel.ISupportInitialize)(this.dgvMovimientos)).EndInit();
             this.groupBoxEdicion.ResumeLayout(false);
             this.groupBoxEdicion.PerformLayout();
+            this.pnlEscaneoTicket.ResumeLayout(false);
+            this.pnlEscaneoTicket.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -414,6 +515,7 @@ namespace TpIDS
         private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosFecha;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosTipo;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosCategoria;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosComercio;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosMonto;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMovimientosDescripcion;
         private System.Windows.Forms.GroupBox groupBoxEdicion;
@@ -425,10 +527,17 @@ namespace TpIDS
         private System.Windows.Forms.TextBox txtbMontoMovimiento;
         private System.Windows.Forms.Label lblFechaMovimiento;
         private System.Windows.Forms.DateTimePicker dtpFechaMovimiento;
+        private System.Windows.Forms.Label lblComercioMovimiento;
+        private System.Windows.Forms.ComboBox cmbComercioMovimiento;
         private System.Windows.Forms.Label lblDescripcionMovimiento;
         private System.Windows.Forms.TextBox txtbDescripcionMovimiento;
+        private System.Windows.Forms.Button btnSugerirCategoriaMovimiento;
         private System.Windows.Forms.Button btnAgregarMovimiento;
         private System.Windows.Forms.Button btnActualizarMovimiento;
         private System.Windows.Forms.Button btnEliminarMovimiento;
+        private System.Windows.Forms.Button btnEscanearTicket;
+        private System.Windows.Forms.Panel pnlEscaneoTicket;
+        private System.Windows.Forms.ProgressBar prgbEscaneoTicket;
+        private System.Windows.Forms.Label lblEscaneoTicketEnCurso;
     }
 }

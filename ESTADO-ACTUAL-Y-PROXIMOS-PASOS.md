@@ -47,13 +47,14 @@ alcance). Ese contenido es la base de G00-G05 (ver seccion 4).
 
 **Decision de alcance del nucleo de negocio (N0X)**, acordada con el usuario y **NEG01-movimientos
 y NEG02-categorias ya implementados el 27/08/2026** (ver seccion 4bis para el detalle completo):
-- Alcance de codigo real: MVP acotado — carga manual de ingresos/egresos (NEG01-movimientos,
-  implementado), categorias globales+personalizadas (NEG02-categorias, implementado). Presupuesto simple y dashboard con
-  KPIs quedan para procesos posteriores (todavia no implementados).
-- Explicitamente fuera del codigo (aunque si documentado como vision de producto en G02): OCR
-  de tickets, sincronizacion bancaria real, scraping de descuentos, geolocalizacion, IA/LLM
-  real. Razon: inviable de construir con garantias en un TP WinForms/.NET Framework 4.7.2, y
-  arriesga el balanceo codigo-documentacion que exige la catedra.
+- Alcance de codigo real: carga manual de ingresos/egresos (NEG01-movimientos, implementado),
+  categorias globales+personalizadas (NEG02-categorias, implementado) y precarga opcional de
+  movimientos desde una foto de ticket mediante Gemini (20/09/2026). Presupuesto simple y dashboard
+  con KPIs quedan para procesos posteriores (todavia no implementados).
+- Explicitamente fuera del codigo (aunque si documentado como vision de producto en G02):
+  sincronizacion bancaria real, scraping de descuentos y geolocalizacion. El escaneo de tickets es
+  la excepcion acordada: usa Gemini multimodal por API para devolver importe, fecha, descripcion y
+  texto detectado; sigue requiriendo revision y confirmacion manual del usuario antes de persistir.
 - Reestructuracion de navegacion: **implementada**. Shell principal MDI (`FormPrincipal`) donde
   todo usuario autenticado aterriza en `FormMovimientos` (si tiene el permiso, que el usuario
   basico tiene desde el alta), con menus "Sesion" (config propia + logout), "Finanzas"
@@ -374,10 +375,10 @@ Pendiente que quedo abierto (detalle completo en ese mismo archivo):
 
 Deferidos a pedido explicito del usuario (ver seccion 1). Cuando el usuario pida retomarlos,
 ya hay decisiones tomadas que no hace falta volver a preguntar: alcance MVP (movimientos
-manuales, categorias, presupuesto, dashboard — sin OCR/sync bancaria/scraping/geolocalizacion/
-IA real en el codigo), primer proceso de negocio a modelar ("Gestion de movimientos
-financieros"), y la reestructuracion de navegacion (shell MDI + menu Administracion por
-permiso) para construir junto con las primeras pantallas de negocio.
+manuales y escaneo opcional con Gemini, categorias, presupuesto, dashboard — sin sincronizacion
+bancaria/scraping/geolocalizacion), primer proceso de negocio a modelar ("Gestion de movimientos
+financieros"), y la reestructuracion de navegacion (shell MDI + menu Administracion por permiso)
+para construir junto con las primeras pantallas de negocio.
 
 ### 5.3. Como arrancar una sesion nueva
 
@@ -451,3 +452,82 @@ regenerado (7 requisitos, 20 CU en total).
   pendiente que la seccion 5.1, ahora tambien con las imagenes nuevas de T08).
 - `base.in.json` (ingles) no tiene el grupo `FormMainShell.*` (gap preexistente, no de esta
   sesion): `FormMainShell.Menu.Backup` solo quedo cargado en espanol.
+
+## 7. Sesion del 22/09/2026: Reglas de Categorizacion y Comercio opcional en Movimientos
+
+Se implemento de punta a punta la funcionalidad de Reglas de Categorizacion configurables y Comercio opcional en Movimientos:
+
+- **Base de Datos y Dominio (BE / DAL / REPOSITORIO):**
+  - `BE/Movimiento.cs`: se agrego la propiedad `Comercio` opcional.
+  - `script_bd.sql`: columna `ComercioId INT NULL` en `dbo.Movimiento`, con FK e indices. Alta del permiso `gestionreglascategorizacion` asignado a los perfiles `admin` y `basico`.
+  - `DAL/MovimientoDAL.cs` y `REPOSITORIO/MovimientoRepositorio.cs`: adaptados para persistir e hidratar `Comercio` (o `DBNull.Value` si no se especifica).
+  - `REPOSITORIO/UnidadDeTrabajoSqlServer.cs`: expone `ReglasCategorizacion` y `ComercioReglaCategorizacion`.
+- **Logica de Negocio (BLL) & CompositionRoot:**
+  - `BLL/MovimientoBLL.cs`: metodos `Crear` y `Actualizar` reciben `int? comercioId = null` y validan su existencia si se especifica.
+  - `BLL/ReglaCategorizacionBLL.cs`: CRUD completo de reglas de categorizacion y algoritmo deterministico de sugerencia `SugerirCategoria(descripcion, comercioId)`:
+    - Normalizacion diacritica y casing.
+    - Matching con limites de palabra (`\b<palabra>\b`) para evitar coincidencias parciales accidentales.
+    - Desempate por especificidad en 3 niveles (cantidad de palabras coincidentes > cobertura total de texto > regla con coincidencia de comercio especifico). Fallback a `null` ante empate residual o sin coincidencias, obligando a la seleccion manual.
+  - `BLL/CompositionRoot.cs`: registro e inyeccion limpia sin constructores por defecto ni service locator.
+- **Capa UI (WinForms):**
+  - `UI/FormReglasCategorizacion.cs` y `.Designer.cs`: CRUD de reglas de categorizacion, asignacion opcional de comercios via `lstbComerciosRegla` (CheckedListBox), grilla con proyeccion de categorias y comercios asociados.
+  - `UI/FormPrincipal.cs` y `.Designer.cs`: agregado de `mnuReglasCategorizacion` bajo el menu `Finanzas`, gobernado por el permiso `gestionreglascategorizacion`.
+  - `UI/FormMovimientos.cs` y `.Designer.cs`: agregado del selector `lblComercioMovimiento` y `cmbComercioMovimiento` (con opcion inicial `<Ninguno>`), columna `Comercio` en `dgvMovimientos`, boton `btnSugerirCategoriaMovimiento` y evento `txtbDescripcionMovimiento_Leave` con sugerencia automatica y mensaje de fallback ante falta de coincidencia o empate.
+- **Internacionalizacion (i18n):**
+  - Sincronizacion de `translation-seeds/base.es.json` y `base.in.json` mediante `sync-i18n-base-seed.ps1`.
+- **Verificacion:**
+  - `TpIDS.sln` compila limpiamente con MSBuild (0 errores, 0 advertencias), validando las guardas de arquitectura y CompositionRoot.
+  - Bateria automatizada ejecutada con `run-tests.ps1 -IncludeIntegration`: 282/282 tests unitarios en verde, 102/102 tests de integracion en verde contra `TpCatedraIDS_Test`. Suite FlaUI pendiente de confirmacion explicita del usuario.
+
+
+## 8. Sesion del 24-25/09/2026: Entidades Financieras, Medios de Pago y extension de Promocion
+
+> Nota: las sesiones intermedias (Analiticas: Dashboard + Balance General, OCR de tickets,
+> Asistente Personal, geolocalizacion de Comercio) no estan volcadas en este documento; su
+> detalle vive en la memoria del proyecto y en el codigo.
+
+Se completo la configuracion de entidades financieras y medios de pago del usuario, y se
+conecto con las Promociones existentes. Caso de negocio que motiva el modelo: *"Pagando con
+Galicia Credito Eminent tenes 10% de reintegro en combustibles lunes y miercoles, del dia A al
+B, con tope de $5000"*.
+
+- **Modelo de dominio:**
+  - `MedioDePago` (aplanado) se partio en `MedioPago` (catalogo global: `Tipo` + `Marca`) y
+    `MedioPagoEntidad` (producto real de una `EntidadFinanciera`: `MedioPago` + `Segmento`).
+    El enum `TipoMedioDePago` se renombro a `TipoMedioPago`.
+  - `EntidadFinanciera.MediosPagoEntidad` = catalogo que ofrece la entidad;
+    `CuentaFinanciera.MediosPagoEntidad` = subconjunto contratado por el usuario (M:N,
+    `CuentaFinancieraMedioPagoEntidad`).
+  - `CuentaFinanciera.Tipo` pasa a enum `TipoCuentaFinanciera` (`BilleteraDigital`,
+    `CuentaCorriente`, `CajaAhorro`) con `CHECK` en SQL.
+  - `Promocion` suma `TopeDescuento` (nullable) y `DiasSemana` (tabla `PromocionDiaSemana`;
+    0 filas = todos los dias). `PromocionMedioDePago` pasa a `PromocionMedioPagoEntidad`.
+    `Promocion` sigue siendo de solo lectura.
+- **Decisiones de alcance (usuario):**
+  - Una `CuentaFinanciera` **no se edita**: solo alta y baja. La entidad es fija; el alta crea
+    la cuenta y sus medios contratados en una sola transaccion.
+  - `CredencialesCifradas` queda **fuera de alcance**: la columna existe pero no se expone en
+    UI ni en la BLL (siempre NULL).
+- **BLL + CompositionRoot:** `MedioPagoBLL`, `EntidadFinancieraBLL` (incluye alta/baja de los
+  `MedioPagoEntidad` de la entidad) y `CuentaFinancieraBLL` (scoped a la sesion). Wireados en
+  `IUnidadDeTrabajo` (`MediosPago`, `MediosPagoEntidad`, `EntidadesFinancieras`,
+  `CuentasFinancieras`).
+- **UI:** `FormGestionMediosPago` y `FormGestionEntidadesFinancieras` +
+  `FormDetalleEntidadFinanciera` (menu Operador), `FormGestionCuentasFinancieras` (menu
+  Finanzas). `FormDetalleComercio` muestra tope y dias de las promociones.
+- **Permisos:** `gestionmediospago` y `gestionentidadesfinancieras` -> operador + admin;
+  `gestioncuentasfinancieras` -> basico + admin. Aplicados tambien en `TpCatedraIDS`.
+- **Traducciones:** 142 keys nuevas en `base.es.json`/`base.in.json`, insertadas tambien en
+  `Palabra`/`Traduccion` de `TpCatedraIDS`.
+- **Diagrama:** `G00-modelo-dominio.puml`/`.svg` actualizado (`EntidadFinanciera`,
+  `CuentaFinanciera` y `Promocion` pasan a `<<Implementado>>`; `MedioPago` y
+  `MedioPagoEntidad` reemplazan a `MedioDePago`).
+- **Verificacion:** `TpIDS.sln` compila (0 errores, guardas OK).
+  `run-tests.ps1 -IncludeIntegration -IncludeUi`: 357/357 unit, 121/121 integracion,
+  43/43 FlaUI.
+- **Tests UI:** `tests/TpIDS.UiTests/FIN_EntidadesMediosPagoTests.cs` (12 tests FlaUI, 12/12 en
+  verde con `-UiFilter FIN`). La infraestructura suma login como `operador` y
+  `UiFind.SeleccionarItemComboConTeclado` (necesario en combos que cargan datos dependientes:
+  `SeleccionarItemCombo` no dispara `SelectedIndexChanged`).
+- **Pendiente:** las promociones siguen sin pantalla de carga (las generara un proceso
+  automatico a futuro).

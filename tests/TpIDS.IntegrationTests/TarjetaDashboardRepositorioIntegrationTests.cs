@@ -24,14 +24,14 @@ namespace TpIDS.IntegrationTests
                 int id = repositorio.InsertarYObtenerId(new BE.TarjetaDashboard
                 {
                     Dashboard = new BE.Dashboard { Id = dashboardId },
-                    Tipo = BE.TipoTarjetaDashboard.SaldoActual,
+                    Tipo = BE.TipoTarjetaDashboard.IngresosPorCategoria,
                     Orden = 1
                 });
 
                 BE.TarjetaDashboard obtenida = repositorio.ObtenerPorId(id);
                 Assert.IsNotNull(obtenida);
                 Assert.AreEqual(dashboardId, obtenida.Dashboard.Id);
-                Assert.AreEqual(BE.TipoTarjetaDashboard.SaldoActual, obtenida.Tipo);
+                Assert.AreEqual(BE.TipoTarjetaDashboard.IngresosPorCategoria, obtenida.Tipo);
                 Assert.AreEqual(1, obtenida.Orden);
 
                 accesoDatos.RollbackTransactionScope();
@@ -51,7 +51,7 @@ namespace TpIDS.IntegrationTests
                 int idPropia = repositorio.InsertarYObtenerId(new BE.TarjetaDashboard
                 {
                     Dashboard = new BE.Dashboard { Id = dashboardId },
-                    Tipo = BE.TipoTarjetaDashboard.SaldoActual,
+                    Tipo = BE.TipoTarjetaDashboard.IngresosPorCategoria,
                     Orden = 1
                 });
                 int idAjena = repositorio.InsertarYObtenerId(new BE.TarjetaDashboard
@@ -81,7 +81,7 @@ namespace TpIDS.IntegrationTests
                 int id = repositorio.InsertarYObtenerId(new BE.TarjetaDashboard
                 {
                     Dashboard = new BE.Dashboard { Id = dashboardId },
-                    Tipo = BE.TipoTarjetaDashboard.SaldoActual,
+                    Tipo = BE.TipoTarjetaDashboard.IngresosPorCategoria,
                     Orden = 1
                 });
 
@@ -113,7 +113,7 @@ namespace TpIDS.IntegrationTests
                 int id = repositorio.InsertarYObtenerId(new BE.TarjetaDashboard
                 {
                     Dashboard = new BE.Dashboard { Id = dashboardId },
-                    Tipo = BE.TipoTarjetaDashboard.AhorroObjetivo,
+                    Tipo = BE.TipoTarjetaDashboard.EvolucionBalance,
                     Orden = 1
                 });
 

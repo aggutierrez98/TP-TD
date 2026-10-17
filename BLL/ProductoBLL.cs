@@ -97,8 +97,7 @@ namespace BLL
         }
 
         // No acepta comercioId ni monedaId: una vez creado el producto, ni el comercio
-        // duenio ni la moneda se vuelven a editar (mismo criterio que Comercio.Ubicacion
-        // no se reedita en ComercioBLL).
+        // duenio ni la moneda se vuelven a editar.
         public bool Actualizar(int id, string nombre, int categoriaProductoId, decimal precio)
         {
             string nombreNormalizado = NormalizarNombre(nombre);

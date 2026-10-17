@@ -48,6 +48,9 @@
     <Compile Include="CategoriaBLL.cs" />
     <Compile Include="ComercioBLL.cs" />
     <Compile Include="RubroComercioBLL.cs" />
+    <Compile Include="MedioPagoBLL.cs" />
+    <Compile Include="EntidadFinancieraBLL.cs" />
+    <Compile Include="CuentaFinancieraBLL.cs" />
     <Compile Include="CategoriaProductoBLL.cs" />
     <Compile Include="ProductoBLL.cs" />
     <Compile Include="PromocionBLL.cs" />
@@ -55,7 +58,10 @@
     <Compile Include="TasaConversionBLL.cs" />
     <Compile Include="ViolacionIntegridadReferencialHelper.cs" />
     <Compile Include="ContratosInternosBLL.cs" />
+    <Compile Include="DashboardBLL.cs" />
     <Compile Include="MovimientoBLL.cs" />
+    <Compile Include="ReglaCategorizacionBLL.cs" />
+    <Compile Include="AsistenteFinancieroBLL.cs" />
     <Compile Include="ListaDeComprasBLL.cs" />
     <Compile Include="NotificacionBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />

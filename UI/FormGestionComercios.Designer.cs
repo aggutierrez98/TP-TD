@@ -22,15 +22,23 @@ namespace TpIDS
             this.btnEliminarComercio = new System.Windows.Forms.Button();
             this.btnActualizarComercio = new System.Windows.Forms.Button();
             this.btnAgregarComercio = new System.Windows.Forms.Button();
-            this.txtbUbicacionComercio = new System.Windows.Forms.TextBox();
-            this.lblUbicacionComercio = new System.Windows.Forms.Label();
             this.cmbRubroComercio = new System.Windows.Forms.ComboBox();
             this.lblRubroComercio = new System.Windows.Forms.Label();
             this.txtbNombreComercio = new System.Windows.Forms.TextBox();
             this.lblNombreComercio = new System.Windows.Forms.Label();
+            this.txtbDireccionComercio = new System.Windows.Forms.TextBox();
+            this.lblDireccionComercio = new System.Windows.Forms.Label();
+            this.txtbLocalidadComercio = new System.Windows.Forms.TextBox();
+            this.lblLocalidadComercio = new System.Windows.Forms.Label();
+            this.txtbProvinciaComercio = new System.Windows.Forms.TextBox();
+            this.lblProvinciaComercio = new System.Windows.Forms.Label();
+            this.lblCoordenadasTituloComercio = new System.Windows.Forms.Label();
+            this.lblCoordenadasComercio = new System.Windows.Forms.Label();
+            this.btnUbicarComercioEnMapa = new System.Windows.Forms.Button();
             this.dgvComercios = new System.Windows.Forms.DataGridView();
             this.colComercioNombre = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colComercioRubro = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colComercioDireccion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBoxRubro = new System.Windows.Forms.GroupBox();
             this.btnEliminarRubro = new System.Windows.Forms.Button();
             this.btnActualizarRubro = new System.Windows.Forms.Button();
@@ -62,15 +70,22 @@ namespace TpIDS
             this.groupBoxComercio.Controls.Add(this.btnEliminarComercio);
             this.groupBoxComercio.Controls.Add(this.btnActualizarComercio);
             this.groupBoxComercio.Controls.Add(this.btnAgregarComercio);
-            this.groupBoxComercio.Controls.Add(this.txtbUbicacionComercio);
-            this.groupBoxComercio.Controls.Add(this.lblUbicacionComercio);
+            this.groupBoxComercio.Controls.Add(this.btnUbicarComercioEnMapa);
+            this.groupBoxComercio.Controls.Add(this.lblCoordenadasComercio);
+            this.groupBoxComercio.Controls.Add(this.lblCoordenadasTituloComercio);
+            this.groupBoxComercio.Controls.Add(this.txtbProvinciaComercio);
+            this.groupBoxComercio.Controls.Add(this.lblProvinciaComercio);
+            this.groupBoxComercio.Controls.Add(this.txtbLocalidadComercio);
+            this.groupBoxComercio.Controls.Add(this.lblLocalidadComercio);
+            this.groupBoxComercio.Controls.Add(this.txtbDireccionComercio);
+            this.groupBoxComercio.Controls.Add(this.lblDireccionComercio);
             this.groupBoxComercio.Controls.Add(this.cmbRubroComercio);
             this.groupBoxComercio.Controls.Add(this.lblRubroComercio);
             this.groupBoxComercio.Controls.Add(this.txtbNombreComercio);
             this.groupBoxComercio.Controls.Add(this.lblNombreComercio);
             this.groupBoxComercio.Location = new System.Drawing.Point(23, 52);
             this.groupBoxComercio.Name = "groupBoxComercio";
-            this.groupBoxComercio.Size = new System.Drawing.Size(594, 150);
+            this.groupBoxComercio.Size = new System.Drawing.Size(594, 220);
             this.groupBoxComercio.TabIndex = 1;
             this.groupBoxComercio.TabStop = false;
             this.groupBoxComercio.Tag = "FormMerchantManagement.ComercioGroup";
@@ -78,10 +93,10 @@ namespace TpIDS
             //
             // btnVerDetalleComercio
             //
-            this.btnVerDetalleComercio.Location = new System.Drawing.Point(374, 108);
+            this.btnVerDetalleComercio.Location = new System.Drawing.Point(374, 170);
             this.btnVerDetalleComercio.Name = "btnVerDetalleComercio";
             this.btnVerDetalleComercio.Size = new System.Drawing.Size(200, 30);
-            this.btnVerDetalleComercio.TabIndex = 9;
+            this.btnVerDetalleComercio.TabIndex = 12;
             this.btnVerDetalleComercio.Tag = "FormMerchantManagement.DetailButton";
             this.btnVerDetalleComercio.Text = "Ver detalle";
             this.btnVerDetalleComercio.UseVisualStyleBackColor = true;
@@ -89,10 +104,10 @@ namespace TpIDS
             //
             // btnEliminarComercio
             //
-            this.btnEliminarComercio.Location = new System.Drawing.Point(254, 108);
+            this.btnEliminarComercio.Location = new System.Drawing.Point(254, 170);
             this.btnEliminarComercio.Name = "btnEliminarComercio";
             this.btnEliminarComercio.Size = new System.Drawing.Size(110, 30);
-            this.btnEliminarComercio.TabIndex = 8;
+            this.btnEliminarComercio.TabIndex = 11;
             this.btnEliminarComercio.Tag = "FormMerchantManagement.DeleteComercioButton";
             this.btnEliminarComercio.Text = "Eliminar";
             this.btnEliminarComercio.UseVisualStyleBackColor = true;
@@ -100,10 +115,10 @@ namespace TpIDS
             //
             // btnActualizarComercio
             //
-            this.btnActualizarComercio.Location = new System.Drawing.Point(134, 108);
+            this.btnActualizarComercio.Location = new System.Drawing.Point(134, 170);
             this.btnActualizarComercio.Name = "btnActualizarComercio";
             this.btnActualizarComercio.Size = new System.Drawing.Size(110, 30);
-            this.btnActualizarComercio.TabIndex = 7;
+            this.btnActualizarComercio.TabIndex = 10;
             this.btnActualizarComercio.Tag = "FormMerchantManagement.UpdateComercioButton";
             this.btnActualizarComercio.Text = "Actualizar";
             this.btnActualizarComercio.UseVisualStyleBackColor = true;
@@ -111,31 +126,95 @@ namespace TpIDS
             //
             // btnAgregarComercio
             //
-            this.btnAgregarComercio.Location = new System.Drawing.Point(14, 108);
+            this.btnAgregarComercio.Location = new System.Drawing.Point(14, 170);
             this.btnAgregarComercio.Name = "btnAgregarComercio";
             this.btnAgregarComercio.Size = new System.Drawing.Size(110, 30);
-            this.btnAgregarComercio.TabIndex = 6;
+            this.btnAgregarComercio.TabIndex = 9;
             this.btnAgregarComercio.Tag = "FormMerchantManagement.AddComercioButton";
             this.btnAgregarComercio.Text = "Agregar";
             this.btnAgregarComercio.UseVisualStyleBackColor = true;
             this.btnAgregarComercio.Click += new System.EventHandler(this.btnAgregarComercio_Click);
             //
-            // txtbUbicacionComercio
+            // txtbDireccionComercio
             //
-            this.txtbUbicacionComercio.Location = new System.Drawing.Point(385, 44);
-            this.txtbUbicacionComercio.Name = "txtbUbicacionComercio";
-            this.txtbUbicacionComercio.Size = new System.Drawing.Size(190, 20);
-            this.txtbUbicacionComercio.TabIndex = 5;
+            this.txtbDireccionComercio.Location = new System.Drawing.Point(14, 92);
+            this.txtbDireccionComercio.Name = "txtbDireccionComercio";
+            this.txtbDireccionComercio.Size = new System.Drawing.Size(250, 20);
+            this.txtbDireccionComercio.TabIndex = 5;
             //
-            // lblUbicacionComercio
+            // lblDireccionComercio
             //
-            this.lblUbicacionComercio.AutoSize = true;
-            this.lblUbicacionComercio.Location = new System.Drawing.Point(382, 28);
-            this.lblUbicacionComercio.Name = "lblUbicacionComercio";
-            this.lblUbicacionComercio.Size = new System.Drawing.Size(59, 13);
-            this.lblUbicacionComercio.TabIndex = 4;
-            this.lblUbicacionComercio.Tag = "FormMerchantManagement.UbicacionLabel";
-            this.lblUbicacionComercio.Text = "Ubicacion:";
+            this.lblDireccionComercio.AutoSize = true;
+            this.lblDireccionComercio.Location = new System.Drawing.Point(11, 76);
+            this.lblDireccionComercio.Name = "lblDireccionComercio";
+            this.lblDireccionComercio.Size = new System.Drawing.Size(59, 13);
+            this.lblDireccionComercio.TabIndex = 4;
+            this.lblDireccionComercio.Tag = "FormMerchantManagement.DireccionComercioLabel";
+            this.lblDireccionComercio.Text = "Direccion:";
+            //
+            // txtbLocalidadComercio
+            //
+            this.txtbLocalidadComercio.Location = new System.Drawing.Point(278, 92);
+            this.txtbLocalidadComercio.Name = "txtbLocalidadComercio";
+            this.txtbLocalidadComercio.Size = new System.Drawing.Size(145, 20);
+            this.txtbLocalidadComercio.TabIndex = 6;
+            //
+            // lblLocalidadComercio
+            //
+            this.lblLocalidadComercio.AutoSize = true;
+            this.lblLocalidadComercio.Location = new System.Drawing.Point(275, 76);
+            this.lblLocalidadComercio.Name = "lblLocalidadComercio";
+            this.lblLocalidadComercio.Size = new System.Drawing.Size(59, 13);
+            this.lblLocalidadComercio.TabIndex = 5;
+            this.lblLocalidadComercio.Tag = "FormMerchantManagement.LocalidadComercioLabel";
+            this.lblLocalidadComercio.Text = "Localidad:";
+            //
+            // txtbProvinciaComercio
+            //
+            this.txtbProvinciaComercio.Location = new System.Drawing.Point(434, 92);
+            this.txtbProvinciaComercio.Name = "txtbProvinciaComercio";
+            this.txtbProvinciaComercio.Size = new System.Drawing.Size(145, 20);
+            this.txtbProvinciaComercio.TabIndex = 7;
+            //
+            // lblProvinciaComercio
+            //
+            this.lblProvinciaComercio.AutoSize = true;
+            this.lblProvinciaComercio.Location = new System.Drawing.Point(431, 76);
+            this.lblProvinciaComercio.Name = "lblProvinciaComercio";
+            this.lblProvinciaComercio.Size = new System.Drawing.Size(59, 13);
+            this.lblProvinciaComercio.TabIndex = 6;
+            this.lblProvinciaComercio.Tag = "FormMerchantManagement.ProvinciaComercioLabel";
+            this.lblProvinciaComercio.Text = "Provincia:";
+            //
+            // lblCoordenadasTituloComercio
+            //
+            this.lblCoordenadasTituloComercio.AutoSize = true;
+            this.lblCoordenadasTituloComercio.Location = new System.Drawing.Point(11, 130);
+            this.lblCoordenadasTituloComercio.Name = "lblCoordenadasTituloComercio";
+            this.lblCoordenadasTituloComercio.Size = new System.Drawing.Size(75, 13);
+            this.lblCoordenadasTituloComercio.TabIndex = 8;
+            this.lblCoordenadasTituloComercio.Tag = "FormMerchantManagement.CoordenadasLabel";
+            this.lblCoordenadasTituloComercio.Text = "Coordenadas:";
+            //
+            // lblCoordenadasComercio
+            //
+            this.lblCoordenadasComercio.AutoSize = true;
+            this.lblCoordenadasComercio.Location = new System.Drawing.Point(100, 130);
+            this.lblCoordenadasComercio.Name = "lblCoordenadasComercio";
+            this.lblCoordenadasComercio.Size = new System.Drawing.Size(59, 13);
+            this.lblCoordenadasComercio.TabIndex = 8;
+            this.lblCoordenadasComercio.Text = "Sin ubicar";
+            //
+            // btnUbicarComercioEnMapa
+            //
+            this.btnUbicarComercioEnMapa.Location = new System.Drawing.Point(330, 122);
+            this.btnUbicarComercioEnMapa.Name = "btnUbicarComercioEnMapa";
+            this.btnUbicarComercioEnMapa.Size = new System.Drawing.Size(180, 28);
+            this.btnUbicarComercioEnMapa.TabIndex = 8;
+            this.btnUbicarComercioEnMapa.Tag = "FormMerchantManagement.LocateOnMapButton";
+            this.btnUbicarComercioEnMapa.Text = "Ubicar en el mapa";
+            this.btnUbicarComercioEnMapa.UseVisualStyleBackColor = true;
+            this.btnUbicarComercioEnMapa.Click += new System.EventHandler(this.btnUbicarComercioEnMapa_Click);
             //
             // cmbRubroComercio
             //
@@ -182,8 +261,9 @@ namespace TpIDS
             this.dgvComercios.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvComercios.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colComercioNombre,
-            this.colComercioRubro});
-            this.dgvComercios.Location = new System.Drawing.Point(23, 215);
+            this.colComercioRubro,
+            this.colComercioDireccion});
+            this.dgvComercios.Location = new System.Drawing.Point(23, 285);
             this.dgvComercios.MultiSelect = false;
             this.dgvComercios.Name = "dgvComercios";
             this.dgvComercios.RowHeadersVisible = false;
@@ -207,6 +287,13 @@ namespace TpIDS
             this.colComercioRubro.Name = "Rubro";
             this.colComercioRubro.ReadOnly = true;
             //
+            // colComercioDireccion
+            //
+            this.colComercioDireccion.DataPropertyName = "Direccion";
+            this.colComercioDireccion.HeaderText = "Direccion";
+            this.colComercioDireccion.Name = "Direccion";
+            this.colComercioDireccion.ReadOnly = true;
+            //
             // groupBoxRubro
             //
             this.groupBoxRubro.Controls.Add(this.btnEliminarRubro);
@@ -214,7 +301,7 @@ namespace TpIDS
             this.groupBoxRubro.Controls.Add(this.btnAgregarRubro);
             this.groupBoxRubro.Controls.Add(this.txtbNombreRubro);
             this.groupBoxRubro.Controls.Add(this.lblNombreRubro);
-            this.groupBoxRubro.Location = new System.Drawing.Point(23, 410);
+            this.groupBoxRubro.Location = new System.Drawing.Point(23, 480);
             this.groupBoxRubro.Name = "groupBoxRubro";
             this.groupBoxRubro.Size = new System.Drawing.Size(594, 110);
             this.groupBoxRubro.TabIndex = 3;
@@ -281,7 +368,7 @@ namespace TpIDS
             this.dgvRubros.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvRubros.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colRubroNombre});
-            this.dgvRubros.Location = new System.Drawing.Point(23, 526);
+            this.dgvRubros.Location = new System.Drawing.Point(23, 605);
             this.dgvRubros.MultiSelect = false;
             this.dgvRubros.Name = "dgvRubros";
             this.dgvRubros.RowHeadersVisible = false;
@@ -302,7 +389,7 @@ namespace TpIDS
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(640, 700);
+            this.ClientSize = new System.Drawing.Size(640, 780);
             this.Controls.Add(this.dgvRubros);
             this.Controls.Add(this.groupBoxRubro);
             this.Controls.Add(this.dgvComercios);
@@ -331,15 +418,23 @@ namespace TpIDS
         private System.Windows.Forms.Button btnEliminarComercio;
         private System.Windows.Forms.Button btnActualizarComercio;
         private System.Windows.Forms.Button btnAgregarComercio;
-        private System.Windows.Forms.TextBox txtbUbicacionComercio;
-        private System.Windows.Forms.Label lblUbicacionComercio;
         private System.Windows.Forms.ComboBox cmbRubroComercio;
         private System.Windows.Forms.Label lblRubroComercio;
         private System.Windows.Forms.TextBox txtbNombreComercio;
         private System.Windows.Forms.Label lblNombreComercio;
+        private System.Windows.Forms.TextBox txtbDireccionComercio;
+        private System.Windows.Forms.Label lblDireccionComercio;
+        private System.Windows.Forms.TextBox txtbLocalidadComercio;
+        private System.Windows.Forms.Label lblLocalidadComercio;
+        private System.Windows.Forms.TextBox txtbProvinciaComercio;
+        private System.Windows.Forms.Label lblProvinciaComercio;
+        private System.Windows.Forms.Label lblCoordenadasTituloComercio;
+        private System.Windows.Forms.Label lblCoordenadasComercio;
+        private System.Windows.Forms.Button btnUbicarComercioEnMapa;
         private System.Windows.Forms.DataGridView dgvComercios;
         private System.Windows.Forms.DataGridViewTextBoxColumn colComercioNombre;
         private System.Windows.Forms.DataGridViewTextBoxColumn colComercioRubro;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colComercioDireccion;
         private System.Windows.Forms.GroupBox groupBoxRubro;
         private System.Windows.Forms.Button btnEliminarRubro;
         private System.Windows.Forms.Button btnActualizarRubro;

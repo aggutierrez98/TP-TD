@@ -14,5 +14,7 @@ namespace REPOSITORIO
         bool Actualizar(Promocion promocion);
 
         bool Eliminar(int id);
+
+        bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias);
     }
 }

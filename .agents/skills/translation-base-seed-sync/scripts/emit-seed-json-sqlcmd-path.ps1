@@ -27,7 +27,13 @@ if (-not (Test-Path $stagingDirectory)) {
     New-Item -ItemType Directory -Path $stagingDirectory -Force | Out-Null
 }
 
-Copy-Item -LiteralPath $resolvedJsonPath -Destination $stagingJsonPath -Force
+# SQL Server lee la copia publica con SINGLE_NCLOB. Convertir explicitamente el
+# JSON fuente (UTF-8) a UTF-16LE evita que sus bytes pasen por VARCHAR/code pages
+# antes de llegar a OPENJSON.
+$utf8Strict = New-Object System.Text.UTF8Encoding($false, $true)
+$utf16LittleEndian = New-Object System.Text.UnicodeEncoding($false, $true)
+$json = [System.IO.File]::ReadAllText($resolvedJsonPath, $utf8Strict)
+[System.IO.File]::WriteAllText($stagingJsonPath, $json, $utf16LittleEndian)
 
 # Expone una copia temporal en una ubicacion publica para evitar bloqueos de lectura
 # cuando SQL Server corre bajo una cuenta de servicio sin acceso al perfil del usuario.

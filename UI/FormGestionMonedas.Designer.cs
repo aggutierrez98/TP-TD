@@ -18,6 +18,13 @@ namespace TpIDS
         {
             this.lblTituloMonedas = new System.Windows.Forms.Label();
             this.groupBoxMonedas = new System.Windows.Forms.GroupBox();
+            this.btnEliminarMoneda = new System.Windows.Forms.Button();
+            this.btnActualizarMoneda = new System.Windows.Forms.Button();
+            this.btnAgregarMoneda = new System.Windows.Forms.Button();
+            this.txtbNombreMoneda = new System.Windows.Forms.TextBox();
+            this.lblNombreMoneda = new System.Windows.Forms.Label();
+            this.txtbCodigoMoneda = new System.Windows.Forms.TextBox();
+            this.lblCodigoMoneda = new System.Windows.Forms.Label();
             this.dgvMonedas = new System.Windows.Forms.DataGridView();
             this.colMonedaCodigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMonedaNombre = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -56,14 +63,90 @@ namespace TpIDS
             //
             // groupBoxMonedas
             //
+            this.groupBoxMonedas.Controls.Add(this.btnEliminarMoneda);
+            this.groupBoxMonedas.Controls.Add(this.btnActualizarMoneda);
+            this.groupBoxMonedas.Controls.Add(this.btnAgregarMoneda);
+            this.groupBoxMonedas.Controls.Add(this.txtbNombreMoneda);
+            this.groupBoxMonedas.Controls.Add(this.lblNombreMoneda);
+            this.groupBoxMonedas.Controls.Add(this.txtbCodigoMoneda);
+            this.groupBoxMonedas.Controls.Add(this.lblCodigoMoneda);
             this.groupBoxMonedas.Controls.Add(this.dgvMonedas);
             this.groupBoxMonedas.Location = new System.Drawing.Point(23, 52);
             this.groupBoxMonedas.Name = "groupBoxMonedas";
-            this.groupBoxMonedas.Size = new System.Drawing.Size(594, 190);
+            this.groupBoxMonedas.Size = new System.Drawing.Size(594, 260);
             this.groupBoxMonedas.TabIndex = 1;
             this.groupBoxMonedas.TabStop = false;
             this.groupBoxMonedas.Tag = "FormCurrencyManagement.MonedaGroup";
             this.groupBoxMonedas.Text = "Monedas";
+            //
+            // btnEliminarMoneda
+            //
+            this.btnEliminarMoneda.Location = new System.Drawing.Point(254, 61);
+            this.btnEliminarMoneda.Name = "btnEliminarMoneda";
+            this.btnEliminarMoneda.Size = new System.Drawing.Size(110, 30);
+            this.btnEliminarMoneda.TabIndex = 6;
+            this.btnEliminarMoneda.Tag = "FormCurrencyManagement.DeleteButton";
+            this.btnEliminarMoneda.Text = "Eliminar";
+            this.btnEliminarMoneda.UseVisualStyleBackColor = true;
+            this.btnEliminarMoneda.Click += new System.EventHandler(this.btnEliminarMoneda_Click);
+            //
+            // btnActualizarMoneda
+            //
+            this.btnActualizarMoneda.Location = new System.Drawing.Point(134, 61);
+            this.btnActualizarMoneda.Name = "btnActualizarMoneda";
+            this.btnActualizarMoneda.Size = new System.Drawing.Size(110, 30);
+            this.btnActualizarMoneda.TabIndex = 5;
+            this.btnActualizarMoneda.Tag = "FormCurrencyManagement.UpdateButton";
+            this.btnActualizarMoneda.Text = "Actualizar";
+            this.btnActualizarMoneda.UseVisualStyleBackColor = true;
+            this.btnActualizarMoneda.Click += new System.EventHandler(this.btnActualizarMoneda_Click);
+            //
+            // btnAgregarMoneda
+            //
+            this.btnAgregarMoneda.Location = new System.Drawing.Point(14, 61);
+            this.btnAgregarMoneda.Name = "btnAgregarMoneda";
+            this.btnAgregarMoneda.Size = new System.Drawing.Size(110, 30);
+            this.btnAgregarMoneda.TabIndex = 4;
+            this.btnAgregarMoneda.Tag = "FormCurrencyManagement.AddButton";
+            this.btnAgregarMoneda.Text = "Agregar";
+            this.btnAgregarMoneda.UseVisualStyleBackColor = true;
+            this.btnAgregarMoneda.Click += new System.EventHandler(this.btnAgregarMoneda_Click);
+            //
+            // txtbNombreMoneda
+            //
+            this.txtbNombreMoneda.Location = new System.Drawing.Point(326, 26);
+            this.txtbNombreMoneda.Name = "txtbNombreMoneda";
+            this.txtbNombreMoneda.Size = new System.Drawing.Size(254, 20);
+            this.txtbNombreMoneda.TabIndex = 3;
+            //
+            // lblNombreMoneda
+            //
+            this.lblNombreMoneda.AutoSize = true;
+            this.lblNombreMoneda.Location = new System.Drawing.Point(270, 29);
+            this.lblNombreMoneda.Name = "lblNombreMoneda";
+            this.lblNombreMoneda.Size = new System.Drawing.Size(50, 13);
+            this.lblNombreMoneda.TabIndex = 2;
+            this.lblNombreMoneda.Tag = "FormCurrencyManagement.NombreLabel";
+            this.lblNombreMoneda.Text = "Nombre:";
+            //
+            // txtbCodigoMoneda
+            //
+            this.txtbCodigoMoneda.CharacterCasing = System.Windows.Forms.CharacterCasing.Upper;
+            this.txtbCodigoMoneda.Location = new System.Drawing.Point(70, 26);
+            this.txtbCodigoMoneda.MaxLength = 3;
+            this.txtbCodigoMoneda.Name = "txtbCodigoMoneda";
+            this.txtbCodigoMoneda.Size = new System.Drawing.Size(180, 20);
+            this.txtbCodigoMoneda.TabIndex = 1;
+            //
+            // lblCodigoMoneda
+            //
+            this.lblCodigoMoneda.AutoSize = true;
+            this.lblCodigoMoneda.Location = new System.Drawing.Point(11, 29);
+            this.lblCodigoMoneda.Name = "lblCodigoMoneda";
+            this.lblCodigoMoneda.Size = new System.Drawing.Size(43, 13);
+            this.lblCodigoMoneda.TabIndex = 0;
+            this.lblCodigoMoneda.Tag = "FormCurrencyManagement.CodigoLabel";
+            this.lblCodigoMoneda.Text = "Codigo:";
             //
             // dgvMonedas
             //
@@ -75,15 +158,16 @@ namespace TpIDS
             this.dgvMonedas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colMonedaCodigo,
             this.colMonedaNombre});
-            this.dgvMonedas.Location = new System.Drawing.Point(14, 25);
+            this.dgvMonedas.Location = new System.Drawing.Point(14, 100);
             this.dgvMonedas.MultiSelect = false;
             this.dgvMonedas.Name = "dgvMonedas";
             this.dgvMonedas.ReadOnly = true;
             this.dgvMonedas.RowHeadersVisible = false;
             this.dgvMonedas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvMonedas.Size = new System.Drawing.Size(566, 150);
-            this.dgvMonedas.TabIndex = 0;
+            this.dgvMonedas.Size = new System.Drawing.Size(566, 145);
+            this.dgvMonedas.TabIndex = 7;
             this.dgvMonedas.Tag = "FormCurrencyManagement.MonedaGrid";
+            this.dgvMonedas.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMonedas_CellClick);
             //
             // colMonedaCodigo
             //
@@ -110,7 +194,7 @@ namespace TpIDS
             this.groupBoxTasas.Controls.Add(this.lblMonedaConversion);
             this.groupBoxTasas.Controls.Add(this.cmbMonedaBase);
             this.groupBoxTasas.Controls.Add(this.lblMonedaBase);
-            this.groupBoxTasas.Location = new System.Drawing.Point(23, 252);
+            this.groupBoxTasas.Location = new System.Drawing.Point(23, 322);
             this.groupBoxTasas.Name = "groupBoxTasas";
             this.groupBoxTasas.Size = new System.Drawing.Size(594, 160);
             this.groupBoxTasas.TabIndex = 2;
@@ -234,7 +318,7 @@ namespace TpIDS
             this.colTasaMonedaConversion,
             this.colTasaCalculo,
             this.colTasaFechaActualizacion});
-            this.dgvTasas.Location = new System.Drawing.Point(23, 422);
+            this.dgvTasas.Location = new System.Drawing.Point(23, 492);
             this.dgvTasas.MultiSelect = false;
             this.dgvTasas.Name = "dgvTasas";
             this.dgvTasas.RowHeadersVisible = false;
@@ -276,7 +360,7 @@ namespace TpIDS
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(640, 660);
+            this.ClientSize = new System.Drawing.Size(640, 730);
             this.Controls.Add(this.dgvTasas);
             this.Controls.Add(this.groupBoxTasas);
             this.Controls.Add(this.groupBoxMonedas);
@@ -300,6 +384,13 @@ namespace TpIDS
 
         private System.Windows.Forms.Label lblTituloMonedas;
         private System.Windows.Forms.GroupBox groupBoxMonedas;
+        private System.Windows.Forms.Button btnEliminarMoneda;
+        private System.Windows.Forms.Button btnActualizarMoneda;
+        private System.Windows.Forms.Button btnAgregarMoneda;
+        private System.Windows.Forms.TextBox txtbNombreMoneda;
+        private System.Windows.Forms.Label lblNombreMoneda;
+        private System.Windows.Forms.TextBox txtbCodigoMoneda;
+        private System.Windows.Forms.Label lblCodigoMoneda;
         private System.Windows.Forms.DataGridView dgvMonedas;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMonedaCodigo;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMonedaNombre;

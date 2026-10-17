@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -15,7 +16,7 @@ namespace DAL
                 Usuario = new Usuario { Id = (int)row["UsuarioId"] },
                 EntidadFinanciera = new EntidadFinanciera { Id = (int)row["EntidadFinancieraId"] },
                 Alias = row["Alias"].ToString(),
-                Tipo = row["Tipo"].ToString(),
+                Tipo = (TipoCuentaFinanciera)Enum.Parse(typeof(TipoCuentaFinanciera), row["Tipo"].ToString()),
                 CredencialesCifradas = row.IsNull("CredencialesCifradas") ? null : row["CredencialesCifradas"].ToString()
             };
         }
@@ -85,6 +86,42 @@ namespace DAL
             }
         }
 
+        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT Id, UsuarioId, EntidadFinancieraId, Alias, Tipo, CredencialesCifradas
+                FROM CuentaFinanciera
+                WHERE EntidadFinancieraId = @EntidadFinancieraId
+                ORDER BY Alias";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidadFinancieraId)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                List<CuentaFinanciera> cuentas = new List<CuentaFinanciera>();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    cuentas.Add(Map(row));
+                }
+
+                return cuentas;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
         public int InsertarYObtenerId(CuentaFinanciera cuenta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
@@ -102,7 +139,7 @@ namespace DAL
                     accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, cuenta.Usuario.Id),
                     accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, cuenta.EntidadFinanciera.Id),
                     accesoDatos.CreateParameter("@Alias", SqlDbType.VarChar, cuenta.Alias),
-                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, cuenta.Tipo),
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, cuenta.Tipo.ToString()),
                     accesoDatos.CreateParameter("@CredencialesCifradas", SqlDbType.VarChar, cuenta.CredencialesCifradas)
                 };
 
@@ -136,7 +173,7 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, cuenta.EntidadFinanciera.Id),
                     accesoDatos.CreateParameter("@Alias", SqlDbType.VarChar, cuenta.Alias),
-                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, cuenta.Tipo),
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, cuenta.Tipo.ToString()),
                     accesoDatos.CreateParameter("@CredencialesCifradas", SqlDbType.VarChar, cuenta.CredencialesCifradas),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, cuenta.Id)
                 };

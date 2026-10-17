@@ -54,14 +54,14 @@ reportar verde vacio.
   (FlaUI mueve ventanas reales) y la BD de test preparada
   (`run-tests.ps1 -IncludeUi` la prepara solo).
 - Datos seed de `script_bd.sql` que la suite asume: usuarios `admin` (grupo `admin`,
-  todos los permisos) y `user` (grupo `basico`), e idioma default `Español` con las
+  todos los permisos), `user` (grupo `basico`) y `operador` (grupo `operador`), e idioma default `Español` con las
   traducciones de `translation-seeds/base.es.json` (los asserts de mensajes comparan
   contra la tabla `Traduccion` del idioma default, no contra textos hardcodeados).
 - En el primer arranque sobre BD virgen, la suite siembra passwords conocidas para
-  `admin`/`user` (con el `PasswordHasher` real, antes de que se inicialicen las
+  `admin`/`user`/`operador` (con el `PasswordHasher` real, antes de que se inicialicen las
   firmas DVH/DVV) y un usuario inactivo de prueba (`uitest_inactivo`).
-- Las escrituras de negocio van siempre por la UI para no romper DVH/DVV; el SQL
-  directo se usa solo para asserts (SELECT).
+- Las escrituras de negocio van por la UI para no romper DVH/DVV; el SQL directo se
+  usa para asserts (SELECT) y, en `FIN`, para armar datos previos en tablas sin firmas.
 - Nomenclatura: `T0X_CUYY_Escenario`, trazable a `diagramas/T0X-*/...casos-de-uso.json`.
 - Ante un fallo queda captura de pantalla en `TestResults/ui-screenshots/`.
 
@@ -75,6 +75,7 @@ reportar verde vacio.
 | `T05_MultidiomaTests.cs` | T05 | CU01/CU02 alta+rename (+duplicado, +rename a nombre existente), CU03 eliminar (+proteccion default, +cancelacion), CU06 editar traduccion (+valor vacio), CU07 preferencia (+idioma incompleto). CU04/CU05 (import/export con dialogos nativos) quedan cubiertos en BLL.Tests |
 | `T06_BitacoraHistorialTests.cs` | T06a/T06b | CU01 Consultar bitacora (filtros usuario/nivel vs SQL), historial de versiones y restauracion (+sin seleccion, +cancelacion) |
 | `T07_IntegridadTests.cs` | T07 | Corrupcion horizontal (DVH) y vertical (DVV) -> pantalla de contingencia; restauran las firmas al terminar |
+| `FIN_EntidadesMediosPagoTests.cs` | FIN (negocio, sin N0X asignado) | Medios de pago (alta, duplicado, baja), entidades financieras (alta, nombre vacio, detalle alta/baja de medio de pago), cuentas financieras (alta con medios marcados, alias vacio, baja, sin edicion) y permisos basico/operador |
 
 Flujos alternativos que quedan fuera de la UI a proposito: los "Xa: excepcion tecnica"
 (requieren tirar la infraestructura), los "sin seleccion" de combos con DataSource (auto-

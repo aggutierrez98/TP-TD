@@ -13,10 +13,15 @@ namespace REPOSITORIO
         private ICategoriaRepositorio _categorias;
         private ICategoriaProductoRepositorio _categoriasProducto;
         private IComercioRepositorio _comercios;
+        private ICuentaFinancieraRepositorio _cuentasFinancieras;
+        private IDashboardRepositorio _dashboards;
+        private IEntidadFinancieraRepositorio _entidadesFinancieras;
         private IIdiomaRepositorio _idiomas;
         private IIntegridadRepositorio _integridad;
         private IItemListaRepositorio _itemsLista;
         private IListaDeComprasRepositorio _listasDeCompras;
+        private IMedioPagoRepositorio _mediosPago;
+        private IMedioPagoEntidadRepositorio _mediosPagoEntidad;
         private IMonedaRepositorio _monedas;
         private IMovimientoRepositorio _movimientos;
         private INotificacionRepositorio _notificaciones;
@@ -27,6 +32,10 @@ namespace REPOSITORIO
         private IRecordatorioCompraRepositorio _recordatoriosCompra;
         private IRecordatorioInversionRepositorio _recordatoriosInversion;
         private IRubroComercioRepositorio _rubrosComercio;
+        private IReglaCategorizacionRepositorio _reglasCategorizacion;
+        private IComercioReglaCategorizacionRepositorio _comercioReglaCategorizacion;
+        private ITarjetaDashboardRepositorio _tarjetasDashboard;
+        private IConsultaChatbotRepositorio _consultasChatbot;
         private ITasaConversionRepositorio _tasasConversion;
         private ITraduccionRepositorio _traducciones;
         private IUsuarioHistorialRepositorio _usuarioHistorial;
@@ -58,6 +67,21 @@ namespace REPOSITORIO
             get { return _comercios ?? (_comercios = new ComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
+        public ICuentaFinancieraRepositorio CuentasFinancieras
+        {
+            get { return _cuentasFinancieras ?? (_cuentasFinancieras = new CuentaFinancieraRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IDashboardRepositorio Dashboards
+        {
+            get { return _dashboards ?? (_dashboards = new DashboardRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IEntidadFinancieraRepositorio EntidadesFinancieras
+        {
+            get { return _entidadesFinancieras ?? (_entidadesFinancieras = new EntidadFinancieraRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
         public IIdiomaRepositorio Idiomas
         {
             get { return _idiomas ?? (_idiomas = new IdiomaRepositorio(ObtenerAccesoDatosTransaccional())); }
@@ -76,6 +100,16 @@ namespace REPOSITORIO
         public IListaDeComprasRepositorio ListasDeCompras
         {
             get { return _listasDeCompras ?? (_listasDeCompras = new ListaDeComprasRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IMedioPagoRepositorio MediosPago
+        {
+            get { return _mediosPago ?? (_mediosPago = new MedioPagoRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IMedioPagoEntidadRepositorio MediosPagoEntidad
+        {
+            get { return _mediosPagoEntidad ?? (_mediosPagoEntidad = new MedioPagoEntidadRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public IMonedaRepositorio Monedas
@@ -126,6 +160,26 @@ namespace REPOSITORIO
         public IRubroComercioRepositorio RubrosComercio
         {
             get { return _rubrosComercio ?? (_rubrosComercio = new RubroComercioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IReglaCategorizacionRepositorio ReglasCategorizacion
+        {
+            get { return _reglasCategorizacion ?? (_reglasCategorizacion = new ReglaCategorizacionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IComercioReglaCategorizacionRepositorio ComercioReglaCategorizacion
+        {
+            get { return _comercioReglaCategorizacion ?? (_comercioReglaCategorizacion = new ComercioReglaCategorizacionRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public ITarjetaDashboardRepositorio TarjetasDashboard
+        {
+            get { return _tarjetasDashboard ?? (_tarjetasDashboard = new TarjetaDashboardRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IConsultaChatbotRepositorio ConsultasChatbot
+        {
+            get { return _consultasChatbot ?? (_consultasChatbot = new ConsultaChatbotRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public ITasaConversionRepositorio TasasConversion

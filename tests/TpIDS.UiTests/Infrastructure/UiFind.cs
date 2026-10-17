@@ -464,6 +464,35 @@ namespace TpIDS.UiTests.Infrastructure
         }
 
         /// <summary>
+        /// Selecciona un item de ComboBox navegando con el teclado (HOME + flecha abajo), como
+        /// un usuario real. A diferencia de <see cref="SeleccionarItemCombo"/>, dispara
+        /// SelectedIndexChanged: SelectionItemPattern.Select() cambia la seleccion nativa
+        /// sin emitir CBN_SELCHANGE, asi que no sirve para combos que cargan datos dependientes.
+        /// </summary>
+        public static void SeleccionarItemComboConTeclado(AutomationElement raiz, string automationId, string texto)
+        {
+            ComboBox combo = Elemento(raiz, automationId).AsComboBox();
+            int cantidad = combo.Items.Length;
+            combo.Focus();
+            FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.HOME);
+
+            for (int i = 0; i <= cantidad; i++)
+            {
+                FlaUI.Core.Input.Wait.UntilInputIsProcessed();
+                ComboBoxItem seleccionado = combo.SelectedItem;
+                if (seleccionado != null && (seleccionado.Text == texto || seleccionado.Name == texto))
+                {
+                    return;
+                }
+
+                FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.DOWN);
+            }
+
+            throw new InvalidOperationException(
+                "No se encontro el item '" + texto + "' en el combo '" + automationId + "'.");
+        }
+
+        /// <summary>
         /// Marca el checkbox de un nodo de TreeView (CheckBoxes=true). Intenta TogglePattern
         /// y cae a seleccionar el nodo + tecla ESPACIO, que es como WinForms togglea el check.
         /// </summary>
@@ -514,6 +543,77 @@ namespace TpIDS.UiTests.Infrastructure
             }
 
             FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.SPACE);
+        }
+
+        /// <summary>
+        /// Marca el item de un CheckedListBox cuyo texto visible contiene el texto dado.
+        /// Intenta TogglePattern; si no esta, usa la accion default MSAA (Check/Uncheck)
+        /// segun el estado CHECKED; y como ultimo recurso selecciona el item + ESPACIO.
+        /// </summary>
+        public static void MarcarItemListaChequeable(Window ventana, string automationId, string textoContenido)
+        {
+            AutomationElement lista = Elemento(ventana, automationId);
+
+            RetryResult<AutomationElement> resultado = Retry.WhileNull(
+                () => lista.FindAllDescendants().FirstOrDefault(item => NombreContiene(item, textoContenido)),
+                TimeSpan.FromSeconds(10),
+                TimeSpan.FromMilliseconds(300));
+
+            if (!resultado.Success || resultado.Result == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontro un item con '" + textoContenido + "' en la lista '" + automationId + "'.");
+            }
+
+            AutomationElement itemLista = resultado.Result;
+
+            var toggle = itemLista.Patterns.Toggle.PatternOrDefault;
+            if (toggle != null)
+            {
+                if (toggle.ToggleState.ValueOrDefault != FlaUI.Core.Definitions.ToggleState.On)
+                {
+                    toggle.Toggle();
+                }
+
+                return;
+            }
+
+            var legacy = itemLista.Patterns.LegacyIAccessible.PatternOrDefault;
+            if (legacy != null)
+            {
+                bool marcado = (legacy.State.ValueOrDefault & FlaUI.Core.WindowsAPI.AccessibilityState.STATE_SYSTEM_CHECKED) != 0;
+                if (!marcado)
+                {
+                    legacy.DoDefaultAction();
+                }
+
+                return;
+            }
+
+            try
+            {
+                ventana.SetForeground();
+            }
+            catch
+            {
+                // Si no se puede traer al frente se intenta igual.
+            }
+
+            itemLista.Click();
+            FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.SPACE);
+        }
+
+        private static bool NombreContiene(AutomationElement elemento, string texto)
+        {
+            try
+            {
+                string nombre = elemento.Name;
+                return !string.IsNullOrEmpty(nombre) && nombre.Contains(texto);
+            }
+            catch (FlaUI.Core.Exceptions.PropertyNotSupportedException)
+            {
+                return false;
+            }
         }
 
         private static void EstablecerValor(AutomationElement elemento, string valor)

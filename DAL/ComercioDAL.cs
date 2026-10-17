@@ -14,14 +14,18 @@ namespace DAL
                 Id = (int)row["Id"],
                 RubroComercio = new RubroComercio { Id = (int)row["RubroComercioId"] },
                 Nombre = row["Nombre"].ToString(),
-                Ubicacion = row.IsNull("Ubicacion") ? null : row["Ubicacion"].ToString()
+                Direccion = row.IsNull("Direccion") ? null : row["Direccion"].ToString(),
+                Localidad = row.IsNull("Localidad") ? null : row["Localidad"].ToString(),
+                Provincia = row.IsNull("Provincia") ? null : row["Provincia"].ToString(),
+                Latitud = row.IsNull("Latitud") ? (decimal?)null : (decimal)row["Latitud"],
+                Longitud = row.IsNull("Longitud") ? (decimal?)null : (decimal)row["Longitud"]
             };
         }
 
         public Comercio ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, RubroComercioId, Nombre, Ubicacion
+                SELECT Id, RubroComercioId, Nombre, Direccion, Localidad, Provincia, Latitud, Longitud
                 FROM Comercio
                 WHERE Id = @Id";
 
@@ -50,7 +54,7 @@ namespace DAL
         public List<Comercio> ObtenerPorRubro(int rubroComercioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, RubroComercioId, Nombre, Ubicacion
+                SELECT Id, RubroComercioId, Nombre, Direccion, Localidad, Provincia, Latitud, Longitud
                 FROM Comercio
                 WHERE RubroComercioId = @RubroComercioId
                 ORDER BY Nombre";
@@ -86,7 +90,7 @@ namespace DAL
         public List<Comercio> ObtenerTodos(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, RubroComercioId, Nombre, Ubicacion
+                SELECT Id, RubroComercioId, Nombre, Direccion, Localidad, Provincia, Latitud, Longitud
                 FROM Comercio
                 ORDER BY Nombre";
 
@@ -116,9 +120,9 @@ namespace DAL
         public int InsertarYObtenerId(Comercio comercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Comercio (RubroComercioId, Nombre, Ubicacion)
+                INSERT INTO Comercio (RubroComercioId, Nombre, Direccion, Localidad, Provincia, Latitud, Longitud)
                 OUTPUT INSERTED.Id
-                VALUES (@RubroComercioId, @Nombre, @Ubicacion)";
+                VALUES (@RubroComercioId, @Nombre, @Direccion, @Localidad, @Provincia, @Latitud, @Longitud)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -129,7 +133,11 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@RubroComercioId", SqlDbType.Int, comercio.RubroComercio.Id),
                     accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, comercio.Nombre),
-                    accesoDatos.CreateParameter("@Ubicacion", SqlDbType.VarChar, comercio.Ubicacion)
+                    accesoDatos.CreateParameter("@Direccion", SqlDbType.VarChar, comercio.Direccion),
+                    accesoDatos.CreateParameter("@Localidad", SqlDbType.VarChar, comercio.Localidad),
+                    accesoDatos.CreateParameter("@Provincia", SqlDbType.VarChar, comercio.Provincia),
+                    accesoDatos.CreateParameter("@Latitud", SqlDbType.Decimal, comercio.Latitud),
+                    accesoDatos.CreateParameter("@Longitud", SqlDbType.Decimal, comercio.Longitud)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);
@@ -149,7 +157,11 @@ namespace DAL
                 UPDATE Comercio
                 SET RubroComercioId = @RubroComercioId,
                     Nombre = @Nombre,
-                    Ubicacion = @Ubicacion
+                    Direccion = @Direccion,
+                    Localidad = @Localidad,
+                    Provincia = @Provincia,
+                    Latitud = @Latitud,
+                    Longitud = @Longitud
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -161,7 +173,11 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@RubroComercioId", SqlDbType.Int, comercio.RubroComercio.Id),
                     accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, comercio.Nombre),
-                    accesoDatos.CreateParameter("@Ubicacion", SqlDbType.VarChar, comercio.Ubicacion),
+                    accesoDatos.CreateParameter("@Direccion", SqlDbType.VarChar, comercio.Direccion),
+                    accesoDatos.CreateParameter("@Localidad", SqlDbType.VarChar, comercio.Localidad),
+                    accesoDatos.CreateParameter("@Provincia", SqlDbType.VarChar, comercio.Provincia),
+                    accesoDatos.CreateParameter("@Latitud", SqlDbType.Decimal, comercio.Latitud),
+                    accesoDatos.CreateParameter("@Longitud", SqlDbType.Decimal, comercio.Longitud),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercio.Id)
                 };
 

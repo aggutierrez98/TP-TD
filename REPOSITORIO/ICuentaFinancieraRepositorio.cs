@@ -9,10 +9,14 @@ namespace REPOSITORIO
 
         List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId);
 
+        List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId);
+
         int InsertarYObtenerId(CuentaFinanciera cuenta);
 
         bool Actualizar(CuentaFinanciera cuenta);
 
         bool Eliminar(int id);
+
+        bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds);
     }
 }

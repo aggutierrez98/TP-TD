@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Forms;
+using ABSTRACCIONES;
 using BE;
 using BLL;
+using SERVICIOS;
 
 namespace TpIDS
 {
@@ -52,12 +54,20 @@ namespace TpIDS
         {
             public string Descripcion { get; set; }
             public decimal Descuento { get; set; }
+
+            // null = sin tope; se muestra "-" en dgvPromociones_CellFormatting.
+            public decimal? TopeDescuento { get; set; }
+
+            // Lista vacia = todos los dias; se traduce en dgvPromociones_CellFormatting.
+            public List<DiaSemana> DiasSemana { get; set; }
+
             public DateTime VigenciaDesde { get; set; }
             public DateTime VigenciaHasta { get; set; }
         }
 
         private void FormDetalleComercio_Load(object sender, EventArgs e)
         {
+            dgvPromociones.CellFormatting += dgvPromociones_CellFormatting;
             CargarMonedas();
             CargarCategorias(null);
             CargarProductos(null);
@@ -414,9 +424,43 @@ namespace TpIDS
             {
                 Descripcion = promocion.Descripcion,
                 Descuento = promocion.Descuento,
+                TopeDescuento = promocion.TopeDescuento,
+                DiasSemana = promocion.DiasSemana ?? new List<DiaSemana>(),
                 VigenciaDesde = promocion.VigenciaDesde,
                 VigenciaHasta = promocion.VigenciaHasta
             };
+        }
+
+        private void dgvPromociones_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            string columna = dgvPromociones.Columns[e.ColumnIndex].Name;
+            if (string.Equals(columna, "TopeDescuento", StringComparison.Ordinal) && e.Value == null)
+            {
+                e.Value = "-";
+                e.FormattingApplied = true;
+                return;
+            }
+
+            if (!string.Equals(columna, "DiasSemana", StringComparison.Ordinal) || !(e.Value is List<DiaSemana> dias))
+            {
+                return;
+            }
+
+            IIdioma idioma = IdiomaService.GetInstance().IdiomaActual;
+            if (idioma == null)
+            {
+                return;
+            }
+
+            e.Value = dias.Count == 0
+                ? idioma.ObtenerTraduccion(EtiquetasFinanzas.ClaveTodosLosDias)
+                : string.Join(", ", dias.OrderBy(dia => dia).Select(dia => idioma.ObtenerTraduccion(EtiquetasFinanzas.ClaveDiaSemana(dia))));
+            e.FormattingApplied = true;
         }
 
         // --- Helpers comunes a las grillas ---

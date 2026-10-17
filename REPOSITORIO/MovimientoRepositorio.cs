@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using ABSTRACCIONES;
 using BE;
 using DAL;
 using SERVICIOS;
@@ -35,6 +37,21 @@ namespace REPOSITORIO
             return movimientos;
         }
 
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            return _movimientoDAL.ObtenerTotalesPorCategoria(usuarioId, tipo, desde, hasta, _accesoDatos);
+        }
+
+        public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta)
+        {
+            return _movimientoDAL.ObtenerTotalesPorMes(usuarioId, desde, hasta, _accesoDatos);
+        }
+
+        public ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta)
+        {
+            return _movimientoDAL.ObtenerResumen(usuarioId, desde, hasta, _accesoDatos);
+        }
+
         private void Hidratar(Movimiento movimiento)
         {
             if (movimiento == null)
@@ -44,6 +61,10 @@ namespace REPOSITORIO
 
             movimiento.Usuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(movimiento.Usuario.Id);
             movimiento.Categoria = new CategoriaRepositorio(_accesoDatos).ObtenerPorId(movimiento.Categoria.Id);
+            if (movimiento.Comercio != null && movimiento.Comercio.Id > 0)
+            {
+                movimiento.Comercio = new ComercioRepositorio(_accesoDatos).ObtenerPorId(movimiento.Comercio.Id);
+            }
         }
 
         public int InsertarYObtenerId(Movimiento movimiento)

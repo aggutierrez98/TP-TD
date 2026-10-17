@@ -12,5 +12,7 @@ namespace SERVICIOS
         public int? CategoriaId { get; set; }
 
         public TipoMovimiento? Tipo { get; set; }
+
+        public string Texto { get; set; }
     }
 }

@@ -5,15 +5,15 @@ using System.Linq;
 
 namespace DAL
 {
-    public class PromocionMedioDePagoDAL
+    public class CuentaFinancieraMedioPagoEntidadDAL
     {
-        public List<int> ObtenerMedioDePagoIdsPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<int> ObtenerMedioPagoEntidadIdsPorCuenta(int cuentaFinancieraId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT MedioDePagoId
-                FROM PromocionMedioDePago
-                WHERE PromocionId = @PromocionId
-                ORDER BY MedioDePagoId";
+                SELECT MedioPagoEntidadId
+                FROM CuentaFinancieraMedioPagoEntidad
+                WHERE CuentaFinancieraId = @CuentaFinancieraId
+                ORDER BY MedioPagoEntidadId";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -22,12 +22,12 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@CuentaFinancieraId", SqlDbType.Int, cuentaFinancieraId)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["MedioDePagoId"])
+                    .Select(row => (int)row["MedioPagoEntidadId"])
                     .ToList();
             }
             finally
@@ -39,7 +39,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarMediosDePagoDePromocion(int promocionId, List<int> medioDePagoIds, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -48,20 +48,20 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@CuentaFinancieraId", SqlDbType.Int, cuentaFinancieraId)
                 };
 
                 string query = @"
-                    DELETE FROM PromocionMedioDePago
-                    WHERE PromocionId = @PromocionId;";
+                    DELETE FROM CuentaFinancieraMedioPagoEntidad
+                    WHERE CuentaFinancieraId = @CuentaFinancieraId;";
 
-                for (int i = 0; i < medioDePagoIds.Count; i++)
+                for (int i = 0; i < medioPagoEntidadIds.Count; i++)
                 {
                     query += string.Format(@"
-                        INSERT INTO PromocionMedioDePago (PromocionId, MedioDePagoId)
-                        VALUES (@PromocionId, @MedioDePagoId{0});", i);
+                        INSERT INTO CuentaFinancieraMedioPagoEntidad (CuentaFinancieraId, MedioPagoEntidadId)
+                        VALUES (@CuentaFinancieraId, @MedioPagoEntidadId{0});", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@MedioDePagoId" + i, SqlDbType.Int, medioDePagoIds[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@MedioPagoEntidadId" + i, SqlDbType.Int, medioPagoEntidadIds[i]));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;

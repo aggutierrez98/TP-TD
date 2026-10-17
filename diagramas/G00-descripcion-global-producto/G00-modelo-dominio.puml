@@ -46,6 +46,22 @@
 '     Producto -- son conceptos distintos (categoria de gasto personal vs. categoria de
 '     catalogo de producto). Correccion de un error propio de la pasada anterior: se agrega
 '     CategoriaProducto <<Vision>> y se saca la asociacion incorrecta Producto-Categoria.
+'
+' Actualizacion 2026-09-24: se codeo la seccion Analiticas (Dashboard + Balance General).
+' Presupuesto y ResumenFinanciero se sacan del modelo: decision del usuario de no
+' implementarlos en este TP, y el codigo real (DashboardBLL, Balance General) nunca los
+' necesito. Dashboard y TarjetaDashboard pasan a <<Implementado>>; el enum de
+' TarjetaDashboard.tipo se actualiza a los 4 valores realmente codeados en
+' BE/TipoTarjetaDashboard.cs. El paquete se renombra "Presupuesto y Analitica" ->
+' "Analitica" porque ya no queda nada de Presupuesto adentro.
+'
+' Actualizacion 2026-09-25: se codearon Entidades Financieras y Medios de Pago (con UI).
+' EntidadFinanciera, CuentaFinanciera y Promocion pasan a <<Implementado>> (ya existian en
+' BE/). MedioDePago se parte en MedioPago (catalogo global Tipo+Marca, ej. "Visa Credito")
+' y MedioPagoEntidad (producto real de una entidad con su segmento, ej. "Galicia + Visa
+' Credito + Eminent"): la entidad ofrece un catalogo de MedioPagoEntidad y cada
+' CuentaFinanciera contrata un subconjunto (N:M). Promocion suma topeDescuento y
+' diasSemana (vacio = todos los dias) para cubrir "10% los lunes con tope de $5000".
 title FINAZAPP - Modelo de Dominio (vision completa del producto)
 
 skinparam class {
@@ -69,13 +85,13 @@ package "Usuarios y Seguridad" {
     +tipo : atomico | compuesto
   }
 
-  class CuentaFinanciera <<Vision>> {
+  class CuentaFinanciera <<Implementado>> {
     +alias
-    +tipo
+    +tipo : billeteraDigital | cuentaCorriente | cajaAhorro
     +credencialesCifradas
   }
 
-  class EntidadFinanciera <<Vision>> {
+  class EntidadFinanciera <<Implementado>> {
     +nombre
   }
 }
@@ -127,15 +143,20 @@ package "Ahorro y Descuentos Inteligentes" {
     +nombre
   }
 
-  class MedioDePago <<Vision>> {
+  class MedioPago <<Implementado>> {
     +tipo : tarjetaCredito | tarjetaDebito | tarjetaPrepaga | cuentaBilleteraVirtual | cuentaDNI
     +marca
+  }
+
+  class MedioPagoEntidad <<Implementado>> {
     +segmento
   }
 
-  class Promocion <<Vision>> {
+  class Promocion <<Implementado>> {
     +descripcion
     +descuento
+    +topeDescuento [0..1]
+    +diasSemana : lunes | martes | miercoles | jueves | viernes | sabado | domingo [0..*]
     +vigenciaDesde
     +vigenciaHasta
   }
@@ -160,23 +181,12 @@ package "Ahorro y Descuentos Inteligentes" {
   }
 }
 
-package "Presupuesto y Analitica" {
-  class Presupuesto <<Vision>> {
-    +montoLimite
-    +periodo
+package "Analitica" {
+  class Dashboard <<Implementado>> {
   }
 
-  class ResumenFinanciero <<Vision>> {
-    +periodo
-    +balance
-    +tasaAhorro
-  }
-
-  class Dashboard <<Vision>> {
-  }
-
-  class TarjetaDashboard <<Vision>> {
-    +tipo : saldoActual | gastosPorCategoria | comparativoMensual | ahorroObjetivo
+  class TarjetaDashboard <<Implementado>> {
+    +tipo : gastosPorCategoria | ingresosPorCategoria | comparativoMensual | evolucionBalance
     +orden
   }
 
@@ -243,8 +253,10 @@ Producto "0..*" -- "1" CategoriaProducto : pertenece a
 Producto "0..*" -- "1" Moneda : se cotiza en
 Comercio "0..*" -- "1" RubroComercio : pertenece a
 Comercio "1" -- "0..*" Producto : vende
-EntidadFinanciera "1" -- "0..*" MedioDePago : emite
-Promocion "0..*" -- "0..*" MedioDePago : aplica a
+EntidadFinanciera "1" -- "0..*" MedioPagoEntidad : ofrece
+MedioPagoEntidad "0..*" -- "1" MedioPago : es un
+CuentaFinanciera "0..*" -- "0..*" MedioPagoEntidad : contrata
+Promocion "0..*" -- "0..*" MedioPagoEntidad : aplica a
 Promocion "0..*" -- "0..*" Comercio : aplica a (alcance puntual)
 Promocion "0..*" -- "0..*" RubroComercio : aplica a (alcance por rubro)
 Usuario "1" -- "0..*" Notificacion : recibe
@@ -253,10 +265,7 @@ Notificacion <|-- RecordatorioInversion
 Promocion "0..1" -- "0..*" RecordatorioCompra : dispara (por nueva promo)
 ItemLista "1" -- "0..*" RecordatorioCompra : origina (por tiempo en lista)
 
-' Presupuesto y Analitica
-Usuario "1" -- "0..*" Presupuesto : define
-Categoria "1" -- "0..*" Presupuesto : limita
-Usuario "1" -- "0..*" ResumenFinanciero : genera (periodico)
+' Analitica
 Usuario "1" -- "0..1" Dashboard : configura
 Dashboard "1" *-- "0..*" TarjetaDashboard : contiene
 

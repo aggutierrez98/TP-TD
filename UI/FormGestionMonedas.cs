@@ -7,9 +7,6 @@ using BLL;
 
 namespace TpIDS
 {
-    // Pantalla de operador (back-office): seccion "Monedas" de solo lectura (el usuario
-    // solo pidio poder verlas) y seccion "Tasas de Conversion" con CRUD completo, en el
-    // mismo Form (igual criterio de dos secciones que FormGestionComercios).
     public partial class FormGestionMonedas : FormTraducibleBase
     {
         private readonly MonedaBLL monedaBLL = CompositionRoot.Moneda;
@@ -42,13 +39,13 @@ namespace TpIDS
 
         private void FormGestionMonedas_Load(object sender, EventArgs e)
         {
-            CargarMonedas();
+            CargarMonedas(null);
             CargarTasas(null);
         }
 
-        // --- Monedas (solo lectura) ---
+        // --- Monedas ---
 
-        private void CargarMonedas()
+        private void CargarMonedas(int? monedaSeleccionadaId)
         {
             try
             {
@@ -58,6 +55,16 @@ namespace TpIDS
 
                 dgvMonedas.DataSource = null;
                 dgvMonedas.DataSource = monedas.Select(ProyectarFilaMoneda).ToList();
+
+                if (monedaSeleccionadaId.HasValue)
+                {
+                    SeleccionarFila<FilaMoneda>(dgvMonedas, fila => fila.Id == monedaSeleccionadaId.Value);
+                }
+                else
+                {
+                    dgvMonedas.ClearSelection();
+                    dgvMonedas.CurrentCell = null;
+                }
 
                 cmbMonedaBase.DataSource = null;
                 cmbMonedaBase.DisplayMember = "Codigo";
@@ -81,6 +88,104 @@ namespace TpIDS
         private static FilaMoneda ProyectarFilaMoneda(Moneda moneda)
         {
             return new FilaMoneda { Id = moneda.Id, Codigo = moneda.Codigo, Nombre = moneda.Nombre };
+        }
+
+        private void btnAgregarMoneda_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                Moneda creada = monedaBLL.Crear(txtbCodigoMoneda.Text, txtbNombreMoneda.Text);
+                LimpiarFormularioMoneda();
+                CargarMonedas(creada.Id);
+                CargarTasas(null);
+                UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.MonedaCreated");
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Alta de moneda");
+            }
+        }
+
+        private void btnActualizarMoneda_Click(object sender, EventArgs e)
+        {
+            if (!ObtenerFilaSeleccionada(dgvMonedas, out FilaMoneda fila))
+            {
+                UiDialogHelper.MostrarWarning("FormCurrencyManagement.Warning.SelectMoneda");
+                return;
+            }
+
+            try
+            {
+                bool actualizada = monedaBLL.Actualizar(fila.Id, txtbCodigoMoneda.Text, txtbNombreMoneda.Text);
+                if (actualizada)
+                {
+                    LimpiarFormularioMoneda();
+                    CargarMonedas(fila.Id);
+                    CargarTasas(null);
+                    UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.MonedaUpdated");
+                }
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Edicion de moneda");
+            }
+        }
+
+        private void btnEliminarMoneda_Click(object sender, EventArgs e)
+        {
+            if (!ObtenerFilaSeleccionada(dgvMonedas, out FilaMoneda fila))
+            {
+                UiDialogHelper.MostrarWarning("FormCurrencyManagement.Warning.SelectMoneda");
+                return;
+            }
+
+            DialogResult confirmacion = UiDialogHelper.Confirmar(
+                "FormCurrencyManagement.Confirm.DeleteMonedaMessage",
+                "FormCurrencyManagement.Confirm.DeleteMonedaTitle",
+                MessageBoxIcon.Warning,
+                fila.Codigo);
+
+            if (confirmacion != DialogResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                bool eliminada = monedaBLL.Eliminar(fila.Id);
+                if (eliminada)
+                {
+                    LimpiarFormularioMoneda();
+                    CargarMonedas(null);
+                    CargarTasas(null);
+                    UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.MonedaDeleted");
+                }
+            }
+            catch (Exception ex)
+            {
+                UiExceptionHandler.Mostrar(ex, "Baja de moneda");
+            }
+        }
+
+        private void dgvMonedas_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0)
+            {
+                return;
+            }
+
+            if (ObtenerFilaSeleccionada(dgvMonedas, out FilaMoneda fila))
+            {
+                txtbCodigoMoneda.Text = fila.Codigo;
+                txtbNombreMoneda.Text = fila.Nombre;
+            }
+        }
+
+        private void LimpiarFormularioMoneda()
+        {
+            txtbCodigoMoneda.Clear();
+            txtbNombreMoneda.Clear();
+            txtbCodigoMoneda.Focus();
         }
 
         // --- Tasas de Conversion ---

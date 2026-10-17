@@ -11,6 +11,8 @@ namespace BE
 
         public Categoria Categoria { get; set; }
 
+        public Comercio Comercio { get; set; }
+
         public TipoMovimiento Tipo { get; set; }
 
         public decimal Monto { get; set; }

@@ -60,8 +60,10 @@
     <Compile Include="IItemListaRepositorio.cs" />
     <Compile Include="ListaDeComprasRepositorio.cs" />
     <Compile Include="IListaDeComprasRepositorio.cs" />
-    <Compile Include="MedioDePagoRepositorio.cs" />
-    <Compile Include="IMedioDePagoRepositorio.cs" />
+    <Compile Include="MedioPagoRepositorio.cs" />
+    <Compile Include="IMedioPagoRepositorio.cs" />
+    <Compile Include="MedioPagoEntidadRepositorio.cs" />
+    <Compile Include="IMedioPagoEntidadRepositorio.cs" />
     <Compile Include="MonedaRepositorio.cs" />
     <Compile Include="IMonedaRepositorio.cs" />
     <Compile Include="MovimientoRepositorio.cs" />
@@ -74,8 +76,8 @@
     <Compile Include="IPromocionRepositorio.cs" />
     <Compile Include="PromocionComercioRepositorio.cs" />
     <Compile Include="IPromocionComercioRepositorio.cs" />
-    <Compile Include="PromocionMedioDePagoRepositorio.cs" />
-    <Compile Include="IPromocionMedioDePagoRepositorio.cs" />
+    <Compile Include="PromocionMedioPagoEntidadRepositorio.cs" />
+    <Compile Include="IPromocionMedioPagoEntidadRepositorio.cs" />
     <Compile Include="PromocionRubroComercioRepositorio.cs" />
     <Compile Include="IPromocionRubroComercioRepositorio.cs" />
     <Compile Include="RecordatorioCompraRepositorio.cs" />
@@ -86,6 +88,10 @@
     <Compile Include="IReglaCategorizacionRepositorio.cs" />
     <Compile Include="ComercioReglaCategorizacionRepositorio.cs" />
     <Compile Include="IComercioReglaCategorizacionRepositorio.cs" />
+    <Compile Include="ConsultaChatbotRepositorio.cs" />
+    <Compile Include="IConsultaChatbotRepositorio.cs" />
+    <Compile Include="ChatbotFinancieroRepositorio.cs" />
+    <Compile Include="IChatbotFinancieroRepositorio.cs" />
     <Compile Include="RubroComercioRepositorio.cs" />
     <Compile Include="IRubroComercioRepositorio.cs" />
     <Compile Include="IdiomaRepositorio.cs" />

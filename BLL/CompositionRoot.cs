@@ -14,6 +14,8 @@ namespace BLL
         private static IPasswordHasher _passwordHasher;
         private static IIntegridadService _integridadService;
         private static IObservado _servicioIdioma;
+        private static IEscaneoTicketService _escaneoTicketService;
+        private static IAsistenteFinancieroService _asistenteFinancieroService;
 
         // BLL de caso de uso: una sola instancia de cada uno, compartida por referencia.
         private static BitacoraBLL _bitacoraBLL;
@@ -21,11 +23,17 @@ namespace BLL
         private static CategoriaProductoBLL _categoriaProductoBLL;
         private static ComercioBLL _comercioBLL;
         private static RubroComercioBLL _rubroComercioBLL;
+        private static MedioPagoBLL _medioPagoBLL;
+        private static EntidadFinancieraBLL _entidadFinancieraBLL;
+        private static CuentaFinancieraBLL _cuentaFinancieraBLL;
         private static ProductoBLL _productoBLL;
         private static PromocionBLL _promocionBLL;
         private static MonedaBLL _monedaBLL;
         private static TasaConversionBLL _tasaConversionBLL;
         private static MovimientoBLL _movimientoBLL;
+        private static DashboardBLL _dashboardBLL;
+        private static ReglaCategorizacionBLL _reglaCategorizacionBLL;
+        private static AsistenteFinancieroBLL _asistenteFinancieroBLL;
         private static ListaDeComprasBLL _listaDeComprasBLL;
         private static NotificacionBLL _notificacionBLL;
         private static UsuarioEstadoBLL _usuarioEstadoBLL;
@@ -52,6 +60,8 @@ namespace BLL
             _passwordHasher = new SERVICIOS.PasswordHasher();
             _integridadService = new SERVICIOS.IntegridadService();
             _servicioIdioma = SERVICIOS.IdiomaService.GetInstance();
+            _escaneoTicketService = new SERVICIOS.GeminiEscaneoTicketService();
+            _asistenteFinancieroService = new SERVICIOS.GeminiAsistenteFinancieroService();
 
             UnidadDeTrabajoFactory uow = new UnidadDeTrabajoFactory();
 
@@ -63,17 +73,42 @@ namespace BLL
 
             _comercioBLL = new ComercioBLL(new ComercioRepositorio(), uow, _bitacoraBLL);
 
+            _medioPagoBLL = new MedioPagoBLL(new MedioPagoRepositorio(), uow, _bitacoraBLL);
+
+            _entidadFinancieraBLL = new EntidadFinancieraBLL(new EntidadFinancieraRepositorio(), uow, _bitacoraBLL);
+
+            _cuentaFinancieraBLL = new CuentaFinancieraBLL(new CuentaFinancieraRepositorio(), uow, _sesion, _bitacoraBLL);
+
             _categoriaProductoBLL = new CategoriaProductoBLL(new CategoriaProductoRepositorio(), uow, _bitacoraBLL);
 
             _productoBLL = new ProductoBLL(new ProductoRepositorio(), new MonedaRepositorio(), uow, _bitacoraBLL);
 
             _promocionBLL = new PromocionBLL(new PromocionRepositorio(), new PromocionComercioRepositorio());
 
-            _monedaBLL = new MonedaBLL(new MonedaRepositorio());
+            _monedaBLL = new MonedaBLL(new MonedaRepositorio(), uow, _bitacoraBLL);
 
             _tasaConversionBLL = new TasaConversionBLL(new TasaConversionRepositorio(), uow, _bitacoraBLL);
 
-            _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), uow, _sesion, _bitacoraBLL);
+            _movimientoBLL = new MovimientoBLL(new MovimientoRepositorio(), new CategoriaRepositorio(), new ComercioRepositorio(), uow, _sesion, _bitacoraBLL, _escaneoTicketService);
+
+            _dashboardBLL = new DashboardBLL(new DashboardRepositorio(), new TarjetaDashboardRepositorio(), uow, _sesion, _bitacoraBLL);
+
+            _reglaCategorizacionBLL = new ReglaCategorizacionBLL(
+                new ReglaCategorizacionRepositorio(),
+                new ComercioReglaCategorizacionRepositorio(),
+                new CategoriaRepositorio(),
+                new ComercioRepositorio(),
+                uow,
+                _sesion,
+                _bitacoraBLL);
+
+            _asistenteFinancieroBLL = new AsistenteFinancieroBLL(
+                new ConsultaChatbotRepositorio(),
+                new ChatbotFinancieroRepositorio(),
+                _asistenteFinancieroService,
+                uow,
+                _sesion,
+                _bitacoraBLL);
 
             _listaDeComprasBLL = new ListaDeComprasBLL(new ListaDeComprasRepositorio(), uow, _sesion, _bitacoraBLL);
 
@@ -167,6 +202,16 @@ namespace BLL
             get { Inicializar(); return _servicioIdioma; }
         }
 
+        public static IEscaneoTicketService EscaneoTicket
+        {
+            get { Inicializar(); return _escaneoTicketService; }
+        }
+
+        public static IAsistenteFinancieroService AsistenteFinancieroService
+        {
+            get { Inicializar(); return _asistenteFinancieroService; }
+        }
+
         public static UsuarioBLL Usuario
         {
             get { Inicializar(); return _usuarioBLL; }
@@ -207,6 +252,21 @@ namespace BLL
             get { Inicializar(); return _rubroComercioBLL; }
         }
 
+        public static MedioPagoBLL MedioPago
+        {
+            get { Inicializar(); return _medioPagoBLL; }
+        }
+
+        public static EntidadFinancieraBLL EntidadFinanciera
+        {
+            get { Inicializar(); return _entidadFinancieraBLL; }
+        }
+
+        public static CuentaFinancieraBLL CuentaFinanciera
+        {
+            get { Inicializar(); return _cuentaFinancieraBLL; }
+        }
+
         public static CategoriaProductoBLL CategoriaProducto
         {
             get { Inicializar(); return _categoriaProductoBLL; }
@@ -235,6 +295,21 @@ namespace BLL
         public static MovimientoBLL Movimiento
         {
             get { Inicializar(); return _movimientoBLL; }
+        }
+
+        public static DashboardBLL Dashboard
+        {
+            get { Inicializar(); return _dashboardBLL; }
+        }
+
+        public static ReglaCategorizacionBLL ReglaCategorizacion
+        {
+            get { Inicializar(); return _reglaCategorizacionBLL; }
+        }
+
+        public static AsistenteFinancieroBLL AsistenteFinanciero
+        {
+            get { Inicializar(); return _asistenteFinancieroBLL; }
         }
 
         public static ListaDeComprasBLL ListaDeCompras

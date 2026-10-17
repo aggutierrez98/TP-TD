@@ -25,7 +25,11 @@ namespace TpIDS.IntegrationTests
                 {
                     RubroComercio = new BE.RubroComercio { Id = rubroComercioId },
                     Nombre = "ComercioTestPropio",
-                    Ubicacion = "UbicacionTest"
+                    Direccion = "DireccionTest",
+                    Localidad = "LocalidadTest",
+                    Provincia = "ProvinciaTest",
+                    Latitud = -34.603700m,
+                    Longitud = -58.381600m
                 });
 
                 BE.Comercio obtenido = repositorio.ObtenerPorId(id);
@@ -34,7 +38,11 @@ namespace TpIDS.IntegrationTests
                 Assert.AreEqual(rubroComercioId, obtenido.RubroComercio.Id);
                 Assert.AreEqual("RubroTestComercioPropio", obtenido.RubroComercio.Nombre);
                 Assert.AreEqual("ComercioTestPropio", obtenido.Nombre);
-                Assert.AreEqual("UbicacionTest", obtenido.Ubicacion);
+                Assert.AreEqual("DireccionTest", obtenido.Direccion);
+                Assert.AreEqual("LocalidadTest", obtenido.Localidad);
+                Assert.AreEqual("ProvinciaTest", obtenido.Provincia);
+                Assert.AreEqual(-34.603700m, obtenido.Latitud);
+                Assert.AreEqual(-58.381600m, obtenido.Longitud);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -82,7 +90,7 @@ namespace TpIDS.IntegrationTests
                 {
                     RubroComercio = new BE.RubroComercio { Id = rubroComercioId },
                     Nombre = "ComercioTestOriginal",
-                    Ubicacion = "UbicacionOriginal"
+                    Direccion = "DireccionOriginal"
                 });
 
                 bool actualizado = repositorio.Actualizar(new BE.Comercio
@@ -90,13 +98,21 @@ namespace TpIDS.IntegrationTests
                     Id = id,
                     RubroComercio = new BE.RubroComercio { Id = rubroComercioId },
                     Nombre = "ComercioTestRenombrado",
-                    Ubicacion = "UbicacionNueva"
+                    Direccion = "DireccionNueva",
+                    Localidad = "LocalidadNueva",
+                    Provincia = "ProvinciaNueva",
+                    Latitud = -34.5m,
+                    Longitud = -58.5m
                 });
 
                 Assert.IsTrue(actualizado);
                 BE.Comercio releido = repositorio.ObtenerPorId(id);
                 Assert.AreEqual("ComercioTestRenombrado", releido.Nombre);
-                Assert.AreEqual("UbicacionNueva", releido.Ubicacion);
+                Assert.AreEqual("DireccionNueva", releido.Direccion);
+                Assert.AreEqual("LocalidadNueva", releido.Localidad);
+                Assert.AreEqual("ProvinciaNueva", releido.Provincia);
+                Assert.AreEqual(-34.5m, releido.Latitud);
+                Assert.AreEqual(-58.5m, releido.Longitud);
 
                 accesoDatos.RollbackTransactionScope();
             }

@@ -37,11 +37,15 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AgenteAhorro.cs" />
+    <Compile Include="AgenteIA.cs" />
+    <Compile Include="AgenteInversiones.cs" />
     <Compile Include="AutorizacionService.cs" />
     <Compile Include="EventoBitacora.cs" />
     <Compile Include="ExcepcionIntegridad.cs" />
@@ -49,6 +53,9 @@
     <Compile Include="ExcepcionTecnica.cs" />
     <Compile Include="FiltroBitacora.cs" />
     <Compile Include="FiltroMovimiento.cs" />
+    <Compile Include="GeminiChatClient.cs" />
+    <Compile Include="GeminiEscaneoTicketService.cs" />
+    <Compile Include="GeminiAsistenteFinancieroService.cs" />
     <Compile Include="IntegridadService.cs" />
     <Compile Include="HistorialEstadosService.cs" />
     <Compile Include="Idioma.cs" />
@@ -60,7 +67,10 @@
     <Compile Include="PasswordHasher.cs" />
     <Compile Include="Palabra.cs" />
     <Compile Include="ResultadoComparacionEstado.cs" />
+    <Compile Include="ResumenMovimientos.cs" />
     <Compile Include="Sesion.cs" />
+    <Compile Include="TotalPorCategoria.cs" />
+    <Compile Include="TotalPorMes.cs" />
     <Compile Include="Traduccion.cs" />
     <Compile Include="UsuarioAutenticadoSesion.cs" />
     <Compile Include="UsuarioHistorialSnapshot.cs" />

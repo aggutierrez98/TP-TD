@@ -4,8 +4,8 @@ namespace TpIDS.UiTests.Infrastructure
 {
     /// <summary>
     /// Acceso de solo lectura a la BD de test para asserts.
-    /// Las escrituras de negocio siempre van por la UI para no romper DVH/DVV;
-    /// la unica excepcion documentada es la corrupcion intencional de T07.
+    /// Las escrituras de negocio van por la UI para no romper DVH/DVV; las excepciones
+    /// documentadas son la corrupcion intencional de T07 y el armado de datos en tablas sin firmas.
     /// </summary>
     internal static class TestDatabase
     {
@@ -54,9 +54,10 @@ namespace TpIDS.UiTests.Infrastructure
         }
 
         /// <summary>
-        /// Escritura directa a la BD de test. Uso restringido: SOLO para la corrupcion
-        /// intencional de firmas de T07 (y su restauracion). El resto de las escrituras
-        /// de negocio deben ir por la UI para no romper DVH/DVV.
+        /// Escritura directa a la BD de test. Uso restringido: la corrupcion intencional
+        /// de firmas de T07 (y su restauracion) y el armado de datos previos en tablas SIN
+        /// firmas DVH/DVV (ej. catalogos de entidades/medios de pago de FIN). Nunca sobre
+        /// tablas firmadas (Usuarios, Bitacora, etc.): esas escrituras van por la UI.
         /// </summary>
         public static int EjecutarSql(string sql, params SqlParameter[] parametros)
         {

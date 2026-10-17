@@ -66,7 +66,7 @@ CREATE TABLE dbo.Traduccion
 (
     PalabraId INT NOT NULL,
     IdiomaId INT NOT NULL,
-    Valor VARCHAR(300) NOT NULL,
+    Valor NVARCHAR(300) NOT NULL,
     CONSTRAINT PK_Traduccion PRIMARY KEY CLUSTERED (PalabraId, IdiomaId),
     CONSTRAINT FK_Traduccion_Palabra FOREIGN KEY (PalabraId) REFERENCES dbo.Palabra(Id),
     CONSTRAINT FK_Traduccion_Idioma FOREIGN KEY (IdiomaId) REFERENCES dbo.Idioma(Id)
@@ -130,6 +130,13 @@ DECLARE @PermisoGestionBackupId INT;
 DECLARE @PermisoGestionNotificacionesId INT;
 DECLARE @PermisoGestionComerciosId INT;
 DECLARE @PermisoGestionMonedasId INT;
+DECLARE @PermisoGestionReglasCategorizacionId INT;
+DECLARE @PermisoUsarAsistentePersonalId INT;
+DECLARE @PermisoVerDashboardAnaliticasId INT;
+DECLARE @PermisoVerBalanceGeneralId INT;
+DECLARE @PermisoGestionMediosPagoId INT;
+DECLARE @PermisoGestionEntidadesFinancierasId INT;
+DECLARE @PermisoGestionCuentasFinancierasId INT;
 DECLARE @GrupoAdminId INT;
 DECLARE @GrupoBasicoId INT;
 DECLARE @GrupoOperadorId INT;
@@ -186,6 +193,37 @@ SET @PermisoGestionComerciosId = SCOPE_IDENTITY();
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionmonedas', 0);
 SET @PermisoGestionMonedasId = SCOPE_IDENTITY();
 
+-- Reglas de categorizacion (Finanzas): nucleo disponible para admin y basico.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionreglascategorizacion', 0);
+SET @PermisoGestionReglasCategorizacionId = SCOPE_IDENTITY();
+
+-- Asistente Personal (chat con IA): mismo alcance que Reglas de categorizacion,
+-- nucleo de producto disponible para admin y basico desde el alta.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('usarasistentepersonal', 0);
+SET @PermisoUsarAsistentePersonalId = SCOPE_IDENTITY();
+
+-- Analiticas (Dashboard): nucleo de producto disponible para admin y basico desde el alta.
+-- verbalancegeneral se declara ya (Balance General es una pantalla futura todavia sin
+-- item de menu propio) para no tener que volver a tocar este bloque cuando se agregue.
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('verdashboardanaliticas', 0);
+SET @PermisoVerDashboardAnaliticasId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('verbalancegeneral', 0);
+SET @PermisoVerBalanceGeneralId = SCOPE_IDENTITY();
+
+-- Medios de pago y Entidades financieras (back-office): catalogos globales del rol
+-- "operador", y admin los tiene desde el arranque (igual que Comercios/Monedas).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionmediospago', 0);
+SET @PermisoGestionMediosPagoId = SCOPE_IDENTITY();
+
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionentidadesfinancieras', 0);
+SET @PermisoGestionEntidadesFinancierasId = SCOPE_IDENTITY();
+
+-- Cuentas financieras (Finanzas): lista personal, mismo alcance que gestionmovimientos
+-- (admin y basico).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestioncuentasfinancieras', 0);
+SET @PermisoGestionCuentasFinancierasId = SCOPE_IDENTITY();
+
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
 SET @GrupoAdminId = SCOPE_IDENTITY();
 
@@ -210,13 +248,27 @@ VALUES
     (@GrupoAdminId, @PermisoGestionNotificacionesId),
     (@GrupoAdminId, @PermisoGestionComerciosId),
     (@GrupoAdminId, @PermisoGestionMonedasId),
+    (@GrupoAdminId, @PermisoGestionReglasCategorizacionId),
+    (@GrupoAdminId, @PermisoUsarAsistentePersonalId),
+    (@GrupoAdminId, @PermisoVerDashboardAnaliticasId),
+    (@GrupoAdminId, @PermisoVerBalanceGeneralId),
+    (@GrupoAdminId, @PermisoGestionMediosPagoId),
+    (@GrupoAdminId, @PermisoGestionEntidadesFinancierasId),
+    (@GrupoAdminId, @PermisoGestionCuentasFinancierasId),
     (@GrupoBasicoId, @PermisoConfiguracionUsuarioId),
     (@GrupoBasicoId, @PermisoGestionMovimientosId),
     (@GrupoBasicoId, @PermisoGestionCategoriasId),
     (@GrupoBasicoId, @PermisoGestionListaComprasId),
+    (@GrupoBasicoId, @PermisoGestionReglasCategorizacionId),
+    (@GrupoBasicoId, @PermisoUsarAsistentePersonalId),
+    (@GrupoBasicoId, @PermisoVerDashboardAnaliticasId),
+    (@GrupoBasicoId, @PermisoVerBalanceGeneralId),
+    (@GrupoBasicoId, @PermisoGestionCuentasFinancierasId),
     (@GrupoOperadorId, @PermisoGestionNotificacionesId),
     (@GrupoOperadorId, @PermisoGestionComerciosId),
-    (@GrupoOperadorId, @PermisoGestionMonedasId);
+    (@GrupoOperadorId, @PermisoGestionMonedasId),
+    (@GrupoOperadorId, @PermisoGestionMediosPagoId),
+    (@GrupoOperadorId, @PermisoGestionEntidadesFinancierasId);
 
 INSERT INTO dbo.Usuarios (Username, PasswordHash, Activo)
 VALUES
@@ -367,12 +419,58 @@ CREATE TABLE dbo.CuentaFinanciera
     CredencialesCifradas VARCHAR(500) NULL,
     CONSTRAINT PK_CuentaFinanciera PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT FK_CuentaFinanciera_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
-    CONSTRAINT FK_CuentaFinanciera_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id)
+    CONSTRAINT FK_CuentaFinanciera_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id),
+    CONSTRAINT CK_CuentaFinanciera_Tipo CHECK (Tipo IN ('BilleteraDigital', 'CuentaCorriente', 'CajaAhorro'))
 );
 GO
 
 CREATE INDEX IX_CuentaFinanciera_UsuarioId
     ON dbo.CuentaFinanciera (UsuarioId);
+GO
+
+-- MedioPago es el catalogo global (Tipo + Marca, ej. "Visa Credito"); MedioPagoEntidad es el
+-- producto concreto que ofrece una EntidadFinanciera (ej. Galicia + Visa Credito + Eminent).
+-- CuentaFinancieraMedioPagoEntidad (N:M) = subconjunto que el usuario contrato en su cuenta.
+CREATE TABLE dbo.MedioPago
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Tipo VARCHAR(30) NOT NULL,
+    Marca VARCHAR(50) NULL,
+    CONSTRAINT PK_MedioPago PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT CK_MedioPago_Tipo CHECK (Tipo IN ('TarjetaCredito', 'TarjetaDebito', 'TarjetaPrepaga', 'CuentaBilleteraVirtual', 'CuentaDNI')),
+    CONSTRAINT UQ_MedioPago_Tipo_Marca UNIQUE (Tipo, Marca)
+);
+GO
+
+CREATE TABLE dbo.MedioPagoEntidad
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    EntidadFinancieraId INT NOT NULL,
+    MedioPagoId INT NOT NULL,
+    Segmento VARCHAR(50) NULL,
+    CONSTRAINT PK_MedioPagoEntidad PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_MedioPagoEntidad_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id),
+    CONSTRAINT FK_MedioPagoEntidad_MedioPago FOREIGN KEY (MedioPagoId) REFERENCES dbo.MedioPago(Id),
+    CONSTRAINT UQ_MedioPagoEntidad_Entidad_Medio_Segmento UNIQUE (EntidadFinancieraId, MedioPagoId, Segmento)
+);
+GO
+
+CREATE INDEX IX_MedioPagoEntidad_EntidadFinancieraId
+    ON dbo.MedioPagoEntidad (EntidadFinancieraId);
+GO
+
+CREATE INDEX IX_MedioPagoEntidad_MedioPagoId
+    ON dbo.MedioPagoEntidad (MedioPagoId);
+GO
+
+CREATE TABLE dbo.CuentaFinancieraMedioPagoEntidad
+(
+    CuentaFinancieraId INT NOT NULL,
+    MedioPagoEntidadId INT NOT NULL,
+    CONSTRAINT PK_CuentaFinancieraMedioPagoEntidad PRIMARY KEY CLUSTERED (CuentaFinancieraId, MedioPagoEntidadId),
+    CONSTRAINT FK_CuentaFinancieraMedioPagoEntidad_CuentaFinanciera FOREIGN KEY (CuentaFinancieraId) REFERENCES dbo.CuentaFinanciera(Id),
+    CONSTRAINT FK_CuentaFinancieraMedioPagoEntidad_MedioPagoEntidad FOREIGN KEY (MedioPagoEntidadId) REFERENCES dbo.MedioPagoEntidad(Id)
+);
 GO
 
 -- Cluster Comercio/Producto sobre el modelo de dominio de FINAZAPP (G00).
@@ -420,7 +518,11 @@ CREATE TABLE dbo.Comercio
     Id INT IDENTITY(1,1) NOT NULL,
     RubroComercioId INT NOT NULL,
     Nombre VARCHAR(100) NOT NULL,
-    Ubicacion VARCHAR(200) NULL,
+    Direccion VARCHAR(200) NULL,
+    Localidad VARCHAR(100) NULL,
+    Provincia VARCHAR(100) NULL,
+    Latitud DECIMAL(9,6) NULL,
+    Longitud DECIMAL(9,6) NULL,
     CONSTRAINT PK_Comercio PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT FK_Comercio_RubroComercio FOREIGN KEY (RubroComercioId) REFERENCES dbo.RubroComercio(Id)
 );
@@ -428,6 +530,16 @@ GO
 
 CREATE INDEX IX_Comercio_RubroComercioId
     ON dbo.Comercio (RubroComercioId);
+GO
+
+-- Comercio opcional para Movimiento
+ALTER TABLE dbo.Movimiento
+ADD ComercioId INT NULL,
+    CONSTRAINT FK_Movimiento_Comercio FOREIGN KEY (ComercioId) REFERENCES dbo.Comercio(Id);
+GO
+
+CREATE INDEX IX_Movimiento_ComercioId
+    ON dbo.Movimiento (ComercioId);
 GO
 
 CREATE TABLE dbo.Producto
@@ -450,46 +562,42 @@ CREATE INDEX IX_Producto_ComercioId
     ON dbo.Producto (ComercioId);
 GO
 
--- Promocion y MedioDePago sobre el modelo de dominio de FINAZAPP (G00). Las relaciones
--- de Promocion son todas N:M (aplica a uno o varios medios de pago / comercios / rubros),
--- resueltas con tablas intermedias sin columna Id propia (mismo patron que UsuarioPermiso).
+-- Promocion sobre el modelo de dominio de FINAZAPP (G00). Las relaciones de Promocion son
+-- todas N:M (aplica a uno o varios medios de pago de entidad / comercios / rubros / dias de
+-- semana), resueltas con tablas intermedias sin columna Id propia (mismo patron que
+-- UsuarioPermiso). PromocionDiaSemana sin filas = la promocion aplica todos los dias.
 CREATE TABLE dbo.Promocion
 (
     Id INT IDENTITY(1,1) NOT NULL,
     Descripcion VARCHAR(300) NOT NULL,
     Descuento DECIMAL(5,2) NOT NULL,
+    TopeDescuento DECIMAL(10,2) NULL,
     VigenciaDesde DATE NOT NULL,
     VigenciaHasta DATE NOT NULL,
     CONSTRAINT PK_Promocion PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT CK_Promocion_Descuento CHECK (Descuento > 0 AND Descuento <= 100),
+    CONSTRAINT CK_Promocion_TopeDescuento CHECK (TopeDescuento IS NULL OR TopeDescuento > 0),
     CONSTRAINT CK_Promocion_Vigencia CHECK (VigenciaHasta >= VigenciaDesde)
 );
 GO
 
-CREATE TABLE dbo.MedioDePago
+CREATE TABLE dbo.PromocionDiaSemana
 (
-    Id INT IDENTITY(1,1) NOT NULL,
-    EntidadFinancieraId INT NOT NULL,
-    Tipo VARCHAR(30) NOT NULL,
-    Marca VARCHAR(50) NULL,
-    Segmento VARCHAR(50) NULL,
-    CONSTRAINT PK_MedioDePago PRIMARY KEY CLUSTERED (Id),
-    CONSTRAINT FK_MedioDePago_EntidadFinanciera FOREIGN KEY (EntidadFinancieraId) REFERENCES dbo.EntidadFinanciera(Id),
-    CONSTRAINT CK_MedioDePago_Tipo CHECK (Tipo IN ('TarjetaCredito', 'TarjetaDebito', 'TarjetaPrepaga', 'CuentaBilleteraVirtual', 'CuentaDNI'))
+    PromocionId INT NOT NULL,
+    DiaSemana VARCHAR(15) NOT NULL,
+    CONSTRAINT PK_PromocionDiaSemana PRIMARY KEY CLUSTERED (PromocionId, DiaSemana),
+    CONSTRAINT FK_PromocionDiaSemana_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT CK_PromocionDiaSemana_DiaSemana CHECK (DiaSemana IN ('Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado', 'Domingo'))
 );
 GO
 
-CREATE INDEX IX_MedioDePago_EntidadFinancieraId
-    ON dbo.MedioDePago (EntidadFinancieraId);
-GO
-
-CREATE TABLE dbo.PromocionMedioDePago
+CREATE TABLE dbo.PromocionMedioPagoEntidad
 (
     PromocionId INT NOT NULL,
-    MedioDePagoId INT NOT NULL,
-    CONSTRAINT PK_PromocionMedioDePago PRIMARY KEY CLUSTERED (PromocionId, MedioDePagoId),
-    CONSTRAINT FK_PromocionMedioDePago_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
-    CONSTRAINT FK_PromocionMedioDePago_MedioDePago FOREIGN KEY (MedioDePagoId) REFERENCES dbo.MedioDePago(Id)
+    MedioPagoEntidadId INT NOT NULL,
+    CONSTRAINT PK_PromocionMedioPagoEntidad PRIMARY KEY CLUSTERED (PromocionId, MedioPagoEntidadId),
+    CONSTRAINT FK_PromocionMedioPagoEntidad_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
+    CONSTRAINT FK_PromocionMedioPagoEntidad_MedioPagoEntidad FOREIGN KEY (MedioPagoEntidadId) REFERENCES dbo.MedioPagoEntidad(Id)
 );
 GO
 
@@ -609,6 +717,44 @@ CREATE TABLE dbo.ComercioReglaCategorizacion
 );
 GO
 
+-- ChatbotFinanciero/ConsultaChatbot sobre el modelo de dominio de FINAZAPP (G00),
+-- paquete "Inteligencia Artificial": de las 4 clases <<Vision>> solo se implementan
+-- estas 2 (las que tienen asociacion real con el chat). AgenteIA y SugerenciaFinanciera
+-- quedan fuera de alcance (recomendaciones financieras, iteracion futura).
+CREATE TABLE dbo.ChatbotFinanciero
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    Nombre VARCHAR(100) NOT NULL,
+    CONSTRAINT PK_ChatbotFinanciero PRIMARY KEY CLUSTERED (Id)
+);
+GO
+
+-- Una fila = un intercambio completo (pregunta + respuesta ya resuelta), insertado
+-- una unica vez cuando ya se tiene la respuesta de Gemini. EsPregunta queda reservado
+-- a futuro para entradas proactivas del bot sin pregunta de usuario (siempre 1 por ahora).
+CREATE TABLE dbo.ConsultaChatbot
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    ChatbotFinancieroId INT NOT NULL,
+    UsuarioId INT NOT NULL,
+    Pregunta VARCHAR(MAX) NOT NULL,
+    Respuesta VARCHAR(MAX) NOT NULL,
+    Fecha DATETIME NOT NULL,
+    EsPregunta BIT NOT NULL CONSTRAINT DF_ConsultaChatbot_EsPregunta DEFAULT (1),
+    CONSTRAINT PK_ConsultaChatbot PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ConsultaChatbot_ChatbotFinanciero FOREIGN KEY (ChatbotFinancieroId) REFERENCES dbo.ChatbotFinanciero(Id),
+    CONSTRAINT FK_ConsultaChatbot_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id)
+);
+GO
+
+CREATE INDEX IX_ConsultaChatbot_UsuarioId_Fecha
+    ON dbo.ConsultaChatbot (UsuarioId, Fecha);
+GO
+
+-- Fila unica sembrada: no hay alta/baja de chatbots desde la UI, solo lectura.
+INSERT INTO dbo.ChatbotFinanciero (Nombre) VALUES (N'Asistente Financiero FINAZAPP');
+GO
+
 -- Categorias globales por defecto (UsuarioId NULL), visibles para todos los usuarios.
 INSERT INTO dbo.Categoria (Nombre, UsuarioId)
 VALUES
@@ -643,7 +789,8 @@ CREATE TABLE dbo.TarjetaDashboard
     Orden INT NOT NULL,
     CONSTRAINT PK_TarjetaDashboard PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT FK_TarjetaDashboard_Dashboard FOREIGN KEY (DashboardId) REFERENCES dbo.Dashboard(Id),
-    CONSTRAINT CK_TarjetaDashboard_Tipo CHECK (Tipo IN ('SaldoActual', 'GastosPorCategoria', 'ComparativoMensual', 'AhorroObjetivo'))
+    CONSTRAINT CK_TarjetaDashboard_Tipo CHECK (Tipo IN ('GastosPorCategoria', 'IngresosPorCategoria', 'ComparativoMensual', 'EvolucionBalance')),
+    CONSTRAINT UQ_TarjetaDashboard_DashboardId_Tipo UNIQUE (DashboardId, Tipo)
 );
 GO
 
@@ -672,6 +819,50 @@ CREATE UNIQUE INDEX UQ_TasaConversion_Par
     ON dbo.TasaConversion (MonedaBaseId, MonedaConversionId);
 GO
 
+IF EXISTS (SELECT 1 FROM dbo.Moneda WHERE Codigo = 'ARS')
+    UPDATE dbo.Moneda SET Nombre = N'Peso Argentino' WHERE Codigo = 'ARS';
+ELSE
+    INSERT INTO dbo.Moneda (Codigo, Nombre) VALUES ('ARS', N'Peso Argentino');
+
+IF EXISTS (SELECT 1 FROM dbo.Moneda WHERE Codigo = 'USD')
+    UPDATE dbo.Moneda SET Nombre = N'Dólar Estadounidense' WHERE Codigo = 'USD';
+ELSE
+    INSERT INTO dbo.Moneda (Codigo, Nombre) VALUES ('USD', N'Dólar Estadounidense');
+GO
+
+DECLARE @MonedaUsdId INT = (SELECT Id FROM dbo.Moneda WHERE Codigo = 'USD');
+DECLARE @MonedaArsId INT = (SELECT Id FROM dbo.Moneda WHERE Codigo = 'ARS');
+DECLARE @FechaTasaSeed DATETIME = CONVERT(DATETIME, '20260920', 112);
+
+IF EXISTS
+(
+    SELECT 1
+    FROM dbo.TasaConversion
+    WHERE MonedaBaseId = @MonedaUsdId
+      AND MonedaConversionId = @MonedaArsId
+)
+    UPDATE dbo.TasaConversion
+    SET CalculoConversion = 1511.2481,
+        FechaActualizacion = @FechaTasaSeed
+    WHERE MonedaBaseId = @MonedaUsdId
+      AND MonedaConversionId = @MonedaArsId;
+ELSE
+    INSERT INTO dbo.TasaConversion
+    (
+        MonedaBaseId,
+        MonedaConversionId,
+        CalculoConversion,
+        FechaActualizacion
+    )
+    VALUES
+    (
+        @MonedaUsdId,
+        @MonedaArsId,
+        1511.2481,
+        @FechaTasaSeed
+    );
+GO
+
 -- BEGIN AUTO-GENERATED I18N BASE SEED
 -- AUTO-GENERATED BY .agents/skills/translation-base-seed-sync/scripts/sync-i18n-base-seed.ps1
 -- SOURCE OF TRUTH: translation-seeds/base.es.json
@@ -680,7 +871,7 @@ GO
 :setvar RepoRoot "."
 -- Formas soportadas de ejecutar este script: SSMS 19/22 en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.
 -- OJO: NO ejecutarlo directo con sqlcmd ODBC 15.x: al llegar a la linea !! corta en silencio (exit 0) y la BD queda sin traducciones.
--- El helper prepara una copia publica del JSON para que OPENROWSET no dependa de permisos sobre el perfil del usuario.
+-- El helper prepara una copia publica UTF-16LE del JSON para que OPENROWSET preserve Unicode y no dependa de permisos sobre el perfil del usuario.
 !! powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepoRoot)\.agents\skills\translation-base-seed-sync\scripts\emit-seed-json-sqlcmd-path.ps1" -RepoRoot "$(RepoRoot)" -OutputFile "NUL"
 GO
 DECLARE @IdiomaBaseId INT;
@@ -691,11 +882,10 @@ DECLARE @RutaTraduccionesBase NVARCHAR(4000) = N'C:\Users\Public\Documents\TpIDS
 DECLARE @TraduccionesBaseJson NVARCHAR(MAX);
 DECLARE @SqlCargaJson NVARCHAR(MAX);
 
-SET @SqlCargaJson = N'SELECT @JsonOut = CONVERT(NVARCHAR(MAX), BulkColumn)
+SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn
 FROM OPENROWSET(
     BULK ''' + REPLACE(@RutaTraduccionesBase, '''', '''''') + ''',
-    SINGLE_CLOB,
-    CODEPAGE = ''65001''
+    SINGLE_NCLOB
 ) AS JsonFile;';
 
 BEGIN TRY
@@ -716,11 +906,11 @@ END
 DECLARE @Seed TABLE
 (
     [Key] VARCHAR(150) NOT NULL PRIMARY KEY,
-    Valor VARCHAR(300) NOT NULL
+    Valor NVARCHAR(300) NOT NULL
 );
 
 INSERT INTO @Seed ([Key], Valor)
-SELECT [key], TRY_CAST([value] AS VARCHAR(300))
+SELECT [key], TRY_CAST([value] AS NVARCHAR(300))
 FROM OPENJSON(@TraduccionesBaseJson)
 WHERE [type] IN (1, 2);
 

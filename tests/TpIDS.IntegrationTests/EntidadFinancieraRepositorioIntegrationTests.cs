@@ -52,6 +52,40 @@ namespace TpIDS.IntegrationTests
         }
 
         [TestMethod]
+        public void ObtenerPorId_ConMediosPagoEntidad_HidrataElCatalogoConSuMedioPago()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                accesoDatos.BeginTransactionScope();
+                EntidadFinancieraRepositorio repositorio = new EntidadFinancieraRepositorio(accesoDatos);
+                int id = repositorio.InsertarYObtenerId(new BE.EntidadFinanciera { Nombre = "BancoTestCatalogo" });
+                int medioPagoId = new MedioPagoRepositorio(accesoDatos).InsertarYObtenerId(new BE.MedioPago
+                {
+                    Tipo = BE.TipoMedioPago.TarjetaCredito,
+                    Marca = "MarcaTestCatalogoEntidad"
+                });
+                int medioPagoEntidadId = new MedioPagoEntidadRepositorio(accesoDatos).InsertarYObtenerId(new BE.MedioPagoEntidad
+                {
+                    EntidadFinanciera = new BE.EntidadFinanciera { Id = id },
+                    MedioPago = new BE.MedioPago { Id = medioPagoId },
+                    Segmento = "Eminent"
+                });
+
+                BE.EntidadFinanciera obtenida = repositorio.ObtenerPorId(id);
+
+                Assert.AreEqual(1, obtenida.MediosPagoEntidad.Count);
+                BE.MedioPagoEntidad item = obtenida.MediosPagoEntidad[0];
+                Assert.AreEqual(medioPagoEntidadId, item.Id);
+                Assert.AreEqual("Eminent", item.Segmento);
+                Assert.AreEqual(BE.TipoMedioPago.TarjetaCredito, item.MedioPago.Tipo);
+                Assert.AreEqual("MarcaTestCatalogoEntidad", item.MedioPago.Marca);
+                Assert.AreSame(obtenida, item.EntidadFinanciera);
+
+                accesoDatos.RollbackTransactionScope();
+            }
+        }
+
+        [TestMethod]
         public void Actualizar_EntidadExistente_PersisteNuevoNombre()
         {
             using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())

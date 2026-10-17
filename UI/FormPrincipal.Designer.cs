@@ -25,6 +25,7 @@ namespace TpIDS
             this.mnuFinanzas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuMovimientos = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuCategorias = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuReglasCategorizacion = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuListaCompras = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuAdministracion = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuUsuarios = new System.Windows.Forms.ToolStripMenuItem();
@@ -36,6 +37,14 @@ namespace TpIDS
             this.mnuNotificaciones = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuComercios = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuMonedas = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorMediosPago = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuOperadorEntidadesFinancieras = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFinanzasCuentasFinancieras = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuAsistentePersonal = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuAsistentePersonalAbrir = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuAnaliticas = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuAnaliticasDashboard = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuAnaliticasBalanceGeneral = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripPrincipal.SuspendLayout();
             this.SuspendLayout();
             //
@@ -45,7 +54,9 @@ namespace TpIDS
             this.mnuSesion,
             this.mnuFinanzas,
             this.mnuAdministracion,
-            this.mnuOperador});
+            this.mnuOperador,
+            this.mnuAsistentePersonal,
+            this.mnuAnaliticas});
             this.menuStripPrincipal.Location = new System.Drawing.Point(0, 0);
             this.menuStripPrincipal.Name = "menuStripPrincipal";
             this.menuStripPrincipal.Size = new System.Drawing.Size(1000, 24);
@@ -88,27 +99,37 @@ namespace TpIDS
             this.mnuFinanzas.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuMovimientos,
             this.mnuCategorias,
-            this.mnuListaCompras});
+            this.mnuReglasCategorizacion,
+            this.mnuListaCompras,
+            this.mnuFinanzasCuentasFinancieras});
             this.mnuFinanzas.Name = "mnuFinanzas";
             this.mnuFinanzas.Size = new System.Drawing.Size(65, 20);
             this.mnuFinanzas.Tag = "FormMainShell.Menu.Finance";
             this.mnuFinanzas.Text = "Finanzas";
-            //
+            // 
             // mnuMovimientos
-            //
+            // 
             this.mnuMovimientos.Name = "mnuMovimientos";
-            this.mnuMovimientos.Size = new System.Drawing.Size(180, 22);
+            this.mnuMovimientos.Size = new System.Drawing.Size(200, 22);
             this.mnuMovimientos.Tag = "FormMainShell.Menu.Movements";
             this.mnuMovimientos.Text = "Movimientos";
             this.mnuMovimientos.Click += new System.EventHandler(this.mnuMovimientos_Click);
-            //
+            // 
             // mnuCategorias
-            //
+            // 
             this.mnuCategorias.Name = "mnuCategorias";
-            this.mnuCategorias.Size = new System.Drawing.Size(180, 22);
+            this.mnuCategorias.Size = new System.Drawing.Size(200, 22);
             this.mnuCategorias.Tag = "FormMainShell.Menu.Categories";
             this.mnuCategorias.Text = "Categorias";
             this.mnuCategorias.Click += new System.EventHandler(this.mnuCategorias_Click);
+            // 
+            // mnuReglasCategorizacion
+            // 
+            this.mnuReglasCategorizacion.Name = "mnuReglasCategorizacion";
+            this.mnuReglasCategorizacion.Size = new System.Drawing.Size(200, 22);
+            this.mnuReglasCategorizacion.Tag = "FormMainShell.Menu.CategorizationRules";
+            this.mnuReglasCategorizacion.Text = "Reglas de categorizacion";
+            this.mnuReglasCategorizacion.Click += new System.EventHandler(this.mnuReglasCategorizacion_Click);
             //
             // mnuListaCompras
             //
@@ -117,6 +138,14 @@ namespace TpIDS
             this.mnuListaCompras.Tag = "FormMainShell.Menu.ShoppingList";
             this.mnuListaCompras.Text = "Lista de compras";
             this.mnuListaCompras.Click += new System.EventHandler(this.mnuListaCompras_Click);
+            //
+            // mnuFinanzasCuentasFinancieras
+            //
+            this.mnuFinanzasCuentasFinancieras.Name = "mnuFinanzasCuentasFinancieras";
+            this.mnuFinanzasCuentasFinancieras.Size = new System.Drawing.Size(200, 22);
+            this.mnuFinanzasCuentasFinancieras.Tag = "FormMainShell.Menu.FinancialAccounts";
+            this.mnuFinanzasCuentasFinancieras.Text = "Mis cuentas financieras";
+            this.mnuFinanzasCuentasFinancieras.Click += new System.EventHandler(this.mnuFinanzasCuentasFinancieras_Click);
             //
             // mnuAdministracion
             //
@@ -176,7 +205,9 @@ namespace TpIDS
             this.mnuOperador.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuNotificaciones,
             this.mnuComercios,
-            this.mnuMonedas});
+            this.mnuMonedas,
+            this.mnuOperadorMediosPago,
+            this.mnuOperadorEntidadesFinancieras});
             this.mnuOperador.Name = "mnuOperador";
             this.mnuOperador.Size = new System.Drawing.Size(76, 20);
             this.mnuOperador.Tag = "FormMainShell.Menu.Operator";
@@ -205,6 +236,65 @@ namespace TpIDS
             this.mnuMonedas.Tag = "FormMainShell.Menu.Currencies";
             this.mnuMonedas.Text = "Monedas";
             this.mnuMonedas.Click += new System.EventHandler(this.mnuMonedas_Click);
+            //
+            // mnuOperadorMediosPago
+            //
+            this.mnuOperadorMediosPago.Name = "mnuOperadorMediosPago";
+            this.mnuOperadorMediosPago.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorMediosPago.Tag = "FormMainShell.Menu.PaymentMethods";
+            this.mnuOperadorMediosPago.Text = "Medios de pago";
+            this.mnuOperadorMediosPago.Click += new System.EventHandler(this.mnuOperadorMediosPago_Click);
+            //
+            // mnuOperadorEntidadesFinancieras
+            //
+            this.mnuOperadorEntidadesFinancieras.Name = "mnuOperadorEntidadesFinancieras";
+            this.mnuOperadorEntidadesFinancieras.Size = new System.Drawing.Size(200, 22);
+            this.mnuOperadorEntidadesFinancieras.Tag = "FormMainShell.Menu.FinancialEntities";
+            this.mnuOperadorEntidadesFinancieras.Text = "Entidades financieras";
+            this.mnuOperadorEntidadesFinancieras.Click += new System.EventHandler(this.mnuOperadorEntidadesFinancieras_Click);
+            //
+            // mnuAsistentePersonal
+            //
+            this.mnuAsistentePersonal.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuAsistentePersonalAbrir});
+            this.mnuAsistentePersonal.Name = "mnuAsistentePersonal";
+            this.mnuAsistentePersonal.Size = new System.Drawing.Size(126, 20);
+            this.mnuAsistentePersonal.Tag = "FormMainShell.Menu.PersonalAssistant";
+            this.mnuAsistentePersonal.Text = "Asistente Personal";
+            //
+            // mnuAsistentePersonalAbrir
+            //
+            this.mnuAsistentePersonalAbrir.Name = "mnuAsistentePersonalAbrir";
+            this.mnuAsistentePersonalAbrir.Size = new System.Drawing.Size(180, 22);
+            this.mnuAsistentePersonalAbrir.Tag = "FormMainShell.Menu.PersonalAssistantChat";
+            this.mnuAsistentePersonalAbrir.Text = "Chatear con el asistente";
+            this.mnuAsistentePersonalAbrir.Click += new System.EventHandler(this.mnuAsistentePersonalAbrir_Click);
+            //
+            // mnuAnaliticas
+            //
+            this.mnuAnaliticas.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuAnaliticasDashboard,
+            this.mnuAnaliticasBalanceGeneral});
+            this.mnuAnaliticas.Name = "mnuAnaliticas";
+            this.mnuAnaliticas.Size = new System.Drawing.Size(76, 20);
+            this.mnuAnaliticas.Tag = "FormMainShell.Menu.Analytics";
+            this.mnuAnaliticas.Text = "Analiticas";
+            //
+            // mnuAnaliticasDashboard
+            //
+            this.mnuAnaliticasDashboard.Name = "mnuAnaliticasDashboard";
+            this.mnuAnaliticasDashboard.Size = new System.Drawing.Size(180, 22);
+            this.mnuAnaliticasDashboard.Tag = "FormMainShell.Menu.AnalyticsDashboard";
+            this.mnuAnaliticasDashboard.Text = "Dashboard";
+            this.mnuAnaliticasDashboard.Click += new System.EventHandler(this.mnuAnaliticasDashboard_Click);
+            //
+            // mnuAnaliticasBalanceGeneral
+            //
+            this.mnuAnaliticasBalanceGeneral.Name = "mnuAnaliticasBalanceGeneral";
+            this.mnuAnaliticasBalanceGeneral.Size = new System.Drawing.Size(180, 22);
+            this.mnuAnaliticasBalanceGeneral.Tag = "FormMainShell.Menu.AnalyticsBalanceSheet";
+            this.mnuAnaliticasBalanceGeneral.Text = "Balance General";
+            this.mnuAnaliticasBalanceGeneral.Click += new System.EventHandler(this.mnuAnaliticasBalanceGeneral_Click);
             //
             // FormPrincipal
             //
@@ -236,6 +326,7 @@ namespace TpIDS
         private System.Windows.Forms.ToolStripMenuItem mnuFinanzas;
         private System.Windows.Forms.ToolStripMenuItem mnuMovimientos;
         private System.Windows.Forms.ToolStripMenuItem mnuCategorias;
+        private System.Windows.Forms.ToolStripMenuItem mnuReglasCategorizacion;
         private System.Windows.Forms.ToolStripMenuItem mnuListaCompras;
         private System.Windows.Forms.ToolStripMenuItem mnuAdministracion;
         private System.Windows.Forms.ToolStripMenuItem mnuUsuarios;
@@ -247,5 +338,13 @@ namespace TpIDS
         private System.Windows.Forms.ToolStripMenuItem mnuNotificaciones;
         private System.Windows.Forms.ToolStripMenuItem mnuComercios;
         private System.Windows.Forms.ToolStripMenuItem mnuMonedas;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorMediosPago;
+        private System.Windows.Forms.ToolStripMenuItem mnuOperadorEntidadesFinancieras;
+        private System.Windows.Forms.ToolStripMenuItem mnuFinanzasCuentasFinancieras;
+        private System.Windows.Forms.ToolStripMenuItem mnuAsistentePersonal;
+        private System.Windows.Forms.ToolStripMenuItem mnuAsistentePersonalAbrir;
+        private System.Windows.Forms.ToolStripMenuItem mnuAnaliticas;
+        private System.Windows.Forms.ToolStripMenuItem mnuAnaliticasDashboard;
+        private System.Windows.Forms.ToolStripMenuItem mnuAnaliticasBalanceGeneral;
     }
 }

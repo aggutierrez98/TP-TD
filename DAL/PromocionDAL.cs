@@ -14,6 +14,7 @@ namespace DAL
                 Id = (int)row["Id"],
                 Descripcion = row["Descripcion"].ToString(),
                 Descuento = (decimal)row["Descuento"],
+                TopeDescuento = row.IsNull("TopeDescuento") ? (decimal?)null : (decimal)row["TopeDescuento"],
                 VigenciaDesde = (System.DateTime)row["VigenciaDesde"],
                 VigenciaHasta = (System.DateTime)row["VigenciaHasta"]
             };
@@ -22,7 +23,7 @@ namespace DAL
         public Promocion ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Descripcion, Descuento, VigenciaDesde, VigenciaHasta
+                SELECT Id, Descripcion, Descuento, TopeDescuento, VigenciaDesde, VigenciaHasta
                 FROM Promocion
                 WHERE Id = @Id";
 
@@ -51,7 +52,7 @@ namespace DAL
         public List<Promocion> ObtenerTodas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, Descripcion, Descuento, VigenciaDesde, VigenciaHasta
+                SELECT Id, Descripcion, Descuento, TopeDescuento, VigenciaDesde, VigenciaHasta
                 FROM Promocion
                 ORDER BY VigenciaDesde DESC";
 
@@ -81,9 +82,9 @@ namespace DAL
         public int InsertarYObtenerId(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Promocion (Descripcion, Descuento, VigenciaDesde, VigenciaHasta)
+                INSERT INTO Promocion (Descripcion, Descuento, TopeDescuento, VigenciaDesde, VigenciaHasta)
                 OUTPUT INSERTED.Id
-                VALUES (@Descripcion, @Descuento, @VigenciaDesde, @VigenciaHasta)";
+                VALUES (@Descripcion, @Descuento, @TopeDescuento, @VigenciaDesde, @VigenciaHasta)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -94,6 +95,7 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@Descripcion", SqlDbType.VarChar, promocion.Descripcion),
                     accesoDatos.CreateParameter("@Descuento", SqlDbType.Decimal, promocion.Descuento),
+                    accesoDatos.CreateParameter("@TopeDescuento", SqlDbType.Decimal, promocion.TopeDescuento),
                     accesoDatos.CreateParameter("@VigenciaDesde", SqlDbType.Date, promocion.VigenciaDesde),
                     accesoDatos.CreateParameter("@VigenciaHasta", SqlDbType.Date, promocion.VigenciaHasta)
                 };
@@ -115,6 +117,7 @@ namespace DAL
                 UPDATE Promocion
                 SET Descripcion = @Descripcion,
                     Descuento = @Descuento,
+                    TopeDescuento = @TopeDescuento,
                     VigenciaDesde = @VigenciaDesde,
                     VigenciaHasta = @VigenciaHasta
                 WHERE Id = @Id";
@@ -128,6 +131,7 @@ namespace DAL
                 {
                     accesoDatos.CreateParameter("@Descripcion", SqlDbType.VarChar, promocion.Descripcion),
                     accesoDatos.CreateParameter("@Descuento", SqlDbType.Decimal, promocion.Descuento),
+                    accesoDatos.CreateParameter("@TopeDescuento", SqlDbType.Decimal, promocion.TopeDescuento),
                     accesoDatos.CreateParameter("@VigenciaDesde", SqlDbType.Date, promocion.VigenciaDesde),
                     accesoDatos.CreateParameter("@VigenciaHasta", SqlDbType.Date, promocion.VigenciaHasta),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, promocion.Id)

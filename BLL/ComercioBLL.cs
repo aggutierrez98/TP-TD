@@ -29,9 +29,10 @@ namespace BLL
             return _comercioRepositorio.ObtenerTodos();
         }
 
-        public Comercio Crear(string nombre, int rubroComercioId, string ubicacion)
+        public Comercio Crear(string nombre, int rubroComercioId, string direccion, string localidad, string provincia, decimal? latitud, decimal? longitud)
         {
             string nombreNormalizado = NormalizarNombre(nombre);
+            ValidarCoordenadas(latitud, longitud);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
@@ -47,7 +48,11 @@ namespace BLL
                     {
                         RubroComercio = rubro,
                         Nombre = nombreNormalizado,
-                        Ubicacion = NormalizarUbicacion(ubicacion)
+                        Direccion = NormalizarTexto(direccion),
+                        Localidad = NormalizarTexto(localidad),
+                        Provincia = NormalizarTexto(provincia),
+                        Latitud = latitud,
+                        Longitud = longitud
                     };
 
                     int id = unidad.Comercios.InsertarYObtenerId(nuevoComercio);
@@ -68,9 +73,10 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre, int rubroComercioId)
+        public bool Actualizar(int id, string nombre, int rubroComercioId, string direccion, string localidad, string provincia, decimal? latitud, decimal? longitud)
         {
             string nombreNormalizado = NormalizarNombre(nombre);
+            ValidarCoordenadas(latitud, longitud);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
@@ -90,6 +96,11 @@ namespace BLL
 
                     comercio.Nombre = nombreNormalizado;
                     comercio.RubroComercio = rubro;
+                    comercio.Direccion = NormalizarTexto(direccion);
+                    comercio.Localidad = NormalizarTexto(localidad);
+                    comercio.Provincia = NormalizarTexto(provincia);
+                    comercio.Latitud = latitud;
+                    comercio.Longitud = longitud;
 
                     bool actualizado = unidad.Comercios.Actualizar(comercio);
                     if (!actualizado)
@@ -176,10 +187,18 @@ namespace BLL
             return nombreNormalizado;
         }
 
-        private static string NormalizarUbicacion(string ubicacion)
+        private static string NormalizarTexto(string valor)
         {
-            string ubicacionNormalizada = (ubicacion ?? string.Empty).Trim();
-            return string.IsNullOrWhiteSpace(ubicacionNormalizada) ? null : ubicacionNormalizada;
+            string valorNormalizado = (valor ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(valorNormalizado) ? null : valorNormalizado;
+        }
+
+        private static void ValidarCoordenadas(decimal? latitud, decimal? longitud)
+        {
+            if (latitud.HasValue != longitud.HasValue)
+            {
+                throw new ExcepcionNegocio("Error.MerchantManagement.CoordenadasIncompletas");
+            }
         }
     }
 }

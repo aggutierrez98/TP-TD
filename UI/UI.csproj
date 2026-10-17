@@ -12,6 +12,13 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <!-- Requerido para que SkiaSharp (motor de render de LiveCharts2) copie su nativo
+         Windows (runtimes\win-x64\native\libSkiaSharp.dll) al output: sin RuntimeIdentifier
+         su logica de copia condicional en SkiaSharp.NativeAssets.Win32.targets no dispara.
+         RuntimeIdentifiers (plural) hace falta para el grafo de compatibilidad en restore;
+         RuntimeIdentifier (singular) selecciona cual usar en build. -->
+    <RuntimeIdentifiers>win;win-x64</RuntimeIdentifiers>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,6 +39,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="GMap.NET.Core" Version="2.1.7" />
+    <PackageReference Include="GMap.NET.WinForms" Version="2.1.7" />
+    <PackageReference Include="LiveChartsCore.SkiaSharpView.WinForms" Version="2.0.5" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="System">
       <HintPath>..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
@@ -111,6 +123,37 @@
     <Compile Include="FormDetalleComercio.Designer.cs">
       <DependentUpon>FormDetalleComercio.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormSeleccionarUbicacionComercio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSeleccionarUbicacionComercio.Designer.cs">
+      <DependentUpon>FormSeleccionarUbicacionComercio.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormGestionMediosPago.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionMediosPago.Designer.cs">
+      <DependentUpon>FormGestionMediosPago.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormGestionEntidadesFinancieras.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionEntidadesFinancieras.Designer.cs">
+      <DependentUpon>FormGestionEntidadesFinancieras.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormDetalleEntidadFinanciera.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormDetalleEntidadFinanciera.Designer.cs">
+      <DependentUpon>FormDetalleEntidadFinanciera.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormGestionCuentasFinancieras.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormGestionCuentasFinancieras.Designer.cs">
+      <DependentUpon>FormGestionCuentasFinancieras.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EtiquetasFinanzas.cs" />
     <Compile Include="FormGestionMonedas.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -128,6 +171,36 @@
     </Compile>
     <Compile Include="FormMovimientos.Designer.cs">
       <DependentUpon>FormMovimientos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormReglasCategorizacion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormReglasCategorizacion.Designer.cs">
+      <DependentUpon>FormReglasCategorizacion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormAsistentePersonal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAsistentePersonal.Designer.cs">
+      <DependentUpon>FormAsistentePersonal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormDashboardAnaliticas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormDashboardAnaliticas.Designer.cs">
+      <DependentUpon>FormDashboardAnaliticas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormBalanceGeneral.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormBalanceGeneral.Designer.cs">
+      <DependentUpon>FormBalanceGeneral.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormSeleccionarTarjetaDashboard.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormSeleccionarTarjetaDashboard.Designer.cs">
+      <DependentUpon>FormSeleccionarTarjetaDashboard.cs</DependentUpon>
     </Compile>
     <Compile Include="FormPrincipal.cs">
       <SubType>Form</SubType>
@@ -208,6 +281,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <!-- Fallback manual: el copy-to-output automatico de SkiaSharp.NativeAssets.Win32 (via
+       Link=x64\libSkiaSharp.dll en su .targets) no funciona en este csproj de formato
+       clasico (bug conocido: Link con subcarpeta no se copia en proyectos no-SDK, probado
+       tanto con el mecanismo automatico del paquete como con un item manual equivalente).
+       Se copia el nativo directo desde el cache global de NuGet, plano en la raiz del
+       output, que es donde SkiaSharp SI lo encuentra en tiempo de ejecucion (verificado). -->
+  <ItemGroup>
+    <None Include="$(NuGetPackageRoot)skiasharp.nativeassets.win32\3.119.0\runtimes\win-x64\native\libSkiaSharp.dll" Condition="Exists('$(NuGetPackageRoot)skiasharp.nativeassets.win32\3.119.0\runtimes\win-x64\native\libSkiaSharp.dll')">
+      <Link>libSkiaSharp.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ABSTRACCIONES\ABSTRACCIONES.csproj">

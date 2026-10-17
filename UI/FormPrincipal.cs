@@ -19,6 +19,13 @@ namespace TpIDS
         private const string PermisoGestionNotificaciones = "gestionnotificaciones";
         private const string PermisoGestionComercios = "gestioncomercios";
         private const string PermisoGestionMonedas = "gestionmonedas";
+        private const string PermisoGestionReglasCategorizacion = "gestionreglascategorizacion";
+        private const string PermisoUsarAsistentePersonal = "usarasistentepersonal";
+        private const string PermisoVerDashboardAnaliticas = "verdashboardanaliticas";
+        private const string PermisoVerBalanceGeneral = "verbalancegeneral";
+        private const string PermisoGestionMediosPago = "gestionmediospago";
+        private const string PermisoGestionEntidadesFinancieras = "gestionentidadesfinancieras";
+        private const string PermisoGestionCuentasFinancieras = "gestioncuentasfinancieras";
 
         private readonly IAutorizacion autorizacion = CompositionRoot.Autorizacion;
         private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
@@ -40,6 +47,7 @@ namespace TpIDS
             bool puedeConfigurar = autorizacion.TienePermiso(PermisoConfiguracion);
             bool puedeMovimientos = autorizacion.TienePermiso(PermisoGestionMovimientos);
             bool puedeCategorias = autorizacion.TienePermiso(PermisoGestionCategorias);
+            bool puedeReglas = autorizacion.TienePermiso(PermisoGestionReglasCategorizacion);
             bool puedeListaCompras = autorizacion.TienePermiso(PermisoGestionListaCompras);
             bool puedeUsuarios = autorizacion.TienePermiso(PermisoGestionUsuarios);
             bool puedePermisos = autorizacion.TienePermiso(PermisoGestionPermisos);
@@ -49,13 +57,21 @@ namespace TpIDS
             bool puedeNotificaciones = autorizacion.TienePermiso(PermisoGestionNotificaciones);
             bool puedeComercios = autorizacion.TienePermiso(PermisoGestionComercios);
             bool puedeMonedas = autorizacion.TienePermiso(PermisoGestionMonedas);
+            bool puedeAsistentePersonal = autorizacion.TienePermiso(PermisoUsarAsistentePersonal);
+            bool puedeDashboard = autorizacion.TienePermiso(PermisoVerDashboardAnaliticas);
+            bool puedeBalanceGeneral = autorizacion.TienePermiso(PermisoVerBalanceGeneral);
+            bool puedeMediosPago = autorizacion.TienePermiso(PermisoGestionMediosPago);
+            bool puedeEntidadesFinancieras = autorizacion.TienePermiso(PermisoGestionEntidadesFinancieras);
+            bool puedeCuentasFinancieras = autorizacion.TienePermiso(PermisoGestionCuentasFinancieras);
 
             mnuMiConfiguracion.Enabled = puedeConfigurar;
 
             mnuMovimientos.Enabled = puedeMovimientos;
             mnuCategorias.Enabled = puedeCategorias;
+            mnuReglasCategorizacion.Enabled = puedeReglas;
             mnuListaCompras.Enabled = puedeListaCompras;
-            mnuFinanzas.Enabled = puedeMovimientos || puedeCategorias || puedeListaCompras;
+            mnuFinanzasCuentasFinancieras.Enabled = puedeCuentasFinancieras;
+            mnuFinanzas.Enabled = puedeMovimientos || puedeCategorias || puedeReglas || puedeListaCompras || puedeCuentasFinancieras;
 
             mnuUsuarios.Enabled = puedeUsuarios;
             mnuPermisos.Enabled = puedePermisos;
@@ -67,7 +83,16 @@ namespace TpIDS
             mnuNotificaciones.Enabled = puedeNotificaciones;
             mnuComercios.Enabled = puedeComercios;
             mnuMonedas.Enabled = puedeMonedas;
-            mnuOperador.Enabled = puedeNotificaciones || puedeComercios || puedeMonedas;
+            mnuOperadorMediosPago.Enabled = puedeMediosPago;
+            mnuOperadorEntidadesFinancieras.Enabled = puedeEntidadesFinancieras;
+            mnuOperador.Enabled = puedeNotificaciones || puedeComercios || puedeMonedas || puedeMediosPago || puedeEntidadesFinancieras;
+
+            mnuAsistentePersonalAbrir.Enabled = puedeAsistentePersonal;
+            mnuAsistentePersonal.Enabled = puedeAsistentePersonal;
+
+            mnuAnaliticas.Enabled = puedeDashboard || puedeBalanceGeneral;
+            mnuAnaliticasDashboard.Enabled = puedeDashboard;
+            mnuAnaliticasBalanceGeneral.Enabled = puedeBalanceGeneral;
         }
 
         // Pantalla de aterrizaje: el nucleo de negocio (movimientos) si el usuario tiene acceso.
@@ -107,6 +132,11 @@ namespace TpIDS
         private void mnuCategorias_Click(object sender, EventArgs e)
         {
             AbrirHijoMdiUnico<FormGestionCategorias>();
+        }
+
+        private void mnuReglasCategorizacion_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormReglasCategorizacion>();
         }
 
         private void mnuListaCompras_Click(object sender, EventArgs e)
@@ -152,6 +182,36 @@ namespace TpIDS
         private void mnuMonedas_Click(object sender, EventArgs e)
         {
             AbrirHijoMdiUnico<FormGestionMonedas>();
+        }
+
+        private void mnuOperadorMediosPago_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionMediosPago>();
+        }
+
+        private void mnuOperadorEntidadesFinancieras_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionEntidadesFinancieras>();
+        }
+
+        private void mnuFinanzasCuentasFinancieras_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormGestionCuentasFinancieras>();
+        }
+
+        private void mnuAsistentePersonalAbrir_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormAsistentePersonal>();
+        }
+
+        private void mnuAnaliticasDashboard_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormDashboardAnaliticas>();
+        }
+
+        private void mnuAnaliticasBalanceGeneral_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormBalanceGeneral>();
         }
 
         // Si ya hay un hijo MDI del tipo T abierto, lo enfoca en vez de abrir uno nuevo

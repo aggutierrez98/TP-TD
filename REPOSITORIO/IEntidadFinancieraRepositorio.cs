@@ -5,8 +5,10 @@ namespace REPOSITORIO
 {
     public interface IEntidadFinancieraRepositorio
     {
+        // Hidrata el catalogo completo MediosPagoEntidad de la entidad.
         EntidadFinanciera ObtenerPorId(int id);
 
+        // Liviano (sin MediosPagoEntidad): pensado para grillas y combos.
         List<EntidadFinanciera> ObtenerTodas();
 
         int InsertarYObtenerId(EntidadFinanciera entidad);

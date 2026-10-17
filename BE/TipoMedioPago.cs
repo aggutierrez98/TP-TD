@@ -1,6 +1,6 @@
 namespace BE
 {
-    public enum TipoMedioDePago
+    public enum TipoMedioPago
     {
         TarjetaCredito,
         TarjetaDebito,

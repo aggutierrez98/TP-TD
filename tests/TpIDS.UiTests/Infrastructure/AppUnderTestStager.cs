@@ -47,6 +47,7 @@ namespace TpIDS.UiTests.Infrastructure
 
                 NormalizarPassword(connection, hasher, TestConfig.AdminUsername, TestConfig.AdminPassword);
                 NormalizarPassword(connection, hasher, TestConfig.BasicUsername, TestConfig.BasicPassword);
+                NormalizarPassword(connection, hasher, TestConfig.OperadorUsername, TestConfig.OperadorPassword);
                 InsertarUsuarioInactivoSiFalta(connection, hasher);
             }
         }

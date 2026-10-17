@@ -6,25 +6,23 @@ using BE;
 
 namespace DAL
 {
-    public class MedioDePagoDAL
+    public class MedioPagoDAL
     {
-        private MedioDePago Map(DataRow row)
+        private MedioPago Map(DataRow row)
         {
-            return new MedioDePago
+            return new MedioPago
             {
                 Id = (int)row["Id"],
-                EntidadFinanciera = new EntidadFinanciera { Id = (int)row["EntidadFinancieraId"] },
-                Tipo = (TipoMedioDePago)Enum.Parse(typeof(TipoMedioDePago), row["Tipo"].ToString()),
-                Marca = row.IsNull("Marca") ? null : row["Marca"].ToString(),
-                Segmento = row.IsNull("Segmento") ? null : row["Segmento"].ToString()
+                Tipo = (TipoMedioPago)Enum.Parse(typeof(TipoMedioPago), row["Tipo"].ToString()),
+                Marca = row.IsNull("Marca") ? null : row["Marca"].ToString()
             };
         }
 
-        public MedioDePago ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
+        public MedioPago ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, EntidadFinancieraId, Tipo, Marca, Segmento
-                FROM MedioDePago
+                SELECT Id, Tipo, Marca
+                FROM MedioPago
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -49,32 +47,26 @@ namespace DAL
             }
         }
 
-        public List<MedioDePago> ObtenerPorEntidadFinanciera(int entidadFinancieraId, AccesoDatosSqlServer accesoDatos = null)
+        public List<MedioPago> ObtenerTodos(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, EntidadFinancieraId, Tipo, Marca, Segmento
-                FROM MedioDePago
-                WHERE EntidadFinancieraId = @EntidadFinancieraId
-                ORDER BY Id";
+                SELECT Id, Tipo, Marca
+                FROM MedioPago
+                ORDER BY Tipo, Marca";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
             try
             {
-                List<SqlParameter> parametros = new List<SqlParameter>
-                {
-                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidadFinancieraId)
-                };
-
-                DataTable dataTable = accesoDatos.Read(query, parametros);
-                List<MedioDePago> mediosDePago = new List<MedioDePago>();
+                DataTable dataTable = accesoDatos.Read(query);
+                List<MedioPago> mediosPago = new List<MedioPago>();
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    mediosDePago.Add(Map(row));
+                    mediosPago.Add(Map(row));
                 }
 
-                return mediosDePago;
+                return mediosPago;
             }
             finally
             {
@@ -85,12 +77,12 @@ namespace DAL
             }
         }
 
-        public int InsertarYObtenerId(MedioDePago medioDePago, AccesoDatosSqlServer accesoDatos = null)
+        public int InsertarYObtenerId(MedioPago medioPago, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO MedioDePago (EntidadFinancieraId, Tipo, Marca, Segmento)
+                INSERT INTO MedioPago (Tipo, Marca)
                 OUTPUT INSERTED.Id
-                VALUES (@EntidadFinancieraId, @Tipo, @Marca, @Segmento)";
+                VALUES (@Tipo, @Marca)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -99,10 +91,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, medioDePago.EntidadFinanciera.Id),
-                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, medioDePago.Tipo.ToString()),
-                    accesoDatos.CreateParameter("@Marca", SqlDbType.VarChar, medioDePago.Marca),
-                    accesoDatos.CreateParameter("@Segmento", SqlDbType.VarChar, medioDePago.Segmento)
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, medioPago.Tipo.ToString()),
+                    accesoDatos.CreateParameter("@Marca", SqlDbType.VarChar, medioPago.Marca)
                 };
 
                 return accesoDatos.WriteWithResult(query, parametros);
@@ -116,13 +106,12 @@ namespace DAL
             }
         }
 
-        public bool Actualizar(MedioDePago medioDePago, AccesoDatosSqlServer accesoDatos = null)
+        public bool Actualizar(MedioPago medioPago, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                UPDATE MedioDePago
+                UPDATE MedioPago
                 SET Tipo = @Tipo,
-                    Marca = @Marca,
-                    Segmento = @Segmento
+                    Marca = @Marca
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;
@@ -132,10 +121,9 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, medioDePago.Tipo.ToString()),
-                    accesoDatos.CreateParameter("@Marca", SqlDbType.VarChar, medioDePago.Marca),
-                    accesoDatos.CreateParameter("@Segmento", SqlDbType.VarChar, medioDePago.Segmento),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, medioDePago.Id)
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, medioPago.Tipo.ToString()),
+                    accesoDatos.CreateParameter("@Marca", SqlDbType.VarChar, medioPago.Marca),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, medioPago.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -152,7 +140,7 @@ namespace DAL
         public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                DELETE FROM MedioDePago
+                DELETE FROM MedioPago
                 WHERE Id = @Id";
 
             bool dispose = accesoDatos == null;

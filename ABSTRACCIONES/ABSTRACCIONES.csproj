@@ -49,6 +49,9 @@
     <Compile Include="IIntegridadService.cs" />
     <Compile Include="IObservado.cs" />
     <Compile Include="IObservador.cs" />
+    <Compile Include="IEscaneoTicketService.cs" />
+    <Compile Include="IAsistenteFinancieroService.cs" />
+    <Compile Include="IntercambioChatbot.cs" />
     <Compile Include="IEventoBitacora.cs" />
     <Compile Include="IFiltroBitacora.cs" />
     <Compile Include="IIdioma.cs" />
@@ -59,6 +62,7 @@
     <Compile Include="ISesion.cs" />
     <Compile Include="IServicioHistorialEstados.cs" />
     <Compile Include="ITraduccion.cs" />
+    <Compile Include="TicketEscaneado.cs" />
     <Compile Include="IUsuarioAutenticado.cs" />
     <Compile Include="IUsuarioSnapshot.cs" />
     <Compile Include="IUsuarioPreferencia.cs" />

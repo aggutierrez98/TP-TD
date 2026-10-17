@@ -1,0 +1,78 @@
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+
+namespace DAL
+{
+    public class PromocionMedioPagoEntidadDAL
+    {
+        public List<int> ObtenerMedioPagoEntidadIdsPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT MedioPagoEntidadId
+                FROM PromocionMedioPagoEntidad
+                WHERE PromocionId = @PromocionId
+                ORDER BY MedioPagoEntidadId";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                };
+
+                DataTable dataTable = accesoDatos.Read(query, parametros);
+                return dataTable.Rows.Cast<DataRow>()
+                    .Select(row => (int)row["MedioPagoEntidadId"])
+                    .ToList();
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+
+        public bool ReemplazarMediosPagoEntidadDePromocion(int promocionId, List<int> medioPagoEntidadIds, AccesoDatosSqlServer accesoDatos = null)
+        {
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+
+            try
+            {
+                List<SqlParameter> parametros = new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                };
+
+                string query = @"
+                    DELETE FROM PromocionMedioPagoEntidad
+                    WHERE PromocionId = @PromocionId;";
+
+                for (int i = 0; i < medioPagoEntidadIds.Count; i++)
+                {
+                    query += string.Format(@"
+                        INSERT INTO PromocionMedioPagoEntidad (PromocionId, MedioPagoEntidadId)
+                        VALUES (@PromocionId, @MedioPagoEntidadId{0});", i);
+
+                    parametros.Add(accesoDatos.CreateParameter("@MedioPagoEntidadId" + i, SqlDbType.Int, medioPagoEntidadIds[i]));
+                }
+
+                return accesoDatos.Write(query, parametros) >= 0;
+            }
+            finally
+            {
+                if (dispose)
+                {
+                    accesoDatos.Dispose();
+                }
+            }
+        }
+    }
+}

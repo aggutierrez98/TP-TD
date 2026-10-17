@@ -13,6 +13,8 @@ namespace TpIDS.UiTests.Infrastructure
         public const string AdminPassword = "UiTest.Admin.1234";
         public const string BasicUsername = "user";
         public const string BasicPassword = "UiTest.User.1234";
+        public const string OperadorUsername = "operador";
+        public const string OperadorPassword = "UiTest.Operador.1234";
         public const string InactiveUsername = "uitest_inactivo";
         public const string InactivePassword = "UiTest.Inactivo.1234";
 

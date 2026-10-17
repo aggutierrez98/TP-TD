@@ -13,6 +13,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\ABSTRACCIONES\ABSTRACCIONES.csproj" />
     <ProjectReference Include="..\..\BE\BE.csproj" />
     <ProjectReference Include="..\..\SERVICIOS\SERVICIOS.csproj" />

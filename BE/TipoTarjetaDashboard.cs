@@ -2,9 +2,9 @@ namespace BE
 {
     public enum TipoTarjetaDashboard
     {
-        SaldoActual,
         GastosPorCategoria,
+        IngresosPorCategoria,
         ComparativoMensual,
-        AhorroObjetivo
+        EvolucionBalance
     }
 }

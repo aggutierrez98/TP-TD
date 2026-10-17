@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using ABSTRACCIONES;
 using BE;
 using BLL;
@@ -46,6 +47,12 @@ namespace BLL.Tests.TestDoubles
             CategoriaRepo = new FakeCategoriaRepositorio();
             CategoriaProductoRepo = new FakeCategoriaProductoRepositorio();
             ComercioRepo = new FakeComercioRepositorio();
+            CuentaFinancieraRepo = new FakeCuentaFinancieraRepositorio();
+            EntidadFinancieraRepo = new FakeEntidadFinancieraRepositorio();
+            MedioPagoRepo = new FakeMedioPagoRepositorio();
+            MedioPagoEntidadRepo = new FakeMedioPagoEntidadRepositorio();
+            DashboardRepo = new FakeDashboardRepositorio();
+            TarjetaDashboardRepo = new FakeTarjetaDashboardRepositorio();
             MonedaRepo = new FakeMonedaRepositorio();
             TasaConversionRepo = new FakeTasaConversionRepositorio();
             IdiomaRepo = new FakeIdiomaRepositorio();
@@ -61,6 +68,7 @@ namespace BLL.Tests.TestDoubles
             RecordatorioCompraRepo = new FakeRecordatorioCompraRepositorio();
             RecordatorioInversionRepo = new FakeRecordatorioInversionRepositorio();
             RubroComercioRepo = new FakeRubroComercioRepositorio();
+            ConsultaChatbotRepo = new FakeConsultaChatbotRepositorio();
             TraduccionRepo = new FakeTraduccionRepositorio();
             UsuarioHistorialRepo = new FakeUsuarioHistorialRepositorio();
             UsuarioPermisoRepo = new FakeUsuarioPermisoRepositorio();
@@ -75,6 +83,18 @@ namespace BLL.Tests.TestDoubles
         public FakeCategoriaProductoRepositorio CategoriaProductoRepo { get; set; }
 
         public FakeComercioRepositorio ComercioRepo { get; set; }
+
+        public FakeCuentaFinancieraRepositorio CuentaFinancieraRepo { get; set; }
+
+        public FakeEntidadFinancieraRepositorio EntidadFinancieraRepo { get; set; }
+
+        public FakeMedioPagoRepositorio MedioPagoRepo { get; set; }
+
+        public FakeMedioPagoEntidadRepositorio MedioPagoEntidadRepo { get; set; }
+
+        public FakeDashboardRepositorio DashboardRepo { get; set; }
+
+        public FakeTarjetaDashboardRepositorio TarjetaDashboardRepo { get; set; }
 
         public FakeMonedaRepositorio MonedaRepo { get; set; }
 
@@ -106,6 +126,12 @@ namespace BLL.Tests.TestDoubles
 
         public FakeRubroComercioRepositorio RubroComercioRepo { get; set; }
 
+        public FakeReglaCategorizacionRepositorio ReglaCategorizacionRepo { get; set; }
+
+        public FakeComercioReglaCategorizacionRepositorio ComercioReglaCategorizacionRepo { get; set; }
+
+        public FakeConsultaChatbotRepositorio ConsultaChatbotRepo { get; set; }
+
         public FakeTraduccionRepositorio TraduccionRepo { get; set; }
 
         public FakeUsuarioHistorialRepositorio UsuarioHistorialRepo { get; set; }
@@ -131,6 +157,18 @@ namespace BLL.Tests.TestDoubles
         public ICategoriaProductoRepositorio CategoriasProducto { get { return CategoriaProductoRepo; } }
 
         public IComercioRepositorio Comercios { get { return ComercioRepo; } }
+
+        public ICuentaFinancieraRepositorio CuentasFinancieras { get { return CuentaFinancieraRepo; } }
+
+        public IEntidadFinancieraRepositorio EntidadesFinancieras { get { return EntidadFinancieraRepo; } }
+
+        public IMedioPagoRepositorio MediosPago { get { return MedioPagoRepo; } }
+
+        public IMedioPagoEntidadRepositorio MediosPagoEntidad { get { return MedioPagoEntidadRepo; } }
+
+        public IDashboardRepositorio Dashboards { get { return DashboardRepo; } }
+
+        public ITarjetaDashboardRepositorio TarjetasDashboard { get { return TarjetaDashboardRepo; } }
 
         public IMonedaRepositorio Monedas { get { return MonedaRepo; } }
 
@@ -159,6 +197,12 @@ namespace BLL.Tests.TestDoubles
         public IRecordatorioInversionRepositorio RecordatoriosInversion { get { return RecordatorioInversionRepo; } }
 
         public IRubroComercioRepositorio RubrosComercio { get { return RubroComercioRepo; } }
+
+        public IReglaCategorizacionRepositorio ReglasCategorizacion { get { return ReglaCategorizacionRepo; } }
+
+        public IComercioReglaCategorizacionRepositorio ComercioReglaCategorizacion { get { return ComercioReglaCategorizacionRepo; } }
+
+        public IConsultaChatbotRepositorio ConsultasChatbot { get { return ConsultaChatbotRepo; } }
 
         public ITasaConversionRepositorio TasasConversion { get { return TasaConversionRepo; } }
 
@@ -698,6 +742,18 @@ namespace BLL.Tests.TestDoubles
             }
 
             return Promociones.Remove(id);
+        }
+
+        public bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias)
+        {
+            Promocion promocion;
+            if (!Promociones.TryGetValue(promocionId, out promocion))
+            {
+                return false;
+            }
+
+            promocion.DiasSemana = new List<DiaSemana>(dias ?? new List<DiaSemana>());
+            return true;
         }
     }
 
@@ -1255,6 +1311,36 @@ namespace BLL.Tests.TestDoubles
             }
 
             return query.OrderByDescending(item => item.Fecha).ToList();
+        }
+
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoriaResult { get; set; } = new List<TotalPorCategoria>();
+
+        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorCategoriaArgs { get; private set; }
+
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        {
+            LastObtenerTotalesPorCategoriaArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            return ObtenerTotalesPorCategoriaResult;
+        }
+
+        public List<TotalPorMes> ObtenerTotalesPorMesResult { get; set; } = new List<TotalPorMes>();
+
+        public Tuple<int, DateTime, DateTime> LastObtenerTotalesPorMesArgs { get; private set; }
+
+        public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta)
+        {
+            LastObtenerTotalesPorMesArgs = Tuple.Create(usuarioId, desde, hasta);
+            return ObtenerTotalesPorMesResult;
+        }
+
+        public ResumenMovimientos ObtenerResumenResult { get; set; } = new ResumenMovimientos();
+
+        public Tuple<int, DateTime, DateTime> LastObtenerResumenArgs { get; private set; }
+
+        public ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta)
+        {
+            LastObtenerResumenArgs = Tuple.Create(usuarioId, desde, hasta);
+            return ObtenerResumenResult;
         }
 
         public int InsertarYObtenerId(Movimiento movimiento)
@@ -2089,6 +2175,26 @@ namespace BLL.Tests.TestDoubles
         }
     }
 
+    internal sealed class FakeEscaneoTicketService : IEscaneoTicketService
+    {
+        public TicketEscaneado NextResultado { get; set; } = new TicketEscaneado();
+
+        public Exception ThrowException { get; set; }
+
+        public byte[] LastImagenBytes { get; private set; }
+
+        public Task<TicketEscaneado> EscanearTicketAsync(byte[] imagenBytes)
+        {
+            LastImagenBytes = imagenBytes;
+            if (ThrowException != null)
+            {
+                throw ThrowException;
+            }
+
+            return Task.FromResult(NextResultado);
+        }
+    }
+
     internal sealed class FakeObservado : IObservado
     {
         public IIdioma IdiomaActual { get; private set; }
@@ -2134,5 +2240,565 @@ namespace BLL.Tests.TestDoubles
         public string Origen { get; private set; }
 
         public IUnidadDeTrabajo Unidad { get; private set; }
+    }
+
+    internal sealed class FakeReglaCategorizacionRepositorio : IReglaCategorizacionRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, ReglaCategorizacion> Reglas { get; } = new Dictionary<int, ReglaCategorizacion>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public ReglaCategorizacion LastInserted { get; private set; }
+
+        public ReglaCategorizacion LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public ReglaCategorizacion ObtenerPorId(int id)
+        {
+            ReglaCategorizacion regla;
+            return Reglas.TryGetValue(id, out regla) ? regla : null;
+        }
+
+        public List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId)
+        {
+            return Reglas.Values.Where(item => item.Usuario != null && item.Usuario.Id == usuarioId).ToList();
+        }
+
+        public int InsertarYObtenerId(ReglaCategorizacion reglaCategorizacion)
+        {
+            if (reglaCategorizacion.Id <= 0)
+            {
+                reglaCategorizacion.Id = _nextId++;
+            }
+
+            Reglas[reglaCategorizacion.Id] = reglaCategorizacion;
+            LastInserted = reglaCategorizacion;
+            return reglaCategorizacion.Id;
+        }
+
+        public bool Actualizar(ReglaCategorizacion reglaCategorizacion)
+        {
+            LastUpdated = reglaCategorizacion;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Reglas[reglaCategorizacion.Id] = reglaCategorizacion;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Reglas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeComercioReglaCategorizacionRepositorio : IComercioReglaCategorizacionRepositorio
+    {
+        public Dictionary<int, List<int>> ComerciosPorRegla { get; } = new Dictionary<int, List<int>>();
+
+        public bool ReemplazarResult { get; set; } = true;
+
+        public List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId)
+        {
+            List<int> ids;
+            return ComerciosPorRegla.TryGetValue(reglaCategorizacionId, out ids) ? new List<int>(ids) : new List<int>();
+        }
+
+        public bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds)
+        {
+            if (!ReemplazarResult)
+            {
+                return false;
+            }
+
+            ComerciosPorRegla[reglaCategorizacionId] = comercioIds == null ? new List<int>() : new List<int>(comercioIds);
+            return true;
+        }
+    }
+
+    internal sealed class FakeConsultaChatbotRepositorio : IConsultaChatbotRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, ConsultaChatbot> Consultas { get; } = new Dictionary<int, ConsultaChatbot>();
+
+        public ConsultaChatbot LastInserted { get; private set; }
+
+        public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId)
+        {
+            return Consultas.Values.Where(item => item.UsuarioId == usuarioId).ToList();
+        }
+
+        public int InsertarYObtenerId(ConsultaChatbot consultaChatbot)
+        {
+            if (consultaChatbot.Id <= 0)
+            {
+                consultaChatbot.Id = _nextId++;
+            }
+
+            Consultas[consultaChatbot.Id] = consultaChatbot;
+            LastInserted = consultaChatbot;
+            return consultaChatbot.Id;
+        }
+    }
+
+    internal sealed class FakeDashboardRepositorio : IDashboardRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, Dashboard> Dashboards { get; } = new Dictionary<int, Dashboard>();
+
+        public bool EliminarResult { get; set; } = true;
+
+        public Dashboard LastInserted { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public Dashboard ObtenerPorId(int id)
+        {
+            Dashboard dashboard;
+            return Dashboards.TryGetValue(id, out dashboard) ? dashboard : null;
+        }
+
+        public Dashboard ObtenerPorUsuario(int usuarioId)
+        {
+            return Dashboards.Values.FirstOrDefault(item => item.Usuario != null && item.Usuario.Id == usuarioId);
+        }
+
+        public int InsertarYObtenerId(Dashboard dashboard)
+        {
+            if (dashboard.Id <= 0)
+            {
+                dashboard.Id = _nextId++;
+            }
+
+            Dashboards[dashboard.Id] = dashboard;
+            LastInserted = dashboard;
+            return dashboard.Id;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Dashboards.Remove(id);
+        }
+    }
+
+    internal sealed class FakeTarjetaDashboardRepositorio : ITarjetaDashboardRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, TarjetaDashboard> Tarjetas { get; } = new Dictionary<int, TarjetaDashboard>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public TarjetaDashboard LastInserted { get; private set; }
+
+        public TarjetaDashboard LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public TarjetaDashboard ObtenerPorId(int id)
+        {
+            TarjetaDashboard tarjeta;
+            return Tarjetas.TryGetValue(id, out tarjeta) ? tarjeta : null;
+        }
+
+        public List<TarjetaDashboard> ObtenerPorDashboard(int dashboardId)
+        {
+            return Tarjetas.Values
+                .Where(item => item.Dashboard != null && item.Dashboard.Id == dashboardId)
+                .OrderBy(item => item.Orden)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(TarjetaDashboard tarjeta)
+        {
+            if (tarjeta.Id <= 0)
+            {
+                tarjeta.Id = _nextId++;
+            }
+
+            Tarjetas[tarjeta.Id] = tarjeta;
+            LastInserted = tarjeta;
+            return tarjeta.Id;
+        }
+
+        public bool Actualizar(TarjetaDashboard tarjeta)
+        {
+            LastUpdated = tarjeta;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Tarjetas[tarjeta.Id] = tarjeta;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Tarjetas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeChatbotFinancieroRepositorio : IChatbotFinancieroRepositorio
+    {
+        public ChatbotFinanciero Chatbot { get; set; } = new ChatbotFinanciero { Id = 1, Nombre = "Asistente Financiero FINAZAPP" };
+
+        public ChatbotFinanciero ObtenerUnico()
+        {
+            return Chatbot;
+        }
+    }
+
+    internal sealed class FakeAsistenteFinancieroService : IAsistenteFinancieroService
+    {
+        public string NextRespuesta { get; set; } = "Respuesta simulada";
+
+        public Exception ThrowException { get; set; }
+
+        public string LastPregunta { get; private set; }
+
+        public List<IntercambioChatbot> LastHistorial { get; private set; }
+
+        public Task<string> ObtenerRespuestaAsync(string pregunta, IEnumerable<IntercambioChatbot> historial)
+        {
+            LastPregunta = pregunta;
+            LastHistorial = historial == null ? new List<IntercambioChatbot>() : historial.ToList();
+
+            if (ThrowException != null)
+            {
+                throw ThrowException;
+            }
+
+            return Task.FromResult(NextRespuesta);
+        }
+    }
+
+    internal sealed class FakeMedioPagoRepositorio : IMedioPagoRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, MedioPago> MediosPago { get; } = new Dictionary<int, MedioPago>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public MedioPago LastInserted { get; private set; }
+
+        public MedioPago LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public MedioPago ObtenerPorId(int id)
+        {
+            MedioPago medioPago;
+            return MediosPago.TryGetValue(id, out medioPago) ? medioPago : null;
+        }
+
+        public List<MedioPago> ObtenerTodos()
+        {
+            return MediosPago.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(MedioPago medioPago)
+        {
+            if (medioPago.Id <= 0)
+            {
+                medioPago.Id = _nextId++;
+            }
+
+            MediosPago[medioPago.Id] = medioPago;
+            LastInserted = medioPago;
+            return medioPago.Id;
+        }
+
+        public bool Actualizar(MedioPago medioPago)
+        {
+            LastUpdated = medioPago;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            MediosPago[medioPago.Id] = medioPago;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return MediosPago.Remove(id);
+        }
+    }
+
+    internal sealed class FakeMedioPagoEntidadRepositorio : IMedioPagoEntidadRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, MedioPagoEntidad> MediosPagoEntidad { get; } = new Dictionary<int, MedioPagoEntidad>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public MedioPagoEntidad LastInserted { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public MedioPagoEntidad ObtenerPorId(int id)
+        {
+            MedioPagoEntidad medioPagoEntidad;
+            return MediosPagoEntidad.TryGetValue(id, out medioPagoEntidad) ? medioPagoEntidad : null;
+        }
+
+        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        {
+            return MediosPagoEntidad.Values
+                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidadFinancieraId)
+                .ToList();
+        }
+
+        public List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId)
+        {
+            return MediosPagoEntidad.Values
+                .Where(item => item.MedioPago != null && item.MedioPago.Id == medioPagoId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(MedioPagoEntidad medioPagoEntidad)
+        {
+            if (medioPagoEntidad.Id <= 0)
+            {
+                medioPagoEntidad.Id = _nextId++;
+            }
+
+            MediosPagoEntidad[medioPagoEntidad.Id] = medioPagoEntidad;
+            LastInserted = medioPagoEntidad;
+            return medioPagoEntidad.Id;
+        }
+
+        public bool Actualizar(MedioPagoEntidad medioPagoEntidad)
+        {
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            MediosPagoEntidad[medioPagoEntidad.Id] = medioPagoEntidad;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return MediosPagoEntidad.Remove(id);
+        }
+    }
+
+    internal sealed class FakeEntidadFinancieraRepositorio : IEntidadFinancieraRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, EntidadFinanciera> Entidades { get; } = new Dictionary<int, EntidadFinanciera>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public bool ThrowForeignKeyOnEliminar { get; set; }
+
+        public EntidadFinanciera LastInserted { get; private set; }
+
+        public EntidadFinanciera LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public EntidadFinanciera ObtenerPorId(int id)
+        {
+            EntidadFinanciera entidad;
+            return Entidades.TryGetValue(id, out entidad) ? entidad : null;
+        }
+
+        public List<EntidadFinanciera> ObtenerTodas()
+        {
+            return Entidades.Values.ToList();
+        }
+
+        public int InsertarYObtenerId(EntidadFinanciera entidad)
+        {
+            if (entidad.Id <= 0)
+            {
+                entidad.Id = _nextId++;
+            }
+
+            Entidades[entidad.Id] = entidad;
+            LastInserted = entidad;
+            return entidad.Id;
+        }
+
+        public bool Actualizar(EntidadFinanciera entidad)
+        {
+            LastUpdated = entidad;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Entidades[entidad.Id] = entidad;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (ThrowForeignKeyOnEliminar)
+            {
+                throw FakeSqlExceptionFactory.CrearExcepcionTecnicaPorViolacionForanea();
+            }
+
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Entidades.Remove(id);
+        }
+    }
+
+    internal sealed class FakeCuentaFinancieraRepositorio : ICuentaFinancieraRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, CuentaFinanciera> Cuentas { get; } = new Dictionary<int, CuentaFinanciera>();
+
+        // Estado de la tabla puente CuentaFinancieraMedioPagoEntidad, por cuenta.
+        public Dictionary<int, List<int>> MedioPagoEntidadIdsPorCuenta { get; } = new Dictionary<int, List<int>>();
+
+        public bool ActualizarResult { get; set; } = true;
+
+        public bool EliminarResult { get; set; } = true;
+
+        public CuentaFinanciera LastInserted { get; private set; }
+
+        public CuentaFinanciera LastUpdated { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public int ReemplazarCallCount { get; private set; }
+
+        public CuentaFinanciera ObtenerPorId(int id)
+        {
+            CuentaFinanciera cuenta;
+            return Cuentas.TryGetValue(id, out cuenta) ? cuenta : null;
+        }
+
+        public List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId)
+        {
+            return Cuentas.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .ToList();
+        }
+
+        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        {
+            return Cuentas.Values
+                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidadFinancieraId)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(CuentaFinanciera cuenta)
+        {
+            if (cuenta.Id <= 0)
+            {
+                cuenta.Id = _nextId++;
+            }
+
+            Cuentas[cuenta.Id] = cuenta;
+            LastInserted = cuenta;
+            return cuenta.Id;
+        }
+
+        public bool Actualizar(CuentaFinanciera cuenta)
+        {
+            LastUpdated = cuenta;
+            if (!ActualizarResult)
+            {
+                return false;
+            }
+
+            Cuentas[cuenta.Id] = cuenta;
+            return true;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Cuentas.Remove(id);
+        }
+
+        public bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds)
+        {
+            ReemplazarCallCount++;
+            MedioPagoEntidadIdsPorCuenta[cuentaFinancieraId] = new List<int>(medioPagoEntidadIds);
+            return true;
+        }
     }
 }

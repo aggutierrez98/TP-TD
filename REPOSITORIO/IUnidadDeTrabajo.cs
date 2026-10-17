@@ -12,6 +12,12 @@ namespace REPOSITORIO
 
         IComercioRepositorio Comercios { get; }
 
+        ICuentaFinancieraRepositorio CuentasFinancieras { get; }
+
+        IDashboardRepositorio Dashboards { get; }
+
+        IEntidadFinancieraRepositorio EntidadesFinancieras { get; }
+
         IIdiomaRepositorio Idiomas { get; }
 
         IIntegridadRepositorio Integridad { get; }
@@ -19,6 +25,10 @@ namespace REPOSITORIO
         IItemListaRepositorio ItemsLista { get; }
 
         IListaDeComprasRepositorio ListasDeCompras { get; }
+
+        IMedioPagoRepositorio MediosPago { get; }
+
+        IMedioPagoEntidadRepositorio MediosPagoEntidad { get; }
 
         IMonedaRepositorio Monedas { get; }
 
@@ -39,6 +49,14 @@ namespace REPOSITORIO
         IRecordatorioInversionRepositorio RecordatoriosInversion { get; }
 
         IRubroComercioRepositorio RubrosComercio { get; }
+
+        IReglaCategorizacionRepositorio ReglasCategorizacion { get; }
+
+        IComercioReglaCategorizacionRepositorio ComercioReglaCategorizacion { get; }
+
+        IConsultaChatbotRepositorio ConsultasChatbot { get; }
+
+        ITarjetaDashboardRepositorio TarjetasDashboard { get; }
 
         ITasaConversionRepositorio TasasConversion { get; }
 

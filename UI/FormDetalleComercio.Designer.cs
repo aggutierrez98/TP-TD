@@ -48,6 +48,8 @@ namespace TpIDS
             this.dgvPromociones = new System.Windows.Forms.DataGridView();
             this.colPromocionDescripcion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colPromocionDescuento = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPromocionTopeDescuento = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPromocionDiasSemana = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colPromocionVigenciaDesde = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colPromocionVigenciaHasta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlComercioDetalle.SuspendLayout();
@@ -380,6 +382,8 @@ namespace TpIDS
             this.dgvPromociones.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colPromocionDescripcion,
             this.colPromocionDescuento,
+            this.colPromocionTopeDescuento,
+            this.colPromocionDiasSemana,
             this.colPromocionVigenciaDesde,
             this.colPromocionVigenciaHasta});
             this.dgvPromociones.Location = new System.Drawing.Point(10, 20);
@@ -405,6 +409,20 @@ namespace TpIDS
             this.colPromocionDescuento.HeaderText = "Descuento";
             this.colPromocionDescuento.Name = "Descuento";
             this.colPromocionDescuento.ReadOnly = true;
+            //
+            // colPromocionTopeDescuento
+            //
+            this.colPromocionTopeDescuento.DataPropertyName = "TopeDescuento";
+            this.colPromocionTopeDescuento.HeaderText = "Tope";
+            this.colPromocionTopeDescuento.Name = "TopeDescuento";
+            this.colPromocionTopeDescuento.ReadOnly = true;
+            //
+            // colPromocionDiasSemana
+            //
+            this.colPromocionDiasSemana.DataPropertyName = "DiasSemana";
+            this.colPromocionDiasSemana.HeaderText = "Dias";
+            this.colPromocionDiasSemana.Name = "DiasSemana";
+            this.colPromocionDiasSemana.ReadOnly = true;
             //
             // colPromocionVigenciaDesde
             //
@@ -485,6 +503,8 @@ namespace TpIDS
         private System.Windows.Forms.DataGridView dgvPromociones;
         private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionDescripcion;
         private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionDescuento;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionTopeDescuento;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionDiasSemana;
         private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionVigenciaDesde;
         private System.Windows.Forms.DataGridViewTextBoxColumn colPromocionVigenciaHasta;
     }

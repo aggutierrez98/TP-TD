@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using DAL;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using REPOSITORIO;
@@ -11,6 +13,26 @@ namespace TpIDS.IntegrationTests
     [TestCategory("Integration")]
     public sealed class TasaConversionRepositorioIntegrationTests
     {
+        [TestMethod]
+        public void ScriptSeed_IncluyeARSUSDYTasaUSDHaciaARS()
+        {
+            using (AccesoDatosSqlServer accesoDatos = new AccesoDatosSqlServer())
+            {
+                MonedaRepositorio monedaRepositorio = new MonedaRepositorio(accesoDatos);
+                TasaConversionRepositorio tasaRepositorio = new TasaConversionRepositorio(accesoDatos);
+
+                BE.Moneda pesoArgentino = monedaRepositorio.ObtenerTodas().Single(item => item.Codigo == "ARS");
+                BE.Moneda dolarEstadounidense = monedaRepositorio.ObtenerTodas().Single(item => item.Codigo == "USD");
+                BE.TasaConversion tasa = tasaRepositorio.ObtenerPorParDeMonedas(dolarEstadounidense.Id, pesoArgentino.Id);
+
+                Assert.AreEqual("Peso Argentino", pesoArgentino.Nombre);
+                Assert.AreEqual("Dólar Estadounidense", dolarEstadounidense.Nombre);
+                Assert.IsNotNull(tasa);
+                Assert.AreEqual(1511.2481m, tasa.CalculoConversion);
+                Assert.AreEqual(new DateTime(2026, 9, 20), tasa.FechaActualizacion);
+            }
+        }
+
         [TestMethod]
         public void InsertarYObtenerId_TasaValida_QuedaDisponible()
         {
