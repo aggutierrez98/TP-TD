@@ -89,7 +89,7 @@ namespace TpIDS
                 Id = notificacion.Id,
                 Usuario = notificacion.Usuario?.Username ?? string.Empty,
                 Tipo = notificacion.GetType().Name,
-                Mensaje = notificacion.Mensaje,
+                Mensaje = VistaPreviaNotificacion.Resumir(notificacion.Mensaje),
                 Fecha = notificacion.Fecha,
                 Leida = notificacion.Leida
             };

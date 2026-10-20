@@ -101,15 +101,14 @@ namespace TpIDS
             string columna = dgvNotificacionesPersonales.Columns[e.ColumnIndex].Name;
             if (columna == "Leida") e.Value = UiDialogHelper.Traducir(n.Leida ? "FormMyNotifications.Value.Read" : "FormMyNotifications.Value.Unread");
             else if (columna == "Tipo") e.Value = TextoTipo(n);
+            else if (columna == "Mensaje") e.Value = VistaPreviaNotificacion.Resumir(n.Mensaje);
             else return;
             e.FormattingApplied = true;
         }
 
         internal static string TextoTipo(Notificacion n)
         {
-            if (n is RecordatorioCompra) return UiDialogHelper.Traducir("FormMyNotifications.Value.PurchaseReminder");
-            if (n is RecordatorioInversion) return UiDialogHelper.Traducir("FormMyNotifications.Value.InvestmentReminder");
-            return UiDialogHelper.Traducir("FormMyNotifications.Value.ManualNotification");
+            return UiDialogHelper.Traducir(VistaPreviaNotificacion.ClaveTipo(n));
         }
 
         private void CambiarOcupado(bool valor)

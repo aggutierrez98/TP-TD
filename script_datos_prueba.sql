@@ -1202,6 +1202,37 @@ IF NOT EXISTS (SELECT 1 FROM dbo.ReglaCategorizacion WHERE UsuarioId = @uid AND 
 IF NOT EXISTS (SELECT 1 FROM dbo.ReglaCategorizacion WHERE UsuarioId = @uid AND Nombre = N'Intereses compensatorios acreditados por devolución') INSERT INTO dbo.ReglaCategorizacion (UsuarioId, CategoriaId, Nombre, PalabrasClave) SELECT @uid, Id, N'Intereses compensatorios acreditados por devolución', N'icompdev' FROM dbo.Categoria WHERE Nombre = N'Intereses cobrados' AND UsuarioId IS NULL;
 IF NOT EXISTS (SELECT 1 FROM dbo.ReglaCategorizacion WHERE UsuarioId = @uid AND Nombre = N'Dividendos acreditados') INSERT INTO dbo.ReglaCategorizacion (UsuarioId, CategoriaId, Nombre, PalabrasClave) SELECT @uid, Id, N'Dividendos acreditados', N'dividendo' FROM dbo.Categoria WHERE Nombre = N'Dividendos' AND UsuarioId IS NULL;
 
+-- INICIO ejemplos de notificaciones
+-- Tres ejemplos sin leer para user, identificados por ClaveEjemplo. Sin TipoAutomatico ni FechaJornada: no
+-- ocupan el cupo diario ni el intervalo de siete dias de inversiones. Segunda carga (aun en otro dia): no
+-- se insertan de nuevo ni se tocan su fecha ni su lectura. No usa APIs ni modifica Usuarios.
+IF NOT EXISTS (SELECT 1 FROM dbo.Notificacion WHERE UsuarioId = @uid AND ClaveEjemplo = 'Demo.Compras')
+    INSERT INTO dbo.Notificacion (UsuarioId, TipoNotificacion, Mensaje, Leida, ClaveEjemplo)
+    VALUES (@uid, 'RecordatorioCompra',
+        N'[EJEMPLO DE DEMOSTRACIÓN] Recomendación de compras' + NCHAR(13) + NCHAR(10)
+        + N'Este es un mensaje de ejemplo cargado con los datos de prueba. No es un análisis en vivo ni refleja precios o promociones vigentes.' + NCHAR(13) + NCHAR(10)
+        + N'Fecha del análisis de ejemplo: 20/10/2026.' + NCHAR(13) + NCHAR(10)
+        + N'Pendientes de ejemplo: Leche entera clásica La Serenísima sachet 1 L y Pan blanco Lactal 315 g.' + NCHAR(13) + NCHAR(10)
+        + N'Cuando el proceso diario genere un análisis real, lo vas a ver acá con los comercios y las promociones del momento.',
+        0, 'Demo.Compras');
+IF NOT EXISTS (SELECT 1 FROM dbo.Notificacion WHERE UsuarioId = @uid AND ClaveEjemplo = 'Demo.Inversiones')
+    INSERT INTO dbo.Notificacion (UsuarioId, TipoNotificacion, Mensaje, Leida, ClaveEjemplo)
+    VALUES (@uid, 'RecordatorioInversion',
+        N'[EJEMPLO DE DEMOSTRACIÓN] Recomendación de inversiones' + NCHAR(13) + NCHAR(10)
+        + N'Este es un mensaje de ejemplo cargado con los datos de prueba. No es un análisis en vivo ni informa rendimientos o cotizaciones vigentes.' + NCHAR(13) + NCHAR(10)
+        + N'Fecha del análisis de ejemplo: 20/10/2026.' + NCHAR(13) + NCHAR(10)
+        + N'Perfil considerado: Alto, sin límites de riesgo ni de liquidez. Sin monto ni porcentaje: la recomendación automática no los supone.' + NCHAR(13) + NCHAR(10)
+        + N'Información orientativa, no constituye asesoramiento financiero.',
+        0, 'Demo.Inversiones');
+IF NOT EXISTS (SELECT 1 FROM dbo.Notificacion WHERE UsuarioId = @uid AND ClaveEjemplo = 'Demo.Movimientos')
+    INSERT INTO dbo.Notificacion (UsuarioId, TipoNotificacion, Mensaje, Leida, ClaveEjemplo)
+    VALUES (@uid, 'Notificacion',
+        N'[EJEMPLO DE DEMOSTRACIÓN] Recordatorio de movimientos' + NCHAR(13) + NCHAR(10)
+        + N'Este es un mensaje de ejemplo cargado con los datos de prueba.' + NCHAR(13) + NCHAR(10)
+        + N'Día revisado en el ejemplo: 19/10/2026. No encontramos movimientos con esa fecha; si hubo gastos o ingresos, registralos desde Movimientos.',
+        0, 'Demo.Movimientos');
+-- FIN ejemplos de notificaciones
+
 COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH

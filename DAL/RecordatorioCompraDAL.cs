@@ -9,23 +9,26 @@ namespace DAL
     {
         private RecordatorioCompra Map(DataRow row)
         {
-            return new RecordatorioCompra
+            var recordatorio = new RecordatorioCompra
             {
                 Id = (int)row["Id"],
                 Usuario = new Usuario { Id = (int)row["UsuarioId"] },
                 Mensaje = row["Mensaje"].ToString(),
                 Fecha = (System.DateTime)row["Fecha"],
                 Leida = (bool)row["Leida"],
-                ItemLista = new ItemLista { Id = (int)row["ItemListaId"] },
+                // Nulos solo en la recomendacion de compras agregada (automatica o ejemplo).
+                ItemLista = row.IsNull("ItemListaId") ? null : new ItemLista { Id = (int)row["ItemListaId"] },
                 Promocion = row.IsNull("PromocionId") ? null : new Promocion { Id = (int)row["PromocionId"] },
-                FechaVencimiento = (System.DateTime)row["FechaVencimiento"]
+                FechaVencimiento = row.IsNull("FechaVencimiento") ? (System.DateTime?)null : (System.DateTime)row["FechaVencimiento"]
             };
+            MetadataNotificacionDAL.Leer(row, recordatorio);
+            return recordatorio;
         }
 
         public RecordatorioCompra ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE Id = @Id AND TipoNotificacion = 'RecordatorioCompra'";
 
@@ -54,7 +57,7 @@ namespace DAL
         public List<RecordatorioCompra> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE UsuarioId = @UsuarioId AND TipoNotificacion = 'RecordatorioCompra'
                 ORDER BY Fecha DESC";
@@ -90,7 +93,7 @@ namespace DAL
         public List<RecordatorioCompra> ObtenerTodas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE TipoNotificacion = 'RecordatorioCompra'
                 ORDER BY Fecha DESC";
@@ -121,9 +124,9 @@ namespace DAL
         public int InsertarYObtenerId(RecordatorioCompra recordatorio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento)
+                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento, TipoAutomatico, FechaJornada, ClaveEjemplo)
                 OUTPUT INSERTED.Id
-                VALUES (@UsuarioId, 'RecordatorioCompra', @Mensaje, @Fecha, @Leida, @ItemListaId, @PromocionId, @FechaVencimiento)";
+                VALUES (@UsuarioId, 'RecordatorioCompra', @Mensaje, @Fecha, @Leida, @ItemListaId, @PromocionId, @FechaVencimiento, @TipoAutomatico, @FechaJornada, @ClaveEjemplo)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -133,13 +136,14 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, recordatorio.Usuario.Id),
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, recordatorio.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, recordatorio.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, recordatorio.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, recordatorio.Leida),
-                    accesoDatos.CreateParameter("@ItemListaId", SqlDbType.Int, recordatorio.ItemLista.Id),
+                    accesoDatos.CreateParameter("@ItemListaId", SqlDbType.Int, recordatorio.ItemLista != null ? (object)recordatorio.ItemLista.Id : null),
                     accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, recordatorio.Promocion != null ? (object)recordatorio.Promocion.Id : null),
                     accesoDatos.CreateParameter("@FechaVencimiento", SqlDbType.Date, recordatorio.FechaVencimiento)
                 };
+                MetadataNotificacionDAL.AgregarParametros(accesoDatos, parametros, recordatorio);
 
                 return accesoDatos.WriteWithResult(query, parametros);
             }
@@ -170,7 +174,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, recordatorio.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, recordatorio.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, recordatorio.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, recordatorio.Leida),
                     accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, recordatorio.Promocion != null ? (object)recordatorio.Promocion.Id : null),

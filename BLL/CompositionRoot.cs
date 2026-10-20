@@ -1,4 +1,5 @@
 using System;
+using System.Configuration;
 using ABSTRACCIONES;
 using REPOSITORIO;
 
@@ -17,6 +18,14 @@ namespace BLL
         private static IObservado _servicioIdioma;
         private static IEscaneoTicketService _escaneoTicketService;
         private static IAsistenteFinancieroService _asistenteFinancieroService;
+        private static IClasificadorConsultas _clasificadorConsultas;
+        private static IServicioEmbeddings _servicioEmbeddings;
+        private static RecomendacionComprasBLL _recomendacionComprasBLL;
+        private static RecomendacionInversionesBLL _recomendacionInversionesBLL;
+        private static GeneradorRecomendaciones _generadorRecomendaciones;
+        private static IProveedorArgentinaDatos _proveedorArgentinaDatos;
+        private static IProveedorMercadoData912 _proveedorData912;
+        private static IProveedorCriptoYa _proveedorCriptoYa;
         private static IReporteTabularPdfService _reportePdfService;
         private static IBusquedaUbicacionesService _busquedaUbicacionesService;
 
@@ -29,6 +38,8 @@ namespace BLL
         private static MedioPagoBLL _medioPagoBLL;
         private static EntidadFinancieraBLL _entidadFinancieraBLL;
         private static CuentaFinancieraBLL _cuentaFinancieraBLL;
+        private static ZonaUsuarioBLL _zonaUsuarioBLL;
+        private static PerfilInversorBLL _perfilInversorBLL;
         private static ProductoBLL _productoBLL;
         private static ComercioProductoBLL _comercioProductoBLL;
         private static PromocionBLL _promocionBLL;
@@ -41,6 +52,7 @@ namespace BLL
         private static AsistenteFinancieroBLL _asistenteFinancieroBLL;
         private static ListaDeComprasBLL _listaDeComprasBLL;
         private static NotificacionBLL _notificacionBLL;
+        private static GeneracionNotificacionesBLL _generacionNotificacionesBLL;
         private static UsuarioEstadoBLL _usuarioEstadoBLL;
         private static IntegridadBLL _integridadBLL;
         private static IdiomaBLL _idiomaBLL;
@@ -67,6 +79,13 @@ namespace BLL
             _servicioIdioma = SERVICIOS.IdiomaService.GetInstance();
             _escaneoTicketService = new SERVICIOS.GeminiEscaneoTicketService();
             _asistenteFinancieroService = new SERVICIOS.GeminiAsistenteFinancieroService();
+            // Lee su clave y modelo de configuracion recien al clasificar, igual que el servicio de respuesta.
+            _clasificadorConsultas = new SERVICIOS.GeminiClasificadorConsultas();
+            _servicioEmbeddings = new SERVICIOS.GeminiServicioEmbeddings();
+            // Instancias compartidas: cada proveedor conserva su cache por endpoint.
+            _proveedorArgentinaDatos = new SERVICIOS.ProveedorArgentinaDatos();
+            _proveedorData912 = new SERVICIOS.ProveedorMercadoData912();
+            _proveedorCriptoYa = new SERVICIOS.ProveedorCriptoYa();
             _reportePdfService = new SERVICIOS.ReporteTabularPdfService();
             // Una sola instancia: serializacion, separacion de un segundo, cooldown y cache son por instancia.
             // No lee ni valida el endpoint al construirse: una configuracion invalida solo afecta a la busqueda.
@@ -87,6 +106,9 @@ namespace BLL
             _entidadFinancieraBLL = new EntidadFinancieraBLL(new EntidadFinancieraRepositorio(), uow, _bitacoraBLL);
 
             _cuentaFinancieraBLL = new CuentaFinancieraBLL(new CuentaFinancieraRepositorio(), uow, _sesion, _bitacoraBLL);
+
+            _zonaUsuarioBLL = new ZonaUsuarioBLL(new ZonaUsuarioRepositorio(), uow, _sesion, _bitacoraBLL);
+            _perfilInversorBLL = new PerfilInversorBLL(new PerfilInversorRepositorio(), uow, _sesion, _bitacoraBLL, () => DateTime.UtcNow);
 
             _categoriaProductoBLL = new CategoriaProductoBLL(new CategoriaProductoRepositorio(), uow, _bitacoraBLL);
 
@@ -122,13 +144,33 @@ namespace BLL
                 _sesion,
                 _bitacoraBLL);
 
+            _recomendacionComprasBLL = new RecomendacionComprasBLL(
+                new RecomendacionComprasRepositorio(), new ZonaUsuarioRepositorio(), new TasaConversionRepositorio(),
+                new CoincidenciaSemanticaProductos(_servicioEmbeddings, new ProductoEmbeddingRepositorio(), uow, () => DateTime.Now),
+                () => DateTime.Now);
+
+            _recomendacionInversionesBLL = new RecomendacionInversionesBLL(new MovimientoRepositorio(), () => DateTime.Now,
+                _proveedorArgentinaDatos, _proveedorData912, _proveedorCriptoYa);
+
+            // Colaborador sin sesion compartido por el chat y la generacion automatica.
+            _generadorRecomendaciones = new GeneradorRecomendaciones(
+                _asistenteFinancieroService, new ValidadorRespuestaAsistente(), _recomendacionComprasBLL, _recomendacionInversionesBLL);
+
             _asistenteFinancieroBLL = new AsistenteFinancieroBLL(
                 new ConsultaChatbotRepositorio(),
                 new ChatbotFinancieroRepositorio(),
                 _asistenteFinancieroService,
+                _clasificadorConsultas,
+                // Una sola instancia: la ventana de uso por usuario vive en memoria de este proceso.
+                new LimiteUsoAsistente(
+                    LimiteUsoAsistente.InterpretarMaximoConfigurado(ConfigurationManager.AppSettings[LimiteUsoAsistente.ClaveConfiguracion]),
+                    () => DateTime.Now),
                 uow,
                 _sesion,
-                _bitacoraBLL);
+                _bitacoraBLL,
+                _servicioIdioma,
+                _generadorRecomendaciones,
+                new PerfilInversorRepositorio());
 
             _listaDeComprasBLL = new ListaDeComprasBLL(new ListaDeComprasRepositorio(), uow, _sesion, _bitacoraBLL);
 
@@ -165,6 +207,10 @@ namespace BLL
                 uow,
                 _servicioIdioma);
 
+            // Proceso automatico diario: sin sesion; el idioma es el de cada destinatario.
+            _generacionNotificacionesBLL = new GeneracionNotificacionesBLL(
+                uow, _generadorRecomendaciones, _recomendacionInversionesBLL, _idiomaBLL, () => DateTime.Now);
+
             _permisoBLL = new PermisoBLL(
                 new PermisoRepositorio(),
                 new UsuarioPermisoRepositorio(),
@@ -196,6 +242,11 @@ namespace BLL
         public static ISesion Sesion
         {
             get { Inicializar(); return _sesion; }
+        }
+
+        public static PerfilInversorBLL PerfilInversor
+        {
+            get { Inicializar(); return _perfilInversorBLL; }
         }
 
         public static IBitacora Bitacora
@@ -231,6 +282,11 @@ namespace BLL
         public static IAsistenteFinancieroService AsistenteFinancieroService
         {
             get { Inicializar(); return _asistenteFinancieroService; }
+        }
+
+        public static IClasificadorConsultas ClasificadorConsultas
+        {
+            get { Inicializar(); return _clasificadorConsultas; }
         }
 
         public static IBusquedaUbicacionesService BusquedaUbicaciones
@@ -293,6 +349,11 @@ namespace BLL
             get { Inicializar(); return _cuentaFinancieraBLL; }
         }
 
+        public static ZonaUsuarioBLL ZonaUsuario
+        {
+            get { Inicializar(); return _zonaUsuarioBLL; }
+        }
+
         public static CategoriaProductoBLL CategoriaProducto
         {
             get { Inicializar(); return _categoriaProductoBLL; }
@@ -351,6 +412,11 @@ namespace BLL
         public static ListaDeComprasBLL ListaDeCompras
         {
             get { Inicializar(); return _listaDeComprasBLL; }
+        }
+
+        public static GeneracionNotificacionesBLL GeneracionNotificaciones
+        {
+            get { Inicializar(); return _generacionNotificacionesBLL; }
         }
 
         public static NotificacionBLL Notificacion

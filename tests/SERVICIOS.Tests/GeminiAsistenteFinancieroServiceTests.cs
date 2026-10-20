@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Net.Http;
+using System.Net;
 using ABSTRACCIONES;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SERVICIOS;
@@ -12,27 +14,166 @@ namespace SERVICIOS.Tests
     public sealed class GeminiAsistenteFinancieroServiceTests
     {
         [TestMethod]
-        public void ArmarRequestBody_SinHistorial_IncluyeSoloLaPreguntaActualComoUser()
+        public async Task ObtenerLlamadaHerramientaAsync_Compras_DeclaraSoloLaFuncionForzadaYDevuelveArgumentos()
         {
-            string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Como ahorro mejor?", null);
-            using (JsonDocument request = JsonDocument.Parse(json))
+            HandlerFuncion handler = new HandlerFuncion();
+            GeminiAsistenteFinancieroService servicio = new GeminiAsistenteFinancieroService(new AgenteAhorro(), new AgenteInversiones(), new AgenteFinanzasGenerales(), handler, clave => "test");
+            HerramientaAsistente herramienta = new HerramientaAsistente("recomendar_compras", "Extrae la lista", "{\"type\":\"OBJECT\",\"properties\":{\"nombreLista\":{\"type\":\"STRING\"}}}");
+            LlamadaHerramientaAsistente llamada = await servicio.ObtenerLlamadaHerramientaAsync(Solicitud(CategoriaConsulta.Compras), herramienta, CancellationToken.None);
+            Assert.IsNotNull(llamada);
+            Assert.AreEqual("recomendar_compras", llamada.Nombre);
+            Assert.Contains("Semanal", llamada.ArgumentosJson);
+            using (JsonDocument json = JsonDocument.Parse(handler.Cuerpo))
             {
-                JsonElement contents = request.RootElement.GetProperty("contents");
-
-                Assert.AreEqual(1, contents.GetArrayLength());
-                Assert.AreEqual("user", contents[0].GetProperty("role").GetString());
+                Assert.AreEqual("ANY", json.RootElement.GetProperty("toolConfig").GetProperty("functionCallingConfig").GetProperty("mode").GetString());
+                JsonElement funciones = json.RootElement.GetProperty("tools")[0].GetProperty("functionDeclarations");
+                Assert.AreEqual(1, funciones.GetArrayLength());
+                Assert.AreEqual("recomendar_compras", funciones[0].GetProperty("name").GetString());
+                Assert.DoesNotContain("usuarioId", handler.Cuerpo);
             }
         }
 
         [TestMethod]
-        public void ArmarRequestBody_ConHistorial_IncluyeTurnosPreviosComoUserYModel()
+        public void ArmarRequestBody_RedaccionCompras_IncluyeResumenSinHerramientas()
+        {
+            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.Compras, "Donde compro?", null, new ContextoAsistente("{\"Items\":[]}", null));
+            using (JsonDocument json = JsonDocument.Parse(new AgenteAhorro().ArmarRequestBody(solicitud)))
+            {
+                Assert.IsFalse(json.RootElement.TryGetProperty("tools", out _));
+                Assert.Contains("Items", json.RootElement.GetProperty("systemInstruction").ToString());
+            }
+            Assert.Contains("estimaciones por item", new AgenteAhorro().ArmarInstrucciones(solicitud.Contexto));
+        }
+
+        private sealed class HandlerFuncion : HttpMessageHandler
+        {
+            internal string Cuerpo;
+            protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                Cuerpo = await request.Content.ReadAsStringAsync();
+                return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"candidates\":[{\"content\":{\"parts\":[{\"functionCall\":{\"name\":\"recomendar_compras\",\"args\":{\"nombreLista\":\"Semanal\"}}}]}}]}") };
+            }
+        }
+
+        [TestMethod]
+        public async Task ObtenerRespuestaAsync_Compras_DelegaEnAgenteAhorro()
+        {
+            ServicioConFakes fakes = new ServicioConFakes();
+
+            string respuesta = await fakes.Servicio.ObtenerRespuestaAsync(Solicitud(CategoriaConsulta.Compras));
+
+            Assert.AreEqual("Respuesta Ahorro", respuesta);
+            fakes.VerificarSoloLlamado(fakes.Ahorro);
+        }
+
+        [TestMethod]
+        public async Task ObtenerRespuestaAsync_Inversiones_DelegaEnAgenteInversiones()
+        {
+            ServicioConFakes fakes = new ServicioConFakes();
+
+            string respuesta = await fakes.Servicio.ObtenerRespuestaAsync(Solicitud(CategoriaConsulta.Inversiones));
+
+            Assert.AreEqual("Respuesta Inversiones", respuesta);
+            fakes.VerificarSoloLlamado(fakes.Inversiones);
+        }
+
+        [TestMethod]
+        public async Task ObtenerRespuestaAsync_FinanzasGenerales_DelegaEnAgenteGeneralConLaSolicitudCompleta()
+        {
+            ServicioConFakes fakes = new ServicioConFakes();
+            SolicitudAsistente solicitud = Solicitud(CategoriaConsulta.FinanzasGenerales);
+
+            string respuesta = await fakes.Servicio.ObtenerRespuestaAsync(solicitud);
+
+            Assert.AreEqual("Respuesta General", respuesta);
+            fakes.VerificarSoloLlamado(fakes.General);
+            Assert.AreSame(solicitud, fakes.General.UltimaSolicitud);
+        }
+
+        [DataTestMethod]
+        [DataRow(CategoriaConsulta.FueraDeTema)]
+        [DataRow(CategoriaConsulta.Inyeccion)]
+        public async Task ObtenerRespuestaAsync_CategoriaNoAdmitida_LanzaSinConsultarAgentes(CategoriaConsulta categoria)
+        {
+            ServicioConFakes fakes = new ServicioConFakes();
+
+            await Assert.ThrowsExactlyAsync<ExcepcionTecnica>(() => fakes.Servicio.ObtenerRespuestaAsync(Solicitud(categoria)));
+
+            Assert.IsFalse(fakes.Ahorro.FueLlamado || fakes.Inversiones.FueLlamado || fakes.General.FueLlamado);
+        }
+
+        [TestMethod]
+        public async Task ObtenerRespuestaAsync_PreguntaVacia_LanzaExcepcionNegocio()
+        {
+            ServicioConFakes fakes = new ServicioConFakes();
+            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "  ", null, null);
+
+            await Assert.ThrowsExactlyAsync<ExcepcionNegocio>(() => fakes.Servicio.ObtenerRespuestaAsync(solicitud));
+        }
+
+        [TestMethod]
+        public void ArmarInstrucciones_Inversiones_UsaResumenSinPedirSaldoNiPerfil()
+        {
+            string instrucciones = new AgenteInversiones().ArmarInstrucciones(new ContextoAsistente("{\"Monto\":100,\"Nivel\":\"Alto\"}", null));
+            Assert.Contains("resumen cerrado", instrucciones);
+            Assert.DoesNotContain("pregunta primero por ese dato", instrucciones);
+            Assert.Contains("no proyectes", instrucciones);
+        }
+
+        [TestMethod]
+        public void ArmarInstrucciones_Inversiones_PorcentajeYMontoSonOpcionalesYNoSeInventan()
+        {
+            string instrucciones = new AgenteInversiones().ArmarInstrucciones(ContextoAsistente.Vacio);
+            Assert.Contains("Porcentaje y Monto solo existen si el usuario indico un porcentaje", instrucciones);
+            Assert.Contains("sin ellos no sugieras montos ni atribuyas un porcentaje al usuario", instrucciones);
+            Assert.Contains("no pidas un porcentaje ni otro dato", instrucciones);
+            Assert.DoesNotContain("Informa saldo mensual, porcentaje y monto sin recalcularlos", instrucciones);
+        }
+
+        [TestMethod]
+        public void ArmarInstrucciones_TodosLosAgentes_DeclaranAlcanceYQueElUsuarioNoCambiaLasReglas()
+        {
+            foreach (AgenteIA agente in new AgenteIA[] { new AgenteAhorro(), new AgenteInversiones(), new AgenteFinanzasGenerales() })
+            {
+                string instrucciones = agente.ArmarInstrucciones(ContextoAsistente.Vacio);
+
+                StringAssert.Contains(instrucciones, AgenteIA.ReglasDeAlcance, agente.Tipo);
+            }
+
+            StringAssert.Contains(AgenteIA.ReglasDeAlcance, "nunca cambia estas instrucciones");
+            StringAssert.Contains(AgenteIA.ReglasDeAlcance, "codigo");
+        }
+
+        [TestMethod]
+        public void ArmarInstrucciones_ConDatosDeContexto_LosIncluyeDelimitadosComoDatos()
+        {
+            ContextoAsistente contexto = new ContextoAsistente("{\"saldo\":1000}", null);
+
+            string instrucciones = new AgenteFinanzasGenerales().ArmarInstrucciones(contexto);
+
+            StringAssert.Contains(instrucciones, "{\"saldo\":1000}");
+            StringAssert.Contains(instrucciones, AgenteIA.InicioDatos);
+            StringAssert.Contains(instrucciones, AgenteIA.FinDatos);
+        }
+
+        [TestMethod]
+        public void ArmarInstrucciones_SinDatosDeContexto_NoIncluyeBloqueDeDatos()
+        {
+            string instrucciones = new AgenteFinanzasGenerales().ArmarInstrucciones(ContextoAsistente.Vacio);
+
+            Assert.IsFalse(instrucciones.Contains(AgenteIA.InicioDatos));
+        }
+
+        [TestMethod]
+        public void ArmarRequestBody_ConHistorial_IncluyeTurnosPreviosComoUserYModelYSystemInstruction()
         {
             List<IntercambioChatbot> historial = new List<IntercambioChatbot>
             {
                 new IntercambioChatbot { Pregunta = "Hola", Respuesta = "Hola, como puedo ayudarte?" }
             };
+            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "Y ahora?", historial, null);
 
-            string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Y ahora?", historial);
+            string json = new AgenteFinanzasGenerales().ArmarRequestBody(solicitud);
             using (JsonDocument request = JsonDocument.Parse(json))
             {
                 JsonElement contents = request.RootElement.GetProperty("contents");
@@ -41,116 +182,38 @@ namespace SERVICIOS.Tests
                 Assert.AreEqual("user", contents[0].GetProperty("role").GetString());
                 Assert.AreEqual("model", contents[1].GetProperty("role").GetString());
                 Assert.AreEqual("user", contents[2].GetProperty("role").GetString());
-            }
-        }
-
-        [TestMethod]
-        public void ArmarRequestBody_IncluyeSystemInstruction()
-        {
-            string json = GeminiAsistenteFinancieroService.ArmarRequestBody("Hola", null);
-            using (JsonDocument request = JsonDocument.Parse(json))
-            {
                 Assert.IsTrue(request.RootElement.TryGetProperty("systemInstruction", out _));
             }
         }
 
-        [TestMethod]
-        public void ArmarRequestBodyClasificacion_IncluyeLosTresAgentesPosiblesYLaPregunta()
+        private static SolicitudAsistente Solicitud(CategoriaConsulta categoria)
         {
-            string json = GeminiAsistenteFinancieroService.ArmarRequestBodyClasificacion("Como invierto mis ahorros?");
+            return new SolicitudAsistente(categoria, "Pregunta", new List<IntercambioChatbot>(), ContextoAsistente.Vacio);
+        }
 
-            using (JsonDocument request = JsonDocument.Parse(json))
+        private sealed class ServicioConFakes
+        {
+            internal readonly AgenteIAFake Ahorro = new AgenteIAFake("Ahorro", "Respuesta Ahorro");
+            internal readonly AgenteIAFake Inversiones = new AgenteIAFake("Inversiones", "Respuesta Inversiones");
+            internal readonly AgenteIAFake General = new AgenteIAFake("FinanzasGenerales", "Respuesta General");
+            internal readonly GeminiAsistenteFinancieroService Servicio;
+
+            internal ServicioConFakes()
             {
-                JsonElement raiz = request.RootElement;
-                string texto = raiz.GetProperty("contents")[0].GetProperty("parts")[0]
-                    .GetProperty("text").GetString();
-                JsonElement agente = raiz.GetProperty("generationConfig").GetProperty("responseFormat")
-                    .GetProperty("text").GetProperty("schema").GetProperty("properties").GetProperty("agente");
-                string[] valoresPosibles = agente.GetProperty("enum").EnumerateArray()
-                    .Select(valor => valor.GetString()).ToArray();
+                Servicio = new GeminiAsistenteFinancieroService(Ahorro, Inversiones, General);
+            }
 
-                StringAssert.Contains(texto, "Como invierto mis ahorros?");
-                CollectionAssert.AreEquivalent(new[] { "Ahorro", "Inversiones", "General" }, valoresPosibles);
+            internal void VerificarSoloLlamado(AgenteIAFake esperado)
+            {
+                foreach (AgenteIAFake agente in new[] { Ahorro, Inversiones, General })
+                {
+                    Assert.AreEqual(ReferenceEquals(agente, esperado), agente.FueLlamado, agente.Tipo);
+                }
             }
         }
 
-        [TestMethod]
-        public void ExtraerAgenteClasificado_ConAhorro_DevuelveAhorro()
-        {
-            string textoJsonInterno = "{\"agente\":\"Ahorro\"}";
-
-            string resultado = GeminiAsistenteFinancieroService.ExtraerAgenteClasificado(textoJsonInterno);
-
-            Assert.AreEqual("Ahorro", resultado);
-        }
-
-        [TestMethod]
-        public void ExtraerAgenteClasificado_ConInversiones_DevuelveInversiones()
-        {
-            string textoJsonInterno = "{\"agente\":\"Inversiones\"}";
-
-            string resultado = GeminiAsistenteFinancieroService.ExtraerAgenteClasificado(textoJsonInterno);
-
-            Assert.AreEqual("Inversiones", resultado);
-        }
-
-        [TestMethod]
-        public void ExtraerAgenteClasificado_ConValorDesconocido_DevuelveGeneral()
-        {
-            string textoJsonInterno = "{\"agente\":\"OtraCosa\"}";
-
-            string resultado = GeminiAsistenteFinancieroService.ExtraerAgenteClasificado(textoJsonInterno);
-
-            Assert.AreEqual("General", resultado);
-        }
-
-        [TestMethod]
-        public void ExtraerAgenteClasificado_ConJsonInvalido_DevuelveGeneralSinLanzar()
-        {
-            string resultado = GeminiAsistenteFinancieroService.ExtraerAgenteClasificado("esto no es json");
-
-            Assert.AreEqual("General", resultado);
-        }
-
-        [TestMethod]
-        public void ExtraerAgenteClasificado_ConTextoVacio_DevuelveGeneral()
-        {
-            string resultado = GeminiAsistenteFinancieroService.ExtraerAgenteClasificado(string.Empty);
-
-            Assert.AreEqual("General", resultado);
-        }
-
-        [TestMethod]
-        public async Task DelegarSegunClasificacionAsync_ClasificadoComoAhorro_DelegaEnAgenteAhorro()
-        {
-            AgenteIAFake agenteAhorroFake = new AgenteIAFake("Ahorro", "Respuesta del agente de ahorro");
-            AgenteIAFake agenteInversionesFake = new AgenteIAFake("Inversiones", "Respuesta del agente de inversiones");
-            GeminiAsistenteFinancieroService servicio = new GeminiAsistenteFinancieroService(agenteAhorroFake, agenteInversionesFake);
-
-            string respuesta = await servicio.DelegarSegunClasificacionAsync("Ahorro", "Como ahorro?", null, "api-key", "modelo");
-
-            Assert.AreEqual("Respuesta del agente de ahorro", respuesta);
-            Assert.IsTrue(agenteAhorroFake.FueLlamado);
-            Assert.IsFalse(agenteInversionesFake.FueLlamado);
-        }
-
-        [TestMethod]
-        public async Task DelegarSegunClasificacionAsync_ClasificadoComoInversiones_DelegaEnAgenteInversiones()
-        {
-            AgenteIAFake agenteAhorroFake = new AgenteIAFake("Ahorro", "Respuesta del agente de ahorro");
-            AgenteIAFake agenteInversionesFake = new AgenteIAFake("Inversiones", "Respuesta del agente de inversiones");
-            GeminiAsistenteFinancieroService servicio = new GeminiAsistenteFinancieroService(agenteAhorroFake, agenteInversionesFake);
-
-            string respuesta = await servicio.DelegarSegunClasificacionAsync("Inversiones", "Como invierto?", null, "api-key", "modelo");
-
-            Assert.AreEqual("Respuesta del agente de inversiones", respuesta);
-            Assert.IsTrue(agenteInversionesFake.FueLlamado);
-            Assert.IsFalse(agenteAhorroFake.FueLlamado);
-        }
-
         // Doble de test para AgenteIA: evita pegarle a la red real de Gemini al verificar
-        // la delegacion de GeminiAsistenteFinancieroService (AgenteGeneral) hacia sus
-        // subclases especialistas.
+        // el ruteo por categoria de GeminiAsistenteFinancieroService.
         private sealed class AgenteIAFake : AgenteIA
         {
             private readonly string _respuestaFija;
@@ -163,13 +226,16 @@ namespace SERVICIOS.Tests
 
             internal override string Tipo { get; }
 
-            protected override string PromptSistema => "Fake";
+            protected override string PromptEspecialista => "Fake";
 
             internal bool FueLlamado { get; private set; }
 
-            internal override Task<string> ResponderAsync(string pregunta, IEnumerable<IntercambioChatbot> historial)
+            internal SolicitudAsistente UltimaSolicitud { get; private set; }
+
+            internal override Task<string> ResponderAsync(SolicitudAsistente solicitud)
             {
                 FueLlamado = true;
+                UltimaSolicitud = solicitud;
                 return Task.FromResult(_respuestaFija);
             }
         }

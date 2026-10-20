@@ -31,6 +31,7 @@ namespace TpIDS
         private const string PermisoGestionProductos = "gestionproductos";
         private const string PermisoGestionPromociones = "gestionpromociones";
         private const string PermisoGestionActualizacionTasas = "gestionactualizaciontasas";
+        private const string PermisoGestionZonasUsuario = "gestionzonasusuario";
 
         private readonly IAutorizacion autorizacion = CompositionRoot.Autorizacion;
         private readonly UsuarioBLL usuarioBLL = CompositionRoot.Usuario;
@@ -121,8 +122,10 @@ namespace TpIDS
             bool puedeProductos = autorizacion.TienePermiso(PermisoGestionProductos);
             bool puedePromociones = autorizacion.TienePermiso(PermisoGestionPromociones);
             bool puedeActualizacionTasas = autorizacion.TienePermiso(PermisoGestionActualizacionTasas);
+            bool puedeZonasUsuario = autorizacion.TienePermiso(PermisoGestionZonasUsuario);
 
             mnuMiConfiguracion.Enabled = puedeConfigurar;
+            mnuMisZonas.Enabled = puedeZonasUsuario;
             mnuMisNotificaciones.Enabled = sesion.HaySesionActiva();
 
             mnuMovimientos.Enabled = puedeMovimientos;
@@ -170,6 +173,11 @@ namespace TpIDS
         private void mnuMiConfiguracion_Click(object sender, EventArgs e)
         {
             new FormConfiguracionUsuario().ShowDialog(this);
+        }
+
+        private void mnuMisZonas_Click(object sender, EventArgs e)
+        {
+            AbrirHijoMdiUnico<FormMisZonas>();
         }
 
         private void mnuCerrarSesion_Click(object sender, EventArgs e)

@@ -5,22 +5,41 @@ using BLL;
 
 namespace TpIDS
 {
-    // Chat libre con el asistente financiero (Gemini): por ahora sin recomendaciones
-    // financieras ni inyeccion de datos del sistema (Movimientos, Categorias, etc.),
-    // eso queda para una iteracion futura. Solo pregunta/respuesta con historial.
+    // Chat con el asistente financiero (Gemini), limitado a temas financieros: el BLL
+    // aplica los guardrails y devuelve la respuesta o un rechazo con texto fijo traducible.
+    // Los rechazos se ven solo en la sesion abierta del chat; no quedan en el historial.
     public partial class FormAsistentePersonal : FormTraducibleBase
     {
         private readonly AsistenteFinancieroBLL asistenteBLL = CompositionRoot.AsistenteFinanciero;
+
+        // Un solo envio activo por formulario: se controla con este indicador ademas del
+        // estado de los controles, porque Enter y el boton pueden dispararse en el mismo
+        // ciclo de mensajes antes de que se deshabiliten.
+        private bool envioEnCurso;
+        private bool formularioCerrado;
 
         public FormAsistentePersonal()
         {
             InitializeComponent();
             Load += FormAsistentePersonal_Load;
+            FormClosed += FormAsistentePersonal_FormClosed;
         }
 
         private void FormAsistentePersonal_Load(object sender, EventArgs e)
         {
             CargarHistorial();
+        }
+
+        private void FormAsistentePersonal_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            formularioCerrado = true;
+        }
+
+        // El envio no se cancela al cerrar: la respuesta puede llegar despues y ya no hay
+        // controles que actualizar ni formulario al cual asociar un dialogo.
+        private bool FormularioDisponible
+        {
+            get { return !formularioCerrado && !IsDisposed && !Disposing; }
         }
 
         private void CargarHistorial()
@@ -41,6 +60,11 @@ namespace TpIDS
 
         private async void btnEnviarMensajeAsistente_Click(object sender, EventArgs e)
         {
+            if (envioEnCurso)
+            {
+                return;
+            }
+
             string pregunta = txtbMensajeAsistente.Text?.Trim();
             if (string.IsNullOrWhiteSpace(pregunta))
             {
@@ -48,22 +72,41 @@ namespace TpIDS
                 return;
             }
 
+            envioEnCurso = true;
             CambiarEstadoEnvio(true);
             try
             {
                 DateTime fecha = DateTime.Now;
-                string respuesta = await asistenteBLL.EnviarMensajeAsync(pregunta);
-                AgregarIntercambioAlHistorial(pregunta, respuesta, fecha);
+                // Sin ConfigureAwait(false): la continuacion debe volver al hilo de UI.
+                RespuestaAsistente respuesta = await asistenteBLL.EnviarMensajeAsync(pregunta);
+                if (!FormularioDisponible)
+                {
+                    return;
+                }
+
+                // Un rechazo no es un error: se muestra como mensaje del asistente, con el
+                // texto fijo del catalogo en el idioma activo, sin dialogo.
+                string textoRespuesta = respuesta.EsRechazo
+                    ? UiDialogHelper.Traducir(respuesta.ClaveRechazo)
+                    : respuesta.Texto;
+                AgregarIntercambioAlHistorial(pregunta, textoRespuesta, fecha);
                 txtbMensajeAsistente.Clear();
             }
             catch (Exception ex)
             {
-                UiExceptionHandler.Mostrar(ex, "Envio de mensaje al asistente financiero");
+                if (FormularioDisponible)
+                {
+                    UiExceptionHandler.Mostrar(ex, "Envio de mensaje al asistente financiero");
+                }
             }
             finally
             {
-                CambiarEstadoEnvio(false);
-                txtbMensajeAsistente.Focus();
+                envioEnCurso = false;
+                if (FormularioDisponible)
+                {
+                    CambiarEstadoEnvio(false);
+                    txtbMensajeAsistente.Focus();
+                }
             }
         }
 
@@ -75,7 +118,7 @@ namespace TpIDS
             }
 
             e.SuppressKeyPress = true;
-            if (btnEnviarMensajeAsistente.Enabled)
+            if (!envioEnCurso && btnEnviarMensajeAsistente.Enabled)
             {
                 btnEnviarMensajeAsistente_Click(sender, EventArgs.Empty);
             }

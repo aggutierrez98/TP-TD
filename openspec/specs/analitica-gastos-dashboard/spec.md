@@ -1,7 +1,7 @@
 # analitica-gastos-dashboard Specification
 
 ## Purpose
-TBD - created by archiving change tarjetas-gasto-comercio-y-ritmo. Update Purpose after archive.
+Definir las tarjetas "Gastos por comercio" y "Gasto acumulado del mes" del dashboard: que el usuario vea en qué comercios gasta más y si su ritmo de gasto del mes en curso supera o no al del mes anterior.
 
 ## Requirements
 

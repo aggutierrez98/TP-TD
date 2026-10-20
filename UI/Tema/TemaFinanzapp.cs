@@ -50,6 +50,23 @@ namespace TpIDS
             }
         }
 
+        /// <summary>
+        /// Estilo comun de las barras de progreso: pista verde clara, relleno verde, bordes redondeados y sin
+        /// texto. En Krypton StateCommon.Back define el relleno y StateNormal.Back la pista completa.
+        /// </summary>
+        public static void TematizarBarraProgreso(KryptonProgressBar barra)
+        {
+            barra.UseValueAsText = false;
+            barra.Text = string.Empty;
+            barra.StateCommon.Back.Color1 = FinanzappPaleta.Verde;
+            barra.StateCommon.Back.Color2 = FinanzappPaleta.Verde;
+            barra.StateNormal.Back.Color1 = FinanzappPaleta.VerdeSuave;
+            barra.StateNormal.Back.Color2 = FinanzappPaleta.VerdeSuave;
+            barra.ValueBackColorStyle = PaletteColorStyle.Solid;
+            barra.StateCommon.Border.Color1 = FinanzappPaleta.VerdeSuave;
+            barra.StateCommon.Border.Rounding = 3;
+        }
+
         /// <summary>Colores de la paleta para un DataGridView nativo (los tests UI lo necesitan nativo).</summary>
         public static void TematizarGrilla(DataGridView grilla)
         {

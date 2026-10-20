@@ -23,5 +23,8 @@ namespace REPOSITORIO
         bool EliminarFisicamente(int id);
 
         List<Usuario> ObtenerTodos();
+
+        // Pagina de Ids de cuentas activas con Id mayor a ultimoId, en orden ascendente (paginacion por clave).
+        List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad);
     }
 }

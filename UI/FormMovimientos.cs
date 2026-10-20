@@ -38,6 +38,7 @@ namespace TpIDS
         public FormMovimientos()
         {
             InitializeComponent();
+            TemaFinanzapp.TematizarBarraProgreso(prgbEscaneoTicket);
             Load += FormMovimientos_Load;
             FormClosing += FormMovimientos_FormClosing;
         }

@@ -132,6 +132,55 @@ namespace TpIDS.UiTests.Infrastructure
             return resultado.Result.IsEnabled;
         }
 
+        /// <summary>
+        /// Lee el estado Enabled de un item dentro del dropdown de un menu de primer nivel:
+        /// expande el menu, lee el item y lo cierra con Escape sin clickearlo.
+        /// </summary>
+        public static bool MenuItemHabilitado(Window ventana, string textoMenuTop, string textoItem)
+        {
+            try
+            {
+                ventana.SetForeground();
+            }
+            catch
+            {
+                // Si no se puede traer al frente se intenta igual.
+            }
+
+            Menu menuStrip = Elemento(ventana, "menuStripPrincipal").AsMenu();
+            RetryResult<MenuItem> menuTopResultado = Retry.WhileNull(
+                () => menuStrip.Items.FirstOrDefault(item => CoincideNombre(item, textoMenuTop)),
+                TimeSpan.FromSeconds(5),
+                TimeSpan.FromMilliseconds(200));
+            if (!menuTopResultado.Success || menuTopResultado.Result == null)
+            {
+                throw new InvalidOperationException(
+                    "No se encontro el menu de primer nivel '" + textoMenuTop + "'.");
+            }
+
+            MenuItem menuTop = menuTopResultado.Result;
+            menuTop.Expand();
+            try
+            {
+                RetryResult<MenuItem> resultado = Retry.WhileNull(
+                    () => menuTop.Items.FirstOrDefault(item => CoincideNombre(item, textoItem)),
+                    TimeSpan.FromSeconds(5),
+                    TimeSpan.FromMilliseconds(200));
+                if (!resultado.Success || resultado.Result == null)
+                {
+                    throw new InvalidOperationException(
+                        "No se encontro el item de menu '" + textoItem + "' dentro de '" + textoMenuTop + "'.");
+                }
+
+                return resultado.Result.IsEnabled;
+            }
+            finally
+            {
+                FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
+                FlaUI.Core.Input.Keyboard.Type(FlaUI.Core.WindowsAPI.VirtualKeyShort.ESCAPE);
+            }
+        }
+
         // Los separadores de un dropdown se enumeran como MenuItem igual que los items
         // reales: se descartan en vez de cortar el escaneo de Items si alguna propiedad
         // no esta soportada para ese elemento puntual.

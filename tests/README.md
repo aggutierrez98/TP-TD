@@ -13,16 +13,13 @@
 
 ### Dependencias productivas declaradas
 
-| Proyecto | Paquete NuGet directo | Version |
-| --- | --- | --- |
-| `UI` | GMap.NET.Core | 2.1.7 |
-| `UI` | GMap.NET.WinForms | 2.1.7 |
-| `UI` | Krypton.Toolkit | 105.26.7.201 |
-| `UI` | LiveChartsCore.SkiaSharpView.WinForms | 2.0.5 |
-
-Ademas, `UI/UI.csproj` copia `libSkiaSharp.dll` desde el cache NuGet de
-`SkiaSharp.NativeAssets.Win32` 3.119.0. La tabla enumera referencias directas;
-no es un inventario completo de dependencias transitivas.
+Los proyectos productivos no usan NuGet: las bibliotecas externas estan incluidas
+como DLL en `lib/<paquete>/<version>/` y se referencian con `Reference`/`HintPath`
+desde los `.props` de cada proyecto (`UI/Ui.references.props`,
+`SERVICIOS/PdfSharp.references.props`, `SERVICIOS/SystemTextJson.references.props`).
+`lib/README.md` enumera cada DLL con su paquete, version, origen y licencia, incluidas
+las nativas de SkiaSharp y HarfBuzz que `UI/UI.csproj` copia al output desde `lib/`.
+La solucion productiva compila sin restore ni cache NuGet.
 
 Los tests tienen permitido usar MSTest, Microsoft.NET.Test.Sdk y FlaUI mediante
 NuGet. La serializacion JSON de servicios y tests usa `System.Text.Json` mediante

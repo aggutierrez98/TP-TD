@@ -62,6 +62,34 @@ namespace BLL.Tests
         }
 
         [TestMethod]
+        public void CrearManual_ExactamenteElLimiteDeAltaManual_Acepta()
+        {
+            NotificacionFixture fixture = new NotificacionFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios.Add(5, new Usuario { Id = 5, Username = "destino" });
+            NotificacionBLL sut = fixture.CreateSut();
+            string mensaje = new string('a', NotificacionBLL.MaximoMensajeManual);
+
+            Notificacion resultado = sut.CrearManual(5, mensaje);
+
+            Assert.AreEqual(300, NotificacionBLL.MaximoMensajeManual);
+            Assert.AreEqual(mensaje, fixture.NotificacionRepo.Notificaciones[resultado.Id].Mensaje);
+        }
+
+        [TestMethod]
+        public void CrearManual_MensajeSuperaElLimiteDeAltaManual_RechazaSinTruncarNiGuardar()
+        {
+            NotificacionFixture fixture = new NotificacionFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios.Add(5, new Usuario { Id = 5, Username = "destino" });
+            NotificacionBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(5, new string('a', NotificacionBLL.MaximoMensajeManual + 1)));
+
+            Assert.AreEqual("Error.Notification.MessageTooLong", ex.Message);
+            Assert.IsEmpty(fixture.NotificacionRepo.Notificaciones);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
         public void MarcarLeida_Notificacion_ActualizaAuditaYGuarda()
         {
             NotificacionFixture fixture = new NotificacionFixture();

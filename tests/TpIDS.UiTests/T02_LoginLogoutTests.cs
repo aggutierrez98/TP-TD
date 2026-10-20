@@ -152,6 +152,9 @@ namespace TpIDS.UiTests
                 "Deberia informarse el registro exitoso.");
             confirmacion.CerrarConOk();
 
+            Window cuestionario = App.EsperarVentana("FormPerfilInversor");
+            UiFind.Click(cuestionario, "btnCancelar");
+
             Assert.IsTrue(
                 App.VentanaCerrada("FormRegistro", TimeSpan.FromSeconds(10)),
                 "El formulario de registro deberia cerrarse tras el alta exitosa.");

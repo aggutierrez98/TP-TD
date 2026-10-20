@@ -120,6 +120,35 @@ namespace DAL
             return InsertarYObtenerId(usuario, accesoDatos) > 0;
         }
 
+        // Pagina por clave (Id ascendente) de cuentas activas: no filtra por rol ni por bloqueo temporal.
+        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT TOP (@Cantidad) Id
+                FROM Usuarios
+                WHERE Activo = 1 AND Id > @UltimoId
+                ORDER BY Id";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+            try
+            {
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@Cantidad", SqlDbType.Int, cantidad),
+                    accesoDatos.CreateParameter("@UltimoId", SqlDbType.Int, ultimoId)
+                });
+                List<int> ids = new List<int>();
+                foreach (DataRow row in tabla.Rows)
+                {
+                    ids.Add((int)row["Id"]);
+                }
+
+                return ids;
+            }
+            finally { if (dispose) accesoDatos.Dispose(); }
+        }
+
         public List<Usuario> ObtenerTodos()
         {
             const string query = @"

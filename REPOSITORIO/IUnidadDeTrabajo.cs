@@ -40,6 +40,8 @@ namespace REPOSITORIO
 
         IProductoRepositorio Productos { get; }
 
+        IProductoEmbeddingRepositorio ProductoEmbeddings { get; }
+
         IComercioProductoRepositorio ComercioProductos { get; }
 
         IPromocionRepositorio Promociones { get; }
@@ -85,6 +87,12 @@ namespace REPOSITORIO
         IUsuarioPreferenciaRepositorio UsuarioPreferencias { get; }
 
         IUsuarioRepositorio Usuarios { get; }
+
+        IZonaUsuarioRepositorio ZonasUsuario { get; }
+
+        IPerfilInversorRepositorio PerfilesInversor { get; }
+
+        IGeneracionNotificacionesRepositorio GeneracionNotificaciones { get; }
 
         void Save();
     }

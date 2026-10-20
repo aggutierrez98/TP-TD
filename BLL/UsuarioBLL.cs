@@ -234,6 +234,18 @@ namespace BLL
 
         public bool Registrar(Usuario usuario, string passwordRaw)
         {
+            RegistrarInterno(usuario, passwordRaw);
+            return true;
+        }
+
+        public ContinuacionPerfilInversor RegistrarParaOnboarding(Usuario usuario, string passwordRaw)
+        {
+            int propietario = RegistrarInterno(usuario, passwordRaw);
+            return new ContinuacionPerfilInversor(propietario, DateTime.UtcNow);
+        }
+
+        private int RegistrarInterno(Usuario usuario, string passwordRaw)
+        {
             string usernameNormalizado = (usuario.Username ?? string.Empty).Trim();
             string passwordNormalizada = (passwordRaw ?? string.Empty).Trim();
 
@@ -278,7 +290,7 @@ namespace BLL
                     // nuevo al DVV persistido sin escanear Usuarios.
                     _integridadBLL.ActualizarDVVInterno(TablaUsuarios, null, nuevoUsuario.DVH, unidad);
                     unidad.Save();
-                    return true;
+                    return nuevoUsuario.Id;
                 }
                 catch (ExcepcionNegocio)
                 {

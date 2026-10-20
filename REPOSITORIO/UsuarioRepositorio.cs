@@ -65,5 +65,10 @@ namespace REPOSITORIO
         {
             return _usuarioDAL.ObtenerTodos(_accesoDatos);
         }
+
+        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad)
+        {
+            return _usuarioDAL.ObtenerIdsActivosDespuesDe(ultimoId, cantidad, _accesoDatos);
+        }
     }
 }

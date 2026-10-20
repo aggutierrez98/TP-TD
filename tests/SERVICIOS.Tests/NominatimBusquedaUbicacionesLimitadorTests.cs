@@ -73,15 +73,22 @@ namespace SERVICIOS.Tests
             RelojFalso reloj = new RelojFalso();
             int enVuelo = 0;
             int maximoEnVuelo = 0;
+            int siguientePeticion = -1;
+            var iniciadas = Enumerable.Range(0, 3).Select(_ =>
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
+            var liberar = Enumerable.Range(0, 3).Select(_ =>
+                new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
             ManejadorHttpFalso manejador = new ManejadorHttpFalso(async (p, ct) =>
             {
+                int indice = Interlocked.Increment(ref siguientePeticion);
                 int actual = Interlocked.Increment(ref enVuelo);
                 int visto;
                 while ((visto = Volatile.Read(ref maximoEnVuelo)) < actual && Interlocked.CompareExchange(ref maximoEnVuelo, actual, visto) != visto)
                 {
                 }
 
-                await Task.Yield();
+                iniciadas[indice].SetResult(true);
+                await liberar[indice].Task;
                 Interlocked.Decrement(ref enVuelo);
                 return RespuestaVacia();
             }, reloj);
@@ -91,10 +98,21 @@ namespace SERVICIOS.Tests
                 servicio.BuscarAsync(Consulta("a"), CancellationToken.None),
                 servicio.BuscarAsync(Consulta("b"), CancellationToken.None),
                 servicio.BuscarAsync(Consulta("c"), CancellationToken.None));
-            while (!todas.IsCompleted)
+            // Avanzar solo cuando el servicio esta esperando la separacion minima.
+            // El bucle anterior adelantaba el reloj tambien entre registrar el inicio
+            // en el servicio y capturarlo en el handler, alterando la medicion.
+            for (int i = 0; i < 3; i++)
             {
-                reloj.Avanzar(UnSegundo);
-                await Task.Yield();
+                await iniciadas[i].Task;
+                Assert.AreEqual(i + 1, manejador.CantidadPeticiones);
+                Assert.AreEqual(1, Volatile.Read(ref enVuelo));
+                liberar[i].SetResult(true);
+                if (i < 2)
+                {
+                    await reloj.EsperaPendienteAsync(UnSegundo);
+                    Assert.AreEqual(i + 1, manejador.CantidadPeticiones);
+                    reloj.Avanzar(UnSegundo);
+                }
             }
 
             await todas;

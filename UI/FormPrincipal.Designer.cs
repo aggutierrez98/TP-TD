@@ -18,10 +18,11 @@ namespace TpIDS
         {
             this.components = new System.ComponentModel.Container();
             this.menuStripPrincipal = new System.Windows.Forms.MenuStrip();
-            this.mnuSesion = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuMiUsuario = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuMisNotificaciones = new MenuNotificacionesItem();
             this.mnuMiConfiguracion = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparatorSesion = new System.Windows.Forms.ToolStripSeparator();
+            this.mnuMisZonas = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparatorMiUsuario = new System.Windows.Forms.ToolStripSeparator();
             this.mnuCerrarSesion = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFinanzas = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuMovimientos = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,7 +57,7 @@ namespace TpIDS
             // menuStripPrincipal
             //
             this.menuStripPrincipal.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mnuSesion,
+            this.mnuMiUsuario,
             this.mnuMisNotificaciones,
             this.mnuFinanzas,
             this.mnuAdministracion,
@@ -68,16 +69,17 @@ namespace TpIDS
             this.menuStripPrincipal.Size = new System.Drawing.Size(1000, 24);
             this.menuStripPrincipal.TabIndex = 0;
             //
-            // mnuSesion
+            // mnuMiUsuario
             //
-            this.mnuSesion.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuMiUsuario.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuMiConfiguracion,
-            this.toolStripSeparatorSesion,
+            this.mnuMisZonas,
+            this.toolStripSeparatorMiUsuario,
             this.mnuCerrarSesion});
-            this.mnuSesion.Name = "mnuSesion";
-            this.mnuSesion.Size = new System.Drawing.Size(58, 20);
-            this.mnuSesion.Tag = "FormMainShell.Menu.Session";
-            this.mnuSesion.Text = "Sesion";
+            this.mnuMiUsuario.Name = "mnuMiUsuario";
+            this.mnuMiUsuario.Size = new System.Drawing.Size(76, 20);
+            this.mnuMiUsuario.Tag = "FormMainShell.Menu.MyUser";
+            this.mnuMiUsuario.Text = "Mi usuario";
             this.mnuMisNotificaciones.Name = "mnuMisNotificaciones";
             this.mnuMisNotificaciones.Tag = "FormMainShell.Menu.MyNotifications";
             this.mnuMisNotificaciones.Text = "Mis notificaciones";
@@ -91,10 +93,18 @@ namespace TpIDS
             this.mnuMiConfiguracion.Text = "Mi configuracion";
             this.mnuMiConfiguracion.Click += new System.EventHandler(this.mnuMiConfiguracion_Click);
             //
-            // toolStripSeparatorSesion
+            // mnuMisZonas
             //
-            this.toolStripSeparatorSesion.Name = "toolStripSeparatorSesion";
-            this.toolStripSeparatorSesion.Size = new System.Drawing.Size(177, 6);
+            this.mnuMisZonas.Name = "mnuMisZonas";
+            this.mnuMisZonas.Size = new System.Drawing.Size(180, 22);
+            this.mnuMisZonas.Tag = "FormMainShell.Menu.MyZones";
+            this.mnuMisZonas.Text = "Mis zonas";
+            this.mnuMisZonas.Click += new System.EventHandler(this.mnuMisZonas_Click);
+            //
+            // toolStripSeparatorMiUsuario
+            //
+            this.toolStripSeparatorMiUsuario.Name = "toolStripSeparatorMiUsuario";
+            this.toolStripSeparatorMiUsuario.Size = new System.Drawing.Size(177, 6);
             //
             // mnuCerrarSesion
             //
@@ -363,9 +373,10 @@ namespace TpIDS
         }
 
         private System.Windows.Forms.MenuStrip menuStripPrincipal;
-        private System.Windows.Forms.ToolStripMenuItem mnuSesion;
+        private System.Windows.Forms.ToolStripMenuItem mnuMiUsuario;
         private System.Windows.Forms.ToolStripMenuItem mnuMiConfiguracion;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparatorSesion;
+        private System.Windows.Forms.ToolStripMenuItem mnuMisZonas;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparatorMiUsuario;
         private System.Windows.Forms.ToolStripMenuItem mnuCerrarSesion;
         private System.Windows.Forms.ToolStripMenuItem mnuFinanzas;
         private System.Windows.Forms.ToolStripMenuItem mnuMovimientos;

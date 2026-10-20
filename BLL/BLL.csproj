@@ -32,6 +32,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -42,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompositionRoot.cs" />
+    <Compile Include="CalculadorPerfilInversor.cs" />
+    <Compile Include="PerfilInversorBLL.cs" />
+    <Compile Include="ContinuacionPerfilInversor.cs" />
     <Compile Include="BackupBLL.cs" />
     <Compile Include="BitacoraBLL.cs" />
     <Compile Include="CategoriaBLL.cs" />
@@ -60,9 +64,15 @@
     <Compile Include="TasaConversionBLL.cs" />
     <Compile Include="ContratosInternosBLL.cs" />
     <Compile Include="DashboardBLL.cs" />
+    <Compile Include="DistanciaGeografica.cs" />
+    <Compile Include="DistanciaZonaUsuario.cs" />
     <Compile Include="MovimientoBLL.cs" />
     <Compile Include="ReglaCategorizacionBLL.cs" />
     <Compile Include="AsistenteFinancieroBLL.cs" />
+    <Compile Include="PrefiltroConsultasAsistente.cs" />
+    <Compile Include="RespuestaAsistente.cs" />
+    <Compile Include="LimiteUsoAsistente.cs" />
+    <Compile Include="ValidadorRespuestaAsistente.cs" />
     <Compile Include="ListaDeComprasBLL.cs" />
     <Compile Include="NotificacionBLL.cs" />
     <Compile Include="IdiomaBLL.cs" />
@@ -74,6 +84,17 @@
     <Compile Include="PermisoBLL.cs" />
     <Compile Include="UsuarioEstadoBLL.cs" />
     <Compile Include="UsuarioBLL.cs" />
+    <Compile Include="ZonaUsuarioBLL.cs" />
+    <Compile Include="CoincidenciaLocalProductos.cs" />
+    <Compile Include="CoincidenciaProducto.cs" />
+    <Compile Include="CoincidenciaSemanticaProductos.cs" />
+    <Compile Include="ResumenCompras.cs" />
+    <Compile Include="ExtractorPorcentajeInversion.cs" />
+    <Compile Include="GeneracionNotificacionesBLL.cs" />
+    <Compile Include="GeneradorRecomendaciones.cs" />
+    <Compile Include="ResumenInversiones.cs" />
+    <Compile Include="RecomendacionInversionesBLL.cs" />
+    <Compile Include="RecomendacionComprasBLL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -94,5 +115,6 @@
       <Name>SERVICIOS</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="..\SERVICIOS\SystemTextJson.references.props" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

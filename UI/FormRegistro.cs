@@ -34,13 +34,14 @@ namespace TpIDS
                     Username = txtbNickname.Text
                 };
 
-                bool success = gestorJugador.Registrar(usuario, txtbPassword.Text);
+                ContinuacionPerfilInversor continuacion = gestorJugador.RegistrarParaOnboarding(usuario, txtbPassword.Text);
 
-                if (success)
+                if (continuacion != null)
                 {
                     UiDialogHelper.MostrarInfoConTitulo(
                         "FormRegistration.Success.UserRegisteredMessage",
                         "FormRegistration.Success.UserRegisteredTitle");
+                    using (var perfil = new FormPerfilInversor(continuacion)) perfil.ShowDialog(this);
                     Close();
                 }
             }

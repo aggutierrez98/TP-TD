@@ -41,6 +41,11 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeUnidadDeTrabajo : IUnidadDeTrabajo
     {
+        public IPerfilInversorRepositorio PerfilesInversor { get; set; }
+
+        public FakeGeneracionNotificacionesRepositorio GeneracionNotificacionesRepo { get; set; } = new FakeGeneracionNotificacionesRepositorio();
+
+        public IGeneracionNotificacionesRepositorio GeneracionNotificaciones { get { return GeneracionNotificacionesRepo; } }
         public FakeUnidadDeTrabajo()
         {
             BitacoraRepo = new FakeBitacoraRepositorio();
@@ -83,6 +88,11 @@ namespace BLL.Tests.TestDoubles
             UsuarioPermisoRepo = new FakeUsuarioPermisoRepositorio();
             UsuarioPreferenciaRepo = new FakeUsuarioPreferenciaRepositorio();
             UsuarioRepo = new FakeUsuarioRepositorio();
+            ZonaUsuarioRepo = new FakeZonaUsuarioRepositorio();
+            ProductoEmbeddingRepo = new FakeProductoEmbeddingRepositorio();
+            NotificacionRepo.Fuentes = () => NotificacionRepo.Notificaciones.Values
+                .Concat(RecordatorioCompraRepo.Recordatorios.Values)
+                .Concat(RecordatorioInversionRepo.Recordatorios.Values.Cast<Notificacion>());
         }
 
         public FakeBitacoraRepositorio BitacoraRepo { get; set; }
@@ -166,6 +176,10 @@ namespace BLL.Tests.TestDoubles
         public FakeUsuarioPreferenciaRepositorio UsuarioPreferenciaRepo { get; set; }
 
         public FakeUsuarioRepositorio UsuarioRepo { get; set; }
+
+        public FakeZonaUsuarioRepositorio ZonaUsuarioRepo { get; set; }
+
+        public FakeProductoEmbeddingRepositorio ProductoEmbeddingRepo { get; set; }
 
         public bool SaveCalled { get; private set; }
 
@@ -257,9 +271,19 @@ namespace BLL.Tests.TestDoubles
 
         public IUsuarioRepositorio Usuarios { get { return UsuarioRepo; } }
 
+        public IZonaUsuarioRepositorio ZonasUsuario { get { return ZonaUsuarioRepo; } }
+
+        public IProductoEmbeddingRepositorio ProductoEmbeddings { get { return ProductoEmbeddingRepo; } }
+
+        // Numeros de intento de Save (desde 1) que fallan; permite fallas transitorias o sostenidas.
+        public HashSet<int> FailSaveCalls { get; } = new HashSet<int>();
+
+        private int _saveAttempts;
+
         public void Save()
         {
-            if (ThrowOnSave)
+            _saveAttempts++;
+            if (ThrowOnSave || FailSaveCalls.Contains(_saveAttempts))
             {
                 throw new InvalidOperationException("Save failed.");
             }
@@ -1492,6 +1516,34 @@ namespace BLL.Tests.TestDoubles
             return NotificacionesPorPromocion.TryGetValue(promocionId, out cantidad) ? cantidad : 0;
         }
 
+        public DateTime? UltimaAutomaticaInversionUtc { get; set; }
+
+        public List<string> Llamadas { get; } = new List<string>();
+
+        public bool UsuarioExiste { get; set; } = true;
+
+        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId)
+        {
+            if (UltimaAutomaticaInversionUtc.HasValue) return UltimaAutomaticaInversionUtc;
+            DateTime? ultima = Fuentes().Where(n => n.Usuario != null && n.Usuario.Id == usuarioId && n.TipoAutomatico == TipoNotificacionAutomatica.Inversiones)
+                .Select(n => (DateTime?)n.Fecha).Max();
+            return ultima.HasValue ? DateTime.SpecifyKind(ultima.Value, DateTimeKind.Local).ToUniversalTime() : (DateTime?)null;
+        }
+
+        // Todas las notificaciones del fake (base y subtipos); la asigna FakeUnidadDeTrabajo.
+        public Func<IEnumerable<Notificacion>> Fuentes { get; set; } = () => new Notificacion[0];
+
+        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, DateTime jornada)
+        {
+            return Fuentes().Any(n => n.Usuario != null && n.Usuario.Id == usuarioId && n.TipoAutomatico == tipo && n.FechaJornada.HasValue && n.FechaJornada.Value.Date == jornada.Date);
+        }
+
+        public bool BloquearUsuarioParaEntrega(int usuarioId)
+        {
+            Llamadas.Add("bloquear:" + usuarioId);
+            return UsuarioExiste;
+        }
+
         public Notificacion ObtenerPorId(int id)
         {
             Notificacion notificacion;
@@ -1951,6 +2003,11 @@ namespace BLL.Tests.TestDoubles
         {
             LastDeletedId = id;
             return EliminarResult && Usuarios.Remove(id);
+        }
+
+        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad)
+        {
+            return Usuarios.Values.Where(u => u.Activo && u.Id > ultimoId).Select(u => u.Id).OrderBy(id => id).Take(cantidad).ToList();
         }
 
         public List<Usuario> ObtenerTodos()
@@ -2457,6 +2514,16 @@ namespace BLL.Tests.TestDoubles
     {
         public int? AplicarIdiomaSesionUsuarioId { get; private set; }
 
+        public Idioma IdiomaDelUsuario { get; set; }
+
+        public Action<int> AlObtenerIdioma { get; set; }
+
+        public Idioma ObtenerIdiomaParaUsuario(int usuarioId)
+        {
+            AlObtenerIdioma?.Invoke(usuarioId);
+            return IdiomaDelUsuario;
+        }
+
         public void AplicarIdiomaSesionUsuario(int usuarioId)
         {
             AplicarIdiomaSesionUsuarioId = usuarioId;
@@ -2935,6 +3002,19 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeAsistenteFinancieroService : IAsistenteFinancieroService
     {
+        public LlamadaHerramientaAsistente LlamadaHerramienta { get; set; }
+        public HerramientaAsistente UltimaHerramienta { get; private set; }
+        public List<string> OrdenLlamadas { get; } = new List<string>();
+        public Action AlExtraerHerramienta { get; set; }
+        public Exception ThrowOnHerramienta { get; set; }
+        public Task<LlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(SolicitudAsistente solicitud, HerramientaAsistente herramienta, System.Threading.CancellationToken cancellationToken)
+        {
+            UltimaHerramienta = herramienta;
+            OrdenLlamadas.Add("herramienta");
+            AlExtraerHerramienta?.Invoke();
+            if (ThrowOnHerramienta != null) throw ThrowOnHerramienta;
+            return Task.FromResult(LlamadaHerramienta);
+        }
         public string NextRespuesta { get; set; } = "Respuesta simulada";
 
         public Exception ThrowException { get; set; }
@@ -2943,10 +3023,17 @@ namespace BLL.Tests.TestDoubles
 
         public List<IntercambioChatbot> LastHistorial { get; private set; }
 
-        public Task<string> ObtenerRespuestaAsync(string pregunta, IEnumerable<IntercambioChatbot> historial)
+        public SolicitudAsistente LastSolicitud { get; private set; }
+
+        public int CallCount { get; private set; }
+
+        public Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud)
         {
-            LastPregunta = pregunta;
-            LastHistorial = historial == null ? new List<IntercambioChatbot>() : historial.ToList();
+            OrdenLlamadas.Add("respuesta");
+            CallCount++;
+            LastSolicitud = solicitud;
+            LastPregunta = solicitud.Pregunta;
+            LastHistorial = solicitud.Historial == null ? new List<IntercambioChatbot>() : solicitud.Historial.ToList();
 
             if (ThrowException != null)
             {
@@ -2954,6 +3041,30 @@ namespace BLL.Tests.TestDoubles
             }
 
             return Task.FromResult(NextRespuesta);
+        }
+    }
+
+    internal sealed class FakeClasificadorConsultas : IClasificadorConsultas
+    {
+        public CategoriaConsulta NextCategoria { get; set; } = CategoriaConsulta.FinanzasGenerales;
+
+        public Exception ThrowException { get; set; }
+
+        public int CallCount { get; private set; }
+
+        public string LastPregunta { get; private set; }
+
+        public Task<CategoriaConsulta> ClasificarAsync(string pregunta, System.Threading.CancellationToken cancellationToken)
+        {
+            CallCount++;
+            LastPregunta = pregunta;
+
+            if (ThrowException != null)
+            {
+                throw ThrowException;
+            }
+
+            return Task.FromResult(NextCategoria);
         }
     }
 
@@ -3276,6 +3387,93 @@ namespace BLL.Tests.TestDoubles
         public int ContarPorMedioPagoEntidad(int medioPagoEntidadId)
         {
             return MedioPagoEntidadIdsPorCuenta.Values.Count(ids => ids.Contains(medioPagoEntidadId));
+        }
+    }
+
+    internal sealed class FakeZonaUsuarioRepositorio : IZonaUsuarioRepositorio
+    {
+        private int _nextId = 1;
+
+        public Dictionary<int, ZonaUsuario> Zonas { get; } = new Dictionary<int, ZonaUsuario>();
+
+        public ZonaUsuario LastInserted { get; private set; }
+
+        public int? LastDeletedId { get; private set; }
+
+        public bool EliminarResult { get; set; } = true;
+
+        public ZonaUsuario ObtenerPorId(int id)
+        {
+            ZonaUsuario zona;
+            return Zonas.TryGetValue(id, out zona) ? zona : null;
+        }
+
+        public List<ZonaUsuario> ObtenerPorUsuario(int usuarioId)
+        {
+            return Zonas.Values
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .OrderBy(item => item.Nombre)
+                .ToList();
+        }
+
+        public int InsertarYObtenerId(ZonaUsuario zona)
+        {
+            while (Zonas.ContainsKey(_nextId))
+            {
+                _nextId++;
+            }
+
+            zona.Id = _nextId++;
+            Zonas[zona.Id] = zona;
+            LastInserted = zona;
+            return zona.Id;
+        }
+
+        public bool Eliminar(int id)
+        {
+            LastDeletedId = id;
+            if (!EliminarResult)
+            {
+                return false;
+            }
+
+            return Zonas.Remove(id);
+        }
+    }
+
+    internal sealed class FakeServicioEmbeddings : IServicioEmbeddings
+    {
+        public const string ModeloFalso = "modelo-test";
+        public string Modelo => ModeloFalso;
+        public Dictionary<string, float[]> Vectores { get; } = new Dictionary<string, float[]>();
+        public List<string> TextosRecibidos { get; } = new List<string>();
+        public int Llamadas { get; private set; }
+        public Exception ThrowException { get; set; }
+
+        public Task<IReadOnlyList<float[]>> CalcularAsync(IReadOnlyList<string> textos, System.Threading.CancellationToken cancellationToken)
+        {
+            Llamadas++;
+            TextosRecibidos.AddRange(textos);
+            if (ThrowException != null) throw ThrowException;
+            return Task.FromResult<IReadOnlyList<float[]>>(textos.Select(texto => Vectores.ContainsKey(texto) ? Vectores[texto] : new[] { 0f, 1f }).ToList());
+        }
+    }
+
+    internal sealed class FakeProductoEmbeddingRepositorio : IProductoEmbeddingRepositorio
+    {
+        public Dictionary<int, ProductoEmbedding> Embeddings { get; } = new Dictionary<int, ProductoEmbedding>();
+
+        public List<ProductoEmbedding> Guardados { get; } = new List<ProductoEmbedding>();
+
+        public List<ProductoEmbedding> ObtenerTodos()
+        {
+            return Embeddings.Values.OrderBy(item => item.ProductoId).ToList();
+        }
+
+        public void Guardar(ProductoEmbedding embedding)
+        {
+            Guardados.Add(embedding);
+            Embeddings[embedding.ProductoId] = embedding;
         }
     }
 }

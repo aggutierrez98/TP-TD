@@ -19,7 +19,7 @@ namespace TpIDS
             ClientSize = new Size(610, 330);
             StartPosition = FormStartPosition.CenterParent;
             lblDatosNotificacion = new KryptonLabel { Name = "lblDatosNotificacion", Location = new Point(18, 15), Size = new Size(574, 28), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-            var txtbMensajeNotificacion = new KryptonTextBox { Name = "txtbMensajeNotificacion", Text = notificacion.Mensaje, ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, Location = new Point(18, 55), Size = new Size(574, 210), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
+            var txtbMensajeNotificacion = new KryptonTextBox { Name = "txtbMensajeNotificacion", Text = VistaPreviaNotificacion.ParaCuadroDeTexto(notificacion.Mensaje), ReadOnly = true, Multiline = true, ScrollBars = ScrollBars.Vertical, Location = new Point(18, 55), Size = new Size(574, 210), Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
             var btnCerrarDetalle = new KryptonButton { Name = "btnCerrarDetalle", Text = "Cerrar", Tag = "FormNotificationDetail.Close", ButtonStyle = ButtonStyle.Custom1, DialogResult = DialogResult.OK, Location = new Point(472, 283), Size = new Size(120, 30), Anchor = AnchorStyles.Bottom | AnchorStyles.Right };
             AcceptButton = btnCerrarDetalle;
             CancelButton = btnCerrarDetalle;

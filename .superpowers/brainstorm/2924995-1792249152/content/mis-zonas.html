@@ -1,0 +1,71 @@
+<h2>Mis Zonas: ¿radio por zona o radio único?</h2>
+<p class="subtitle">Menú renombrado "Mi usuario" → Mi configuración / Mis zonas / Cerrar sesión. Elegí la variante que te cierre (es un wireframe, no el look Krypton final).</p>
+
+<div class="section">
+  <div class="mockup" style="max-width:220px">
+    <div class="mockup-header">Menú</div>
+    <div class="mockup-body" style="font-size:13px;line-height:1.9">
+      <b>Mi usuario ▾</b><br>
+      &nbsp;&nbsp;Mi configuración<br>
+      &nbsp;&nbsp;<b style="color:#3a9a5b">Mis zonas</b><br>
+      &nbsp;&nbsp;──────────<br>
+      &nbsp;&nbsp;Cerrar sesión
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card" data-choice="radio-por-zona" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;gap:8px;padding:8px;font-size:12px">
+        <div style="width:42%">
+          <div class="label">Mis zonas</div>
+          <div style="border:1px solid #999;padding:4px;margin:4px 0">
+            ● Casa — 1,5 km<br>● Trabajo — 800 m<br>● Facultad — 1 km
+          </div>
+          <input class="mock-input" placeholder="Nombre (ej. Casa)" style="width:100%">
+          <div style="margin:4px 0">Radio: ──●──── 1,5 km</div>
+          <input class="mock-input" placeholder="Buscar dirección..." style="width:100%">
+          <div style="margin-top:4px"><button class="mock-button">Agregar</button> <button class="mock-button">Quitar</button></div>
+        </div>
+        <div style="flex:1;position:relative;background:#e8efe6;border:1px solid #999;min-height:200px">
+          <div style="position:absolute;left:20%;top:30%;width:90px;height:90px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:58%;top:18%;width:50px;height:50px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:55%;top:60%;width:65px;height:65px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:5px;bottom:5px">Mapa GMap (clic = marcar punto)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Radio por zona</h3>
+      <p>Cada punto tiene su propio radio. "Casa" puede cubrir 1,5 km y "Trabajo" solo 800 m porque ahí vas caminando.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="radio-unico" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;gap:8px;padding:8px;font-size:12px">
+        <div style="width:42%">
+          <div class="label">Mis zonas</div>
+          <div style="border:1px solid #999;padding:4px;margin:4px 0">
+            ● Casa<br>● Trabajo<br>● Facultad
+          </div>
+          <input class="mock-input" placeholder="Nombre (ej. Casa)" style="width:100%">
+          <input class="mock-input" placeholder="Buscar dirección..." style="width:100%;margin-top:4px">
+          <div style="margin-top:4px"><button class="mock-button">Agregar</button> <button class="mock-button">Quitar</button></div>
+          <div style="margin-top:8px;border-top:1px solid #ccc;padding-top:4px">Distancia máx. a comercios: ──●── 1 km</div>
+        </div>
+        <div style="flex:1;position:relative;background:#e8efe6;border:1px solid #999;min-height:200px">
+          <div style="position:absolute;left:20%;top:30%;width:65px;height:65px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:58%;top:18%;width:65px;height:65px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:55%;top:60%;width:65px;height:65px;border-radius:50%;background:rgba(93,196,125,.3);border:2px solid #5DC47D"></div>
+          <div style="position:absolute;left:5px;bottom:5px">Mapa GMap (clic = marcar punto)</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Radio único</h3>
+      <p>Todos los puntos usan la misma distancia, configurada una sola vez. Es más simple de usar y de programar.</p>
+    </div>
+  </div>
+</div>

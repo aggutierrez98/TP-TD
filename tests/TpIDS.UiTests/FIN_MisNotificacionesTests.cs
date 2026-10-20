@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Data.SqlClient;
 using System.Linq;
 using FlaUI.Core.AutomationElements;
@@ -87,6 +88,54 @@ namespace TpIDS.UiTests
                 Assert.IsTrue(Retry.WhileFalse(() => DescripcionContador(principal) == esperado, TimeSpan.FromSeconds(10)).Success);
             }
             finally { Limpiar(prefijo); }
+        }
+
+        [TestMethod]
+        [TestCategory("UI")]
+        public void FIN_MisNotificaciones_EjemplosDemo_SeLeenCompletosDesdeLaBandeja()
+        {
+            string[] claves = { "Demo.Compras", "Demo.Inversiones", "Demo.Movimientos" };
+            TestDatabase.EjecutarSql(BloqueEjemplos(), new SqlParameter("@u", TestConfig.BasicUsername));
+            try
+            {
+                Window bandeja = AbrirBandeja(LoginComo(TestConfig.BasicUsername, TestConfig.BasicPassword));
+                for (int i = 0; i < claves.Length; i++)
+                {
+                    string completo = (string)TestDatabase.EscalarOrNull(
+                        "SELECT n.Mensaje FROM Notificacion n JOIN Usuarios u ON u.Id = n.UsuarioId WHERE u.Username = @u AND n.ClaveEjemplo = @c",
+                        new SqlParameter("@u", TestConfig.BasicUsername), new SqlParameter("@c", claves[i]));
+                    Assert.IsTrue(completo.Contains("\r\n"), "El ejemplo debe tener saltos de linea.");
+                    UiFind.SeleccionarFilaGrilla(bandeja, "dgvNotificacionesPersonales", ResumenGrilla(completo));
+                    UiFind.Click(bandeja, "btnDetalleNotificacion");
+                    Window detalle = App.EsperarVentana("FormDetalleNotificacion");
+                    Assert.AreEqual(completo, UiFind.CajaTexto(detalle, "txtbMensajeNotificacion").Text);
+                    Assert.AreEqual(1, TestDatabase.Contar("SELECT COUNT(*) FROM Notificacion WHERE ClaveEjemplo = @c AND Leida = 1", new SqlParameter("@c", claves[i])));
+                    UiFind.Click(detalle, "btnCerrarDetalle");
+                }
+            }
+            finally
+            {
+                TestDatabase.EjecutarSql("DELETE n FROM Notificacion n JOIN Usuarios u ON u.Id = n.UsuarioId WHERE u.Username = @u AND n.ClaveEjemplo LIKE 'Demo.%'",
+                    new SqlParameter("@u", TestConfig.BasicUsername));
+            }
+        }
+
+        // Texto de la celda Mensaje: una linea, espacios colapsados, maximo 120 caracteres con puntos suspensivos
+        // (misma regla que UI/VistaPreviaNotificacion.Resumir).
+        private static string ResumenGrilla(string mensaje)
+        {
+            string linea = System.Text.RegularExpressions.Regex.Replace(mensaje, @"\s+", " ").Trim();
+            return linea.Length <= 120 ? linea : linea.Substring(0, 119).TrimEnd() + "\u2026";
+        }
+
+        // Bloque de ejemplos de script_datos_prueba.sql (entre sus marcadores), ligado al usuario basico.
+        private static string BloqueEjemplos()
+        {
+            string texto = File.ReadAllText(Path.Combine(TestConfig.RepoRoot, "script_datos_prueba.sql"));
+            int desde = texto.IndexOf("-- INICIO ejemplos de notificaciones", StringComparison.Ordinal);
+            int hasta = texto.IndexOf("-- FIN ejemplos de notificaciones", StringComparison.Ordinal);
+            Assert.IsTrue(desde >= 0 && hasta > desde, "Faltan los marcadores del bloque de ejemplos en script_datos_prueba.sql.");
+            return "DECLARE @uid INT = (SELECT Id FROM Usuarios WHERE Username = @u);" + Environment.NewLine + texto.Substring(desde, hasta - desde);
         }
 
         [TestMethod]

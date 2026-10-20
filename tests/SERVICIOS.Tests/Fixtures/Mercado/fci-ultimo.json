@@ -1,0 +1,26 @@
+[
+  {
+    "fondo": "1810 Ahorro",
+    "horizonte": "corto",
+    "fecha": "2026-10-16",
+    "vcp": 242182.465,
+    "ccp": 6550556719,
+    "patrimonio": 1586429976366.02
+  },
+  {
+    "fondo": "1822 Raices Ahorro Dólares - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-16",
+    "vcp": 1004.863,
+    "ccp": 53037516.19,
+    "patrimonio": 53295460.57
+  },
+  {
+    "fondo": "1822 Raices Ahorro Pesos - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-10-16",
+    "vcp": 38661.176,
+    "ccp": 7172797776.58,
+    "patrimonio": 277308795710.82
+  }
+]

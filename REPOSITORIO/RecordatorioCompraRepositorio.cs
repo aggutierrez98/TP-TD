@@ -49,7 +49,11 @@ namespace REPOSITORIO
             }
 
             recordatorio.Usuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(recordatorio.Usuario.Id);
-            recordatorio.ItemLista = new ItemListaRepositorio(_accesoDatos).ObtenerPorId(recordatorio.ItemLista.Id);
+            if (recordatorio.ItemLista != null)
+            {
+                recordatorio.ItemLista = new ItemListaRepositorio(_accesoDatos).ObtenerPorId(recordatorio.ItemLista.Id);
+            }
+
             if (recordatorio.Promocion != null)
             {
                 recordatorio.Promocion = new PromocionRepositorio(_accesoDatos).ObtenerPorId(recordatorio.Promocion.Id);

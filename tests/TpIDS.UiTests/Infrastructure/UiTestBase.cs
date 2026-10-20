@@ -75,7 +75,7 @@ namespace TpIDS.UiTests.Infrastructure
             return App.EsperarVentana("FormPrincipal");
         }
 
-        private static readonly string TextoMenuSesion = TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Session");
+        private static readonly string TextoMenuMiUsuario = TestDatabase.ObtenerTraduccion("FormMainShell.Menu.MyUser");
         private static readonly string TextoMenuAdministracion = TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Administration");
 
         /// <summary>Navega Administracion &gt; Usuarios desde el shell y espera el hijo MDI.</summary>
@@ -113,17 +113,24 @@ namespace TpIDS.UiTests.Infrastructure
             return App.EsperarVentana("FormBackup");
         }
 
-        /// <summary>Navega Sesion &gt; Mi configuracion desde el shell y espera el dialogo modal.</summary>
+        /// <summary>Navega Mi usuario &gt; Mi configuracion desde el shell y espera el dialogo modal.</summary>
         internal Window AbrirConfiguracion(Window principal)
         {
-            UiFind.ClickMenu(principal, TextoMenuSesion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.MyConfiguration"));
+            UiFind.ClickMenu(principal, TextoMenuMiUsuario, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.MyConfiguration"));
             return App.EsperarVentana("FormConfiguracionUsuario");
         }
 
-        /// <summary>Navega Sesion &gt; Cerrar sesion desde el shell (no espera el MessageBox de confirmacion).</summary>
+        /// <summary>Navega Mi usuario &gt; Mis zonas desde el shell y espera el hijo MDI.</summary>
+        internal Window AbrirMisZonas(Window principal)
+        {
+            UiFind.ClickMenu(principal, TextoMenuMiUsuario, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.MyZones"));
+            return App.EsperarVentana("FormMisZonas");
+        }
+
+        /// <summary>Navega Mi usuario &gt; Cerrar sesion desde el shell (no espera el MessageBox de confirmacion).</summary>
         internal void CerrarSesionDesdeMenu(Window principal)
         {
-            UiFind.ClickMenu(principal, TextoMenuSesion, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Logout"));
+            UiFind.ClickMenu(principal, TextoMenuMiUsuario, TestDatabase.ObtenerTraduccion("FormMainShell.Menu.Logout"));
         }
 
         /// <summary>

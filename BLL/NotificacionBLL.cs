@@ -10,6 +10,10 @@ namespace BLL
 {
     public class NotificacionBLL
     {
+        // Contrato del alta manual del operador. La columna Mensaje admite texto completo
+        // (recomendaciones automaticas), asi que el limite se valida aca y nunca se trunca.
+        public const int MaximoMensajeManual = 300;
+
         private readonly ISesion _sesion;
 
         private int ObtenerDestinatarioActual()
@@ -104,6 +108,11 @@ namespace BLL
             if (string.IsNullOrWhiteSpace(mensajeNormalizado))
             {
                 throw new ExcepcionNegocio("Error.Notification.MessageRequired");
+            }
+
+            if (mensajeNormalizado.Length > MaximoMensajeManual)
+            {
+                throw new ExcepcionNegocio("Error.Notification.MessageTooLong");
             }
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())

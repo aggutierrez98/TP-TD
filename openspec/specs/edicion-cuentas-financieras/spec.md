@@ -1,7 +1,7 @@
 # edicion-cuentas-financieras Specification
 
 ## Purpose
-TBD - created by archiving change editar-cuenta-financiera. Update Purpose after archive.
+Permitir al usuario modificar sus propias cuentas financieras (alias, tipo, entidad y medios de pago) con las mismas reglas del alta, de forma atómica y registrada en bitácora, sin tocar cuentas ajenas ni credenciales cifradas.
 
 ## Requirements
 

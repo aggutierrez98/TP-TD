@@ -19,6 +19,7 @@
   <Import Project="..\..\SERVICIOS\PdfSharp.references.props" />
 
   <ItemGroup>
+    <None Update="Fixtures\Mercado\*.json" CopyToOutputDirectory="PreserveNewest" />
     <ProjectReference Include="..\..\ABSTRACCIONES\ABSTRACCIONES.csproj" />
     <ProjectReference Include="..\..\BE\BE.csproj" />
     <ProjectReference Include="..\..\SERVICIOS\SERVICIOS.csproj" />

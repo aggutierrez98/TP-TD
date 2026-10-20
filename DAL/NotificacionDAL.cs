@@ -20,6 +20,75 @@ namespace DAL
             finally { if (dispose) accesoDatos.Dispose(); }
         }
 
+        // Fecha de la ultima notificacion automatica de inversiones del usuario (sin importar si fue
+        // leida; los ejemplos de laboratorio y los recordatorios manuales no tienen TipoAutomatico).
+        // Notificacion.Fecha es la hora local del equipo que la entrego; se informa en UTC para medir
+        // 7 * 24 horas. Si el usuario elimina la notificacion, el intervalo se reinicia por si solo.
+        public System.DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT MAX(Fecha) AS Ultima
+                FROM Notificacion
+                WHERE UsuarioId = @UsuarioId AND TipoAutomatico = 'Inversiones'";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+            try
+            {
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                object ultima = tabla.Rows[0]["Ultima"];
+                return ultima == System.DBNull.Value
+                    ? (System.DateTime?)null
+                    : System.DateTime.SpecifyKind((System.DateTime)ultima, System.DateTimeKind.Local).ToUniversalTime();
+            }
+            finally { if (dispose) accesoDatos.Dispose(); }
+        }
+
+        // UPDLOCK + HOLDLOCK sobre la fila del usuario la retienen hasta el fin de la transaccion
+        // del llamador: serializa entregas concurrentes por usuario sin bloquear a otros usuarios.
+        // Solo tiene sentido dentro de una unidad de trabajo; sin ella la transaccion propia de la
+        // llamada termina enseguida y el bloqueo se libera.
+        public bool BloquearUsuarioParaEntrega(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT COUNT(*) AS Total
+                FROM Usuarios WITH (UPDLOCK, HOLDLOCK)
+                WHERE Id = @UsuarioId";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+            try
+            {
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                return (int)tabla.Rows[0]["Total"] > 0;
+            }
+            finally { if (dispose) accesoDatos.Dispose(); }
+        }
+
+        // Respalda la deduplicacion previa; el UNIQUE filtrado (UsuarioId, TipoAutomatico, FechaJornada)
+        // es la garantia final. Los ejemplos de laboratorio no tienen TipoAutomatico y nunca coinciden.
+        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, System.DateTime jornada, AccesoDatosSqlServer accesoDatos = null)
+        {
+            const string query = @"
+                SELECT COUNT(*) AS Total
+                FROM Notificacion
+                WHERE UsuarioId = @UsuarioId AND TipoAutomatico = @Tipo AND FechaJornada = @Jornada";
+
+            bool dispose = accesoDatos == null;
+            accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
+            try
+            {
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter>
+                {
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
+                    accesoDatos.CreateParameter("@Jornada", SqlDbType.Date, jornada.Date)
+                });
+                return (int)tabla.Rows[0]["Total"] > 0;
+            }
+            finally { if (dispose) accesoDatos.Dispose(); }
+        }
+
         public bool MarcarPersonalLeida(int id, int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
@@ -89,7 +158,7 @@ namespace DAL
                     resultado = new RecordatorioCompra {
                         ItemLista = row["ItemListaId"] == System.DBNull.Value ? null : new ItemLista { Id = (int)row["ItemListaId"] },
                         Promocion = row["PromocionId"] == System.DBNull.Value ? null : new Promocion { Id = (int)row["PromocionId"] },
-                        FechaVencimiento = (System.DateTime)row["FechaVencimiento"] };
+                        FechaVencimiento = row["FechaVencimiento"] == System.DBNull.Value ? (System.DateTime?)null : (System.DateTime)row["FechaVencimiento"] };
                     break;
                 case "RecordatorioInversion": resultado = new RecordatorioInversion(); break;
                 default: resultado = new Notificacion(); break;
@@ -99,12 +168,13 @@ namespace DAL
             resultado.Mensaje = row["Mensaje"].ToString();
             resultado.Fecha = (System.DateTime)row["Fecha"];
             resultado.Leida = (bool)row["Leida"];
+            MetadataNotificacionDAL.Leer(row, resultado);
             return resultado;
         }
 
         private Notificacion Map(DataRow row)
         {
-            return new Notificacion
+            var notificacion = new Notificacion
             {
                 Id = (int)row["Id"],
                 Usuario = new Usuario { Id = (int)row["UsuarioId"] },
@@ -112,6 +182,8 @@ namespace DAL
                 Fecha = (System.DateTime)row["Fecha"],
                 Leida = (bool)row["Leida"]
             };
+            MetadataNotificacionDAL.Leer(row, notificacion);
+            return notificacion;
         }
 
         // Cuenta cualquier fila de Notificacion (notificacion o recordatorio) que referencia a la promocion.
@@ -147,7 +219,7 @@ namespace DAL
         public Notificacion ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE Id = @Id AND TipoNotificacion = 'Notificacion'";
 
@@ -176,7 +248,7 @@ namespace DAL
         public List<Notificacion> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE UsuarioId = @UsuarioId AND TipoNotificacion = 'Notificacion'
                 ORDER BY Fecha DESC";
@@ -212,7 +284,7 @@ namespace DAL
         public List<Notificacion> ObtenerTodas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE TipoNotificacion = 'Notificacion'
                 ORDER BY Fecha DESC";
@@ -243,9 +315,9 @@ namespace DAL
         public int InsertarYObtenerId(Notificacion notificacion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida)
+                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida, TipoAutomatico, FechaJornada, ClaveEjemplo)
                 OUTPUT INSERTED.Id
-                VALUES (@UsuarioId, 'Notificacion', @Mensaje, @Fecha, @Leida)";
+                VALUES (@UsuarioId, 'Notificacion', @Mensaje, @Fecha, @Leida, @TipoAutomatico, @FechaJornada, @ClaveEjemplo)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -255,10 +327,11 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, notificacion.Usuario.Id),
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, notificacion.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, notificacion.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, notificacion.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, notificacion.Leida)
                 };
+                MetadataNotificacionDAL.AgregarParametros(accesoDatos, parametros, notificacion);
 
                 return accesoDatos.WriteWithResult(query, parametros);
             }
@@ -287,7 +360,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, notificacion.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, notificacion.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, notificacion.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, notificacion.Leida),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, notificacion.Id)

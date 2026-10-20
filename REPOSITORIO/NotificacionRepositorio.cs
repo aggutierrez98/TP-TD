@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BE;
 using DAL;
@@ -17,6 +18,10 @@ namespace REPOSITORIO
         {
             return _notificacionDAL.ContarNoLeidas(usuarioId, _accesoDatos);
         }
+        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId) => _notificacionDAL.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId, _accesoDatos);
+        public bool BloquearUsuarioParaEntrega(int usuarioId) => _notificacionDAL.BloquearUsuarioParaEntrega(usuarioId, _accesoDatos);
+        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, DateTime jornada) => _notificacionDAL.ExisteAutomatica(usuarioId, tipo, jornada, _accesoDatos);
+
         private readonly NotificacionDAL _notificacionDAL;
         private readonly AccesoDatosSqlServer _accesoDatos;
 

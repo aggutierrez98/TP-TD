@@ -1,0 +1,26 @@
+[
+  {
+    "fondo": "Fima Premium - Clase A",
+    "horizonte": "corto",
+    "fecha": "2026-09-18",
+    "vcp": 84890.11,
+    "ccp": 44036100451.34,
+    "patrimonio": 3738229403692.17
+  },
+  {
+    "fondo": "Fima Premium - Clase B",
+    "horizonte": "corto",
+    "fecha": "2026-09-18",
+    "vcp": 102512.358,
+    "ccp": 45261190422.2,
+    "patrimonio": 4639831372050.77
+  },
+  {
+    "fondo": "Fima Premium - Clase C",
+    "horizonte": "corto",
+    "fecha": "2026-09-18",
+    "vcp": 104151.362,
+    "ccp": 7679489156.8,
+    "patrimonio": 799829252813.17
+  }
+]

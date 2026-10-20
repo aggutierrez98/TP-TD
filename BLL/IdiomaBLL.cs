@@ -289,7 +289,8 @@ namespace BLL
             _servicioIdioma.CambiarIdioma(idioma);
         }
 
-        private Idioma ObtenerIdiomaParaUsuario(int usuarioId)
+        // Idioma del destinatario (preferencia completa o default) sin tocar el idioma global de la aplicacion.
+        public Idioma ObtenerIdiomaParaUsuario(int usuarioId)
         {
             UsuarioPreferencia preferencia = _usuarioPreferenciaRepositorio.ObtenerPorUsuarioId(usuarioId);
             if (preferencia != null)

@@ -45,6 +45,7 @@
   <Import Project="PdfSharp.references.props" />
   <ItemGroup>
     <Compile Include="AgenteAhorro.cs" />
+    <Compile Include="AgenteFinanzasGenerales.cs" />
     <Compile Include="AgenteIA.cs" />
     <Compile Include="AgenteInversiones.cs" />
     <Compile Include="AutorizacionService.cs" />
@@ -55,6 +56,9 @@
     <Compile Include="FiltroBitacora.cs" />
     <Compile Include="FiltroMovimiento.cs" />
     <Compile Include="GeminiChatClient.cs" />
+    <Compile Include="GeminiClasificadorConsultas.cs" />
+    <Compile Include="GeminiServicioEmbeddings.cs" />
+    <Compile Include="GeminiFunciones.cs" />
     <Compile Include="GeminiEscaneoTicketService.cs" />
     <Compile Include="GeminiAsistenteFinancieroService.cs" />
     <Compile Include="IntegridadService.cs" />
@@ -64,6 +68,10 @@
     <Compile Include="IdiomaService.cs" />
     <Compile Include="NominatimBusquedaUbicacionesService.cs" />
     <Compile Include="OpenExchangeRatesProveedor.cs" />
+    <Compile Include="ProveedorArgentinaDatos.cs" />
+    <Compile Include="ClienteMercadoPublico.cs" />
+    <Compile Include="ProveedorMercadoData912.cs" />
+    <Compile Include="ProveedorCriptoYa.cs" />
     <Compile Include="RelojBusqueda.cs" />
     <Compile Include="PermisoGrupo.cs" />
     <Compile Include="PermisoService.cs" />

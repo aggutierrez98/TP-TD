@@ -62,10 +62,15 @@
     <Compile Include="ResultadoActualizacionTasas.cs" />
     <Compile Include="ResultadoEjecucionActualizacionTasas.cs" />
     <Compile Include="Notificacion.cs" />
+    <Compile Include="TipoNotificacionAutomatica.cs" />
+    <Compile Include="ResultadoGeneracionNotificacion.cs" />
+    <Compile Include="CorridaGeneracionNotificaciones.cs" />
+    <Compile Include="DetalleGeneracionNotificacion.cs" />
     <Compile Include="FiltroNotificacion.cs" />
     <Compile Include="PaginaNotificaciones.cs" />
     <Compile Include="ComercioProducto.cs" />
     <Compile Include="Producto.cs" />
+    <Compile Include="ProductoEmbedding.cs" />
     <Compile Include="Promocion.cs" />
     <Compile Include="RecordatorioCompra.cs" />
     <Compile Include="RecordatorioInversion.cs" />
@@ -79,6 +84,8 @@
     <Compile Include="TipoMedioPago.cs" />
     <Compile Include="TipoTarjetaDashboard.cs" />
     <Compile Include="Usuario.cs" />
+    <Compile Include="PerfilInversor.cs" />
+    <Compile Include="ZonaUsuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

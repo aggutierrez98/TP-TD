@@ -6,6 +6,20 @@ using SERVICIOS;
 
 namespace BLL
 {
+    internal interface IRecomendacionInversionesBLL
+    {
+        System.Threading.Tasks.Task<ResumenInversiones> CalcularAsync(int usuarioActualId, decimal? porcentaje, System.Threading.CancellationToken cancellationToken, PerfilInversor perfil);
+
+        // Solo el calculo economico local (sin fuentes externas): nivel, saldo y, si hay porcentaje, monto.
+        ResumenInversiones CalcularSaldo(int usuarioActualId, decimal? porcentaje);
+    }
+
+    internal interface IRecomendacionComprasBLL
+    {
+        System.Threading.Tasks.Task<ResumenCompras> CalcularAsync(int usuarioActualId, string nombreLista, System.Threading.CancellationToken cancellationToken);
+        IReadOnlyList<ReferenciaAsistente> ObtenerUniversoReferencias(int usuarioActualId);
+    }
+
     internal interface IBitacoraBLL
     {
         List<EventoBitacora> Buscar(FiltroBitacora filtro);
@@ -22,6 +36,8 @@ namespace BLL
     internal interface IIdiomaBLL
     {
         void AplicarIdiomaSesionUsuario(int usuarioId);
+
+        Idioma ObtenerIdiomaParaUsuario(int usuarioId);
     }
 
     internal interface IPermisoBLL

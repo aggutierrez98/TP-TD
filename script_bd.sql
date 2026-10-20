@@ -1,4 +1,13 @@
-﻿USE [master];
+﻿:on error exit
+USE [master];
+GO
+
+-- Verificacion previa: este script borra/recrea la base y lee el seed de traducciones con
+-- OPENROWSET(BULK), que requieren sysadmin (o dbcreator + bulkadmin). Se corta aca, antes de
+-- tocar nada, en lugar de fallar a mitad de camino con la base a medio crear.
+IF IS_SRVROLEMEMBER(N'sysadmin') <> 1
+   AND NOT (IS_SRVROLEMEMBER(N'dbcreator') = 1 AND IS_SRVROLEMEMBER(N'bulkadmin') = 1)
+    THROW 50010, 'El login actual no tiene permisos suficientes: se requiere sysadmin (o dbcreator y bulkadmin) en esta instancia. No se modifico nada.', 1;
 GO
 
 IF DB_ID(N'TpCatedraIDS') IS NOT NULL
@@ -29,6 +38,31 @@ CREATE TABLE dbo.Usuarios
     DVH VARCHAR(100) NULL,
     CONSTRAINT PK_Usuarios PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT UQ_Usuarios_Username UNIQUE (Username)
+);
+GO
+
+CREATE TABLE dbo.PerfilInversor
+(
+    Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_PerfilInversor PRIMARY KEY,
+    UsuarioId INT NOT NULL CONSTRAINT UQ_PerfilInversor_Usuario UNIQUE,
+    VersionCuestionario INT NOT NULL CONSTRAINT CK_PerfilInversor_Version CHECK (VersionCuestionario > 0),
+    FechaEvaluacionUtc DATETIME2 NOT NULL,
+    Capacidad DECIMAL(7,4) NOT NULL CONSTRAINT CK_PerfilInversor_Capacidad CHECK (Capacidad BETWEEN 0 AND 100),
+    Tolerancia DECIMAL(7,4) NOT NULL CONSTRAINT CK_PerfilInversor_Tolerancia CHECK (Tolerancia BETWEEN 0 AND 100),
+    Puntaje DECIMAL(7,4) NOT NULL CONSTRAINT CK_PerfilInversor_Puntaje CHECK (Puntaje BETWEEN 0 AND 100),
+    NivelRiesgo INT NOT NULL CONSTRAINT CK_PerfilInversor_Nivel CHECK (NivelRiesgo IN (0,1,2)),
+    MotivosLimite NVARCHAR(MAX) NOT NULL,
+    CONSTRAINT FK_PerfilInversor_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id)
+);
+GO
+
+CREATE TABLE dbo.PerfilInversorRespuesta
+(
+    PerfilInversorId INT NOT NULL,
+    PreguntaId INT NOT NULL CONSTRAINT CK_PerfilInversorRespuesta_Pregunta CHECK (PreguntaId BETWEEN 1 AND 10),
+    OpcionId CHAR(1) NOT NULL CONSTRAINT CK_PerfilInversorRespuesta_Opcion CHECK (OpcionId IN ('A','B','C','D')),
+    CONSTRAINT PK_PerfilInversorRespuesta PRIMARY KEY (PerfilInversorId, PreguntaId),
+    CONSTRAINT FK_PerfilInversorRespuesta_Perfil FOREIGN KEY (PerfilInversorId) REFERENCES dbo.PerfilInversor(Id) ON DELETE CASCADE
 );
 GO
 
@@ -140,6 +174,7 @@ DECLARE @PermisoGestionCuentasFinancierasId INT;
 DECLARE @PermisoGestionProductosId INT;
 DECLARE @PermisoGestionPromocionesId INT;
 DECLARE @PermisoGestionActualizacionTasasId INT;
+DECLARE @PermisoGestionZonasUsuarioId INT;
 DECLARE @GrupoAdminId INT;
 DECLARE @GrupoBasicoId INT;
 DECLARE @GrupoOperadorId INT;
@@ -241,6 +276,11 @@ SET @PermisoGestionPromocionesId = SCOPE_IDENTITY();
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionactualizaciontasas', 0);
 SET @PermisoGestionActualizacionTasasId = SCOPE_IDENTITY();
 
+-- Mis zonas (menu Mi usuario): lugares habituales del usuario con su radio, mismo alcance
+-- que gestioncuentasfinancieras (admin y basico).
+INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('gestionzonasusuario', 0);
+SET @PermisoGestionZonasUsuarioId = SCOPE_IDENTITY();
+
 INSERT INTO dbo.Permiso (Nombre, EsGrupo) VALUES ('admin', 1);
 SET @GrupoAdminId = SCOPE_IDENTITY();
 
@@ -275,6 +315,7 @@ VALUES
     (@GrupoAdminId, @PermisoGestionProductosId),
     (@GrupoAdminId, @PermisoGestionPromocionesId),
     (@GrupoAdminId, @PermisoGestionActualizacionTasasId),
+    (@GrupoAdminId, @PermisoGestionZonasUsuarioId),
     (@GrupoBasicoId, @PermisoConfiguracionUsuarioId),
     (@GrupoBasicoId, @PermisoGestionMovimientosId),
     (@GrupoBasicoId, @PermisoGestionCategoriasId),
@@ -284,6 +325,7 @@ VALUES
     (@GrupoBasicoId, @PermisoVerDashboardAnaliticasId),
     (@GrupoBasicoId, @PermisoVerBalanceGeneralId),
     (@GrupoBasicoId, @PermisoGestionCuentasFinancierasId),
+    (@GrupoBasicoId, @PermisoGestionZonasUsuarioId),
     (@GrupoOperadorId, @PermisoGestionNotificacionesId),
     (@GrupoOperadorId, @PermisoGestionComerciosId),
     (@GrupoOperadorId, @PermisoGestionMonedasId),
@@ -305,6 +347,20 @@ SELECT @UsuarioOperadorId = Id FROM dbo.Usuarios WHERE Username = 'operador';
 SELECT @GrupoAdminId = Id FROM dbo.Permiso WHERE Nombre = 'admin';
 SELECT @GrupoBasicoId = Id FROM dbo.Permiso WHERE Nombre = 'basico';
 SELECT @GrupoOperadorId = Id FROM dbo.Permiso WHERE Nombre = 'operador';
+
+-- Perfil de ejemplo solicitado para user. Vector v1: C,D,C,D,C,C,D,D,D,C.
+-- Capacidad=100, tolerancia=100, puntaje=100, Alto=2, sin limites aplicados.
+INSERT INTO dbo.PerfilInversor
+    (UsuarioId, VersionCuestionario, FechaEvaluacionUtc, Capacidad, Tolerancia, Puntaje, NivelRiesgo, MotivosLimite)
+VALUES (@UsuarioBasicoId, 1, SYSUTCDATETIME(), 100, 100, 100, 2, N'[]');
+DECLARE @PerfilInversorEjemploId INT = CONVERT(INT, SCOPE_IDENTITY());
+INSERT INTO dbo.PerfilInversorRespuesta (PerfilInversorId, PreguntaId, OpcionId)
+VALUES
+    (@PerfilInversorEjemploId,1,'C'), (@PerfilInversorEjemploId,2,'D'),
+    (@PerfilInversorEjemploId,3,'C'), (@PerfilInversorEjemploId,4,'D'),
+    (@PerfilInversorEjemploId,5,'C'), (@PerfilInversorEjemploId,6,'C'),
+    (@PerfilInversorEjemploId,7,'D'), (@PerfilInversorEjemploId,8,'D'),
+    (@PerfilInversorEjemploId,9,'D'), (@PerfilInversorEjemploId,10,'C');
 
 INSERT INTO dbo.UsuarioPermiso (UsuarioId, PermisoId)
 VALUES
@@ -745,25 +801,58 @@ CREATE TABLE dbo.Notificacion
     Id INT IDENTITY(1,1) NOT NULL,
     UsuarioId INT NOT NULL,
     TipoNotificacion VARCHAR(30) NOT NULL,
-    Mensaje VARCHAR(300) NOT NULL,
+    Mensaje NVARCHAR(MAX) NOT NULL,
     Fecha DATETIME NOT NULL CONSTRAINT DF_Notificacion_Fecha DEFAULT (GETDATE()),
     Leida BIT NOT NULL CONSTRAINT DF_Notificacion_Leida DEFAULT (0),
     ItemListaId INT NULL,
     PromocionId INT NULL,
     FechaVencimiento DATE NULL,
+    TipoAutomatico VARCHAR(20) NULL,
+    FechaJornada DATE NULL,
+    ClaveEjemplo VARCHAR(60) NULL,
     CONSTRAINT PK_Notificacion PRIMARY KEY CLUSTERED (Id),
     CONSTRAINT FK_Notificacion_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
     CONSTRAINT FK_Notificacion_ItemLista FOREIGN KEY (ItemListaId) REFERENCES dbo.ItemLista(Id),
     CONSTRAINT FK_Notificacion_Promocion FOREIGN KEY (PromocionId) REFERENCES dbo.Promocion(Id),
     CONSTRAINT CK_Notificacion_Tipo CHECK (TipoNotificacion IN ('Notificacion', 'RecordatorioCompra', 'RecordatorioInversion')),
+    -- Un recordatorio individual exige item y vencimiento; la recomendacion de compras agregada
+    -- (automatica o ejemplo Demo.Compras) es un resumen diario sin item, promocion ni vencimiento.
+    -- ISNULL evita que un NULL deje el CHECK en UNKNOWN, que SQL Server acepta.
     CONSTRAINT CK_Notificacion_RecordatorioCompra_Campos CHECK (
-        (TipoNotificacion <> 'RecordatorioCompra') OR (ItemListaId IS NOT NULL AND FechaVencimiento IS NOT NULL)
-    )
+        (TipoNotificacion <> 'RecordatorioCompra')
+        OR (ItemListaId IS NOT NULL AND FechaVencimiento IS NOT NULL)
+        OR ISNULL(TipoAutomatico, '') = 'Compras'
+        OR ISNULL(ClaveEjemplo, '') = 'Demo.Compras'
+    ),
+    -- Metadata de automatizacion: TipoAutomatico y FechaJornada van juntos, el tipo automatico
+    -- fija el discriminador y un ejemplo de laboratorio (ClaveEjemplo) nunca es automatico.
+    CONSTRAINT CK_Notificacion_Automatica CHECK (
+        (TipoAutomatico IS NULL AND FechaJornada IS NULL)
+        OR (TipoAutomatico IS NOT NULL AND FechaJornada IS NOT NULL AND ClaveEjemplo IS NULL AND (
+            (TipoAutomatico = 'Compras' AND TipoNotificacion = 'RecordatorioCompra')
+            OR (TipoAutomatico = 'Inversiones' AND TipoNotificacion = 'RecordatorioInversion')
+            OR (TipoAutomatico = 'Movimientos' AND TipoNotificacion = 'Notificacion')
+        ))
+    ),
+    CONSTRAINT CK_Notificacion_ClaveEjemplo CHECK (ClaveEjemplo IS NULL OR LEN(ClaveEjemplo) > 0)
 );
 GO
 
 CREATE INDEX IX_Notificacion_UsuarioId
     ON dbo.Notificacion (UsuarioId);
+GO
+
+-- Una notificacion automatica por usuario, tipo y jornada (aun con corridas superpuestas), y una
+-- sola vez cada ejemplo de laboratorio por usuario. Indices filtrados: exigen QUOTED_IDENTIFIER ON
+-- (se activa mas arriba en esta sesion).
+CREATE UNIQUE INDEX UX_Notificacion_Automatica
+    ON dbo.Notificacion (UsuarioId, TipoAutomatico, FechaJornada)
+    WHERE TipoAutomatico IS NOT NULL;
+GO
+
+CREATE UNIQUE INDEX UX_Notificacion_ClaveEjemplo
+    ON dbo.Notificacion (UsuarioId, ClaveEjemplo)
+    WHERE ClaveEjemplo IS NOT NULL;
 GO
 
 -- ReglaCategorizacion sobre el modelo de dominio de FINAZAPP (G00). Ultima tabla
@@ -827,6 +916,62 @@ GO
 
 CREATE INDEX IX_ConsultaChatbot_UsuarioId_Fecha
     ON dbo.ConsultaChatbot (UsuarioId, Fecha);
+GO
+
+-- Registro tecnico del proceso automatico de notificaciones: una fila por corrida y una por
+-- usuario y tipo evaluado. Motivo es un codigo estable (sin prompts, secretos ni respuestas
+-- privadas). No hay pantalla de historial: se consulta por consola o SQL.
+CREATE TABLE dbo.CorridaGeneracionNotificaciones
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    InicioUtc DATETIME2(7) NOT NULL,
+    FinUtc DATETIME2(7) NULL,
+    Jornada DATE NOT NULL,
+    Entregadas INT NOT NULL CONSTRAINT DF_CorridaGeneracionNotificaciones_Entregadas DEFAULT (0),
+    Omitidas INT NOT NULL CONSTRAINT DF_CorridaGeneracionNotificaciones_Omitidas DEFAULT (0),
+    Fallidas INT NOT NULL CONSTRAINT DF_CorridaGeneracionNotificaciones_Fallidas DEFAULT (0),
+    CONSTRAINT PK_CorridaGeneracionNotificaciones PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT CK_CorridaGeneracionNotificaciones_Fin CHECK (FinUtc IS NULL OR FinUtc >= InicioUtc),
+    CONSTRAINT CK_CorridaGeneracionNotificaciones_Cantidades CHECK (Entregadas >= 0 AND Omitidas >= 0 AND Fallidas >= 0)
+);
+GO
+
+CREATE INDEX IX_CorridaGeneracionNotificaciones_InicioUtc
+    ON dbo.CorridaGeneracionNotificaciones (InicioUtc DESC);
+GO
+
+-- NotificacionId referencia el aviso entregado; si el operador lo elimina, el registro tecnico
+-- se conserva sin la referencia (SET NULL).
+CREATE TABLE dbo.DetalleGeneracionNotificacion
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    CorridaId INT NOT NULL,
+    UsuarioId INT NOT NULL,
+    TipoAutomatico VARCHAR(20) NOT NULL,
+    Jornada DATE NOT NULL,
+    Resultado VARCHAR(10) NOT NULL,
+    Motivo VARCHAR(60) NULL,
+    NotificacionId INT NULL,
+    FechaUtc DATETIME2(7) NOT NULL,
+    CONSTRAINT PK_DetalleGeneracionNotificacion PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_DetalleGeneracionNotificacion_Corrida FOREIGN KEY (CorridaId) REFERENCES dbo.CorridaGeneracionNotificaciones(Id),
+    CONSTRAINT FK_DetalleGeneracionNotificacion_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT FK_DetalleGeneracionNotificacion_Notificacion FOREIGN KEY (NotificacionId) REFERENCES dbo.Notificacion(Id) ON DELETE SET NULL,
+    CONSTRAINT CK_DetalleGeneracionNotificacion_Tipo CHECK (TipoAutomatico IN ('Compras', 'Inversiones', 'Movimientos')),
+    CONSTRAINT CK_DetalleGeneracionNotificacion_Resultado CHECK (Resultado IN ('Entregada', 'Omitida', 'Fallida')),
+    CONSTRAINT CK_DetalleGeneracionNotificacion_Motivo CHECK (
+        (Resultado = 'Entregada') OR (Motivo IS NOT NULL AND LEN(Motivo) > 0)
+    ),
+    CONSTRAINT CK_DetalleGeneracionNotificacion_Notificacion CHECK (Resultado = 'Entregada' OR NotificacionId IS NULL)
+);
+GO
+
+CREATE INDEX IX_DetalleGeneracionNotificacion_CorridaId
+    ON dbo.DetalleGeneracionNotificacion (CorridaId);
+GO
+
+CREATE INDEX IX_DetalleGeneracionNotificacion_UsuarioId_TipoAutomatico_Jornada
+    ON dbo.DetalleGeneracionNotificacion (UsuarioId, TipoAutomatico, Jornada);
 GO
 
 -- Fila unica sembrada: no hay alta/baja de chatbots desde la UI, solo lectura.
@@ -985,6 +1130,45 @@ GO
 
 CREATE INDEX IX_ActualizacionTasaDetalle_EjecucionId
     ON dbo.ActualizacionTasaDetalle (EjecucionId);
+GO
+
+-- Zonas habituales del usuario (casa, trabajo) con su propio radio en metros. Siempre se
+-- consultan por UsuarioId (el de la sesion); el nombre es unico por usuario.
+CREATE TABLE dbo.ZonaUsuario
+(
+    Id INT IDENTITY(1,1) NOT NULL,
+    UsuarioId INT NOT NULL,
+    Nombre VARCHAR(50) NOT NULL,
+    Latitud DECIMAL(9,6) NOT NULL,
+    Longitud DECIMAL(9,6) NOT NULL,
+    RadioMetros INT NOT NULL,
+    CONSTRAINT PK_ZonaUsuario PRIMARY KEY CLUSTERED (Id),
+    CONSTRAINT FK_ZonaUsuario_Usuario FOREIGN KEY (UsuarioId) REFERENCES dbo.Usuarios(Id),
+    CONSTRAINT UQ_ZonaUsuario_UsuarioId_Nombre UNIQUE (UsuarioId, Nombre),
+    CONSTRAINT CK_ZonaUsuario_RadioMetros CHECK (RadioMetros BETWEEN 100 AND 20000),
+    CONSTRAINT CK_ZonaUsuario_Latitud CHECK (Latitud BETWEEN -90 AND 90),
+    CONSTRAINT CK_ZonaUsuario_Longitud CHECK (Longitud BETWEEN -180 AND 180)
+);
+GO
+
+CREATE INDEX IX_ZonaUsuario_UsuarioId
+    ON dbo.ZonaUsuario (UsuarioId);
+GO
+
+-- Representacion semantica precalculada de cada producto para el respaldo de la coincidencia
+-- item de lista -> producto. Vector = float32 little-endian (VARBINARY y no VECTOR: la
+-- instancia del laboratorio puede no tener ese tipo). Se recalcula cuando cambian TextoFuente
+-- (nombre + categoria) o Modelo; vectores de modelos distintos no son comparables.
+CREATE TABLE dbo.ProductoEmbedding
+(
+    ProductoId INT NOT NULL,
+    Modelo VARCHAR(100) NOT NULL,
+    TextoFuente VARCHAR(300) NOT NULL,
+    Vector VARBINARY(MAX) NOT NULL,
+    FechaCalculo DATETIME NOT NULL,
+    CONSTRAINT PK_ProductoEmbedding PRIMARY KEY CLUSTERED (ProductoId),
+    CONSTRAINT FK_ProductoEmbedding_Producto FOREIGN KEY (ProductoId) REFERENCES dbo.Producto(Id) ON DELETE CASCADE
+);
 GO
 
 -- BEGIN AUTO-GENERATED I18N BASE SEED

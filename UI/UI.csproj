@@ -113,6 +113,12 @@
     <Compile Include="FormDetalleComercio.Designer.cs">
       <DependentUpon>FormDetalleComercio.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormMisZonas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMisZonas.Designer.cs">
+      <DependentUpon>FormMisZonas.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormSeleccionarUbicacionComercio.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -224,6 +230,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ActualizadorContadorNotificaciones.cs" />
+    <Compile Include="VistaPreviaNotificacion.cs" />
     <Compile Include="CoordinadorBusquedaUbicacion.cs" />
     <Compile Include="Tema\MenuNotificacionesItem.cs">
       <SubType>Component</SubType>
@@ -243,6 +250,10 @@
     <Compile Include="FormGestionPermisos.Designer.cs">
       <DependentUpon>FormGestionPermisos.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormPerfilInversor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Tema\RadioButtonAccesible.cs" />
     <Compile Include="FormRegistro.cs">
       <SubType>Form</SubType>
     </Compile>

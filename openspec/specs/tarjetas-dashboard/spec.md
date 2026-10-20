@@ -1,7 +1,7 @@
 # tarjetas-dashboard Specification
 
 ## Purpose
-TBD - created by archiving change tarjetas-dashboard-grandes. Update Purpose after archive.
+Definir cómo se disponen y se leen las tarjetas del dashboard: ancho responsivo, gráficos legibles sin superposiciones ni ejes distorsionados, y toda la información de cada tarjeta visible sin interacción del mouse.
 
 ## Requirements
 

@@ -35,6 +35,19 @@ namespace TpIDS.UiTests.Infrastructure
 
             CopiarDirectorio(sourceDir, stagingDir);
             ReescribirConnectionStrings(TestConfig.StagedExePath + ".config");
+            QuitarSecretosLocales(stagingDir);
+        }
+
+        // La copia bajo test nunca usa la clave real de Gemini del desarrollador: la suite no hace
+        // llamadas pagas ni depende de la red, y el asistente termina de forma determinista con
+        // Error.Assistant.ApiKeyMissing (appSettings file= tolera la ausencia del archivo).
+        private static void QuitarSecretosLocales(string stagingDir)
+        {
+            string secretos = Path.Combine(stagingDir, "secrets.config");
+            if (File.Exists(secretos))
+            {
+                File.Delete(secretos);
+            }
         }
 
         public static void SembrarCredencialesConocidas()

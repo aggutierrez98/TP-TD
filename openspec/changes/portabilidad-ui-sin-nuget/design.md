@@ -44,6 +44,10 @@ Inventario necesario (version del grafo actual):
 - [Peso del repo y licencias] → README con licencia por paquete (MIT / Apache-2.0 / LGPL segun corresponda; confirmar al copiar).
 - [Los builds locales usan el cache y ocultan faltantes] → ninguna afirmacion de portabilidad sin la verificacion de la decision 6.
 
+## Revision de bindingRedirect (tarea 2.4)
+
+Se comparo, con `Assembly.ReflectionOnlyLoadFrom` sobre `UI/bin/Debug`, la version que cada DLL del output pide de otra DLL presente contra la version realmente presente: hay 36 discrepancias (System.Memory, System.Buffers, System.ValueTuple, System.Runtime.CompilerServices.Unsafe, System.Text.Json, System.Text.Encodings.Web, Microsoft.Bcl.AsyncInterfaces, System.Threading.Tasks.Extensions, Microsoft.Extensions.Logging.Abstractions, SkiaSharp y SkiaSharp.HarfBuzz). Todas quedan cubiertas por los `bindingRedirect` que `AutoGenerateBindingRedirects=true` escribe en `TpIDS.exe.config` al compilar con MSBuild (cada rango `0.0.0.0-X` incluye la version pedida). Newtonsoft.Json, System.Collections.Immutable y System.Reflection.Metadata no tienen discrepancias. `App.config` conserva solo el redirect explicito de System.Resources.Extensions; no hacen falta mas redirects manuales. El arranque con ese output (Dashboard, mapa y pantallas Krypton en las suites UI) no mostro `FileLoadException`.
+
 ## Migration Plan
 
 1. Copiar DLL a `lib/` y documentar; 2. agregar el `.props` sin quitar aun los `PackageReference` y compilar; 3. quitar los `PackageReference` y las propiedades de RID; 4. ajustar `App.config` y GMap; 5. verificar en clon limpio y con la suite de tests. Rollback: `git revert`; los `PackageReference` originales quedan en el historial.

@@ -8,6 +8,8 @@ namespace BE
 
         public Promocion Promocion { get; set; }
 
-        public DateTime FechaVencimiento { get; set; }
+        // Nulo solo en la recomendacion de compras agregada (automatica o ejemplo): un resumen
+        // diario no tiene vencimiento y no se le inventa uno.
+        public DateTime? FechaVencimiento { get; set; }
     }
 }

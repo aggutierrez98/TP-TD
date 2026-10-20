@@ -50,6 +50,20 @@ namespace REPOSITORIO
         private IUsuarioPermisoRepositorio _usuarioPermisos;
         private IUsuarioPreferenciaRepositorio _usuarioPreferencias;
         private IUsuarioRepositorio _usuarios;
+        private IZonaUsuarioRepositorio _zonasUsuario;
+        private IProductoEmbeddingRepositorio _productoEmbeddings;
+        private IPerfilInversorRepositorio _perfilesInversor;
+        private IGeneracionNotificacionesRepositorio _generacionNotificaciones;
+
+        public IPerfilInversorRepositorio PerfilesInversor
+        {
+            get { return _perfilesInversor ?? (_perfilesInversor = new PerfilInversorRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IGeneracionNotificacionesRepositorio GeneracionNotificaciones
+        {
+            get { return _generacionNotificaciones ?? (_generacionNotificaciones = new GeneracionNotificacionesRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
 
         public UnidadDeTrabajoSqlServer()
         {
@@ -258,6 +272,16 @@ namespace REPOSITORIO
         public IUsuarioRepositorio Usuarios
         {
             get { return _usuarios ?? (_usuarios = new UsuarioRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IProductoEmbeddingRepositorio ProductoEmbeddings
+        {
+            get { return _productoEmbeddings ?? (_productoEmbeddings = new ProductoEmbeddingRepositorio(ObtenerAccesoDatosTransaccional())); }
+        }
+
+        public IZonaUsuarioRepositorio ZonasUsuario
+        {
+            get { return _zonasUsuario ?? (_zonasUsuario = new ZonaUsuarioRepositorio(ObtenerAccesoDatosTransaccional())); }
         }
 
         public void Save()

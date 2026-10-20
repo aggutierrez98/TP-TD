@@ -366,7 +366,7 @@ MigrationBackup/
 FodyWeavers.xsd
 # Local secrets (template: UI/secrets.config.example)
 UI/secrets.config
-ActualizadorTasas/secrets.config
+CRONS/secrets.config
 
 # Resultados de tests y verificaciones (TRX, capturas UI, PDF/Excel exportados por los tests)
 TestResults/

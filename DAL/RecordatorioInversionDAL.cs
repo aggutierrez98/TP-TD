@@ -9,7 +9,7 @@ namespace DAL
     {
         private RecordatorioInversion Map(DataRow row)
         {
-            return new RecordatorioInversion
+            var recordatorio = new RecordatorioInversion
             {
                 Id = (int)row["Id"],
                 Usuario = new Usuario { Id = (int)row["UsuarioId"] },
@@ -17,12 +17,14 @@ namespace DAL
                 Fecha = (System.DateTime)row["Fecha"],
                 Leida = (bool)row["Leida"]
             };
+            MetadataNotificacionDAL.Leer(row, recordatorio);
+            return recordatorio;
         }
 
         public RecordatorioInversion ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE Id = @Id AND TipoNotificacion = 'RecordatorioInversion'";
 
@@ -51,7 +53,7 @@ namespace DAL
         public List<RecordatorioInversion> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE UsuarioId = @UsuarioId AND TipoNotificacion = 'RecordatorioInversion'
                 ORDER BY Fecha DESC";
@@ -87,7 +89,7 @@ namespace DAL
         public List<RecordatorioInversion> ObtenerTodas(AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT Id, UsuarioId, Mensaje, Fecha, Leida
+                SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
                 FROM Notificacion
                 WHERE TipoNotificacion = 'RecordatorioInversion'
                 ORDER BY Fecha DESC";
@@ -118,9 +120,9 @@ namespace DAL
         public int InsertarYObtenerId(RecordatorioInversion recordatorio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida)
+                INSERT INTO Notificacion (UsuarioId, TipoNotificacion, Mensaje, Fecha, Leida, TipoAutomatico, FechaJornada, ClaveEjemplo)
                 OUTPUT INSERTED.Id
-                VALUES (@UsuarioId, 'RecordatorioInversion', @Mensaje, @Fecha, @Leida)";
+                VALUES (@UsuarioId, 'RecordatorioInversion', @Mensaje, @Fecha, @Leida, @TipoAutomatico, @FechaJornada, @ClaveEjemplo)";
 
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -130,10 +132,11 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, recordatorio.Usuario.Id),
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, recordatorio.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, recordatorio.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, recordatorio.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, recordatorio.Leida)
                 };
+                MetadataNotificacionDAL.AgregarParametros(accesoDatos, parametros, recordatorio);
 
                 return accesoDatos.WriteWithResult(query, parametros);
             }
@@ -162,7 +165,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.VarChar, recordatorio.Mensaje),
+                    accesoDatos.CreateParameter("@Mensaje", SqlDbType.NVarChar, recordatorio.Mensaje),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, recordatorio.Fecha),
                     accesoDatos.CreateParameter("@Leida", SqlDbType.Bit, recordatorio.Leida),
                     accesoDatos.CreateParameter("@Id", SqlDbType.Int, recordatorio.Id)

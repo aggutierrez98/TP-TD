@@ -72,6 +72,8 @@
     <Compile Include="IMovimientoRepositorio.cs" />
     <Compile Include="NotificacionRepositorio.cs" />
     <Compile Include="INotificacionRepositorio.cs" />
+    <Compile Include="IGeneracionNotificacionesRepositorio.cs" />
+    <Compile Include="GeneracionNotificacionesRepositorio.cs" />
     <Compile Include="ComercioProductoRepositorio.cs" />
     <Compile Include="IComercioProductoRepositorio.cs" />
     <Compile Include="ProductoRepositorio.cs" />
@@ -126,6 +128,14 @@
     <Compile Include="UsuarioPermisoRepositorio.cs" />
     <Compile Include="UsuarioPreferenciaRepositorio.cs" />
     <Compile Include="UsuarioRepositorio.cs" />
+    <Compile Include="IZonaUsuarioRepositorio.cs" />
+    <Compile Include="ZonaUsuarioRepositorio.cs" />
+    <Compile Include="IPerfilInversorRepositorio.cs" />
+    <Compile Include="PerfilInversorRepositorio.cs" />
+    <Compile Include="IRecomendacionComprasRepositorio.cs" />
+    <Compile Include="RecomendacionComprasRepositorio.cs" />
+    <Compile Include="IProductoEmbeddingRepositorio.cs" />
+    <Compile Include="ProductoEmbeddingRepositorio.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

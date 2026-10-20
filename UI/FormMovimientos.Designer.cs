@@ -61,7 +61,7 @@
             this.lblCategoriaMovimiento = new Krypton.Toolkit.KryptonLabel();
             this.btnEscanearTicket = new Krypton.Toolkit.KryptonButton();
             this.pnlEscaneoTicket = new System.Windows.Forms.Panel();
-            this.prgbEscaneoTicket = new System.Windows.Forms.ProgressBar();
+            this.prgbEscaneoTicket = new Krypton.Toolkit.KryptonProgressBar();
             this.lblEscaneoTicketEnCurso = new Krypton.Toolkit.KryptonLabel();
             ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltros)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.groupBoxFiltros.Panel)).BeginInit();
@@ -742,7 +742,7 @@
         private Krypton.Toolkit.KryptonButton btnEliminarMovimiento;
         private Krypton.Toolkit.KryptonButton btnEscanearTicket;
         private System.Windows.Forms.Panel pnlEscaneoTicket;
-        private System.Windows.Forms.ProgressBar prgbEscaneoTicket;
+        private Krypton.Toolkit.KryptonProgressBar prgbEscaneoTicket;
         private Krypton.Toolkit.KryptonLabel lblEscaneoTicketEnCurso;
         private System.Windows.Forms.TableLayoutPanel tlpFechasFiltro;
         private System.Windows.Forms.TableLayoutPanel tlpCamposFiltro;

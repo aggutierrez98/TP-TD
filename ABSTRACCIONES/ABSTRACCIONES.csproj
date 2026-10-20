@@ -52,7 +52,15 @@
     <Compile Include="IObservador.cs" />
     <Compile Include="IEscaneoTicketService.cs" />
     <Compile Include="IAsistenteFinancieroService.cs" />
+    <Compile Include="HerramientaAsistente.cs" />
     <Compile Include="IntercambioChatbot.cs" />
+    <Compile Include="CategoriaConsulta.cs" />
+    <Compile Include="IClasificadorConsultas.cs" />
+    <Compile Include="IServicioEmbeddings.cs" />
+    <Compile Include="TipoReferenciaAsistente.cs" />
+    <Compile Include="ReferenciaAsistente.cs" />
+    <Compile Include="ContextoAsistente.cs" />
+    <Compile Include="SolicitudAsistente.cs" />
     <Compile Include="IEventoBitacora.cs" />
     <Compile Include="IFiltroBitacora.cs" />
     <Compile Include="IIdioma.cs" />
@@ -77,6 +85,7 @@
     <Compile Include="IUsuarioAutenticado.cs" />
     <Compile Include="IUsuarioSnapshot.cs" />
     <Compile Include="IUsuarioPreferencia.cs" />
+    <Compile Include="ProveedoresMercado.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

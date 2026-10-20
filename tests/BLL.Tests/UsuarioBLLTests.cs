@@ -351,6 +351,40 @@ namespace BLL.Tests
         }
 
         [TestMethod]
+        public void RegistrarParaOnboarding_AltaConfirmada_ContinuacionPropietarioFijoSinSesionNiCredenciales()
+        {
+            var fixture = new UsuarioFixture();
+            var entrada = new Usuario { Id = 999, Username = " nuevo " };
+            var continuacion = fixture.CreateSut().RegistrarParaOnboarding(entrada, "secreto");
+            Assert.IsNotNull(continuacion);
+            Assert.AreEqual(fixture.Unidad.UsuarioRepo.LastInserted.Id, continuacion.UsuarioId);
+            Assert.AreNotEqual(999, continuacion.UsuarioId);
+            entrada.Id = 123;
+            Assert.AreEqual(fixture.Unidad.UsuarioRepo.LastInserted.Id, continuacion.UsuarioId);
+            Assert.IsTrue(fixture.Unidad.SaveCalled);
+            Assert.IsFalse(fixture.Sesion.HaySesionActiva());
+            Assert.IsEmpty(typeof(ContinuacionPerfilInversor).GetConstructors());
+            Assert.IsEmpty(typeof(ContinuacionPerfilInversor).GetProperties());
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void RegistrarParaOnboarding_AltaRechazadaONoConfirmada_NoEntregaContinuacion(bool falloCommit)
+        {
+            var fixture = new UsuarioFixture();
+            fixture.Unidad.ThrowOnSave = falloCommit;
+            if (!falloCommit) fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "nuevo" };
+            ContinuacionPerfilInversor resultado = null;
+            if (falloCommit)
+                Assert.ThrowsExactly<ExcepcionTecnica>(() => resultado = fixture.CreateSut().RegistrarParaOnboarding(new Usuario { Username = "nuevo" }, "pwd"));
+            else
+                Assert.ThrowsExactly<ExcepcionNegocio>(() => resultado = fixture.CreateSut().RegistrarParaOnboarding(new Usuario { Username = "nuevo" }, "pwd"));
+            Assert.IsNull(resultado);
+            Assert.IsFalse(fixture.Sesion.HaySesionActiva());
+        }
+
+        [TestMethod]
         public void Registrar_RepoException_WrapsInExcepcionTecnicaAndDoesNotSave()
         {
             UsuarioFixture fixture = new UsuarioFixture();

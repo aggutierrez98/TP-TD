@@ -14,7 +14,7 @@
 - [x] 2.1 Crear `UI/Ui.references.props` con `Reference`/`HintPath`/`Private=true` e importarlo desde `UI.csproj`; verificar que `TpIDS.sln` compila (se hizo junto con 2.2: convivir con los `PackageReference` duplicaria referencias)
 - [x] 2.2 Quitar los 4 `PackageReference`, `RuntimeIdentifier(s)` y la copia desde `$(NuGetPackageRoot)`; reemplazar por `None` + `CopyToOutputDirectory` hacia `lib/`; verificar que el output contiene `libSkiaSharp.dll` y `libHarfBuzzSharp.dll`
 - [x] 2.3 Pasar GMap a `AccessMode.ServerOnly` en `FormSeleccionarUbicacionComercio.cs` y verificar que el mapa carga tiles y los tests UI del mapa siguen pasando
-- [ ] 2.4 Revisar los `bindingRedirect` de `App.config` contra las identidades reales del output y verificar con `monodis`/`ildasm` o con el arranque que no hay `FileLoadException`
+- [x] 2.4 Revisar los `bindingRedirect` de `App.config` contra las identidades reales del output y verificar con `monodis`/`ildasm` o con el arranque que no hay `FileLoadException`
 
 ## 3. Verificacion de portabilidad
 
@@ -25,5 +25,5 @@
 
 ## 4. Cierre
 
-- [ ] 4.1 Actualizar `tests/README.md` y el apartado de portabilidad de AGENTS.md y verificar que ya no declaran a UI como incumplidora
-- [ ] 4.2 Marcar la tarea 5.2 de `migrar-json-system-text-sin-nuget` como resuelta por este cambio, anotando el nombre, y verificar con `openspec list`
+- [x] 4.1 Actualizar `tests/README.md` y el apartado de portabilidad de AGENTS.md y verificar que ya no declaran a UI como incumplidora
+- [x] 4.2 Marcar la tarea 5.2 de `migrar-json-system-text-sin-nuget` como resuelta por este cambio, anotando el nombre, y verificar con `openspec list`
