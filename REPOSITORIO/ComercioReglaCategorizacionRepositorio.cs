@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,21 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId)
+        public List<Comercio> ObtenerComerciosPorReglaCategorizacion(ReglaCategorizacion reglaCategorizacion)
         {
-            return _comercioReglaCategorizacionDAL.ObtenerComercioIdsPorReglaCategorizacion(reglaCategorizacionId, _accesoDatos);
+            List<Comercio> comercios = _comercioReglaCategorizacionDAL.ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion, _accesoDatos);
+            ComercioRepositorio comercioRepositorio = new ComercioRepositorio(_accesoDatos);
+            return comercios.Select(item => comercioRepositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds)
+        public bool ReemplazarComerciosDeReglaCategorizacion(ReglaCategorizacion reglaCategorizacion, IEnumerable<Comercio> comercios)
         {
-            return _comercioReglaCategorizacionDAL.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacionId, comercioIds, _accesoDatos);
+            return _comercioReglaCategorizacionDAL.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion, comercios, _accesoDatos);
         }
 
-        public int ContarPorComercio(int comercioId)
+        public int ContarPorComercio(Comercio comercio)
         {
-            return _comercioReglaCategorizacionDAL.ContarPorComercio(comercioId, _accesoDatos);
+            return _comercioReglaCategorizacionDAL.ContarPorComercio(comercio, _accesoDatos);
         }
     }
 }

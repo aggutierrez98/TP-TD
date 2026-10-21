@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,21 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerComercioIdsPorPromocion(int promocionId)
+        public List<Comercio> ObtenerComerciosPorPromocion(Promocion promocion)
         {
-            return _promocionComercioDAL.ObtenerComercioIdsPorPromocion(promocionId, _accesoDatos);
+            ComercioRepositorio repositorio = new ComercioRepositorio(_accesoDatos);
+            return _promocionComercioDAL.ObtenerComerciosPorPromocion(promocion, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public List<int> ObtenerPromocionIdsPorComercio(int comercioId)
+        public List<Promocion> ObtenerPromocionesPorComercio(Comercio comercio)
         {
-            return _promocionComercioDAL.ObtenerPromocionIdsPorComercio(comercioId, _accesoDatos);
+            PromocionRepositorio repositorio = new PromocionRepositorio(_accesoDatos);
+            return _promocionComercioDAL.ObtenerPromocionesPorComercio(comercio, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarComerciosDePromocion(int promocionId, List<int> comercioIds)
+        public bool ReemplazarComerciosDePromocion(Promocion promocion, List<Comercio> comercios)
         {
-            return _promocionComercioDAL.ReemplazarComerciosDePromocion(promocionId, comercioIds, _accesoDatos);
+            return _promocionComercioDAL.ReemplazarComerciosDePromocion(promocion, comercios, _accesoDatos);
         }
     }
 }

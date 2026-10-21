@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,14 +20,14 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<string> ObtenerSegmentosPorPromocion(int promocionId)
+        public List<string> ObtenerSegmentosPorPromocion(Promocion promocion)
         {
-            return _dal.ObtenerSegmentosPorPromocion(promocionId, _accesoDatos);
+            return _dal.ObtenerSegmentosPorPromocion(promocion, _accesoDatos);
         }
 
-        public bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos)
+        public bool ReemplazarSegmentosDePromocion(Promocion promocion, List<string> segmentos)
         {
-            return _dal.ReemplazarSegmentosDePromocion(promocionId, segmentos ?? new List<string>(), _accesoDatos);
+            return _dal.ReemplazarSegmentosDePromocion(promocion, segmentos ?? new List<string>(), _accesoDatos);
         }
     }
 }

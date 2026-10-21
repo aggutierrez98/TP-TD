@@ -14,8 +14,8 @@ namespace REPOSITORIO
 
         bool ReemplazarRelaciones(List<Tuple<int, int>> relaciones);
 
-        bool EliminarPermisos(List<int> idsPermiso);
+        bool EliminarPermisos(List<IPermiso> permisos);
 
-        int ObtenerIdPorNombre(string nombre);
+        IPermiso ObtenerPorNombre(string nombre);
     }
 }

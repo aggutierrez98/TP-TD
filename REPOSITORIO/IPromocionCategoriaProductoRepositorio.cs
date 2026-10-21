@@ -1,14 +1,15 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IPromocionCategoriaProductoRepositorio
     {
-        List<int> ObtenerCategoriaProductoIdsPorPromocion(int promocionId, bool excluidos);
+        List<CategoriaProducto> ObtenerCategoriasProductoPorPromocion(Promocion promocion, bool excluidos);
 
-        bool ReemplazarCategoriasProductoDePromocion(int promocionId, List<int> incluidos, List<int> excluidos);
+        bool ReemplazarCategoriasProductoDePromocion(Promocion promocion, List<CategoriaProducto> incluidos, List<CategoriaProducto> excluidos);
 
         // Promociones que incluyen o excluyen la categoria: la baja de la categoria se bloquea si hay alguna.
-        int ContarPorCategoriaProducto(int categoriaProductoId);
+        int ContarPorCategoriaProducto(CategoriaProducto categoriaProducto);
     }
 }

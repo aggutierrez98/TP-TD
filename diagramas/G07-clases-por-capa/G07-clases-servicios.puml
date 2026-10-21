@@ -1,106 +1,584 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa SERVICIOS
-
+title G07 - Diagrama de clases por capa - SERVICIOS
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "ABSTRACCIONES" <<Frame>> {
-  interface IPermiso
-  enum TipoMovimiento
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'SERVICIOS/AgenteAhorro.cs
+  class "AgenteAhorro" as SERVICIOS_AgenteAhorro {
+    ~Tipo : string
+    #PromptEspecialista : string
+  }
+  'SERVICIOS/AgenteFinanzasGenerales.cs
+  class "AgenteFinanzasGenerales" as SERVICIOS_AgenteFinanzasGenerales {
+    ~Tipo : string
+    #PromptEspecialista : string
+  }
+  'SERVICIOS/AgenteIA.cs
+  class "AgenteIA" as SERVICIOS_AgenteIA {
+    ~ReglasDeAlcance : string
+    ~InicioDatos : string
+    ~FinDatos : string
+    ~Tipo : string
+    #PromptEspecialista : string
+    ~ArmarInstrucciones(contexto : IContextoAsistente) : string
+    ~ArmarRequestBody(solicitud : ISolicitudAsistente) : string
+    ~ResponderAsync(solicitud : ISolicitudAsistente) : Task<string>
+  }
+  'SERVICIOS/AgenteInversiones.cs
+  class "AgenteInversiones" as SERVICIOS_AgenteInversiones {
+    ~Tipo : string
+    #PromptEspecialista : string
+  }
+  'SERVICIOS/ClienteMercadoPublico.cs
+  class "ClienteMercadoPublico" as SERVICIOS_ClienteMercadoPublico {
+    ~ClienteMercadoPublico(handler : HttpMessageHandler, timeout : TimeSpan, ahora : Func<DateTime>, vigencia :\nTimeSpan)
+    ~ObtenerAsync(url : string, parsear : Func<JsonElement, List<DatoMercado>>, ct : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+    ~Texto(e : JsonElement, nombre : string) : string
+    ~Numero(e : JsonElement, nombre : string) : decimal?
+    ~Fecha(e : JsonElement, nombre : string) : DateTime?
+  }
+  'SERVICIOS/ContextoAsistente.cs
+  class "ContextoAsistente" as SERVICIOS_ContextoAsistente {
+    ~Vacio : ContextoAsistente
+    ~ContextoAsistente(datosJson : string, referenciasPermitidas : IReadOnlyList<IReferenciaAsistente>)
+    ~DatosJson : string
+    ~ReferenciasPermitidas : IReadOnlyList<IReferenciaAsistente>
+  }
+  'SERVICIOS/DatoMercado.cs
+  class "DatoMercado" as SERVICIOS_DatoMercado {
+    ~Nombre : string
+    ~Tipo : string
+    ~Fuente : string
+    ~Fecha : DateTime
+    ~Precio : decimal?
+    ~Volumen : decimal?
+    ~Vcp : decimal?
+    ~Tasa : decimal?
+    ~TipoTasa : string
+    ~Moneda : string
+    ~MesesInmovilizacion : int?
+    ~DiasHabilesDisponibilidad : int?
+    ~RequierePreaviso : bool?
+    ~RequierePermanencia : bool?
+    ~FuenteCondiciones : string
+    ~FechaDisponibilidadMaxima : DateTime?
+  }
+  'SERVICIOS/GeminiFunciones.cs
+  class "DeclaracionFuncionGemini" as SERVICIOS_DeclaracionFuncionGemini {
+    ~DeclaracionFuncionGemini(nombre : string, descripcion : string, parametros : object)
+    ~Nombre : string
+    ~Descripcion : string
+    ~Parametros : object
+  }
+  'SERVICIOS/GeminiAsistenteFinancieroService.cs
+  class "GeminiAsistenteFinancieroService" as SERVICIOS_GeminiAsistenteFinancieroService {
+    ~GeminiAsistenteFinancieroService()
+    ~GeminiAsistenteFinancieroService(agenteAhorro : AgenteIA, agenteInversiones : AgenteIA,\nagenteFinanzasGenerales : AgenteIA, manejador : HttpMessageHandler, configuracion : Func<string, string>)
+    ~ObtenerRespuestaAsync(solicitud : ISolicitudAsistente) : Task<string>
+    ~ObtenerLlamadaHerramientaAsync(solicitud : ISolicitudAsistente, herramienta : IHerramientaAsistente,\ncancellationToken : CancellationToken) : Task<ILlamadaHerramientaAsistente>
+  }
+  'SERVICIOS/GeminiChatClient.cs
+  class "GeminiChatClient" as SERVICIOS_GeminiChatClient {
+    ~EndpointBase : string
+    ~ModeloPorDefecto : string
+    ~ObtenerRespuestaAsync(promptSistema : string, pregunta : string, historial :\nIEnumerable<IIntercambioChatbot>, apiKey : string, modelo : string) : Task<string>
+    ~PostearYLeerAsync(requestBody : string, apiKey : string, modelo : string) : Task<string>
+    ~PostearYLeerAsync(requestBody : string, apiKey : string, modelo : string, manejador : HttpMessageHandler,\ncancellationToken : CancellationToken) : Task<string>
+    ~ArmarRequestBody(promptSistema : string, pregunta : string, historial : IEnumerable<IIntercambioChatbot>) :\nstring
+    ~ArmarRequestBody(promptSistema : string, pregunta : string, historial : IEnumerable<IIntercambioChatbot>,\nopciones : OpcionesGeneracionGemini) : string
+    ~ObtenerLlamadasFuncionAsync(promptSistema : string, pregunta : string, historial :\nIEnumerable<IIntercambioChatbot>, opciones : OpcionesGeneracionGemini, apiKey : string, modelo : string,\nmanejador : HttpMessageHandler, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<LlamadaFuncionGemini>>
+    ~ExtraerLlamadasFuncion(jsonRespuesta : string) : IReadOnlyList<LlamadaFuncionGemini>
+    ~ExtraerTexto(jsonRespuesta : string) : string
+    ~ExtraerTextoCrudo(jsonRespuesta : string) : string
+  }
+  'SERVICIOS/GeminiClasificadorConsultas.cs
+  class "GeminiClasificadorConsultas" as SERVICIOS_GeminiClasificadorConsultas {
+    ~GeminiClasificadorConsultas()
+    ~GeminiClasificadorConsultas(manejador : HttpMessageHandler, obtenerApiKey : Func<string>, obtenerModelo :\nFunc<string>)
+    ~ClasificarAsync(pregunta : string, cancellationToken : CancellationToken) : Task<CategoriaConsulta>
+    ~ArmarRequestBody(pregunta : string) : string
+  }
+  'SERVICIOS/GeminiEscaneoTicketService.cs
+  class "GeminiEscaneoTicketService" as SERVICIOS_GeminiEscaneoTicketService {
+    ~EscanearTicketAsync(imagenBytes : byte[]) : Task<ITicketEscaneado>
+    ~ArmarRequestBody(imagenBytes : byte[]) : string
+    ~ExtraerTicket(jsonRespuesta : string) : TicketEscaneado
+  }
+  'SERVICIOS/GeminiServicioEmbeddings.cs
+  class "GeminiServicioEmbeddings" as SERVICIOS_GeminiServicioEmbeddings {
+    ~ModeloEmbeddings : string
+    ~Dimension : int
+    ~TextosPorLote : int
+    ~PrefijoTarea : string
+    ~TiempoMaximoPeticion : TimeSpan
+    ~GeminiServicioEmbeddings()
+    ~GeminiServicioEmbeddings(manejador : HttpMessageHandler, proveedorClave : Func<string>, tiempoMaximo :\nTimeSpan)
+    ~Modelo : string
+    ~CalcularAsync(textos : IReadOnlyList<string>, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<float[]>>
+    ~ArmarRequestBody(textos : IEnumerable<string>) : string
+  }
+  'SERVICIOS/HerramientaAsistente.cs
+  class "HerramientaAsistente" as SERVICIOS_HerramientaAsistente {
+    ~HerramientaAsistente(nombre : string, descripcion : string, parametrosJson : string)
+    ~Nombre : string
+    ~Descripcion : string
+    ~ParametrosJson : string
+  }
+  'SERVICIOS/IntercambioChatbot.cs
+  class "IntercambioChatbot" as SERVICIOS_IntercambioChatbot {
+    ~Pregunta : string
+    ~Respuesta : string
+  }
+  'SERVICIOS/LimiteUsoAsistente.cs
+  class "LimiteUsoAsistente" as SERVICIOS_LimiteUsoAsistente {
+    ~MaximoPorDefecto : int
+    ~ClaveConfiguracion : string
+    ~LimiteUsoAsistente()
+    ~LimiteUsoAsistente(maximoPorMinuto : int, reloj : Func<DateTime>)
+    ~IntentarConsumir(usuario : IUsuarioAutenticado) : bool
+    ~InterpretarMaximoConfigurado(valor : string) : int
+  }
+  'SERVICIOS/GeminiFunciones.cs
+  class "LlamadaFuncionGemini" as SERVICIOS_LlamadaFuncionGemini {
+    ~LlamadaFuncionGemini(id : string, nombre : string, argumentosJson : string)
+    ~Id : string
+    ~Nombre : string
+    ~ArgumentosJson : string
+  }
+  'SERVICIOS/HerramientaAsistente.cs
+  class "LlamadaHerramientaAsistente" as SERVICIOS_LlamadaHerramientaAsistente {
+    ~LlamadaHerramientaAsistente(nombre : string, argumentosJson : string)
+    ~Nombre : string
+    ~ArgumentosJson : string
+  }
+  'SERVICIOS/GeminiFunciones.cs
+  class "OpcionesGeneracionGemini" as SERVICIOS_OpcionesGeneracionGemini {
+    ~Temperatura : double?
+    ~Funciones : IReadOnlyList<DeclaracionFuncionGemini>
+    ~FuncionesPermitidas : IReadOnlyList<string>
+  }
+  'SERVICIOS/ProveedorArgentinaDatos.cs
+  class "ProveedorArgentinaDatos" as SERVICIOS_ProveedorArgentinaDatos {
+    ~ProveedorArgentinaDatos()
+    ~ProveedorArgentinaDatos(handler : HttpMessageHandler, timeout : TimeSpan, ahora : Func<DateTime>)
+    ~ObtenerFondosAsync(tipo : string, fecha : DateTime?, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+    ~ObtenerPlazosFijosAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+    ~ObtenerCuentasRemuneradasAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+    ~ObtenerInflacionAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+  }
+  'SERVICIOS/ProveedorCriptoYa.cs
+  class "ProveedorCriptoYa" as SERVICIOS_ProveedorCriptoYa {
+    ~ProveedorCriptoYa()
+    ~ProveedorCriptoYa(handler : HttpMessageHandler, timeout : TimeSpan, ahora : Func<DateTime>)
+    ~ObtenerPreciosAsync(moneda : string, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  'SERVICIOS/ProveedorMercadoData912.cs
+  class "ProveedorMercadoData912" as SERVICIOS_ProveedorMercadoData912 {
+    ~ProveedorMercadoData912()
+    ~ProveedorMercadoData912(handler : HttpMessageHandler, timeout : TimeSpan, ahora : Func<DateTime>)
+    ~ObtenerCotizacionesAsync(cedears : bool, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  'SERVICIOS/ReferenciaAsistente.cs
+  class "ReferenciaAsistente" as SERVICIOS_ReferenciaAsistente {
+    ~ReferenciaAsistente(tipo : TipoReferenciaAsistente, nombre : string, esTicker : bool)
+    ~Tipo : TipoReferenciaAsistente
+    ~Nombre : string
+    ~EsTicker : bool
+  }
+  'SERVICIOS/SolicitudAsistente.cs
+  class "SolicitudAsistente" as SERVICIOS_SolicitudAsistente {
+    ~SolicitudAsistente(categoria : CategoriaConsulta, pregunta : string, historial :\nIReadOnlyList<IIntercambioChatbot>, contexto : IContextoAsistente)
+    ~Categoria : CategoriaConsulta
+    ~Pregunta : string
+    ~Historial : IReadOnlyList<IIntercambioChatbot>
+    ~Contexto : IContextoAsistente
+  }
+}
+package "Comercios y promociones" as P1 {
+  'SERVICIOS/GastoPorComercio.cs
+  class "GastoPorComercio" as SERVICIOS_GastoPorComercio {
+    ~Comercios : List<TotalPorComercio>
+    ~TotalSinComercio : decimal
+  }
+  'SERVICIOS/TotalPorComercio.cs
+  class "TotalPorComercio" as SERVICIOS_TotalPorComercio {
+    ~ComercioNombre : string
+    ~Total : decimal
+  }
+}
+package "Finanzas personales" as P2 {
+  'SERVICIOS/ReporteTabularPdfService.cs
+  class "ReporteTabularPdfService" as SERVICIOS_ReporteTabularPdfService {
+    ~Generar(reporte : IReporteTabularPdf) : byte[]
+  }
+  'SERVICIOS/ResumenMovimientos.cs
+  class "ResumenMovimientos" as SERVICIOS_ResumenMovimientos {
+    ~TotalIngresos : decimal
+    ~TotalEgresos : decimal
+  }
+  'SERVICIOS/TotalPorCategoria.cs
+  class "TotalPorCategoria" as SERVICIOS_TotalPorCategoria {
+    ~CategoriaNombre : string
+    ~Total : decimal
+  }
+}
+package "Idiomas y presentacion" as P3 {
+  'SERVICIOS/Idioma.cs
+  class "Idioma" as SERVICIOS_Idioma {
+    ~Id : int
+    ~Nombre : string
+    ~Default : bool
+    ~Traducciones : List<Traduccion>
+    ~Idioma()
+    ~ObtenerTraduccion(key : string) : string
+    ~TieneTraduccion(key : string) : bool
+    ~Traducciones : IList<ITraduccion>
+  }
+  'SERVICIOS/IdiomaCatalogoService.cs
+  class "IdiomaCatalogoService" as SERVICIOS_IdiomaCatalogoService {
+    ~NormalizarNombre(nombre : string) : string
+    ~ValidarNombreDuplicado(idiomas : IEnumerable<Idioma>, nombre : string, excluido : Idioma) : void
+    ~EstaCompleto(idioma : Idioma) : bool
+    ~ValidarIdiomaSeleccionable(idioma : Idioma) : void
+    ~LeerCatalogoJson(rutaArchivo : string) : Dictionary<string, string>
+    ~ValidarRutaExportacion(rutaArchivo : string) : void
+    ~ConstruirCatalogoExportable(idioma : Idioma) : Dictionary<string, string>
+    ~EscribirCatalogoJson(traducciones : Dictionary<string, string>, rutaArchivo : string) : void
+  }
+  'SERVICIOS/IdiomaService.cs
+  class "IdiomaService" as SERVICIOS_IdiomaService {
+    ~GetInstance() : IdiomaService
+    ~IdiomaActual : IIdioma
+    ~RegistrarObservador(observador : IObservador) : void
+    ~DesregistrarObservador(observador : IObservador) : void
+    ~Notificar() : void
+    ~CambiarIdioma(idioma : IIdioma) : void
+  }
+  'SERVICIOS/Palabra.cs
+  class "Palabra" as SERVICIOS_Palabra {
+    ~Id : int
+    ~Key : string
+  }
+  'SERVICIOS/Traduccion.cs
+  class "Traduccion" as SERVICIOS_Traduccion {
+    ~Idioma : IIdioma
+    ~Valor : string
+    ~Palabra : Palabra
+    ~Palabra : IPalabra
+  }
+}
+package "Infraestructura" as P4 {
+  'SERVICIOS/ExcepcionNegocio.cs
+  class "ExcepcionNegocio" as SERVICIOS_ExcepcionNegocio {
+    ~ExcepcionNegocio(messageKey : string)
+  }
+  'SERVICIOS/ExcepcionTecnica.cs
+  class "ExcepcionTecnica" as SERVICIOS_ExcepcionTecnica {
+    ~ExcepcionTecnica(messageKey : string)
+    ~ExcepcionTecnica(messageKey : string, innerException : Exception)
+  }
+  'SERVICIOS/GastoAcumuladoMensual.cs
+  class "GastoAcumuladoMensual" as SERVICIOS_GastoAcumuladoMensual {
+    ~MesActual : List<decimal>
+    ~MesAnterior : List<decimal>
+    ~AcumuladoActual : decimal
+    ~AcumuladoAnteriorAlMismoDia : decimal
+    ~VariacionPorcentual : decimal?
+  }
+  'SERVICIOS/RelojBusqueda.cs
+  interface "IRelojBusqueda" as SERVICIOS_IRelojBusqueda {
+    +Monotonico : TimeSpan
+    +AhoraUtc : DateTimeOffset
+    +EsperarAsync(duracion : TimeSpan, cancellationToken : CancellationToken) : Task
+  }
+  'SERVICIOS/RelojBusqueda.cs
+  class "RelojSistemaBusqueda" as SERVICIOS_RelojSistemaBusqueda {
+    ~Monotonico : TimeSpan
+    ~AhoraUtc : DateTimeOffset
+    ~EsperarAsync(duracion : TimeSpan, cancellationToken : CancellationToken) : Task
+  }
+  'SERVICIOS/TicketEscaneado.cs
+  class "TicketEscaneado" as SERVICIOS_TicketEscaneado {
+    ~Monto : decimal?
+    ~Fecha : DateTime?
+    ~Descripcion : string
+    ~TextoCrudo : string
+  }
+  'SERVICIOS/TotalPorDia.cs
+  class "TotalPorDia" as SERVICIOS_TotalPorDia {
+    ~Fecha : DateTime
+    ~Total : decimal
+  }
+  'SERVICIOS/TotalPorMes.cs
+  class "TotalPorMes" as SERVICIOS_TotalPorMes {
+    ~Anio : int
+    ~Mes : int
+    ~TotalIngresos : decimal
+    ~TotalEgresos : decimal
+  }
+}
+package "Monedas y tasas" as P5 {
+  'SERVICIOS/OpenExchangeRatesProveedor.cs
+  class "OpenExchangeRatesProveedor" as SERVICIOS_OpenExchangeRatesProveedor {
+    ~Endpoint : string
+    ~ClaveAppSettings : string
+    ~MonedaBaseEsperada : string
+    ~TiempoMaximoPeticion : TimeSpan
+    ~OpenExchangeRatesProveedor()
+    ~OpenExchangeRatesProveedor(manejador : HttpMessageHandler, proveedorClave : Func<string>, tiempoMaximo :\nTimeSpan)
+    ~ObtenerTasasAsync(cancellationToken : CancellationToken) : Task<ITasasCambioObtenidas>
+  }
+  'SERVICIOS/ProveedorTasasException.cs
+  class "ProveedorTasasException" as SERVICIOS_ProveedorTasasException {
+    ~ProveedorTasasException(estado : EstadoProveedorTasas)
+    ~ProveedorTasasException(estado : EstadoProveedorTasas, innerException : Exception)
+    ~ProveedorTasasException(estado : EstadoProveedorTasas, codigoHttp : int?, codigoProveedor : string,\ninnerException : Exception)
+    ~Estado : EstadoProveedorTasas
+    ~CodigoHttp : int?
+    ~CodigoProveedor : string
+  }
+  'SERVICIOS/TasasCambioObtenidas.cs
+  class "TasasCambioObtenidas" as SERVICIOS_TasasCambioObtenidas {
+    ~TasasCambioObtenidas(monedaBase : string, fechaFuenteUtc : DateTime?, tasas : IReadOnlyDictionary<string,\ndecimal>)
+    ~MonedaBase : string
+    ~FechaFuenteUtc : DateTime?
+    ~Tasas : IReadOnlyDictionary<string, decimal>
+  }
+}
+package "Ubicacion y zonas" as P6 {
+  'SERVICIOS/BusquedaUbicacionException.cs
+  class "BusquedaUbicacionException" as SERVICIOS_BusquedaUbicacionException {
+    ~BusquedaUbicacionException(estado : EstadoBusquedaUbicacion)
+    ~BusquedaUbicacionException(estado : EstadoBusquedaUbicacion, innerException : Exception)
+    ~BusquedaUbicacionException(estado : EstadoBusquedaUbicacion, codigoHttp : int?, esperaSugerida : TimeSpan?,\ninnerException : Exception)
+    ~Estado : EstadoBusquedaUbicacion
+    ~CodigoHttp : int?
+    ~EsperaSugerida : TimeSpan?
+  }
+  'SERVICIOS/ConsultaUbicacion.cs
+  class "ConsultaUbicacion" as SERVICIOS_ConsultaUbicacion {
+    ~ConsultaUbicacion(texto : string, idioma : string, zonaPreferida : ILimitesGeograficos)
+    ~Texto : string
+    ~Idioma : string
+    ~ZonaPreferida : ILimitesGeograficos
+  }
+  'SERVICIOS/LimitesGeograficos.cs
+  class "LimitesGeograficos" as SERVICIOS_LimitesGeograficos {
+    ~LimitesGeograficos(sur : double, oeste : double, norte : double, este : double)
+    ~Sur : double
+    ~Oeste : double
+    ~Norte : double
+    ~Este : double
+  }
+  'SERVICIOS/NominatimBusquedaUbicacionesService.cs
+  class "NominatimBusquedaUbicacionesService" as SERVICIOS_NominatimBusquedaUbicacionesService {
+    ~UserAgent : string
+    ~MaximoResultados : int
+    ~MaximoEntradasCache : int
+    ~MaximoBytesRespuesta : int
+    ~TiempoMaximoPeticion : TimeSpan
+    ~SeparacionMinima : TimeSpan
+    ~VigenciaCache : TimeSpan
+    ~EsperaPorDefectoLimite : TimeSpan
+    ~EsperaMaximaLimite : TimeSpan
+    ~NominatimBusquedaUbicacionesService()
+    ~NominatimBusquedaUbicacionesService(manejador : HttpMessageHandler, proveedorEndpoint : Func<string>, reloj :\nIRelojBusqueda)
+    ~BuscarAsync(consulta : IConsultaUbicacion, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IResultadoBusquedaUbicacion>>
+    ~InterpretarRespuesta(cuerpo : byte[]) : IReadOnlyList<ResultadoBusquedaUbicacion>
+  }
+  'SERVICIOS/ResultadoBusquedaUbicacion.cs
+  class "ResultadoBusquedaUbicacion" as SERVICIOS_ResultadoBusquedaUbicacion {
+    ~ResultadoBusquedaUbicacion(descripcion : string, latitud : double, longitud : double, tipo : string, limites\n: ILimitesGeograficos)
+    ~Descripcion : string
+    ~Latitud : double
+    ~Longitud : double
+    ~Tipo : string
+    ~Limites : ILimitesGeograficos
+  }
+}
+package "Usuarios y auditoria" as P7 {
+  'SERVICIOS/AutorizacionService.cs
+  class "AutorizacionService" as SERVICIOS_AutorizacionService {
+    ~GetInstance() : AutorizacionService
+    ~ActualizarPermisosUsuarioActual(permisos : IEnumerable<IPermiso>) : void
+    ~Limpiar() : void
+    ~TienePermiso(rutaPermiso : string) : bool
+  }
+  'SERVICIOS/EventoBitacora.cs
+  class "EventoBitacora" as SERVICIOS_EventoBitacora {
+    ~Id : int
+    ~FechaHora : DateTime
+    ~UsuarioId : int?
+    ~UsernameSnapshot : string
+    ~Actividad : string
+    ~Informacion : string
+    ~Nivel : string
+    ~Origen : string
+    ~EsTecnica : bool
+  }
+  'SERVICIOS/ExcepcionIntegridad.cs
+  class "ExcepcionIntegridad" as SERVICIOS_ExcepcionIntegridad {
+    ~ExcepcionIntegridad(tipo : TipoFalloIntegridad, tabla : string, registro : ABSTRACCIONES.IIntegrable,\nmessageKey : string)
+    ~Tipo : TipoFalloIntegridad
+    ~Tabla : string
+    ~Registro : ABSTRACCIONES.IIntegrable
+  }
+  'SERVICIOS/FiltroBitacora.cs
+  class "FiltroBitacora" as SERVICIOS_FiltroBitacora {
+    ~FechaDesde : DateTime?
+    ~FechaHasta : DateTime?
+    ~Usuario : string
+    ~Actividad : string
+    ~Nivel : string
+    ~EsTecnica : bool?
+  }
+  'SERVICIOS/HistorialEstadosService.cs
+  class "HistorialEstadosService" as SERVICIOS_HistorialEstadosService {
+    ~GetInstance() : HistorialEstadosService
+    ~Configurar(obtenedorVersionesUsuario : Func<IUsuarioAutenticado, IList<UsuarioHistorialSnapshot>>,\nobtenedorVersionUsuario : Func<IUsuarioSnapshot, UsuarioHistorialSnapshot>) : void
+    ~ObtenerVersionesUsuario(usuario : IUsuarioAutenticado) : IList<UsuarioHistorialSnapshot>
+    ~ObtenerVersionUsuario(snapshot : IUsuarioSnapshot) : UsuarioHistorialSnapshot
+    ~ObtenerVersionesUsuario(usuario : IUsuarioAutenticado) : IList<IUsuarioSnapshot>
+    ~ObtenerVersionUsuario(snapshot : IUsuarioSnapshot) : IUsuarioSnapshot
+  }
+  'SERVICIOS/IntegridadService.cs
+  class "IntegridadService" as SERVICIOS_IntegridadService {
+    ~CalcularDVH<T>(entidad : T) : string
+    ~CalcularDVV(listaDVH : IEnumerable<string>) : string
+    ~CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
+  }
+  'SERVICIOS/PasswordHasher.cs
+  class "PasswordHasher" as SERVICIOS_PasswordHasher {
+    ~HashPassword(password : string) : string
+    ~VerifyPassword(password : string, storedHash : string) : bool
+  }
+  'SERVICIOS/PermisoGrupo.cs
+  class "PermisoGrupo" as SERVICIOS_PermisoGrupo {
+    ~PermisoGrupo()
+    ~Id : int
+    ~Nombre : string
+    ~EsGrupo : bool
+    ~Hijos : IList<IPermiso>
+    ~Agregar(permiso : IPermiso) : void
+    ~Quitar(permiso : IPermiso) : void
+    ~Contiene(permiso : IPermiso) : bool
+    ~ObtenerPermisosHoja() : IList<IPermiso>
+    ~ToString() : string
+  }
+  'SERVICIOS/PermisoService.cs
+  class "PermisoService" as SERVICIOS_PermisoService {
+    ~ConstruirArbol(nodos : IList<IPermiso>, relaciones : IList<Tuple<int, int>>) : List<IPermiso>
+    ~ObtenerPermisosEfectivos(permisosAsignados : IEnumerable<IPermiso>) : List<IPermiso>
+    ~FiltrarGrupos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
+    ~FiltrarPermisos(nodos : IEnumerable<IPermiso>) : List<IPermiso>
+    ~NormalizarNombre(nombre : string) : string
+    ~ValidarNombre(nombre : string) : void
+    ~ValidarNombresUnicos(raices : IEnumerable<IPermiso>) : void
+    ~ValidarGruposNoVacios(nodos : IEnumerable<IPermiso>) : void
+    ~ValidarSinCiclos(raices : IEnumerable<IPermiso>) : void
+    ~GeneraCiclo(padre : IPermiso, hijo : IPermiso) : bool
+    ~Aplanar(raices : IEnumerable<IPermiso>) : List<IPermiso>
+    ~ObtenerRelaciones(raices : IEnumerable<IPermiso>) : List<Tuple<int, int>>
+  }
+  'SERVICIOS/PermisoSimple.cs
+  class "PermisoSimple" as SERVICIOS_PermisoSimple {
+    ~PermisoSimple()
+    ~Id : int
+    ~Nombre : string
+    ~EsGrupo : bool
+    ~Hijos : IList<IPermiso>
+    ~Agregar(permiso : IPermiso) : void
+    ~Quitar(permiso : IPermiso) : void
+    ~Contiene(permiso : IPermiso) : bool
+    ~ObtenerPermisosHoja() : IList<IPermiso>
+    ~ToString() : string
+  }
+  'SERVICIOS/ResultadoComparacionEstado.cs
+  class "ResultadoComparacionEstado" as SERVICIOS_ResultadoComparacionEstado {
+    ~Campo : string
+    ~ValorAnterior : string
+    ~ValorNuevo : string
+  }
+  'SERVICIOS/Sesion.cs
+  class "Sesion" as SERVICIOS_Sesion {
+    ~GetInstance() : Sesion
+    ~IniciarSesion(usuario : IUsuarioAutenticado) : void
+    ~CerrarSesion() : void
+    ~GetUsuarioActual() : IUsuarioAutenticado
+    ~GetUsuarioActualNombre() : string
+    ~ActualizarUsuarioActualNombre(username : string) : void
+    ~HaySesionActiva() : bool
+  }
+  'SERVICIOS/ExcepcionIntegridad.cs
+  enum "TipoFalloIntegridad" as SERVICIOS_TipoFalloIntegridad {
+    Horizontal
+    Vertical
+  }
+  'SERVICIOS/UsuarioHistorialSnapshot.cs
+  class "UsuarioHistorialSnapshot" as SERVICIOS_UsuarioHistorialSnapshot {
+    ~UsuarioHistorialSnapshot()
+    ~HistorialId : int
+    ~Usuario : IUsuarioAutenticado
+    ~FechaHora : DateTime
+    ~ActorUsuario : IUsuarioAutenticado
+    ~ActorUsernameSnapshot : string
+    ~Accion : string
+    ~Observaciones : string
+    ~Username : string
+    ~PasswordHash : string
+    ~Activo : bool
+    ~Idioma : IIdioma
+    ~Permisos : IList<IPermiso>
+  }
+  'SERVICIOS/UsuarioPreferencia.cs
+  class "UsuarioPreferencia" as SERVICIOS_UsuarioPreferencia {
+    ~Usuario : IUsuarioAutenticado
+    ~Idioma : IIdioma
+  }
 }
 
-package "SERVICIOS (servicios concretos + tipos de dominio)" {
+SERVICIOS_AgenteAhorro --|> SERVICIOS_AgenteIA
+SERVICIOS_AgenteFinanzasGenerales --|> SERVICIOS_AgenteIA
+SERVICIOS_AgenteInversiones --|> SERVICIOS_AgenteIA
+SERVICIOS_AutorizacionService --> SERVICIOS_PermisoService : _permisoService
+SERVICIOS_ExcepcionIntegridad --|> SERVICIOS_ExcepcionTecnica
+SERVICIOS_GastoPorComercio --> "*" SERVICIOS_TotalPorComercio : Comercios
+SERVICIOS_GeminiAsistenteFinancieroService --> SERVICIOS_AgenteIA : _agenteAhorro
+SERVICIOS_GeminiAsistenteFinancieroService --> SERVICIOS_AgenteIA : _agenteFinanzasGenerales
+SERVICIOS_GeminiAsistenteFinancieroService --> SERVICIOS_AgenteIA : _agenteInversiones
+SERVICIOS_HistorialEstadosService --> "*" SERVICIOS_UsuarioHistorialSnapshot : _obtenedorVersionesUsuario
+SERVICIOS_HistorialEstadosService --> SERVICIOS_UsuarioHistorialSnapshot : _obtenedorVersionUsuario
+SERVICIOS_Idioma --> "*" SERVICIOS_Traduccion : Traducciones
+SERVICIOS_NominatimBusquedaUbicacionesService --> SERVICIOS_IRelojBusqueda : _reloj
+SERVICIOS_OpcionesGeneracionGemini --> "*" SERVICIOS_DeclaracionFuncionGemini : Funciones
+SERVICIOS_ProveedorArgentinaDatos --> SERVICIOS_ClienteMercadoPublico : _cliente
+SERVICIOS_ProveedorCriptoYa --> SERVICIOS_ClienteMercadoPublico : _cliente
+SERVICIOS_ProveedorMercadoData912 --> SERVICIOS_ClienteMercadoPublico : _cliente
+SERVICIOS_RelojSistemaBusqueda ..|> SERVICIOS_IRelojBusqueda
+SERVICIOS_Traduccion --> SERVICIOS_Palabra : Palabra
 
-  ' --- Seguridad / sesion / permisos ---
-  ' Las interfaces de ABSTRACCIONES implementadas 1:1 por una sola clase
-  ' se muestran como estereotipo en la propia clase (no como caja aparte)
-  ' para no duplicar nodos sin agregar informacion nueva.
-  class Sesion <<singleton>> <<ISesion>>
-  class UsuarioAutenticadoSesion <<IUsuarioAutenticado>>
-  class AutorizacionService <<singleton>> <<IAutorizacion>>
-  class PasswordHasher <<IPasswordHasher>>
-  class PermisoService
-  class PermisoSimple <<IPermiso>>
-  class PermisoGrupo <<IPermiso>>
-
-  ' --- Idioma (Observer) ---
-  class IdiomaService <<singleton>> <<IObservado>>
-  class IdiomaCatalogoService
-  class Idioma <<IIdioma>>
-  class Traduccion <<ITraduccion>>
-  class Palabra <<IPalabra>>
-
-  ' --- Integridad ---
-  class IntegridadService <<IIntegridadService>>
-
-  ' --- Historial / control de cambios ---
-  class HistorialEstadosService <<singleton>> <<IServicioHistorialEstados>>
-  class UsuarioHistorialSnapshot <<IUsuarioSnapshot>>
-  class ResultadoComparacionEstado <<IResultadoComparacionEstado>>
-  class UsuarioPreferencia <<IUsuarioPreferencia>>
-
-  ' --- Bitacora ---
-  class EventoBitacora <<IEventoBitacora>>
-  class FiltroBitacora <<IFiltroBitacora>>
-
-  ' --- Movimientos (dominio financiero, NEG01/NEG02) ---
-  class FiltroMovimiento
-
-  ' --- Excepciones ---
-  class ExcepcionNegocio
-  class ExcepcionTecnica
-  class ExcepcionIntegridad
-  enum TipoFalloIntegridad
-}
-
-AutorizacionService --> PermisoService
-PermisoSimple ..|> IPermiso
-PermisoGrupo ..|> IPermiso
-PermisoGrupo o--> "*" IPermiso : Hijos (Composite)
-Idioma o--> "*" Traduccion
-Traduccion --> Palabra
-FiltroMovimiento ..> TipoMovimiento
-ExcepcionIntegridad --|> ExcepcionTecnica
-ExcepcionIntegridad --> TipoFalloIntegridad
-
-' --- Quiebres de layout (edges ocultos, no representan relaciones reales) ---
-' Fuerzan una grilla de ~4 columnas por fila en vez de una sola fila muy
-' ancha, para que el diagrama entre en una hoja A4/Word sin quedar ilegible.
-
-Sesion -[hidden]right-> UsuarioAutenticadoSesion
-UsuarioAutenticadoSesion -[hidden]right-> AutorizacionService
-AutorizacionService -[hidden]right-> PasswordHasher
-
-PermisoService -[hidden]right-> PermisoSimple
-PermisoSimple -[hidden]right-> PermisoGrupo
-
-IdiomaService -[hidden]right-> IdiomaCatalogoService
-IdiomaCatalogoService -[hidden]right-> Idioma
-
-Traduccion -[hidden]right-> Palabra
-
-HistorialEstadosService -[hidden]right-> UsuarioHistorialSnapshot
-UsuarioHistorialSnapshot -[hidden]right-> ResultadoComparacionEstado
-ResultadoComparacionEstado -[hidden]right-> UsuarioPreferencia
-
-EventoBitacora -[hidden]right-> FiltroBitacora
-FiltroBitacora -[hidden]right-> FiltroMovimiento
-
-ExcepcionNegocio -[hidden]right-> ExcepcionTecnica
-ExcepcionTecnica -[hidden]right-> ExcepcionIntegridad
-ExcepcionIntegridad -[hidden]right-> TipoFalloIntegridad
-
-Sesion -[hidden]down-> PermisoService
-PermisoService -[hidden]down-> IdiomaService
-IdiomaService -[hidden]down-> Traduccion
-Traduccion -[hidden]down-> IntegridadService
-IntegridadService -[hidden]down-> HistorialEstadosService
-HistorialEstadosService -[hidden]down-> EventoBitacora
-EventoBitacora -[hidden]down-> ExcepcionNegocio
-
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
 @enduml

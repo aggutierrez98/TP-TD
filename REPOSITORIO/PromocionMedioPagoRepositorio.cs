@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,20 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerMedioPagoIdsPorPromocion(int promocionId)
+        public List<MedioPago> ObtenerMediosPagoPorPromocion(Promocion promocion)
         {
-            return _dal.ObtenerMedioPagoIdsPorPromocion(promocionId, _accesoDatos);
+            MedioPagoRepositorio repositorio = new MedioPagoRepositorio(_accesoDatos);
+            return _dal.ObtenerMediosPagoPorPromocion(promocion, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarMediosPagoDePromocion(int promocionId, List<int> medioPagoIds)
+        public bool ReemplazarMediosPagoDePromocion(Promocion promocion, List<MedioPago> mediosPago)
         {
-            return _dal.ReemplazarMediosPagoDePromocion(promocionId, medioPagoIds ?? new List<int>(), _accesoDatos);
+            return _dal.ReemplazarMediosPagoDePromocion(promocion, mediosPago ?? new List<MedioPago>(), _accesoDatos);
         }
 
-        public int ContarPorMedioPago(int medioPagoId)
+        public int ContarPorMedioPago(MedioPago medioPago)
         {
-            return _dal.ContarPorMedioPago(medioPagoId, _accesoDatos);
+            return _dal.ContarPorMedioPago(medioPago, _accesoDatos);
         }
     }
 }

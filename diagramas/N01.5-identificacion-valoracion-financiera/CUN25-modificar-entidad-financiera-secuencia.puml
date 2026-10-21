@@ -1,0 +1,76 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN25 Modificar entidad financiera — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionEntidadesFinancieras" as FormGestionEntidadesFinancieras
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+participant "EntidadFinancieraDAL" as EntidadFinancieraDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionEntidadesFinancieras : El actor desea corregir o actualizar el nombre de una entidad financiera.
+Actor -> FormGestionEntidadesFinancieras : selecciona la opción «Entidades financieras» del menú «Operador».
+FormGestionEntidadesFinancieras --> Actor : presenta la pantalla «Gestión de entidades financieras» con el listado de entidades\nregistradas.
+Actor -> FormGestionEntidadesFinancieras : selecciona del listado la entidad a modificar.
+FormGestionEntidadesFinancieras --> Actor : muestra el nombre de la entidad seleccionada en el campo «Nombre:».
+Actor -> FormGestionEntidadesFinancieras : modifica el nombre en el campo «Nombre:».
+Actor -> FormGestionEntidadesFinancieras : presiona el botón «Actualizar».
+FormGestionEntidadesFinancieras -> EntidadFinancieraBLL ++ : Actualizar(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> EntidadFinancieraBLL -- : IUnidadDeTrabajo
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : EntidadFinanciera
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerTodas()
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : List<EntidadFinanciera>
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : List<EntidadFinanciera>
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : Actualizar(entidad: EntidadFinanciera)
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : Actualizar(entidad: EntidadFinanciera, accesoDatos:\nAccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : bool
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : bool
+EntidadFinancieraBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL --> FormGestionEntidadesFinancieras -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionEntidadesFinancieras -> EntidadFinancieraBLL ++ : ObtenerTodas()
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerTodas()
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : List<EntidadFinanciera>
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : List<EntidadFinanciera>
+EntidadFinancieraBLL --> FormGestionEntidadesFinancieras -- : List<EntidadFinanciera>
+end
+FormGestionEntidadesFinancieras --> Actor : guarda el nuevo nombre, actualiza el listado manteniendo seleccionada la entidad e informa\nel resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/EntidadFinancieraBLL.cs:29 EntidadFinancieraBLL.ObtenerTodas
+' BLL/EntidadFinancieraBLL.cs:72 EntidadFinancieraBLL.Actualizar
+' DAL/EntidadFinancieraDAL.cs:106 EntidadFinancieraDAL.Actualizar
+' DAL/EntidadFinancieraDAL.cs:19 EntidadFinancieraDAL.ObtenerPorId
+' DAL/EntidadFinancieraDAL.cs:48 EntidadFinancieraDAL.ObtenerTodas
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:27 EntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:35 EntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:63 EntidadFinancieraRepositorio.Actualizar
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:12 IEntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:16 IEntidadFinancieraRepositorio.Actualizar
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionEntidadesFinancieras.cs:81 FormGestionEntidadesFinancieras.btnEditarEntidadFinanciera_Click
+@enduml

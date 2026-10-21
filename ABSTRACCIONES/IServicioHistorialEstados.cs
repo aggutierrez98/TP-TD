@@ -4,8 +4,8 @@ namespace ABSTRACCIONES
 {
     public interface IServicioHistorialEstados
     {
-        IList<IUsuarioSnapshot> ObtenerVersionesUsuario(int usuarioId);
+        IList<IUsuarioSnapshot> ObtenerVersionesUsuario(IUsuarioAutenticado usuario);
 
-        IUsuarioSnapshot ObtenerVersionUsuario(int historialId);
+        IUsuarioSnapshot ObtenerVersionUsuario(IUsuarioSnapshot snapshot);
     }
 }

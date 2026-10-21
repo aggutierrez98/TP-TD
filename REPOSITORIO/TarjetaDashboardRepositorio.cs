@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return tarjeta;
         }
 
-        public List<TarjetaDashboard> ObtenerPorDashboard(int dashboardId)
+        public List<TarjetaDashboard> ObtenerPorDashboard(Dashboard dashboard)
         {
-            List<TarjetaDashboard> tarjetas = _tarjetaDashboardDAL.ObtenerPorDashboard(dashboardId, _accesoDatos);
+            List<TarjetaDashboard> tarjetas = _tarjetaDashboardDAL.ObtenerPorDashboard(dashboard, _accesoDatos);
             tarjetas.ForEach(Hidratar);
             return tarjetas;
         }
@@ -54,9 +54,9 @@ namespace REPOSITORIO
             return _tarjetaDashboardDAL.Actualizar(tarjeta, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(TarjetaDashboard tarjeta)
         {
-            return _tarjetaDashboardDAL.Eliminar(id, _accesoDatos);
+            return _tarjetaDashboardDAL.Eliminar(tarjeta, _accesoDatos);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using BLL.Tests.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -42,7 +43,7 @@ namespace BLL.Tests
             Assert.AreEqual(7, f.Repo.UsuarioCuentas);
             Assert.Contains("Super propio", servicio.LastSolicitud.Contexto.DatosJson);
             Assert.IsFalse(respuesta.EsRechazo);
-            Assert.AreEqual(7, unidad.ConsultaChatbotRepo.LastInserted.UsuarioId);
+            Assert.AreEqual(7, unidad.ConsultaChatbotRepo.LastInserted.Usuario.Id);
         }
 
         [TestMethod]
@@ -105,7 +106,7 @@ namespace BLL.Tests
         private static AsistenteFinancieroBLL Crear(ComprasFixture f, FakeAsistenteFinancieroService servicio, FakeUnidadDeTrabajo unidad, IObservado idioma = null)
         {
             return new AsistenteFinancieroBLL(new FakeConsultaChatbotRepositorio(), new FakeChatbotFinancieroRepositorio(), servicio,
-                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Compras }, new LimiteUsoAsistente(1000, () => ComprasFixture.Hoy),
+                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Compras }, new FakeLimiteUsoAsistente(1000),
                 new FakeUnidadDeTrabajoFactory(unidad), f.Sesion, new SpyBitacoraBLL(), idioma ?? new FakeObservado(),
                 new GeneradorRecomendaciones(servicio, new ValidadorRespuestaAsistente(), f.Crear(), null));
         }

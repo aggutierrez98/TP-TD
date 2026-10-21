@@ -30,32 +30,26 @@ namespace BLL
             return _productoRepositorio.ObtenerTodos();
         }
 
-        public Producto Crear(string nombre, int categoriaProductoId)
+        // Devuelve la misma instancia recibida, con el nombre normalizado, la categoria
+        // persistida y el Id cargado.
+        public Producto Crear(Producto producto)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(producto?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    CategoriaProducto categoria = unidad.CategoriasProducto.ObtenerPorId(categoriaProductoId);
-                    if (categoria == null)
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
-                    }
+                    CategoriaProducto categoria = ObtenerCategoriaPersistida(unidad, producto.CategoriaProducto);
 
-                    Producto nuevoProducto = new Producto
-                    {
-                        CategoriaProducto = categoria,
-                        Nombre = nombreNormalizado
-                    };
+                    producto.CategoriaProducto = categoria;
+                    producto.Nombre = nombreNormalizado;
 
-                    int id = unidad.Productos.InsertarYObtenerId(nuevoProducto);
-                    nuevoProducto.Id = id;
+                    producto.Id = unidad.Productos.InsertarYObtenerId(producto);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormProductManagement.Value.Activity.ProductoCreation", "FormProductManagement.Value.Info.ProductoCreation", "ProductoBLL", unidad);
                     unidad.Save();
-                    return nuevoProducto;
+                    return producto;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -68,30 +62,27 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre, int categoriaProductoId)
+        // Recibe el producto con nombre y categoria nuevos y los copia sobre el persistido.
+        public bool Actualizar(Producto producto)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(producto?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Producto producto = unidad.Productos.ObtenerPorId(id);
-                    if (producto == null)
+                    Producto persistido = unidad.Productos.ObtenerPorId(producto.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ProductoNotFound");
                     }
 
-                    CategoriaProducto categoria = unidad.CategoriasProducto.ObtenerPorId(categoriaProductoId);
-                    if (categoria == null)
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
-                    }
+                    CategoriaProducto categoria = ObtenerCategoriaPersistida(unidad, producto.CategoriaProducto);
 
-                    producto.Nombre = nombreNormalizado;
-                    producto.CategoriaProducto = categoria;
+                    persistido.Nombre = nombreNormalizado;
+                    persistido.CategoriaProducto = categoria;
 
-                    bool actualizado = unidad.Productos.Actualizar(producto);
+                    bool actualizado = unidad.Productos.Actualizar(persistido);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.ProductoUpdateFailed");
@@ -116,27 +107,27 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Producto producto)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Producto producto = unidad.Productos.ObtenerPorId(id);
-                    if (producto == null)
+                    Producto persistido = producto == null ? null : unidad.Productos.ObtenerPorId(producto.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ProductoNotFound");
                     }
 
                     // Un producto que algun comercio vende, o que una promocion incluye o
                     // excluye, no se puede dar de baja: hay que quitarlo antes de esos usos.
-                    if (unidad.ComercioProductos.ContarPorProducto(id) > 0
-                        || unidad.PromocionProductos.ContarPorProducto(id) > 0)
+                    if (unidad.ComercioProductos.ContarPorProducto(persistido) > 0
+                        || unidad.PromocionProductos.ContarPorProducto(persistido) > 0)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ProductoInUse");
                     }
 
-                    bool eliminado = unidad.Productos.Eliminar(id);
+                    bool eliminado = unidad.Productos.Eliminar(persistido);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.ProductoDeleteFailed");
@@ -159,6 +150,18 @@ namespace BLL
                     throw new ExcepcionTecnica("Error.MerchantManagement.ProductoDeleteFailed", ex);
                 }
             }
+        }
+
+        // Relee la categoria recibida: el producto queda con la entidad persistida, no con la recibida.
+        private static CategoriaProducto ObtenerCategoriaPersistida(IUnidadDeTrabajo unidad, CategoriaProducto categoria)
+        {
+            CategoriaProducto persistida = categoria == null ? null : unidad.CategoriasProducto.ObtenerPorId(categoria.Id);
+            if (persistida == null)
+            {
+                throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
+            }
+
+            return persistida;
         }
 
         private static string NormalizarNombre(string nombre)

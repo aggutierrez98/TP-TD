@@ -1,0 +1,43 @@
+@startuml
+' Fuente: diagramas/NEG19-zonas-usuario/NEG19-zonas-usuario-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN78 Consultar mis zonas — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMisZonas" as FormMisZonas
+control "ZonaUsuarioBLL" as ZonaUsuarioBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "ZonaUsuarioRepositorio\n:IZonaUsuarioRepositorio" as IZonaUsuarioRepositorio
+participant "ZonaUsuarioDAL" as ZonaUsuarioDAL
+note over FormMisZonas : El actor desea revisar dónde ubicó sus zonas habituales de compra.
+Actor -> FormMisZonas : selecciona la opción «Mis zonas» del menú «Mi usuario».
+FormMisZonas -> ZonaUsuarioBLL ++ : ObtenerMisZonas()
+ZonaUsuarioBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ZonaUsuarioBLL -- : Usuario
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : List<ZonaUsuario>
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : List<ZonaUsuario>
+ZonaUsuarioBLL --> FormMisZonas -- : List<ZonaUsuario>
+FormMisZonas --> Actor : presenta la pantalla «Mis zonas» ocupando el área de trabajo, con el listado de zonas del\nactor (columnas «Nombre» y «Radio (m)»), el panel «Nueva zona» y un mapa donde cada zona\nse dibuja como un círculo de su radio, con un…
+Actor -> FormMisZonas : selecciona una zona del listado.
+FormMisZonas --> Actor : resalta esa zona en el mapa y lo centra sobre ella.
+Actor -> FormMisZonas : puede acercar o alejar el mapa con los botones «+» y «−» o con la rueda del mouse, y\ndesplazarlo arrastrando con el botón derecho.
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ZonaUsuarioBLL.cs:43 ZonaUsuarioBLL.ObtenerMisZonas
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' UI/FormMisZonas.cs:122 FormMisZonas.CargarZonas
+@enduml

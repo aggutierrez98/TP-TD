@@ -1,0 +1,42 @@
+@startuml
+' Fuente: diagramas/NEG03-categorias-movimientos/NEG03-categorias-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN11 Consultar categorías de movimientos — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormGestionCategorias" as FormGestionCategorias
+control "CategoriaBLL" as CategoriaBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "CategoriaRepositorio\n:ICategoriaRepositorio" as ICategoriaRepositorio
+participant "CategoriaDAL" as CategoriaDAL
+note over FormGestionCategorias : El actor desea conocer las categorías con las que puede clasificar sus\nmovimientos.
+Actor -> FormGestionCategorias : selecciona la opción «Categorías» del menú «Finanzas».
+FormGestionCategorias -> CategoriaBLL ++ : ObtenerVisiblesParaUsuarioActual()
+CategoriaBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> CategoriaBLL -- : Usuario
+CategoriaBLL -> ICategoriaRepositorio ++ : ObtenerVisiblesParaUsuario(usuario: Usuario)
+ICategoriaRepositorio -> CategoriaDAL ++ : ObtenerVisiblesParaUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+CategoriaDAL --> ICategoriaRepositorio -- : List<Categoria>
+ICategoriaRepositorio --> CategoriaBLL -- : List<Categoria>
+CategoriaBLL --> FormGestionCategorias -- : List<Categoria>
+FormGestionCategorias --> Actor : presenta la pantalla «Gestión de categorías» con el listado de categorías disponibles
+Actor -> FormGestionCategorias : selecciona una categoría del listado.
+FormGestionCategorias --> Actor : muestra el nombre de la categoría seleccionada en el campo «Nombre:» de la sección\n«Categoría».
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CategoriaDAL.cs:49 CategoriaDAL.ObtenerVisiblesParaUsuario
+' REPOSITORIO/CategoriaRepositorio.cs:30 CategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' UI/FormGestionCategorias.cs:165 FormGestionCategorias.CargarCategorias
+@enduml

@@ -2,9 +2,7 @@ namespace ABSTRACCIONES
 {
     public interface ITraduccion
     {
-        int PalabraId { get; set; }
-
-        int IdiomaId { get; set; }
+        IIdioma Idioma { get; set; }
 
         string Valor { get; set; }
 

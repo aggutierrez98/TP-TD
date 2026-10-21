@@ -1,0 +1,108 @@
+{
+  "requisito": "NEG07-medios-pago",
+  "titulo": "Medios de pago",
+  "subtitulo": "Especificaciones de casos de uso",
+  "casos_de_uso": [
+    {
+      "id_nombre": "CUN29 Consultar medios de pago",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador consultar el catálogo de medios de pago (tipo y marca) disponibles en el sistema.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de medios de pago.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea conocer los medios de pago registrados en el catálogo.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Medios de pago» del menú «Operador».",
+        "2. El sistema presenta la pantalla «Gestión de medios de pago» con el listado de medios de pago ordenado por tipo y marca, indicando para cada uno su «Tipo» (tarjeta de crédito, tarjeta de débito, tarjeta prepaga, cuenta DNI o cuenta de billetera virtual) y su «Marca».",
+        "3. El actor selecciona un medio de pago del listado.",
+        "4. El sistema muestra el tipo y la marca del medio seleccionado en los campos «Tipo:» y «Marca:»."
+      ],
+      "flujos_alternativos": [
+        "2a. Si no hay medios de pago registrados, el sistema presenta el listado vacío. El caso de uso finaliza sin selección.",
+        "2b. Si ocurre un error al cargar el listado, el sistema muestra un mensaje de error. El caso de uso finaliza sin completar la consulta.",
+        "3a. Si el actor solo necesita consultar el listado, omite la selección de un medio de pago. El caso de uso finaliza con el listado disponible.",
+        "4a. Si el medio de pago seleccionado no tiene marca, el sistema muestra el campo «Marca:» vacío."
+      ],
+      "postcondiciones": "El actor dispone del listado de medios de pago y, si seleccionó uno, de su tipo y marca. La consulta no modifica el catálogo."
+    },
+    {
+      "id_nombre": "CUN30 Alta de medio de pago",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador registrar un nuevo medio de pago (tipo y marca opcional) en el catálogo.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de medios de pago. No existe otro medio de pago con el mismo tipo y la misma marca.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea incorporar al catálogo un medio de pago que aún no figura.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Medios de pago» del menú «Operador».",
+        "2. El sistema presenta la pantalla «Gestión de medios de pago» con el listado de medios registrados.",
+        "3. El actor selecciona un tipo de medio de pago en el campo «Tipo:».",
+        "4. El actor ingresa, si lo desea, la marca en el campo «Marca:».",
+        "5. El actor presiona el botón «Agregar».",
+        "6. El sistema registra el medio de pago, limpia los campos «Tipo:» y «Marca:», actualiza el listado con el nuevo medio seleccionado y muestra el mensaje «Medio de pago creado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "5a. Si el actor no seleccionó un tipo, el sistema muestra el mensaje «Debe seleccionar un tipo de medio de pago.». No se registra el medio.",
+        "5b. Si ya existe un medio de pago con el mismo tipo y la misma marca (sin distinguir mayúsculas de minúsculas), el sistema muestra el mensaje «Ya existe un medio de pago con ese tipo y marca.». No se registra el medio.",
+        "5c. Si ocurre un error al registrar el medio de pago, el sistema muestra un mensaje de error. No se registra el medio."
+      ],
+      "postcondiciones": "El nuevo medio de pago figura en el catálogo y queda disponible para ser asociado a entidades financieras. Si no se ingresó marca, queda registrado sin marca."
+    },
+    {
+      "id_nombre": "CUN31 Modificar medio de pago",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador modificar el tipo y la marca de un medio de pago existente.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de medios de pago. Existe al menos un medio de pago registrado.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea corregir o actualizar el tipo o la marca de un medio de pago.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Medios de pago» del menú «Operador».",
+        "2. El sistema presenta la pantalla «Gestión de medios de pago» con el listado de medios registrados.",
+        "3. El actor selecciona del listado el medio de pago a modificar.",
+        "4. El sistema muestra el tipo y la marca del medio seleccionado en los campos «Tipo:» y «Marca:».",
+        "5. El actor modifica el tipo y/o la marca.",
+        "6. El actor presiona el botón «Actualizar».",
+        "7. El sistema guarda los cambios, limpia los campos, actualiza el listado manteniendo seleccionado el medio y muestra el mensaje «Medio de pago actualizado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "6a. Si el actor presiona «Actualizar» sin haber seleccionado un medio de pago, el sistema muestra el mensaje «Debe seleccionar un medio de pago.». No se realizan cambios.",
+        "6b. Si el campo «Tipo:» no tiene un tipo seleccionado, el sistema muestra el mensaje «Debe seleccionar un tipo de medio de pago.». No se realizan cambios.",
+        "6c. Si ya existe otro medio de pago con el mismo tipo y la misma marca, el sistema muestra el mensaje «Ya existe un medio de pago con ese tipo y marca.». No se realizan cambios.",
+        "6d. Si el medio de pago seleccionado ya no existe, el sistema muestra el mensaje «No se encontró el medio de pago indicado.». No se realizan cambios.",
+        "6e. Si ocurre un error al guardar, el sistema muestra un mensaje de error. No se realizan cambios."
+      ],
+      "postcondiciones": "El medio de pago figura en el listado con su nuevo tipo y marca."
+    },
+    {
+      "id_nombre": "CUN32 Baja de medio de pago",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador eliminar un medio de pago del catálogo cuando no está en uso.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de medios de pago. Existe al menos un medio de pago registrado. Ninguna entidad financiera ofrece el medio de pago ni lo utiliza una promoción.",
+      "puntos_extension": "Si una entidad financiera ofrece el medio de pago, debe quitarse previamente mediante CUN28 Quitar medio de pago de entidad financiera.",
+      "condicion": "El actor desea retirar del catálogo un medio de pago que ya no corresponde.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Medios de pago» del menú «Operador».",
+        "2. El sistema presenta la pantalla «Gestión de medios de pago» con el listado de medios registrados.",
+        "3. El actor selecciona del listado el medio de pago a eliminar.",
+        "4. El actor presiona el botón «Eliminar».",
+        "5. El sistema solicita confirmación mediante el mensaje «Se eliminará el medio de pago {tipo y marca}. ¿Desea continuar?», titulado «Confirmar eliminación».",
+        "6. El actor confirma la eliminación.",
+        "7. El sistema elimina el medio de pago, limpia los campos, actualiza el listado sin el medio eliminado y muestra el mensaje «Medio de pago eliminado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "4a. Si el actor presiona «Eliminar» sin haber seleccionado un medio de pago, el sistema muestra el mensaje «Debe seleccionar un medio de pago.». No se elimina nada.",
+        "6a. Si el actor no confirma la eliminación, el sistema cierra la confirmación y mantiene el medio de pago en el listado.",
+        "7a. Si alguna entidad financiera ofrece el medio de pago o alguna promoción lo usa, el sistema muestra el mensaje «No se puede eliminar el medio de pago porque alguna entidad lo ofrece o alguna promocion lo usa.». El medio se conserva.",
+        "7b. Si el medio de pago ya no existe, el sistema muestra el mensaje «No se encontró el medio de pago indicado.». No se elimina nada.",
+        "7c. Si ocurre un error al eliminar, el sistema muestra un mensaje de error. El medio se conserva."
+      ],
+      "postcondiciones": "El medio de pago deja de figurar en el catálogo y en el listado."
+    }
+  ]
+}

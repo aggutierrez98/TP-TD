@@ -32,13 +32,13 @@ namespace TpIDS
         private async Task CargarPaginaAsync(int pagina, FiltroNotificacion filtro = null)
         {
             if (ocupado) return;
-            int? usuarioId = sesion.GetUsuarioActualId();
+            int? usuarioId = sesion.GetUsuarioActual()?.Id;
             CambiarOcupado(true);
             try
             {
                 FiltroNotificacion consulta = filtro ?? filtroAplicado;
                 var datos = await Task.Run(() => notificacionBLL.BuscarPersonales(consulta, pagina));
-                if (IsDisposed || Disposing || usuarioId != sesion.GetUsuarioActualId()) return;
+                if (IsDisposed || Disposing || usuarioId != sesion.GetUsuarioActual()?.Id) return;
                 filtroAplicado = consulta;
                 resultado = datos;
                 dgvNotificacionesPersonales.DataSource = datos.Elementos;
@@ -46,7 +46,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                if (!IsDisposed && !Disposing && usuarioId == sesion.GetUsuarioActualId())
+                if (!IsDisposed && !Disposing && usuarioId == sesion.GetUsuarioActual()?.Id)
                     UiExceptionHandler.Mostrar(ex, "Consulta de notificaciones personales");
             }
             finally { if (!IsDisposed && !Disposing) CambiarOcupado(false); }
@@ -72,12 +72,12 @@ namespace TpIDS
         {
             var seleccionada = dgvNotificacionesPersonales.CurrentRow?.DataBoundItem as Notificacion;
             if (ocupado || seleccionada == null) return;
-            int? usuarioId = sesion.GetUsuarioActualId();
+            int? usuarioId = sesion.GetUsuarioActual()?.Id;
             CambiarOcupado(true);
             try
             {
-                var leida = await Task.Run(() => notificacionBLL.LeerPersonal(seleccionada.Id));
-                if (IsDisposed || Disposing || usuarioId != sesion.GetUsuarioActualId()) return;
+                var leida = await Task.Run(() => notificacionBLL.LeerPersonal(seleccionada));
+                if (IsDisposed || Disposing || usuarioId != sesion.GetUsuarioActual()?.Id) return;
                 seleccionada.Leida = true;
                 dgvNotificacionesPersonales.Invalidate();
                 NotificacionLeida?.Invoke(this, EventArgs.Empty);
@@ -86,7 +86,7 @@ namespace TpIDS
             }
             catch (Exception ex)
             {
-                if (!IsDisposed && !Disposing && usuarioId == sesion.GetUsuarioActualId())
+                if (!IsDisposed && !Disposing && usuarioId == sesion.GetUsuarioActual()?.Id)
                     UiExceptionHandler.Mostrar(ex, "Lectura de notificación personal");
             }
             finally { if (!IsDisposed && !Disposing) CambiarOcupado(false); }

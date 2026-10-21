@@ -206,7 +206,7 @@ namespace TpIDS
             for (int i = 0; i < rdbOpciones.Length; i++)
             {
                 var opcion = rdbOpciones[i];
-                bool visible = pregunta && i < _perfilBLL.ObtenerCantidadOpciones(_paso + 1);
+                bool visible = pregunta && i < _perfilBLL.ObtenerCantidadOpciones(_perfilBLL.ObtenerPreguntas()[_paso]);
                 groupBoxOpciones[i].Visible = visible;
                 opcion.Visible = visible;
                 opcion.Checked = pregunta && _opciones[_paso] == ((char)('A' + i)).ToString();
@@ -246,7 +246,7 @@ namespace TpIDS
             int direccion = e.KeyCode == Keys.Down || e.KeyCode == Keys.Right ? 1
                 : e.KeyCode == Keys.Up || e.KeyCode == Keys.Left ? -1 : 0;
             if (direccion == 0 || _paso < 0 || _paso >= 10) return;
-            int cantidad = _perfilBLL.ObtenerCantidadOpciones(_paso + 1);
+            int cantidad = _perfilBLL.ObtenerCantidadOpciones(_perfilBLL.ObtenerPreguntas()[_paso]);
             int indice = (Array.IndexOf(rdbOpciones, sender) + direccion + cantidad) % cantidad;
             rdbOpciones[indice].Checked = true;
             rdbOpciones[indice].Focus();
@@ -254,7 +254,7 @@ namespace TpIDS
         }
 
         private RespuestaPerfilInversor[] ObtenerRespuestas() => _opciones.Select((o, i) =>
-            new RespuestaPerfilInversor { PreguntaId = i + 1, OpcionId = o }).ToArray();
+            new RespuestaPerfilInversor { Pregunta = _perfilBLL.ObtenerPreguntas()[i], OpcionId = o }).ToArray();
 
         private async void btnSiguiente_Click(object sender, EventArgs e)
         {

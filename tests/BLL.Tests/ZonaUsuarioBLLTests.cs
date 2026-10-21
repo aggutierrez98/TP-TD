@@ -200,7 +200,7 @@ namespace BLL.Tests
             sut.Crear("Ultima", -34.6m, -58.4m, 1000);
 
             Assert.AreEqual(10, ZonaUsuarioBLL.MaximoZonasPorUsuario);
-            Assert.AreEqual(ZonaUsuarioBLL.MaximoZonasPorUsuario, fixture.ZonaRepo.ObtenerPorUsuario(UsuarioActualId).Count);
+            Assert.AreEqual(ZonaUsuarioBLL.MaximoZonasPorUsuario, fixture.ZonaRepo.ObtenerPorUsuario(new Usuario { Id = UsuarioActualId }).Count);
         }
 
         [TestMethod]
@@ -222,7 +222,7 @@ namespace BLL.Tests
             fixture.AgregarZona(1, UsuarioActualId, "Casa", -34.6m, -58.4m, 1000);
             ZonaUsuarioBLL sut = fixture.CreateSut();
 
-            bool eliminada = sut.Eliminar(1);
+            bool eliminada = sut.Eliminar(new ZonaUsuario { Id = 1 });
 
             Assert.IsTrue(eliminada);
             Assert.IsFalse(fixture.ZonaRepo.Zonas.ContainsKey(1));
@@ -237,7 +237,7 @@ namespace BLL.Tests
             fixture.AgregarZona(1, OtroUsuarioId, "Casa", -34.6m, -58.4m, 1000);
             ZonaUsuarioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new ZonaUsuario { Id = 1, Usuario = new Usuario { Id = UsuarioActualId } }));
 
             Assert.AreEqual("Error.MyZones.NotOwned", ex.Message);
             Assert.IsTrue(fixture.ZonaRepo.Zonas.ContainsKey(1));
@@ -251,7 +251,7 @@ namespace BLL.Tests
             ZonaUsuarioFixture fixture = new ZonaUsuarioFixture();
             ZonaUsuarioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new ZonaUsuario { Id = 99 }));
 
             Assert.AreEqual("Error.MyZones.NotFound", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);

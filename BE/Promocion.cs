@@ -22,24 +22,24 @@ namespace BE
         public List<DiaSemana> DiasSemana { get; set; } = new List<DiaSemana>();
 
         // Filtros de alcance: cada lista vacia = sin restriccion en esa dimension.
-        public List<int> ComercioIds { get; set; } = new List<int>();
+        public List<Comercio> Comercios { get; set; } = new List<Comercio>();
 
-        public List<int> RubroComercioIds { get; set; } = new List<int>();
+        public List<RubroComercio> RubrosComercio { get; set; } = new List<RubroComercio>();
 
-        public List<int> EntidadFinancieraIds { get; set; } = new List<int>();
+        public List<EntidadFinanciera> EntidadesFinancieras { get; set; } = new List<EntidadFinanciera>();
 
-        public List<int> MedioPagoIds { get; set; } = new List<int>();
+        public List<MedioPago> MediosPago { get; set; } = new List<MedioPago>();
 
         public List<string> Segmentos { get; set; } = new List<string>();
 
         // Incluidos: el producto (o su categoria) debe coincidir con alguno. Excluidos: si
         // coincide con alguno, la promocion no aplica (la exclusion gana).
-        public List<int> ProductoIncluidoIds { get; set; } = new List<int>();
+        public List<Producto> ProductosIncluidos { get; set; } = new List<Producto>();
 
-        public List<int> ProductoExcluidoIds { get; set; } = new List<int>();
+        public List<Producto> ProductosExcluidos { get; set; } = new List<Producto>();
 
-        public List<int> CategoriaIncluidaIds { get; set; } = new List<int>();
+        public List<CategoriaProducto> CategoriasIncluidas { get; set; } = new List<CategoriaProducto>();
 
-        public List<int> CategoriaExcluidaIds { get; set; } = new List<int>();
+        public List<CategoriaProducto> CategoriasExcluidas { get; set; } = new List<CategoriaProducto>();
     }
 }

@@ -1,0 +1,147 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN75 Consultar balance general — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormBalanceGeneral {
+    -ActualizarResumen(desde: DateTime, hasta: DateTime): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class MovimientoBLL {
+    +ObtenerParaUsuarioActual(filtro: FiltroMovimiento): List<Movimiento>
+    +ObtenerResumenBalance(desde: DateTime, hasta: DateTime): ResumenMovimientos
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class CategoriaBLL {
+    +ObtenerVisiblesParaUsuarioActual(): List<Categoria>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+MovimientoBLL -[hidden]right-> SesionUsuarioExtensiones
+MovimientoBLL -[hidden]down-> CategoriaBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IMovimientoRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento): List<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime):\nResumenMovimientos
+  }
+  class MovimientoRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento): List<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime):\nResumenMovimientos
+  }
+  class "CategoriaRepositorio" as ICategoriaRepositorio <<ICategoriaRepositorio>> {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IMovimientoRepositorio -[hidden]right-> MovimientoRepositorio
+IMovimientoRepositorio -[hidden]down-> ICategoriaRepositorio
+package "DAL" as L_DAL {
+  class MovimientoDAL {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento, accesoDatos:\nAccesoDatosSqlServer): List<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime, accesoDatos:\nAccesoDatosSqlServer): ResumenMovimientos
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "SERVICIOS" as L_SERVICIOS {
+  class ResumenMovimientos {
+    +TotalIngresos: decimal
+    +TotalEgresos: decimal
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Categoria {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class FiltroMovimiento {
+    +FechaDesde: DateTime?
+    +FechaHasta: DateTime?
+    +Categoria: Categoria
+    +Tipo: TipoMovimiento?
+    +Texto: string
+  }
+  class Movimiento {
+    +Id: int
+    +Usuario: Usuario
+    +Categoria: Categoria
+    +Comercio: Comercio
+    +Tipo: TipoMovimiento
+    +Monto: decimal
+    +Fecha: DateTime
+    +Descripcion: string
+    +FechaCreacion: DateTime
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Categoria -[hidden]right-> Comercio
+Categoria -[hidden]down-> FiltroMovimiento
+FiltroMovimiento -[hidden]right-> Movimiento
+FiltroMovimiento -[hidden]down-> Usuario
+CategoriaBLL ..> ICategoriaRepositorio : usa
+CategoriaBLL ..> SesionUsuarioExtensiones : usa
+FormBalanceGeneral ..> CategoriaBLL : usa
+FormBalanceGeneral ..> MovimientoBLL : usa
+MovimientoRepositorio ..> MovimientoDAL : usa
+MovimientoBLL ..> IMovimientoRepositorio : usa
+MovimientoBLL ..> SesionUsuarioExtensiones : usa
+MovimientoRepositorio ..|> IMovimientoRepositorio
+L_DAL -[hidden]down-> L_BE
+MovimientoBLL ..> ResumenMovimientos : datos
+Categoria --> Usuario : Usuario
+FiltroMovimiento --> Categoria : Categoria
+Movimiento --> Usuario : Usuario
+Movimiento --> Categoria : Categoria
+Movimiento --> Comercio : Comercio
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/MovimientoBLL.cs:161 MovimientoBLL.ObtenerResumenBalance
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/MovimientoDAL.cs:284 MovimientoDAL.ObtenerResumen
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:23 IMovimientoRepositorio.ObtenerResumen
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:60 MovimientoRepositorio.ObtenerResumen
+' UI/FormBalanceGeneral.cs:117 FormBalanceGeneral.ActualizarResumen
+@enduml

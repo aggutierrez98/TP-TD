@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CompositionRoot.cs" />
+    <Compile Include="SesionUsuarioExtensiones.cs" />
     <Compile Include="CalculadorPerfilInversor.cs" />
     <Compile Include="PerfilInversorBLL.cs" />
     <Compile Include="ContinuacionPerfilInversor.cs" />
@@ -71,7 +72,6 @@
     <Compile Include="AsistenteFinancieroBLL.cs" />
     <Compile Include="PrefiltroConsultasAsistente.cs" />
     <Compile Include="RespuestaAsistente.cs" />
-    <Compile Include="LimiteUsoAsistente.cs" />
     <Compile Include="ValidadorRespuestaAsistente.cs" />
     <Compile Include="ListaDeComprasBLL.cs" />
     <Compile Include="NotificacionBLL.cs" />

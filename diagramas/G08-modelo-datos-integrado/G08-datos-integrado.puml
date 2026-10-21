@@ -1,161 +1,538 @@
 @startuml
-title G08 - Modelo de datos integrado (DER de todos los modulos)
+title G08 - Modelo de datos integrado - TpCatedraIDS
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
+hide empty members
 
 hide methods
-hide stereotypes
-skinparam backgroundColor white
-skinparam classAttributeIconSize 0
-skinparam shadowing false
-skinparam linetype ortho
-
-' ===================== T02 / T03 - Usuarios =====================
-entity "Usuarios" as Usuarios {
-  *Id : int <<PK, IDENTITY>>
-  --
-  Username : varchar(50) <<UQ>>
-  PasswordHash : varchar(max)
-  Activo : bit
-  IntentosFallidos : int
-  Bloqueado : bit
-  BloqueadoHasta : datetime <<NULL>>
-  DVH : varchar(100) <<NULL>>
+' Fuente: catalogo real de .\SQLEXPRESS / TpCatedraIDS, 20/10/2026.
+' * = PK. NULL/NOT NULL explicitos; UQ = indice unico. Las relaciones son FKs fisicas.
+package "Asistente e inversiones" as D0 {
+  entity "dbo.ChatbotFinanciero" as T_ChatbotFinanciero {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+  }
+  entity "dbo.ConsultaChatbot" as T_ConsultaChatbot {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    ChatbotFinancieroId : int <<FK, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    Pregunta : varchar(max) <<NOT NULL>>
+    Respuesta : varchar(max) <<NOT NULL>>
+    Fecha : datetime <<NOT NULL>>
+    EsPregunta : bit <<NOT NULL>>
+  }
+  entity "dbo.CorridaGeneracionNotificaciones" as T_CorridaGeneracionNotificaciones {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    InicioUtc : datetime2(7) <<NOT NULL>>
+    FinUtc : datetime2(7) <<NULL>>
+    Jornada : date <<NOT NULL>>
+    Entregadas : int <<NOT NULL>>
+    Omitidas : int <<NOT NULL>>
+    Fallidas : int <<NOT NULL>>
+    --
+    CHECK CK_CorridaGeneracionNotificaciones_Cantidades ([Entregadas]>=(0) AND [Omitidas]>=(0) AND\n[Fallidas]>=(0))
+    CHECK CK_CorridaGeneracionNotificaciones_Fin ([FinUtc] IS NULL OR [FinUtc]>=[InicioUtc])
+  }
+  entity "dbo.DetalleGeneracionNotificacion" as T_DetalleGeneracionNotificacion {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    CorridaId : int <<FK, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    TipoAutomatico : varchar(20) <<NOT NULL>>
+    Jornada : date <<NOT NULL>>
+    Resultado : varchar(10) <<NOT NULL>>
+    Motivo : varchar(60) <<NULL>>
+    NotificacionId : int <<FK, NULL>>
+    FechaUtc : datetime2(7) <<NOT NULL>>
+    --
+    CHECK CK_DetalleGeneracionNotificacion_Motivo ([Resultado]='Entregada' OR [Motivo] IS NOT NULL AND\nlen([Motivo])>(0))
+    CHECK CK_DetalleGeneracionNotificacion_Notificacion ([Resultado]='Entregada' OR [NotificacionId] IS\nNULL)
+    CHECK CK_DetalleGeneracionNotificacion_Resultado ([Resultado]='Fallida' OR [Resultado]='Omitida' OR\n[Resultado]='Entregada')
+    CHECK CK_DetalleGeneracionNotificacion_Tipo ([TipoAutomatico]='Movimientos' OR\n[TipoAutomatico]='Inversiones' OR [TipoAutomatico]='Compras')
+    ON DELETE SET_NULL (NotificacionId)
+  }
+  entity "dbo.ProductoEmbedding" as T_ProductoEmbedding {
+    *ProductoId : int <<PK, FK, NOT NULL>>
+    Modelo : varchar(100) <<NOT NULL>>
+    TextoFuente : varchar(300) <<NOT NULL>>
+    Vector : varbinary(max) <<NOT NULL>>
+    FechaCalculo : datetime <<NOT NULL>>
+    --
+    ON DELETE CASCADE (ProductoId)
+  }
 }
-
-' ===================== T04 - Perfiles / permisos =====================
-entity "Permiso" as Permiso {
-  *Id : int <<PK, IDENTITY>>
-  --
-  Nombre : varchar(100) <<UQ>>
-  EsGrupo : bit
+package "Comercios y promociones" as D1 {
+  entity "dbo.CategoriaProducto" as T_CategoriaProducto {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    --
+    UQ UQ_CategoriaProducto_Nombre (Nombre)
+  }
+  entity "dbo.Comercio" as T_Comercio {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    RubroComercioId : int <<FK, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    Direccion : varchar(200) <<NULL>>
+    Localidad : varchar(100) <<NULL>>
+    Provincia : varchar(100) <<NULL>>
+    Latitud : decimal(9,6) <<NULL>>
+    Longitud : decimal(9,6) <<NULL>>
+  }
+  entity "dbo.ComercioProducto" as T_ComercioProducto {
+    *ComercioId : int <<PK, FK, NOT NULL>>
+    *ProductoId : int <<PK, FK, NOT NULL>>
+    MonedaId : int <<FK, NOT NULL>>
+    Precio : decimal(18,2) <<NOT NULL>>
+    --
+    CHECK CK_ComercioProducto_Precio ([Precio]>(0))
+  }
+  entity "dbo.ComercioReglaCategorizacion" as T_ComercioReglaCategorizacion {
+    *ComercioId : int <<PK, FK, NOT NULL>>
+    *ReglaCategorizacionId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.Producto" as T_Producto {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    CategoriaProductoId : int <<FK, NOT NULL>>
+    Nombre : varchar(150) <<NOT NULL>>
+  }
+  entity "dbo.Promocion" as T_Promocion {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Descripcion : varchar(300) <<NOT NULL>>
+    Descuento : decimal(5,2) <<NOT NULL>>
+    TopeDescuento : decimal(10,2) <<NULL>>
+    VigenciaDesde : date <<NOT NULL>>
+    VigenciaHasta : date <<NOT NULL>>
+    --
+    CHECK CK_Promocion_Descuento ([Descuento]>(0) AND [Descuento]<=(100))
+    CHECK CK_Promocion_TopeDescuento ([TopeDescuento] IS NULL OR [TopeDescuento]>(0))
+    CHECK CK_Promocion_Vigencia ([VigenciaHasta]>=[VigenciaDesde])
+  }
+  entity "dbo.PromocionCategoriaProducto" as T_PromocionCategoriaProducto {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *CategoriaProductoId : int <<PK, FK, NOT NULL>>
+    Excluido : bit <<NOT NULL>>
+  }
+  entity "dbo.PromocionComercio" as T_PromocionComercio {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *ComercioId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.PromocionDiaSemana" as T_PromocionDiaSemana {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *DiaSemana : varchar(15) <<PK, NOT NULL>>
+    --
+    CHECK CK_PromocionDiaSemana_DiaSemana ([DiaSemana]='Domingo' OR [DiaSemana]='Sabado' OR\n[DiaSemana]='Viernes' OR [DiaSemana]='Jueves' OR [DiaSemana]='Miercoles' OR [DiaSemana]='Martes' OR\n[DiaSemana]='Lunes')
+  }
+  entity "dbo.PromocionEntidadFinanciera" as T_PromocionEntidadFinanciera {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *EntidadFinancieraId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.PromocionMedioPago" as T_PromocionMedioPago {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *MedioPagoId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.PromocionProducto" as T_PromocionProducto {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *ProductoId : int <<PK, FK, NOT NULL>>
+    Excluido : bit <<NOT NULL>>
+  }
+  entity "dbo.PromocionRubroComercio" as T_PromocionRubroComercio {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *RubroComercioId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.PromocionSegmento" as T_PromocionSegmento {
+    *PromocionId : int <<PK, FK, NOT NULL>>
+    *Segmento : varchar(50) <<PK, NOT NULL>>
+  }
+  entity "dbo.RubroComercio" as T_RubroComercio {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    --
+    UQ UQ_RubroComercio_Nombre (Nombre)
+  }
 }
-
-entity "PermisoCompuesto" as PermisoCompuesto {
-  *PermisoPadreId : int <<PK, FK>>
-  *PermisoHijoId : int <<PK, FK>>
+package "Finanzas personales" as D2 {
+  entity "dbo.Categoria" as T_Categoria {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    UsuarioId : int <<FK, NULL>>
+    --
+    UQ UQ_Categoria_Nombre_Global (Nombre) WHERE ([UsuarioId] IS NULL)
+    UQ UQ_Categoria_Nombre_Usuario (UsuarioId, Nombre) WHERE ([UsuarioId] IS NOT NULL)
+  }
+  entity "dbo.CuentaFinanciera" as T_CuentaFinanciera {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    EntidadFinancieraId : int <<FK, NOT NULL>>
+    Alias : varchar(100) <<NOT NULL>>
+    Tipo : varchar(30) <<NOT NULL>>
+    CredencialesCifradas : varchar(500) <<NULL>>
+    --
+    CHECK CK_CuentaFinanciera_Tipo ([Tipo]='CajaAhorro' OR [Tipo]='CuentaCorriente' OR\n[Tipo]='BilleteraDigital')
+  }
+  entity "dbo.CuentaFinancieraMedioPagoEntidad" as T_CuentaFinancieraMedioPagoEntidad {
+    *CuentaFinancieraId : int <<PK, FK, NOT NULL>>
+    *MedioPagoEntidadId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.Dashboard" as T_Dashboard {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    --
+    UQ UQ_Dashboard_UsuarioId (UsuarioId)
+  }
+  entity "dbo.EntidadFinanciera" as T_EntidadFinanciera {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    --
+    UQ UQ_EntidadFinanciera_Nombre (Nombre)
+  }
+  entity "dbo.ItemLista" as T_ItemLista {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    ListaDeComprasId : int <<FK, NOT NULL>>
+    Descripcion : varchar(200) <<NOT NULL>>
+    Cantidad : int <<NOT NULL>>
+    Comprado : bit <<NOT NULL>>
+    --
+    CHECK CK_ItemLista_Cantidad ([Cantidad]>(0))
+  }
+  entity "dbo.ListaDeCompras" as T_ListaDeCompras {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    FechaCreacion : datetime <<NOT NULL>>
+  }
+  entity "dbo.MedioPago" as T_MedioPago {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Tipo : varchar(30) <<NOT NULL>>
+    Marca : varchar(50) <<NULL>>
+    --
+    UQ UQ_MedioPago_Tipo_Marca (Tipo, Marca)
+    CHECK CK_MedioPago_Tipo ([Tipo]='CuentaDNI' OR [Tipo]='CuentaBilleteraVirtual' OR\n[Tipo]='TarjetaPrepaga' OR [Tipo]='TarjetaDebito' OR [Tipo]='TarjetaCredito')
+  }
+  entity "dbo.MedioPagoEntidad" as T_MedioPagoEntidad {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    EntidadFinancieraId : int <<FK, NOT NULL>>
+    MedioPagoId : int <<FK, NOT NULL>>
+    Segmento : varchar(50) <<NULL>>
+    --
+    UQ UQ_MedioPagoEntidad_Entidad_Medio_Segmento (EntidadFinancieraId, MedioPagoId, Segmento)
+  }
+  entity "dbo.Movimiento" as T_Movimiento {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    CategoriaId : int <<FK, NOT NULL>>
+    Tipo : varchar(10) <<NOT NULL>>
+    Monto : decimal(18,2) <<NOT NULL>>
+    Fecha : date <<NOT NULL>>
+    Descripcion : varchar(300) <<NULL>>
+    FechaCreacion : datetime <<NOT NULL>>
+    ComercioId : int <<FK, NULL>>
+    --
+    CHECK CK_Movimiento_Monto ([Monto]>(0))
+    CHECK CK_Movimiento_Tipo ([Tipo]='Egreso' OR [Tipo]='Ingreso')
+  }
+  entity "dbo.ReglaCategorizacion" as T_ReglaCategorizacion {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    CategoriaId : int <<FK, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    PalabrasClave : varchar(300) <<NULL>>
+  }
+  entity "dbo.TarjetaDashboard" as T_TarjetaDashboard {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    DashboardId : int <<FK, NOT NULL>>
+    Tipo : varchar(30) <<NOT NULL>>
+    Orden : int <<NOT NULL>>
+    --
+    UQ UQ_TarjetaDashboard_DashboardId_Tipo (DashboardId, Tipo)
+    CHECK CK_TarjetaDashboard_Tipo ([Tipo]='GastoAcumuladoMensual' OR [Tipo]='GastosPorComercio' OR\n[Tipo]='EvolucionBalance' OR [Tipo]='ComparativoMensual' OR [Tipo]='IngresosPorCategoria' OR\n[Tipo]='GastosPorCategoria')
+  }
 }
-
-entity "UsuarioPermiso" as UsuarioPermiso {
-  *UsuarioId : int <<PK, FK>>
-  *PermisoId : int <<PK, FK>>
+package "Idiomas y presentacion" as D3 {
+  entity "dbo.Idioma" as T_Idioma {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    Default : bit <<NOT NULL>>
+    --
+    UQ UQ_Idioma_Nombre (Nombre)
+  }
+  entity "dbo.Palabra" as T_Palabra {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Key : varchar(150) <<NOT NULL>>
+    --
+    UQ UQ_Palabra_Key (Key)
+  }
+  entity "dbo.Traduccion" as T_Traduccion {
+    *PalabraId : int <<PK, FK, NOT NULL>>
+    *IdiomaId : int <<PK, FK, NOT NULL>>
+    Valor : nvarchar(300) <<NOT NULL>>
+  }
 }
-
-' ===================== T05 - Multidioma =====================
-entity "Idioma" as Idioma {
-  *Id : int <<PK, IDENTITY>>
-  --
-  Nombre : varchar(100) <<UQ>>
-  Default : bit
+package "Monedas y tasas" as D4 {
+  entity "dbo.ActualizacionTasaDetalle" as T_ActualizacionTasaDetalle {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    EjecucionId : int <<FK, NOT NULL>>
+    MonedaBaseId : int <<FK, NOT NULL>>
+    MonedaConversionId : int <<FK, NOT NULL>>
+    ValorAnterior : decimal(18,6) <<NOT NULL>>
+    ValorNuevo : decimal(18,6) <<NULL>>
+    Estado : varchar(30) <<NOT NULL>>
+    --
+    CHECK CK_ActualizacionTasaDetalle_Estado ([Estado]='SaltadoSinDato' OR [Estado]='SaltadoManual' OR\n[Estado]='Actualizado')
+  }
+  entity "dbo.EjecucionActualizacionTasas" as T_EjecucionActualizacionTasas {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    FechaInicio : datetime <<NOT NULL>>
+    Origen : varchar(20) <<NOT NULL>>
+    Resultado : varchar(20) <<NOT NULL>>
+    ConsumioRequest : bit <<NOT NULL>>
+    Mensaje : nvarchar(500) <<NULL>>
+    --
+    CHECK CK_EjecucionActualizacionTasas_Origen ([Origen]='Manual' OR [Origen]='Programada')
+    CHECK CK_EjecucionActualizacionTasas_Resultado ([Resultado]='Omitida' OR [Resultado]='Fallida' OR\n[Resultado]='Exitosa')
+  }
+  entity "dbo.Moneda" as T_Moneda {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Codigo : varchar(10) <<NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    --
+    UQ UQ_Moneda_Codigo (Codigo)
+  }
+  entity "dbo.TasaConversion" as T_TasaConversion {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    MonedaBaseId : int <<FK, NOT NULL>>
+    MonedaConversionId : int <<FK, NOT NULL>>
+    CalculoConversion : decimal(18,6) <<NOT NULL>>
+    FechaActualizacion : datetime <<NOT NULL>>
+    EsManual : bit <<NOT NULL>>
+    ProtegidaPorUsuarioId : int <<FK, NULL>>
+    FechaProteccion : datetime <<NULL>>
+    --
+    UQ UQ_TasaConversion_Par (MonedaBaseId, MonedaConversionId)
+    CHECK CK_TasaConversion_Calculo ([CalculoConversion]>(0))
+    CHECK CK_TasaConversion_MonedasDistintas ([MonedaBaseId]<>[MonedaConversionId])
+  }
 }
-
-entity "Palabra" as Palabra {
-  *Id : int <<PK, IDENTITY>>
-  --
-  Key : varchar(150) <<UQ>>
+package "Notificaciones" as D5 {
+  entity "dbo.Notificacion" as T_Notificacion {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    TipoNotificacion : varchar(30) <<NOT NULL>>
+    Mensaje : nvarchar(max) <<NOT NULL>>
+    Fecha : datetime <<NOT NULL>>
+    Leida : bit <<NOT NULL>>
+    ItemListaId : int <<FK, NULL>>
+    PromocionId : int <<FK, NULL>>
+    FechaVencimiento : date <<NULL>>
+    TipoAutomatico : varchar(20) <<NULL>>
+    FechaJornada : date <<NULL>>
+    ClaveEjemplo : varchar(60) <<NULL>>
+    --
+    UQ UX_Notificacion_Automatica (UsuarioId, TipoAutomatico, FechaJornada) WHERE ([TipoAutomatico] IS\nNOT NULL)
+    UQ UX_Notificacion_ClaveEjemplo (UsuarioId, ClaveEjemplo) WHERE ([ClaveEjemplo] IS NOT NULL)
+    CHECK CK_Notificacion_Automatica ([TipoAutomatico] IS NULL AND [FechaJornada] IS NULL OR\n[TipoAutomatico] IS NOT NULL AND [FechaJornada] IS NOT NULL AND [ClaveEjemplo] IS NULL AND\n([TipoAutomatico]='Compras' AND [TipoNotificacion]='RecordatorioCompra' OR\n[TipoAutomatico]='Inversiones' AND [TipoNotificacion]='RecordatorioInversion' OR\n[TipoAutomatico]='Movimientos' AND [TipoNotificacion]='Notificacion'))
+    CHECK CK_Notificacion_ClaveEjemplo ([ClaveEjemplo] IS NULL OR len([ClaveEjemplo])>(0))
+    CHECK CK_Notificacion_RecordatorioCompra_Campos ([TipoNotificacion]<>'RecordatorioCompra' OR\n[ItemListaId] IS NOT NULL AND [FechaVencimiento] IS NOT NULL OR\nisnull([TipoAutomatico],'')='Compras' OR isnull([ClaveEjemplo],'')='Demo.Compras')
+    CHECK CK_Notificacion_Tipo ([TipoNotificacion]='RecordatorioInversion' OR\n[TipoNotificacion]='RecordatorioCompra' OR [TipoNotificacion]='Notificacion')
+  }
 }
-
-entity "Traduccion" as Traduccion {
-  *PalabraId : int <<PK, FK>>
-  *IdiomaId : int <<PK, FK>>
-  --
-  Valor : varchar(300)
+package "Perfil inversor" as D6 {
+  entity "dbo.PerfilInversor" as T_PerfilInversor {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    VersionCuestionario : int <<NOT NULL>>
+    FechaEvaluacionUtc : datetime2(7) <<NOT NULL>>
+    Capacidad : decimal(7,4) <<NOT NULL>>
+    Tolerancia : decimal(7,4) <<NOT NULL>>
+    Puntaje : decimal(7,4) <<NOT NULL>>
+    NivelRiesgo : int <<NOT NULL>>
+    MotivosLimite : nvarchar(max) <<NOT NULL>>
+    --
+    UQ UQ_PerfilInversor_Usuario (UsuarioId)
+    CHECK CK_PerfilInversor_Capacidad ([Capacidad]>=(0) AND [Capacidad]<=(100))
+    CHECK CK_PerfilInversor_Nivel ([NivelRiesgo]=(2) OR [NivelRiesgo]=(1) OR [NivelRiesgo]=(0))
+    CHECK CK_PerfilInversor_Puntaje ([Puntaje]>=(0) AND [Puntaje]<=(100))
+    CHECK CK_PerfilInversor_Tolerancia ([Tolerancia]>=(0) AND [Tolerancia]<=(100))
+    CHECK CK_PerfilInversor_Version ([VersionCuestionario]>(0))
+  }
+  entity "dbo.PerfilInversorRespuesta" as T_PerfilInversorRespuesta {
+    *PerfilInversorId : int <<PK, FK, NOT NULL>>
+    *PreguntaId : int <<PK, NOT NULL>>
+    OpcionId : char(1) <<NOT NULL>>
+    --
+    CHECK CK_PerfilInversorRespuesta_Opcion ([OpcionId]='D' OR [OpcionId]='C' OR [OpcionId]='B' OR\n[OpcionId]='A')
+    CHECK CK_PerfilInversorRespuesta_Pregunta ([PreguntaId]>=(1) AND [PreguntaId]<=(10))
+    ON DELETE CASCADE (PerfilInversorId)
+  }
 }
-
-entity "UsuarioPreferencias" as Pref {
-  *UsuarioId : int <<PK, FK>>
-  --
-  IdiomaId : int <<FK>>
+package "Ubicacion y zonas" as D7 {
+  entity "dbo.ZonaUsuario" as T_ZonaUsuario {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    Nombre : varchar(50) <<NOT NULL>>
+    Latitud : decimal(9,6) <<NOT NULL>>
+    Longitud : decimal(9,6) <<NOT NULL>>
+    RadioMetros : int <<NOT NULL>>
+    --
+    UQ UQ_ZonaUsuario_UsuarioId_Nombre (UsuarioId, Nombre)
+    CHECK CK_ZonaUsuario_Latitud ([Latitud]>=(-90) AND [Latitud]<=(90))
+    CHECK CK_ZonaUsuario_Longitud ([Longitud]>=(-180) AND [Longitud]<=(180))
+    CHECK CK_ZonaUsuario_RadioMetros ([RadioMetros]>=(100) AND [RadioMetros]<=(20000))
+  }
 }
-
-' ===================== T06a - Bitacora =====================
-entity "Bitacora" as Bitacora {
-  *Id : int <<PK, IDENTITY>>
-  --
-  FechaHora : datetime
-  UsuarioId : int <<FK, NULL>>
-  UsernameSnapshot : varchar(50) <<NULL>>
-  Actividad : varchar(100)
-  Informacion : varchar(500) <<NULL>>
-  Nivel : varchar(20)
-  Origen : varchar(100)
-  EsTecnica : bit
+package "Usuarios y auditoria" as D8 {
+  entity "dbo.Bitacora" as T_Bitacora {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    FechaHora : datetime <<NOT NULL>>
+    UsuarioId : int <<FK, NULL>>
+    UsernameSnapshot : varchar(50) <<NULL>>
+    Actividad : varchar(100) <<NOT NULL>>
+    Informacion : varchar(500) <<NULL>>
+    Nivel : varchar(20) <<NOT NULL>>
+    Origen : varchar(100) <<NOT NULL>>
+    EsTecnica : bit <<NOT NULL>>
+  }
+  entity "dbo.DigitoVerificadorVertical" as T_DigitoVerificadorVertical {
+    *NombreTabla : varchar(100) <<PK, NOT NULL>>
+    Valor : varchar(100) <<NOT NULL>>
+    FechaActualizacion : datetime <<NOT NULL>>
+  }
+  entity "dbo.Permiso" as T_Permiso {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Nombre : varchar(100) <<NOT NULL>>
+    EsGrupo : bit <<NOT NULL>>
+    --
+    UQ UQ_Permiso_Nombre (Nombre)
+  }
+  entity "dbo.PermisoCompuesto" as T_PermisoCompuesto {
+    *PermisoPadreId : int <<PK, FK, NOT NULL>>
+    *PermisoHijoId : int <<PK, FK, NOT NULL>>
+    --
+    CHECK CK_PermisoCompuesto_Distinto ([PermisoPadreId]<>[PermisoHijoId])
+  }
+  entity "dbo.UsuarioHistorial" as T_UsuarioHistorial {
+    *HistorialId : int <<PK, IDENTITY, NOT NULL>>
+    UsuarioId : int <<FK, NOT NULL>>
+    FechaHora : datetime <<NOT NULL>>
+    ActorUsuarioId : int <<FK, NULL>>
+    ActorUsernameSnapshot : varchar(50) <<NULL>>
+    Accion : varchar(100) <<NOT NULL>>
+    Observaciones : varchar(500) <<NULL>>
+    Username : varchar(50) <<NOT NULL>>
+    PasswordHash : varchar(max) <<NOT NULL>>
+    Activo : bit <<NOT NULL>>
+    IdiomaId : int <<NULL>>
+  }
+  entity "dbo.UsuarioHistorialPermiso" as T_UsuarioHistorialPermiso {
+    *HistorialId : int <<PK, FK, NOT NULL>>
+    *PermisoId : int <<PK, NOT NULL>>
+  }
+  entity "dbo.UsuarioPermiso" as T_UsuarioPermiso {
+    *UsuarioId : int <<PK, FK, NOT NULL>>
+    *PermisoId : int <<PK, FK, NOT NULL>>
+  }
+  entity "dbo.UsuarioPreferencias" as T_UsuarioPreferencias {
+    *UsuarioId : int <<PK, FK, NOT NULL>>
+    IdiomaId : int <<FK, NOT NULL>>
+  }
+  entity "dbo.Usuarios" as T_Usuarios {
+    *Id : int <<PK, IDENTITY, NOT NULL>>
+    Username : varchar(50) <<NOT NULL>>
+    PasswordHash : varchar(max) <<NOT NULL>>
+    Activo : bit <<NOT NULL>>
+    IntentosFallidos : int <<NOT NULL>>
+    Bloqueado : bit <<NOT NULL>>
+    BloqueadoHasta : datetime <<NULL>>
+    DVH : varchar(100) <<NULL>>
+    --
+    UQ UQ_Usuarios_Username (Username)
+  }
 }
-
-' ===================== T06b - Control de cambios =====================
-entity "UsuarioHistorial" as Hist {
-  *HistorialId : int <<PK, IDENTITY>>
-  --
-  UsuarioId : int <<FK>>
-  FechaHora : datetime
-  ActorUsuarioId : int <<FK, NULL>>
-  ActorUsernameSnapshot : varchar(50) <<NULL>>
-  Accion : varchar(100)
-  Observaciones : varchar(500) <<NULL>>
-  Username : varchar(50)
-  PasswordHash : varchar(max)
-  Activo : bit
-  IdiomaId : int <<NULL>>
-}
-
-entity "UsuarioHistorialPermiso" as HistPerm {
-  *HistorialId : int <<PK, FK>>
-  *PermisoId : int <<PK>>
-}
-
-' ===================== T07 - Digitos verificadores =====================
-entity "DigitoVerificadorVertical" as DVV {
-  *NombreTabla : varchar(100) <<PK>>
-  --
-  Valor : varchar(100)
-  FechaActualizacion : datetime
-}
-
-' ===================== NEG01/NEG02 - Movimientos financieros =====================
-entity "Categoria" as Categoria {
-  *Id : int <<PK, IDENTITY>>
-  --
-  Nombre : varchar(100)
-  UsuarioId : int <<FK, NULL>>
-}
-
-entity "Movimiento" as Movimiento {
-  *Id : int <<PK, IDENTITY>>
-  --
-  UsuarioId : int <<FK>>
-  CategoriaId : int <<FK>>
-  Tipo : varchar(10)
-  Monto : decimal(18,2)
-  Fecha : date
-  Descripcion : varchar(300) <<NULL>>
-  FechaCreacion : datetime
-}
-
-' ===================== Relaciones (FK reales) =====================
-' Perfiles
-Permiso ||--o{ PermisoCompuesto : padre
-Permiso ||--o{ PermisoCompuesto : hijo
-Usuarios ||--o{ UsuarioPermiso
-Permiso  ||--o{ UsuarioPermiso
-
-' Multidioma
-Palabra ||--o{ Traduccion
-Idioma  ||--o{ Traduccion
-Usuarios ||--|| Pref
-Idioma   ||--o{ Pref
-
-' Bitacora
-Usuarios ||--o{ Bitacora : UsuarioId (NULL)
-
-' Control de cambios
-Usuarios ||--o{ Hist : UsuarioId
-Usuarios ||--o{ Hist : ActorUsuarioId (NULL)
-Hist ||--o{ HistPerm
-
-' Integridad (relacion logica por nombre de tabla, sin FK)
-DVV ..> Usuarios : NombreTabla = "Usuarios"
-
-' Movimientos financieros
-Usuarios ||--o{ Categoria : UsuarioId (NULL)
-Usuarios ||--o{ Movimiento : UsuarioId
-Categoria ||--o{ Movimiento : CategoriaId
-
+T_EjecucionActualizacionTasas ||--o{ T_ActualizacionTasaDetalle : EjecucionId
+T_Moneda ||--o{ T_ActualizacionTasaDetalle : MonedaBaseId
+T_Moneda ||--o{ T_ActualizacionTasaDetalle : MonedaConversionId
+T_Usuarios o|--o{ T_Bitacora : UsuarioId
+T_Usuarios o|--o{ T_Categoria : UsuarioId
+T_RubroComercio ||--o{ T_Comercio : RubroComercioId
+T_Comercio ||--o{ T_ComercioProducto : ComercioId
+T_Moneda ||--o{ T_ComercioProducto : MonedaId
+T_Producto ||--o{ T_ComercioProducto : ProductoId
+T_Comercio ||--o{ T_ComercioReglaCategorizacion : ComercioId
+T_ReglaCategorizacion ||--o{ T_ComercioReglaCategorizacion : ReglaCategorizacionId
+T_ChatbotFinanciero ||--o{ T_ConsultaChatbot : ChatbotFinancieroId
+T_Usuarios ||--o{ T_ConsultaChatbot : UsuarioId
+T_EntidadFinanciera ||--o{ T_CuentaFinanciera : EntidadFinancieraId
+T_Usuarios ||--o{ T_CuentaFinanciera : UsuarioId
+T_CuentaFinanciera ||--o{ T_CuentaFinancieraMedioPagoEntidad : CuentaFinancieraId
+T_MedioPagoEntidad ||--o{ T_CuentaFinancieraMedioPagoEntidad : MedioPagoEntidadId
+T_Usuarios ||--o| T_Dashboard : UsuarioId
+T_CorridaGeneracionNotificaciones ||--o{ T_DetalleGeneracionNotificacion : CorridaId
+T_Notificacion o|--o{ T_DetalleGeneracionNotificacion : NotificacionId
+T_Usuarios ||--o{ T_DetalleGeneracionNotificacion : UsuarioId
+T_ListaDeCompras ||--o{ T_ItemLista : ListaDeComprasId
+T_Usuarios ||--o{ T_ListaDeCompras : UsuarioId
+T_EntidadFinanciera ||--o{ T_MedioPagoEntidad : EntidadFinancieraId
+T_MedioPago ||--o{ T_MedioPagoEntidad : MedioPagoId
+T_Categoria ||--o{ T_Movimiento : CategoriaId
+T_Comercio o|--o{ T_Movimiento : ComercioId
+T_Usuarios ||--o{ T_Movimiento : UsuarioId
+T_ItemLista o|--o{ T_Notificacion : ItemListaId
+T_Promocion o|--o{ T_Notificacion : PromocionId
+T_Usuarios ||--o{ T_Notificacion : UsuarioId
+T_Usuarios ||--o| T_PerfilInversor : UsuarioId
+T_PerfilInversor ||--o{ T_PerfilInversorRespuesta : PerfilInversorId
+T_Permiso ||--o{ T_PermisoCompuesto : PermisoHijoId
+T_Permiso ||--o{ T_PermisoCompuesto : PermisoPadreId
+T_CategoriaProducto ||--o{ T_Producto : CategoriaProductoId
+T_Producto ||--o| T_ProductoEmbedding : ProductoId
+T_CategoriaProducto ||--o{ T_PromocionCategoriaProducto : CategoriaProductoId
+T_Promocion ||--o{ T_PromocionCategoriaProducto : PromocionId
+T_Comercio ||--o{ T_PromocionComercio : ComercioId
+T_Promocion ||--o{ T_PromocionComercio : PromocionId
+T_Promocion ||--o{ T_PromocionDiaSemana : PromocionId
+T_EntidadFinanciera ||--o{ T_PromocionEntidadFinanciera : EntidadFinancieraId
+T_Promocion ||--o{ T_PromocionEntidadFinanciera : PromocionId
+T_MedioPago ||--o{ T_PromocionMedioPago : MedioPagoId
+T_Promocion ||--o{ T_PromocionMedioPago : PromocionId
+T_Producto ||--o{ T_PromocionProducto : ProductoId
+T_Promocion ||--o{ T_PromocionProducto : PromocionId
+T_Promocion ||--o{ T_PromocionRubroComercio : PromocionId
+T_RubroComercio ||--o{ T_PromocionRubroComercio : RubroComercioId
+T_Promocion ||--o{ T_PromocionSegmento : PromocionId
+T_Categoria ||--o{ T_ReglaCategorizacion : CategoriaId
+T_Usuarios ||--o{ T_ReglaCategorizacion : UsuarioId
+T_Dashboard ||--o{ T_TarjetaDashboard : DashboardId
+T_Moneda ||--o{ T_TasaConversion : MonedaBaseId
+T_Moneda ||--o{ T_TasaConversion : MonedaConversionId
+T_Usuarios o|--o{ T_TasaConversion : ProtegidaPorUsuarioId
+T_Idioma ||--o{ T_Traduccion : IdiomaId
+T_Palabra ||--o{ T_Traduccion : PalabraId
+T_Usuarios o|--o{ T_UsuarioHistorial : ActorUsuarioId
+T_Usuarios ||--o{ T_UsuarioHistorial : UsuarioId
+T_UsuarioHistorial ||--o{ T_UsuarioHistorialPermiso : HistorialId
+T_Permiso ||--o{ T_UsuarioPermiso : PermisoId
+T_Usuarios ||--o{ T_UsuarioPermiso : UsuarioId
+T_Idioma ||--o{ T_UsuarioPreferencias : IdiomaId
+T_Usuarios ||--o| T_UsuarioPreferencias : UsuarioId
+T_Usuarios ||--o{ T_ZonaUsuario : UsuarioId
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+D0 -[hidden]right-> D1
+D1 -[hidden]right-> D2
+D0 -[hidden]down-> D3
+D3 -[hidden]right-> D4
+D1 -[hidden]down-> D4
+D4 -[hidden]right-> D5
+D2 -[hidden]down-> D5
+D3 -[hidden]down-> D6
+D6 -[hidden]right-> D7
+D4 -[hidden]down-> D7
+D7 -[hidden]right-> D8
+D5 -[hidden]down-> D8
 @enduml

@@ -1,4 +1,5 @@
 using ABSTRACCIONES;
+using SERVICIOS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace BLL.Tests
@@ -6,7 +7,7 @@ namespace BLL.Tests
     [TestClass]
     public sealed class ValidadorRespuestaAsistenteTests
     {
-        private static readonly ReferenciaAsistente[] Universo =
+        private static readonly IReferenciaAsistente[] Universo =
         {
             new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Carrefour"),
             new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"),
@@ -64,7 +65,7 @@ namespace BLL.Tests
         [TestMethod]
         public void Validar_ComercioAusenteDelContexto_DevuelveReferenciaNoPermitida()
         {
-            ContextoAsistente contexto = Contexto(new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"));
+            IContextoAsistente contexto = Contexto(new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"));
 
             ResultadoValidacionRespuesta resultado = _sut.Validar("Te conviene comprar en Carrefour.", Universo, contexto);
 
@@ -74,7 +75,7 @@ namespace BLL.Tests
         [TestMethod]
         public void Validar_SoloReferenciasPermitidas_EsValida()
         {
-            ContextoAsistente contexto = Contexto(
+            IContextoAsistente contexto = Contexto(
                 new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"),
                 new ReferenciaAsistente(TipoReferenciaAsistente.Cuenta, "Caja de ahorro Galicia"));
 
@@ -96,7 +97,7 @@ namespace BLL.Tests
         [TestMethod]
         public void Validar_ReferenciaPermitidaDeOtroTipo_NoHabilitaLaMencion()
         {
-            ContextoAsistente contexto = Contexto(new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"));
+            IContextoAsistente contexto = Contexto(new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, "Coto"));
 
             ResultadoValidacionRespuesta resultado = _sut.Validar(
                 "Aprovecha la promo Miercoles Coto.", Universo, contexto);
@@ -128,7 +129,7 @@ namespace BLL.Tests
             Assert.AreEqual(ResultadoValidacionRespuesta.RespuestaVacia, _sut.Validar("  ", Universo, ContextoAsistente.Vacio));
         }
 
-        private static ContextoAsistente Contexto(params ReferenciaAsistente[] permitidas)
+        private static IContextoAsistente Contexto(params IReferenciaAsistente[] permitidas)
         {
             return new ContextoAsistente("{}", permitidas);
         }

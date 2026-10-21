@@ -40,10 +40,10 @@ namespace SERVICIOS
         /// <param name="nombre">El nombre normalizado que se quiere validar.</param>
         /// <param name="idiomaId">El identificador del idioma en edicion, si corresponde.</param>
         /// <exception cref="ExcepcionNegocio">Ya existe otro idioma con el mismo nombre.</exception>
-        public void ValidarNombreDuplicado(IEnumerable<Idioma> idiomas, string nombre, int? idiomaId)
+        public void ValidarNombreDuplicado(IEnumerable<Idioma> idiomas, string nombre, Idioma excluido)
         {
             bool existe = idiomas.Any(item =>
-                (!idiomaId.HasValue || item.Id != idiomaId.Value) &&
+                (excluido == null || item.Id != excluido.Id) &&
                 string.Equals(item.Nombre, nombre, System.StringComparison.OrdinalIgnoreCase));
 
             if (existe)

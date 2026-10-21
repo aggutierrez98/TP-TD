@@ -76,7 +76,7 @@ namespace SERVICIOS.Tests
         {
             string root = EncontrarRaiz();
             string logo = Path.Combine(root, "UI", "Resources", "logo_reporte_finanzapp.png");
-            return new ReporteMovimientosPdf(7, "Listado de movimientos",
+            return new ReporteMovimientosPdf(new Usuario { Id = 7 }, "Listado de movimientos",
                 new[] { "Fecha", "Tipo", "Categoría", "Comercio", "Monto", "Descripción" },
                 filas, new[] { "Descripción: café", "Tipo: Todos", "Fecha desde: Sin límite" },
                 File.Exists(logo) ? File.ReadAllBytes(logo) : null, new DateTime(2026, 10, 14, 10, 30, 0),

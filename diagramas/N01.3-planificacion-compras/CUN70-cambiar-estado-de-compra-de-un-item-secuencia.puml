@@ -1,0 +1,59 @@
+@startuml
+' Fuente: diagramas/NEG16-lista-compras/NEG16-lista-compras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN70 Cambiar estado de compra de un ítem — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormListaDeCompras" as FormListaDeCompras
+control "ListaDeComprasBLL" as ListaDeComprasBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ItemListaRepositorio\n:IItemListaRepositorio" as IItemListaRepositorio
+participant "ItemListaDAL" as ItemListaDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormListaDeCompras : El actor compró un ítem (o necesita volver a marcarlo como pendiente) y desea\nreflejarlo en su lista.
+Actor -> FormListaDeCompras : marca o desmarca la casilla de la columna «Comprado» del ítem deseado.
+FormListaDeCompras -> ListaDeComprasBLL ++ : MarcarComprado(recibido: ItemLista, comprado: bool)
+ListaDeComprasBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ListaDeComprasBLL -- : Usuario
+ListaDeComprasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ListaDeComprasBLL -- : IUnidadDeTrabajo
+ListaDeComprasBLL -> IItemListaRepositorio ++ : ObtenerPorId(id: int)
+IItemListaRepositorio -> ItemListaDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ItemListaDAL --> IItemListaRepositorio -- : ItemLista
+IItemListaRepositorio --> ListaDeComprasBLL -- : ItemLista
+ListaDeComprasBLL -> IItemListaRepositorio ++ : Actualizar(itemLista: ItemLista)
+IItemListaRepositorio -> ItemListaDAL ++ : Actualizar(itemLista: ItemLista, accesoDatos:\nAccesoDatosSqlServer)
+ItemListaDAL --> IItemListaRepositorio -- : bool
+IItemListaRepositorio --> ListaDeComprasBLL -- : bool
+ListaDeComprasBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ListaDeComprasBLL -- : void
+ListaDeComprasBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ListaDeComprasBLL -- : void
+ListaDeComprasBLL --> FormListaDeCompras -- : bool
+FormListaDeCompras --> Actor : registra el nuevo estado de compra del ítem y lo mantiene reflejado en el listado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ListaDeComprasBLL.cs:147 ListaDeComprasBLL.MarcarComprado
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ItemListaDAL.cs:118 ItemListaDAL.Actualizar
+' DAL/ItemListaDAL.cs:22 ItemListaDAL.ObtenerPorId
+' REPOSITORIO/IItemListaRepositorio.cs:14 IItemListaRepositorio.Actualizar
+' REPOSITORIO/IItemListaRepositorio.cs:8 IItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ItemListaRepositorio.cs:23 ItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/ItemListaRepositorio.cs:52 ItemListaRepositorio.Actualizar
+' UI/FormListaDeCompras.cs:135 FormListaDeCompras.dgvItems_CellValueChanged
+@enduml

@@ -13,6 +13,6 @@ namespace REPOSITORIO
 
         bool Actualizar(RubroComercio rubro);
 
-        bool Eliminar(int id);
+        bool Eliminar(RubroComercio rubro);
     }
 }

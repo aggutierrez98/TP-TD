@@ -121,10 +121,10 @@ namespace DAL
         }
 
         // Pagina por clave (Id ascendente) de cuentas activas: no filtra por rol ni por bloqueo temporal.
-        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad, AccesoDatosSqlServer accesoDatos = null)
+        public List<Usuario> ObtenerActivosDespuesDe(Usuario ultimo, int cantidad, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT TOP (@Cantidad) Id
+                SELECT TOP (@Cantidad) Id, Username, PasswordHash, Activo, IntentosFallidos, Bloqueado, BloqueadoHasta, DVH
                 FROM Usuarios
                 WHERE Activo = 1 AND Id > @UltimoId
                 ORDER BY Id";
@@ -136,15 +136,15 @@ namespace DAL
                 DataTable tabla = accesoDatos.Read(query, new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Cantidad", SqlDbType.Int, cantidad),
-                    accesoDatos.CreateParameter("@UltimoId", SqlDbType.Int, ultimoId)
+                    accesoDatos.CreateParameter("@UltimoId", SqlDbType.Int, ultimo?.Id ?? 0)
                 });
-                List<int> ids = new List<int>();
+                List<Usuario> usuarios = new List<Usuario>();
                 foreach (DataRow row in tabla.Rows)
                 {
-                    ids.Add((int)row["Id"]);
+                    usuarios.Add(Map(row));
                 }
 
-                return ids;
+                return usuarios;
             }
             finally { if (dispose) accesoDatos.Dispose(); }
         }
@@ -247,7 +247,7 @@ namespace DAL
 
         // Actualiza el contador de intentos fallidos, el estado de bloqueo (temporal o
         // permanente) y su DVH en una unica sentencia: Login los modifica siempre juntos.
-        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh, AccesoDatosSqlServer accesoDatos = null)
+        public bool ActualizarEstadoBloqueo(Usuario usuario, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -268,7 +268,7 @@ namespace DAL
                     accesoDatos.CreateParameter("@Bloqueado", SqlDbType.Bit, bloqueado),
                     accesoDatos.CreateParameter("@BloqueadoHasta", SqlDbType.DateTime, bloqueadoHasta),
                     accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, dvh),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -284,7 +284,7 @@ namespace DAL
 
         // Actualiza unicamente el DVH de una fila. Se usa al inicializar las firmas o
         // tras restaurar un estado historico, sin reescribir el resto de las columnas.
-        public bool ActualizarDVH(int id, string dvh, AccesoDatosSqlServer accesoDatos = null)
+        public bool ActualizarDVH(Usuario usuario, string dvh, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -299,7 +299,7 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@DVH", SqlDbType.VarChar, dvh),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -346,7 +346,7 @@ namespace DAL
             }
         }
 
-        public bool Desactivar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Desactivar(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Usuarios
@@ -361,7 +361,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -375,7 +375,7 @@ namespace DAL
             }
         }
 
-        public bool EliminarFisicamente(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool EliminarFisicamente(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE UsuarioHistorial
@@ -411,7 +411,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, usuario.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

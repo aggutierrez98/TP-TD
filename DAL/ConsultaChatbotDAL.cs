@@ -8,13 +8,13 @@ namespace DAL
 {
     public class ConsultaChatbotDAL
     {
-        private ConsultaChatbot Map(DataRow row)
+        private ConsultaChatbot Map(DataRow row, Usuario usuario)
         {
             return new ConsultaChatbot
             {
                 Id = (int)row["Id"],
-                ChatbotFinancieroId = (int)row["ChatbotFinancieroId"],
-                UsuarioId = (int)row["UsuarioId"],
+                ChatbotFinanciero = new ChatbotFinanciero { Id = (int)row["ChatbotFinancieroId"] },
+                Usuario = usuario,
                 Pregunta = row["Pregunta"].ToString(),
                 Respuesta = row["Respuesta"].ToString(),
                 Fecha = (DateTime)row["Fecha"],
@@ -22,7 +22,7 @@ namespace DAL
             };
         }
 
-        public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, ChatbotFinancieroId, UsuarioId, Pregunta, Respuesta, Fecha, EsPregunta
@@ -37,14 +37,14 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 List<ConsultaChatbot> consultas = new List<ConsultaChatbot>();
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    consultas.Add(Map(row));
+                    consultas.Add(Map(row, usuario));
                 }
 
                 return consultas;
@@ -72,8 +72,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ChatbotFinancieroId", SqlDbType.Int, consultaChatbot.ChatbotFinancieroId),
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, consultaChatbot.UsuarioId),
+                    accesoDatos.CreateParameter("@ChatbotFinancieroId", SqlDbType.Int, consultaChatbot.ChatbotFinanciero.Id),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, consultaChatbot.Usuario.Id),
                     accesoDatos.CreateParameter("@Pregunta", SqlDbType.VarChar, consultaChatbot.Pregunta),
                     accesoDatos.CreateParameter("@Respuesta", SqlDbType.VarChar, consultaChatbot.Respuesta),
                     accesoDatos.CreateParameter("@Fecha", SqlDbType.DateTime, consultaChatbot.Fecha),

@@ -6,7 +6,7 @@ namespace BE
     // TextoFuente. Si cualquiera de los dos cambia, el vector queda desactualizado y se recalcula.
     public class ProductoEmbedding
     {
-        public int ProductoId { get; set; }
+        public Producto Producto { get; set; }
 
         public string Modelo { get; set; }
 

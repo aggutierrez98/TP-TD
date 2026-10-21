@@ -41,7 +41,7 @@ namespace TpIDS.IntegrationTests
                     primero.Save();
                     await segundo;
                 }
-                var final = new PerfilInversorRepositorio().ObtenerPorUsuario(usuario);
+                var final = new PerfilInversorRepositorio().ObtenerPorUsuario(new Usuario { Id = usuario });
                 Assert.AreEqual("BCCCCCCCCB", string.Concat(final.Respuestas.Select(r => r.OpcionId)));
                 Assert.AreEqual(64.16m, final.Puntaje);
                 Assert.AreEqual(NivelRiesgoInversor.Moderado, final.NivelRiesgo);
@@ -58,10 +58,10 @@ namespace TpIDS.IntegrationTests
             using (var unidad = new UnidadDeTrabajoFactory().Crear())
             {
                 var invalido = CrearPerfil(usuario, "AAAAAAAAAA");
-                invalido.Respuestas[9].PreguntaId = 1;
+                invalido.Respuestas[9].Pregunta = new PreguntaPerfilInversor(1);
                 Assert.ThrowsExactly<ExcepcionTecnica>(() => unidad.PerfilesInversor.Guardar(invalido));
             }
-            var final = new PerfilInversorRepositorio().ObtenerPorUsuario(usuario);
+            var final = new PerfilInversorRepositorio().ObtenerPorUsuario(new Usuario { Id = usuario });
             Assert.AreEqual(100m, final.Puntaje);
             Assert.AreEqual("CDCDCCDDDC", string.Concat(final.Respuestas.Select(r => r.OpcionId)));
         }
@@ -74,22 +74,22 @@ namespace TpIDS.IntegrationTests
                 var repo = new PerfilInversorRepositorio(acceso);
                 int admin = new UsuarioDAL().ObtenerPorUsername("admin", acceso).Id;
                 int user = new UsuarioDAL().ObtenerPorUsername("user", acceso).Id;
-                Assert.IsNull(repo.ObtenerPorUsuario(admin));
+                Assert.IsNull(repo.ObtenerPorUsuario(new Usuario { Id = admin }));
                 var alto = CrearPerfil(admin, "CDCDCCDDDC");
                 repo.Guardar(alto);
-                var leido = repo.ObtenerPorUsuario(admin);
-                Assert.AreEqual(admin, leido.UsuarioId);
+                var leido = repo.ObtenerPorUsuario(new Usuario { Id = admin });
+                Assert.AreEqual(admin, leido.Usuario.Id);
                 Assert.AreEqual(NivelRiesgoInversor.Alto, leido.NivelRiesgo);
                 Assert.AreEqual(10, leido.Respuestas.Count);
                 var bajo = CrearPerfil(admin, "AAAAAAAAAA");
                 repo.Guardar(bajo);
-                var nuevo = repo.ObtenerPorUsuario(admin);
+                var nuevo = repo.ObtenerPorUsuario(new Usuario { Id = admin });
                 Assert.AreEqual(leido.Id, nuevo.Id);
                 Assert.AreEqual(NivelRiesgoInversor.Bajo, nuevo.NivelRiesgo);
                 Assert.IsTrue(nuevo.Respuestas.All(r => r.OpcionId == "A"));
                 Assert.AreEqual(10, nuevo.Respuestas.Count);
                 Assert.Contains("NoAceptaPerdidas", nuevo.MotivosLimite);
-                Assert.AreEqual(NivelRiesgoInversor.Alto, repo.ObtenerPorUsuario(user).NivelRiesgo);
+                Assert.AreEqual(NivelRiesgoInversor.Alto, repo.ObtenerPorUsuario(new Usuario { Id = user }).NivelRiesgo);
                 acceso.RollbackTransactionScope();
             }
         }
@@ -101,7 +101,7 @@ namespace TpIDS.IntegrationTests
             using (var acceso = new AccesoDatosSqlServer()) user = new UsuarioDAL().ObtenerPorUsername("user", acceso).Id;
             using (var unidad = new UnidadDeTrabajoFactory().Crear())
                 unidad.PerfilesInversor.Guardar(CrearPerfil(user, "AAAAAAAAAA"));
-            var original = new PerfilInversorRepositorio().ObtenerPorUsuario(user);
+            var original = new PerfilInversorRepositorio().ObtenerPorUsuario(new Usuario { Id = user });
             Assert.AreEqual(NivelRiesgoInversor.Alto, original.NivelRiesgo);
             Assert.AreEqual("CDCDCCDDDC", string.Concat(original.Respuestas.Select(r => r.OpcionId)));
         }
@@ -109,8 +109,8 @@ namespace TpIDS.IntegrationTests
         private static PerfilInversor CrearPerfil(int usuarioId, string opciones)
         {
             var perfil = CalculadorPerfilInversor.Evaluar(1, opciones.Select((o, i) =>
-                new RespuestaPerfilInversor { PreguntaId = i + 1, OpcionId = o.ToString() }));
-            perfil.UsuarioId = usuarioId;
+                new RespuestaPerfilInversor { Pregunta = new PreguntaPerfilInversor(i + 1), OpcionId = o.ToString() }));
+            perfil.Usuario = new Usuario { Id = usuarioId };
             perfil.FechaEvaluacionUtc = DateTime.UtcNow;
             return perfil;
         }
@@ -131,7 +131,7 @@ namespace TpIDS.IntegrationTests
                     && (int)r["NivelRiesgo"] == 2 && (int)r["VersionCuestionario"] == 1));
                 Assert.AreEqual("[]", datos.Rows[0]["MotivosLimite"]);
                 var recalculado = CalculadorPerfilInversor.Evaluar(1, datos.Rows.Cast<DataRow>().Select(r =>
-                    new RespuestaPerfilInversor { PreguntaId = (int)r["PreguntaId"], OpcionId = r["OpcionId"].ToString() }));
+                    new RespuestaPerfilInversor { Pregunta = new PreguntaPerfilInversor((int)r["PreguntaId"]), OpcionId = r["OpcionId"].ToString() }));
                 Assert.AreEqual((decimal)datos.Rows[0]["Puntaje"], recalculado.Puntaje);
                 Assert.AreEqual((NivelRiesgoInversor)(int)datos.Rows[0]["NivelRiesgo"], recalculado.NivelRiesgo);
                 Assert.AreEqual(0, acceso.Read(@"SELECT p.Id FROM PerfilInversor p JOIN Usuarios u ON u.Id=p.UsuarioId WHERE u.Username<>'user'", null).Rows.Count);

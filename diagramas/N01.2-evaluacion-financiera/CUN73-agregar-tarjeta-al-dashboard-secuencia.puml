@@ -1,0 +1,87 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN73 Agregar tarjeta al dashboard — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormDashboardAnaliticas" as FormDashboardAnaliticas
+control "DashboardBLL" as DashboardBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "TarjetaDashboardRepositorio\n:ITarjetaDashboardRepositorio" as ITarjetaDashboardRepositorio
+participant "TarjetaDashboardDAL" as TarjetaDashboardDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "DashboardRepositorio\n:IDashboardRepositorio" as IDashboardRepositorio
+note over FormDashboardAnaliticas : El actor desea sumar un nuevo análisis a su dashboard.
+Actor -> FormDashboardAnaliticas : selecciona el botón «Agregar tarjeta» de la pantalla «Dashboard».
+FormDashboardAnaliticas -> DashboardBLL ++ : ObtenerTiposDisponibles()
+DashboardBLL -> DashboardBLL ++ : ObtenerOCrearDashboardActual()
+DashboardBLL --> DashboardBLL -- : Dashboard
+ref over DashboardBLL : Obtencion/creacion detallada en CUN72
+DashboardBLL --> FormDashboardAnaliticas -- : IReadOnlyList<TipoTarjetaDashboard>
+FormDashboardAnaliticas --> Actor : presenta el diálogo «Agregar tarjeta» con la lista de tipos de tarjeta que el actor aún no\nagregó, con el botón «Aceptar» deshabilitado y el botón «Cancelar».
+Actor -> FormDashboardAnaliticas : selecciona un tipo de tarjeta de la lista.
+FormDashboardAnaliticas --> Actor : habilita el botón «Aceptar».
+Actor -> FormDashboardAnaliticas : selecciona el botón «Aceptar».
+FormDashboardAnaliticas -> DashboardBLL ++ : AgregarTarjeta(tipo: TipoTarjetaDashboard)
+DashboardBLL -> DashboardBLL ++ : ObtenerOCrearDashboardActual()
+DashboardBLL --> DashboardBLL -- : Dashboard
+ref over DashboardBLL : Obtencion/creacion detallada en CUN72
+DashboardBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> DashboardBLL -- : IUnidadDeTrabajo
+DashboardBLL -> ITarjetaDashboardRepositorio ++ : InsertarYObtenerId(tarjeta: TarjetaDashboard)
+ITarjetaDashboardRepositorio -> TarjetaDashboardDAL ++ : InsertarYObtenerId(tarjeta: TarjetaDashboard, accesoDatos:\nAccesoDatosSqlServer)
+TarjetaDashboardDAL --> ITarjetaDashboardRepositorio -- : int
+ITarjetaDashboardRepositorio --> DashboardBLL -- : int
+DashboardBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> DashboardBLL -- : void
+DashboardBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> DashboardBLL -- : void
+DashboardBLL --> FormDashboardAnaliticas -- : TarjetaDashboard
+group Refrescar listado tras la operacion exitosa
+FormDashboardAnaliticas -> DashboardBLL ++ : ObtenerOCrearDashboardActual()
+DashboardBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> DashboardBLL -- : Usuario
+DashboardBLL -> IDashboardRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IDashboardRepositorio --> DashboardBLL -- : Dashboard
+alt Ya existe para el usuario
+note over DashboardBLL : Reutilizar la entidad persistida; no insertar otra.
+else No existe
+DashboardBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> DashboardBLL -- : IUnidadDeTrabajo
+DashboardBLL -> IDashboardRepositorio ++ : InsertarYObtenerId(dashboard: Dashboard)
+IDashboardRepositorio --> DashboardBLL -- : int
+DashboardBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> DashboardBLL -- : void
+DashboardBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> DashboardBLL -- : void
+end
+DashboardBLL --> FormDashboardAnaliticas -- : Dashboard
+end
+FormDashboardAnaliticas --> Actor : cierra el diálogo y vuelve a presentar el dashboard incluyendo la nueva tarjeta con su\ngráfico y su resumen.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DashboardBLL.cs:166 DashboardBLL.ObtenerTiposDisponibles
+' BLL/DashboardBLL.cs:35 DashboardBLL.ObtenerOCrearDashboardActual
+' BLL/DashboardBLL.cs:78 DashboardBLL.AgregarTarjeta
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/TarjetaDashboardDAL.cs:87 TarjetaDashboardDAL.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:11 IDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:9 IDashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:12 ITarjetaDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:47 TarjetaDashboardRepositorio.InsertarYObtenerId
+' UI/FormDashboardAnaliticas.cs:241 FormDashboardAnaliticas.btnAgregarTarjeta_Click
+@enduml

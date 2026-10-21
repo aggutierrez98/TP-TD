@@ -10,7 +10,7 @@ namespace DAL
     // una sola lectura lo que el BLL necesita, sin hidratar entidad por entidad.
     public class RecomendacionComprasDAL
     {
-        public List<ItemLista> ObtenerItemsPendientesPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ItemLista> ObtenerItemsPendientesPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT i.Id, i.Descripcion, i.Cantidad, i.Comprado,
@@ -21,7 +21,7 @@ namespace DAL
                 ORDER BY l.Nombre, l.Id, i.Id";
 
             List<SqlParameter> parametros = new List<SqlParameter>();
-            DataTable tabla = Leer(query, accesoDatos, acceso => parametros.Add(acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)), parametros);
+            DataTable tabla = Leer(query, accesoDatos, acceso => parametros.Add(acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)), parametros);
 
             List<ItemLista> items = new List<ItemLista>();
             foreach (DataRow row in tabla.Rows)
@@ -162,7 +162,7 @@ namespace DAL
 
         // CredencialesCifradas no se selecciona: nunca sale de la base para este caso de uso.
         // LEFT JOIN para conservar las cuentas sin medios contratados.
-        public List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT cf.Id, cf.UsuarioId, cf.Alias, cf.Tipo,
@@ -178,7 +178,7 @@ namespace DAL
                 ORDER BY cf.Alias, cf.Id, mpe.Id";
 
             List<SqlParameter> parametros = new List<SqlParameter>();
-            DataTable tabla = Leer(query, accesoDatos, acceso => parametros.Add(acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)), parametros);
+            DataTable tabla = Leer(query, accesoDatos, acceso => parametros.Add(acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)), parametros);
 
             List<CuentaFinanciera> cuentas = new List<CuentaFinanciera>();
             Dictionary<int, CuentaFinanciera> porId = new Dictionary<int, CuentaFinanciera>();

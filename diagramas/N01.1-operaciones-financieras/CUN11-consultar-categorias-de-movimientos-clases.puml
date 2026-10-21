@@ -1,0 +1,83 @@
+@startuml
+' Fuente: diagramas/NEG03-categorias-movimientos/NEG03-categorias-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN11 Consultar categorías de movimientos — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionCategorias {
+    -CargarCategorias(categoriaSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class CategoriaBLL {
+    +ObtenerVisiblesParaUsuarioActual(): List<Categoria>
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaBLL -[hidden]right-> SesionUsuarioExtensiones
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface ICategoriaRepositorio {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  class CategoriaRepositorio {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ICategoriaRepositorio -[hidden]right-> CategoriaRepositorio
+package "DAL" as L_DAL {
+  class CategoriaDAL {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario, accesoDatos: AccesoDatosSqlServer):\nList<Categoria>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Categoria {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Categoria -[hidden]right-> Usuario
+CategoriaBLL ..> ICategoriaRepositorio : usa
+CategoriaBLL ..> SesionUsuarioExtensiones : usa
+CategoriaRepositorio ..|> ICategoriaRepositorio
+FormGestionCategorias ..> CategoriaBLL : usa
+CategoriaRepositorio ..> CategoriaDAL : usa
+CategoriaBLL ..> Categoria : datos
+Categoria --> Usuario : Usuario
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CategoriaDAL.cs:49 CategoriaDAL.ObtenerVisiblesParaUsuario
+' REPOSITORIO/CategoriaRepositorio.cs:30 CategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' UI/FormGestionCategorias.cs:165 FormGestionCategorias.CargarCategorias
+@enduml

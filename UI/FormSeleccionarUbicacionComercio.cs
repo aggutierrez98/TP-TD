@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 using ABSTRACCIONES;
+using SERVICIOS;
 using GMap.NET;
 using GMap.NET.MapProviders;
 using GMap.NET.WindowsForms;
@@ -41,7 +42,7 @@ namespace TpIDS
         private bool _arrastrandoMarcador;
         private readonly bool _busquedaDisponible;
         private readonly CoordinadorBusquedaUbicacion _coordinadorBusqueda;
-        private IReadOnlyList<ResultadoBusquedaUbicacion> _coincidencias;
+        private IReadOnlyList<IResultadoBusquedaUbicacion> _coincidencias;
         private IIdioma _idioma;
         private bool _cerrado;
 
@@ -231,7 +232,7 @@ namespace TpIDS
                 return;
             }
 
-            ConsultaUbicacion consulta = new ConsultaUbicacion(texto, ObtenerCodigoIdioma(), ObtenerZonaVisible());
+            IConsultaUbicacion consulta = new ConsultaUbicacion(texto, ObtenerCodigoIdioma(), ObtenerZonaVisible());
             LimpiarCoincidencias();
             btnBuscarUbicacion.Enabled = false;
             MostrarEstadoBusqueda("FormMapLocationPicker.SearchSearching", "Buscando...");
@@ -303,10 +304,10 @@ namespace TpIDS
             }
         }
 
-        private void MostrarCoincidencias(IReadOnlyList<ResultadoBusquedaUbicacion> coincidencias)
+        private void MostrarCoincidencias(IReadOnlyList<IResultadoBusquedaUbicacion> coincidencias)
         {
-            List<ResultadoBusquedaUbicacion> vigentes = new List<ResultadoBusquedaUbicacion>();
-            foreach (ResultadoBusquedaUbicacion coincidencia in coincidencias)
+            List<IResultadoBusquedaUbicacion> vigentes = new List<IResultadoBusquedaUbicacion>();
+            foreach (IResultadoBusquedaUbicacion coincidencia in coincidencias)
             {
                 if (coincidencia != null && vigentes.Count < MaximoCoincidencias)
                 {
@@ -318,7 +319,7 @@ namespace TpIDS
             _coincidencias = vigentes;
             cmbResultadosUbicacion.BeginUpdate();
             cmbResultadosUbicacion.Items.Clear();
-            foreach (ResultadoBusquedaUbicacion coincidencia in vigentes)
+            foreach (IResultadoBusquedaUbicacion coincidencia in vigentes)
             {
                 cmbResultadosUbicacion.Items.Add(new ItemCoincidencia(coincidencia));
             }
@@ -362,7 +363,7 @@ namespace TpIDS
                 return;
             }
 
-            ResultadoBusquedaUbicacion elegida = _coincidencias[indice];
+            IResultadoBusquedaUbicacion elegida = _coincidencias[indice];
             AplicarCoincidencia(elegida);
             string descripcion = elegida.Descripcion ?? string.Empty;
             toolTipNavegacion.SetToolTip(cmbResultadosUbicacion, descripcion);
@@ -459,7 +460,7 @@ namespace TpIDS
         }
 
         // La zona visible es una preferencia de la busqueda, no una restriccion.
-        private LimitesGeograficos ObtenerZonaVisible()
+        private ILimitesGeograficos ObtenerZonaVisible()
         {
             try
             {
@@ -477,7 +478,7 @@ namespace TpIDS
             }
         }
 
-        private void AplicarCoincidencia(ResultadoBusquedaUbicacion coincidencia)
+        private void AplicarCoincidencia(IResultadoBusquedaUbicacion coincidencia)
         {
             // Interrumpir cualquier arrastre activo y limpiar el hover del marcador que se reemplaza.
             _arrastrandoMarcador = false;
@@ -498,7 +499,7 @@ namespace TpIDS
         }
 
         // Mayor zoom (dentro de los limites del mapa) en el que la extension cabe en la vista.
-        private int? CalcularZoomEncuadre(LimitesGeograficos limites)
+        private int? CalcularZoomEncuadre(ILimitesGeograficos limites)
         {
             Size vista = mapUbicacionComercio.ClientSize;
             if (vista.Width <= 0 || vista.Height <= 0)
@@ -532,7 +533,7 @@ namespace TpIDS
         {
             private readonly string _texto;
 
-            public ItemCoincidencia(ResultadoBusquedaUbicacion coincidencia)
+            public ItemCoincidencia(IResultadoBusquedaUbicacion coincidencia)
             {
                 string descripcion = coincidencia.Descripcion ?? string.Empty;
                 _texto = string.IsNullOrWhiteSpace(coincidencia.Tipo) ? descripcion : descripcion + " (" + coincidencia.Tipo + ")";

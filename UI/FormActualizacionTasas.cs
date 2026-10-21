@@ -25,6 +25,7 @@ namespace TpIDS
         // View-models planos para bindear las grillas.
         private sealed class FilaEjecucion
         {
+            public EjecucionActualizacionTasas Ejecucion { get; set; }
             public int Id { get; set; }
             public DateTime FechaInicio { get; set; }
             public OrigenActualizacionTasas Origen { get; set; }
@@ -100,7 +101,7 @@ namespace TpIDS
             try
             {
                 dgvDetalleEjecucionTasas.DataSource = null;
-                dgvDetalleEjecucionTasas.DataSource = actualizacionTasasBLL.ObtenerDetalleDeEjecucion(seleccionada.Id)
+                dgvDetalleEjecucionTasas.DataSource = actualizacionTasasBLL.ObtenerDetalleDeEjecucion(seleccionada.Ejecucion)
                     .Select(ProyectarFilaDetalle)
                     .ToList();
             }
@@ -235,6 +236,7 @@ namespace TpIDS
         {
             return new FilaEjecucion
             {
+                Ejecucion = ejecucion,
                 Id = ejecucion.Id,
                 FechaInicio = ejecucion.FechaInicio,
                 Origen = ejecucion.Origen,

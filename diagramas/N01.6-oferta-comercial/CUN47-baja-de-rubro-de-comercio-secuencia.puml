@@ -1,0 +1,85 @@
+@startuml
+' Fuente: diagramas/NEG10-rubros-comercio/NEG10-rubros-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN47 Baja de rubro de comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionComercios" as FormGestionComercios
+control "RubroComercioBLL" as RubroComercioBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "RubroComercioRepositorio\n:IRubroComercioRepositorio" as IRubroComercioRepositorio
+participant "RubroComercioDAL" as RubroComercioDAL
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "PromocionRubroComercioRepositorio\n:IPromocionRubroComercioRepositorio" as IPromocionRubroComercioRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionComercios : El actor desea retirar un rubro que ya no corresponde.
+Actor -> FormGestionComercios : selecciona la opción «Comercios» del menú «Operador».
+FormGestionComercios --> Actor : presenta la pantalla «Gestion de Comercios» con la sección «Rubros de comercio» y su\nlistado de rubros.
+Actor -> FormGestionComercios : selecciona del listado el rubro a eliminar.
+Actor -> FormGestionComercios : presiona el botón «Eliminar» de la sección «Rubros de comercio».
+FormGestionComercios --> Actor : solicita confirmación mediante el mensaje «Se eliminara el rubro seleccionado. Desea\ncontinuar?», titulado «Confirmar eliminacion».
+alt El actor confirma la operacion
+Actor -> FormGestionComercios : confirma la eliminación.
+FormGestionComercios -> RubroComercioBLL ++ : Eliminar(rubro: RubroComercio)
+RubroComercioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> RubroComercioBLL -- : IUnidadDeTrabajo
+RubroComercioBLL -> IRubroComercioRepositorio ++ : ObtenerPorId(id: int)
+IRubroComercioRepositorio -> RubroComercioDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : RubroComercio
+IRubroComercioRepositorio --> RubroComercioBLL -- : RubroComercio
+RubroComercioBLL -> IComercioRepositorio ++ : ObtenerPorRubro(rubro: RubroComercio)
+IComercioRepositorio --> RubroComercioBLL -- : List<Comercio>
+RubroComercioBLL -> IPromocionRubroComercioRepositorio ++ : ContarPorRubroComercio(rubroComercio: RubroComercio)
+IPromocionRubroComercioRepositorio --> RubroComercioBLL -- : int
+RubroComercioBLL -> IRubroComercioRepositorio ++ : Eliminar(rubro: RubroComercio)
+IRubroComercioRepositorio -> RubroComercioDAL ++ : Eliminar(rubro: RubroComercio, accesoDatos:\nAccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : bool
+IRubroComercioRepositorio --> RubroComercioBLL -- : bool
+RubroComercioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> RubroComercioBLL -- : void
+RubroComercioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> RubroComercioBLL -- : void
+RubroComercioBLL --> FormGestionComercios -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionComercios -> RubroComercioBLL ++ : ObtenerTodas()
+RubroComercioBLL -> IRubroComercioRepositorio ++ : ObtenerTodas()
+IRubroComercioRepositorio -> RubroComercioDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : List<RubroComercio>
+IRubroComercioRepositorio --> RubroComercioBLL -- : List<RubroComercio>
+RubroComercioBLL --> FormGestionComercios -- : List<RubroComercio>
+end
+FormGestionComercios --> Actor : elimina el rubro, vacía el campo «Nombre:», actualiza el listado y el selector «Rubro:», e\ninforma el resultado.
+else El actor cancela la confirmacion
+Actor -> FormGestionComercios : Cancelar la operacion
+FormGestionComercios --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/RubroComercioBLL.cs:100 RubroComercioBLL.Eliminar
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' DAL/RubroComercioDAL.cs:135 RubroComercioDAL.Eliminar
+' DAL/RubroComercioDAL.cs:19 RubroComercioDAL.ObtenerPorId
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' REPOSITORIO/IComercioRepositorio.cs:10 IComercioRepositorio.ObtenerPorRubro
+' REPOSITORIO/IPromocionRubroComercioRepositorio.cs:12 IPromocionRubroComercioRepositorio.ContarPorRubroComercio
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:16 IRubroComercioRepositorio.Eliminar
+' REPOSITORIO/IRubroComercioRepositorio.cs:8 IRubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/RubroComercioRepositorio.cs:23 RubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:43 RubroComercioRepositorio.Eliminar
+' UI/FormGestionComercios.cs:357 FormGestionComercios.btnEliminarRubro_Click
+@enduml

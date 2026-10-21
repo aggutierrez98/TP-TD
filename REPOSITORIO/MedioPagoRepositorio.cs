@@ -41,9 +41,9 @@ namespace REPOSITORIO
             return _medioPagoDAL.Actualizar(medioPago, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(MedioPago medioPago)
         {
-            return _medioPagoDAL.Eliminar(id, _accesoDatos);
+            return _medioPagoDAL.Eliminar(medioPago, _accesoDatos);
         }
     }
 }

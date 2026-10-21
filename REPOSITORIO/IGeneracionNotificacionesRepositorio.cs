@@ -9,14 +9,14 @@ namespace REPOSITORIO
     {
         int InsertarCorridaYObtenerId(CorridaGeneracionNotificaciones corrida);
 
-        bool FinalizarCorrida(int corridaId, DateTime finUtc, int entregadas, int omitidas, int fallidas);
+        bool FinalizarCorrida(CorridaGeneracionNotificaciones corrida, DateTime finUtc, int entregadas, int omitidas, int fallidas);
 
         int InsertarDetalleYObtenerId(DetalleGeneracionNotificacion detalle);
 
-        CorridaGeneracionNotificaciones ObtenerCorrida(int id);
+        CorridaGeneracionNotificaciones ObtenerPorId(int id);
 
         List<CorridaGeneracionNotificaciones> ObtenerRecientes(int cantidad);
 
-        List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(int corridaId);
+        List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(CorridaGeneracionNotificaciones corrida);
     }
 }

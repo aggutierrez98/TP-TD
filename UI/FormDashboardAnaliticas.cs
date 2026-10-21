@@ -193,8 +193,7 @@ namespace TpIDS
                 Tag = "FormDashboard.RemoveCardButton",
                 Text = UiDialogHelper.Traducir("FormDashboard.RemoveCardButton")
             };
-            int tarjetaId = tarjeta.Id;
-            quitar.Click += (sender, e) => QuitarTarjeta(tarjetaId);
+            quitar.Click += (sender, e) => QuitarTarjeta(tarjeta);
 
             // Periodo y totales: texto permanente bajo el titulo (se ve sin interactuar).
             KryptonLabel resumen = new KryptonLabel
@@ -226,11 +225,11 @@ namespace TpIDS
             return panel;
         }
 
-        private void QuitarTarjeta(int tarjetaId)
+        private void QuitarTarjeta(TarjetaDashboard tarjeta)
         {
             try
             {
-                dashboardBLL.QuitarTarjeta(tarjetaId);
+                dashboardBLL.QuitarTarjeta(tarjeta);
                 CargarDashboard();
             }
             catch (Exception ex)

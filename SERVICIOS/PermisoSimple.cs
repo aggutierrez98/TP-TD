@@ -44,9 +44,9 @@ namespace SERVICIOS
         /// </summary>
         /// <param name="id">El identificador del permiso buscado.</param>
         /// <returns><see langword="true" /> si el identificador coincide; en caso contrario, <see langword="false" />.</returns>
-        public bool Contiene(int id)
+        public bool Contiene(IPermiso permiso)
         {
-            return Id == id;
+            return permiso != null && Id == permiso.Id;
         }
 
         /// <summary>

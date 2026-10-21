@@ -1,0 +1,77 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN40 Baja de tasa de conversion — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMonedas" as FormGestionMonedas
+control "TasaConversionBLL" as TasaConversionBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "TasaConversionRepositorio\n:ITasaConversionRepositorio" as ITasaConversionRepositorio
+participant "TasaConversionDAL" as TasaConversionDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionMonedas : El actor desea retirar una tasa de conversión que ya no corresponde.
+Actor -> FormGestionMonedas : selecciona la opción «Monedas» del menú «Operador».
+FormGestionMonedas --> Actor : presenta la pantalla «Gestion de Monedas» con la sección «Tasas de Conversion» y su\nlistado de tasas.
+Actor -> FormGestionMonedas : selecciona del listado la tasa a eliminar.
+Actor -> FormGestionMonedas : presiona el botón «Eliminar» de la sección «Tasas de Conversion».
+FormGestionMonedas --> Actor : solicita confirmación mediante el mensaje «Se eliminara la tasa de conversion\nseleccionada. Desea continuar?», titulado «Confirmar eliminacion».
+alt El actor confirma la operacion
+Actor -> FormGestionMonedas : confirma la eliminación.
+FormGestionMonedas -> TasaConversionBLL ++ : Eliminar(recibida: TasaConversion)
+TasaConversionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> TasaConversionBLL -- : IUnidadDeTrabajo
+TasaConversionBLL -> ITasaConversionRepositorio ++ : ObtenerPorId(id: int)
+ITasaConversionRepositorio -> TasaConversionDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+TasaConversionDAL --> ITasaConversionRepositorio -- : TasaConversion
+ITasaConversionRepositorio --> TasaConversionBLL -- : TasaConversion
+TasaConversionBLL -> ITasaConversionRepositorio ++ : Eliminar(tasa: TasaConversion)
+ITasaConversionRepositorio -> TasaConversionDAL ++ : Eliminar(tasa: TasaConversion, accesoDatos:\nAccesoDatosSqlServer)
+TasaConversionDAL --> ITasaConversionRepositorio -- : bool
+ITasaConversionRepositorio --> TasaConversionBLL -- : bool
+TasaConversionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> TasaConversionBLL -- : void
+TasaConversionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> TasaConversionBLL -- : void
+TasaConversionBLL --> FormGestionMonedas -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionMonedas -> TasaConversionBLL ++ : ObtenerTodas()
+TasaConversionBLL -> ITasaConversionRepositorio ++ : ObtenerTodas()
+ITasaConversionRepositorio -> TasaConversionDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+TasaConversionDAL --> ITasaConversionRepositorio -- : List<TasaConversion>
+ITasaConversionRepositorio --> TasaConversionBLL -- : List<TasaConversion>
+TasaConversionBLL --> FormGestionMonedas -- : List<TasaConversion>
+end
+FormGestionMonedas --> Actor : elimina la tasa, limpia los campos, actualiza el listado sin la tasa eliminada e informa\nel resultado.
+else El actor cancela la confirmacion
+Actor -> FormGestionMonedas : Cancelar la operacion
+FormGestionMonedas --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/TasaConversionBLL.cs:187 TasaConversionBLL.Eliminar
+' BLL/TasaConversionBLL.cs:76 TasaConversionBLL.ObtenerTodas
+' DAL/TasaConversionDAL.cs:25 TasaConversionDAL.ObtenerPorId
+' DAL/TasaConversionDAL.cs:270 TasaConversionDAL.Eliminar
+' DAL/TasaConversionDAL.cs:55 TasaConversionDAL.ObtenerTodas
+' REPOSITORIO/ITasaConversionRepositorio.cs:10 ITasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/ITasaConversionRepositorio.cs:24 ITasaConversionRepositorio.Eliminar
+' REPOSITORIO/ITasaConversionRepositorio.cs:8 ITasaConversionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/TasaConversionRepositorio.cs:23 TasaConversionRepositorio.ObtenerPorId
+' REPOSITORIO/TasaConversionRepositorio.cs:30 TasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/TasaConversionRepositorio.cs:89 TasaConversionRepositorio.Eliminar
+' UI/FormGestionMonedas.cs:331 FormGestionMonedas.btnEliminarTasa_Click
+@enduml

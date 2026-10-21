@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,20 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerEntidadFinancieraIdsPorPromocion(int promocionId)
+        public List<EntidadFinanciera> ObtenerEntidadesFinancierasPorPromocion(Promocion promocion)
         {
-            return _dal.ObtenerEntidadFinancieraIdsPorPromocion(promocionId, _accesoDatos);
+            EntidadFinancieraRepositorio repositorio = new EntidadFinancieraRepositorio(_accesoDatos);
+            return _dal.ObtenerEntidadesFinancierasPorPromocion(promocion, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarEntidadesFinancierasDePromocion(int promocionId, List<int> entidadFinancieraIds)
+        public bool ReemplazarEntidadesFinancierasDePromocion(Promocion promocion, List<EntidadFinanciera> entidadesFinancieras)
         {
-            return _dal.ReemplazarEntidadesFinancierasDePromocion(promocionId, entidadFinancieraIds ?? new List<int>(), _accesoDatos);
+            return _dal.ReemplazarEntidadesFinancierasDePromocion(promocion, entidadesFinancieras ?? new List<EntidadFinanciera>(), _accesoDatos);
         }
 
-        public int ContarPorEntidadFinanciera(int entidadFinancieraId)
+        public int ContarPorEntidadFinanciera(EntidadFinanciera entidadFinanciera)
         {
-            return _dal.ContarPorEntidadFinanciera(entidadFinancieraId, _accesoDatos);
+            return _dal.ContarPorEntidadFinanciera(entidadFinanciera, _accesoDatos);
         }
     }
 }

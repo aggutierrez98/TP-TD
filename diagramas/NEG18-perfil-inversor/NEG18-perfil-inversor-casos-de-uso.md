@@ -1,0 +1,62 @@
+# Perfil inversor
+
+_Especificaciones de casos de uso_
+
+---
+
+**ID y Nombre:** CUN76 Consultar mi perfil inversor  
+**Estado:** Implementado  
+**Descripcion:** Permite al Usuario consultar el nivel de riesgo de su perfil inversor y la fecha de su última evaluación, o verificar que aún no lo completó.  
+**Actor Principal:** Usuario recién registrado o autenticado  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la configuración de usuario.  
+**Puntos de Extension:** Se extiende con CUN77 Completar o actualizar mi perfil inversor, que se inicia desde la misma pantalla.  
+**Condicion:** El actor desea saber si tiene un perfil inversor registrado y cuál es su nivel de riesgo.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Mi configuración» del menú «Mi usuario».
+2. El sistema presenta la pantalla «Configuración del usuario» y consulta el perfil inversor del actor.
+3. El sistema muestra el nivel de riesgo del perfil en la etiqueta «Perfil inversor» («Riesgo bajo», «Riesgo moderado» o «Riesgo alto»), la fecha de la última evaluación («Última actualización») y habilita el botón «Volver a hacer el cuestionario».
+
+**Flujos Alternativos:**
+3a. Si el actor aún no completó su perfil inversor, el sistema muestra «Perfil inversor: Sin perfil de riesgo», no muestra fecha de actualización y habilita el botón «Completar cuestionario».
+3b. Si ocurre un error al consultar el perfil, el sistema muestra el mensaje «No se pudo consultar tu perfil inversor. Volvé a intentar.». La consulta no se completa y el botón del cuestionario se mantiene disponible para reintentar la carga.
+3c. Si el actor cambia el idioma de la aplicación, el sistema vuelve a presentar los textos del perfil en el idioma elegido.
+
+**Postcondiciones:** El actor conoce el estado de su perfil inversor. La consulta no modifica el perfil.
+
+---
+
+**ID y Nombre:** CUN77 Completar o actualizar mi perfil inversor  
+**Estado:** Implementado  
+**Descripcion:** Permite al Usuario responder el cuestionario de diez preguntas y guardar su perfil inversor, ya sea por primera vez o para reemplazar el anterior.  
+**Actor Principal:** Usuario recién registrado o autenticado  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la configuración de usuario. Alternativamente, el actor acaba de registrarse y el cuestionario se le presenta automáticamente, dentro de los 30 minutos posteriores al registro.  
+**Puntos de Extension:** Extiende a CUN76 Consultar mi perfil inversor. Puede iniciarse también como paso final del registro de usuario. El perfil guardado habilita las recomendaciones personales de inversión de CUN87 Conversar y consultar recomendación financiera.  
+**Condicion:** El actor desea conocer o actualizar su perfil inversor, para recibir recomendaciones personales de inversión.  
+
+**Escenario Principal:**
+1. El actor selecciona el botón «Completar cuestionario» (o «Volver a hacer el cuestionario») de la pantalla «Configuración del usuario».
+2. El sistema presenta la pantalla «Perfil inversor» con la introducción «Conozcamos tu perfil inversor», la indicación «10 preguntas · 3–5 minutos», el aviso de que el cuestionario es opcional y los botones «Comenzar cuestionario» y «Cancelar».
+3. El actor selecciona el botón «Comenzar cuestionario».
+4. El sistema presenta la primera pregunta con el indicador «Pregunta 1 de 10», la barra de avance, sus opciones de respuesta y los botones «Anterior», «Siguiente» y «Cancelar».
+5. El actor elige una opción de respuesta y selecciona el botón «Siguiente».
+6. El sistema presenta la pregunta siguiente. El actor repite el paso 5 hasta llegar a la décima pregunta, donde el botón «Siguiente» se reemplaza por «Ver resultado».
+7. El actor elige una opción de la décima pregunta y selecciona el botón «Ver resultado».
+8. El sistema presenta el resultado «Tu perfil inversor: Riesgo …» con la descripción del perfil, los motivos que limitan el nivel de riesgo (o la leyenda «Tu resultado combina tu capacidad económica y tu tolerancia al riesgo.»), el aviso de que el perfil es orientativo y los botones «Revisar respuestas» y «Guardar perfil y continuar».
+9. El actor selecciona el botón «Guardar perfil y continuar».
+10. El sistema guarda el perfil, cierra la pantalla del cuestionario y, si el cuestionario se inició desde «Configuración del usuario», actualiza allí el nivel de riesgo y la fecha de última actualización.
+
+**Flujos Alternativos:**
+1a. Si el actor acaba de registrarse, el sistema le informa que el usuario fue registrado y presenta automáticamente la pantalla «Perfil inversor». El caso de uso continúa en el paso 2. En esta variante, el botón «Cancelar» de la introducción se muestra como «Omitir por ahora».
+2a. Si el actor selecciona «Cancelar» (u «Omitir por ahora»), el sistema cierra la pantalla sin guardar ningún perfil. El caso de uso finaliza. En el caso del registro, el actor podrá completar el cuestionario más tarde desde «Mi configuración».
+5a. Si el actor selecciona «Siguiente» (o «Ver resultado») sin haber elegido una opción, el sistema marca la pregunta con el mensaje «Respondé las diez preguntas con opciones válidas antes de continuar.» y permanece en la misma pregunta.
+5b. Si el actor selecciona el botón «Anterior», el sistema vuelve a la pregunta previa conservando las respuestas ya elegidas, que pueden modificarse.
+5c. Si el actor selecciona «Cancelar» durante el cuestionario, el sistema cierra la pantalla sin guardar ningún perfil ni las respuestas dadas. El caso de uso finaliza.
+8a. Si el actor selecciona el botón «Revisar respuestas», el sistema vuelve a la primera pregunta conservando las respuestas elegidas, y el caso de uso continúa en el paso 5.
+9a. Si ocurre un error al guardar el perfil, el sistema muestra el mensaje «No se pudo guardar el perfil inversor. Tus respuestas se conservan para reintentar.» y mantiene abierto el resultado para que el actor pueda reintentar.
+9b. Si el cuestionario se había presentado tras el registro y transcurrieron más de 30 minutos, o la oportunidad ya fue utilizada o descartada, el sistema muestra el mensaje «Esta oportunidad de completar el perfil finalizó. Podés hacerlo desde Mi Configuración después de ingresar.» y no guarda el perfil.
+9c. Mientras el sistema guarda el perfil, los botones de la pantalla permanecen deshabilitados y no es posible cerrarla.
+
+**Postcondiciones:** El perfil inversor del actor queda registrado con su nivel de riesgo y la fecha de evaluación, reemplazando al anterior si existía. Si el actor no completó el procedimiento, el perfil previo (o su ausencia) se mantiene sin cambios.

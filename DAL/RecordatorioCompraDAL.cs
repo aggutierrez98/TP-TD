@@ -54,7 +54,7 @@ namespace DAL
             }
         }
 
-        public List<RecordatorioCompra> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<RecordatorioCompra> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, Mensaje, Fecha, Leida, ItemListaId, PromocionId, FechaVencimiento, " + MetadataNotificacionDAL.Columnas + @"
@@ -69,7 +69,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -193,7 +193,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(RecordatorioCompra recordatorio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Notificacion
@@ -206,7 +206,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, recordatorio.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

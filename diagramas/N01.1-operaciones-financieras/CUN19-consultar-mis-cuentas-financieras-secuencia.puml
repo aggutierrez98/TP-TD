@@ -1,0 +1,50 @@
+@startuml
+' Fuente: diagramas/NEG05-cuentas-financieras/NEG05-cuentas-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN19 Consultar mis cuentas financieras — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormGestionCuentasFinancieras" as FormGestionCuentasFinancieras
+control "CuentaFinancieraBLL" as CuentaFinancieraBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "CuentaFinancieraRepositorio\n:ICuentaFinancieraRepositorio" as ICuentaFinancieraRepositorio
+participant "CuentaFinancieraDAL" as CuentaFinancieraDAL
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+note over FormGestionCuentasFinancieras : El actor desea consultar las cuentas financieras que tiene registradas.
+Actor -> FormGestionCuentasFinancieras : selecciona la opción «Mis cuentas financieras» del menú «Finanzas».
+FormGestionCuentasFinancieras -> CuentaFinancieraBLL ++ : ObtenerMisCuentas()
+CuentaFinancieraBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> CuentaFinancieraBLL -- : Usuario
+CuentaFinancieraBLL -> ICuentaFinancieraRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+ICuentaFinancieraRepositorio -> CuentaFinancieraDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+CuentaFinancieraDAL --> ICuentaFinancieraRepositorio -- : List<CuentaFinanciera>
+ICuentaFinancieraRepositorio --> CuentaFinancieraBLL -- : List<CuentaFinanciera>
+CuentaFinancieraBLL --> FormGestionCuentasFinancieras -- : List<CuentaFinanciera>
+FormGestionCuentasFinancieras --> Actor : presenta la pantalla «Mis cuentas financieras» con el listado de las cuentas del actor,\nordenadas por alias
+Actor -> FormGestionCuentasFinancieras : selecciona una cuenta del listado.
+FormGestionCuentasFinancieras -> EntidadFinancieraBLL ++ : ObtenerMediosPagoEntidad(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL --> FormGestionCuentasFinancieras -- : List<MedioPagoEntidad>
+FormGestionCuentasFinancieras --> Actor : muestra en la sección de datos de la cuenta la entidad financiera, el alias y el tipo de\nla cuenta seleccionada, y presenta en «Medios de pago contratados:» los medios que ofrece\nla entidad, con los contratados por la cuenta…
+' BLL/CuentaFinancieraBLL.cs:34 CuentaFinancieraBLL.ObtenerMisCuentas
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CuentaFinancieraDAL.cs:53 CuentaFinancieraDAL.ObtenerPorUsuario
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:34 CuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:10 ICuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' UI/FormGestionCuentasFinancieras.cs:114 FormGestionCuentasFinancieras.CargarCuentas
+@enduml

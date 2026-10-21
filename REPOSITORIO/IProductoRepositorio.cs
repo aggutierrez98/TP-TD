@@ -13,8 +13,8 @@ namespace REPOSITORIO
 
         bool Actualizar(Producto producto);
 
-        bool Eliminar(int id);
+        bool Eliminar(Producto producto);
 
-        int ContarPorCategoria(int categoriaProductoId);
+        int ContarPorCategoria(CategoriaProducto categoria);
     }
 }

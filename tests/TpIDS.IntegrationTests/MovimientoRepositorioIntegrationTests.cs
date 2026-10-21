@@ -104,11 +104,11 @@ namespace TpIDS.IntegrationTests
                 int idOtraCategoria = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaB }, Tipo = TipoMovimiento.Ingreso, Monto = 100m, Fecha = new DateTime(2026, 8, 11) });
                 int idOtroTipo = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaA }, Tipo = TipoMovimiento.Egreso, Monto = 100m, Fecha = new DateTime(2026, 8, 12) });
 
-                System.Collections.Generic.List<Movimiento> resultado = repositorio.ObtenerPorUsuario(usuarioId, new FiltroMovimiento
+                System.Collections.Generic.List<Movimiento> resultado = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId }, new FiltroMovimiento
                 {
                     FechaDesde = new DateTime(2026, 8, 1),
                     FechaHasta = new DateTime(2026, 8, 31),
-                    CategoriaId = categoriaA,
+                    Categoria = new CategoriaRepositorio(accesoDatos).ObtenerPorId(categoriaA),
                     Tipo = TipoMovimiento.Ingreso
                 });
 
@@ -134,7 +134,7 @@ namespace TpIDS.IntegrationTests
                 int idCoincide = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Egreso, Monto = 100m, Fecha = new DateTime(2026, 8, 13), Descripcion = "Compra en Supermercado Coto" });
                 int idNoCoincide = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Egreso, Monto = 100m, Fecha = new DateTime(2026, 8, 14), Descripcion = "Pago de luz" });
 
-                System.Collections.Generic.List<Movimiento> resultado = repositorio.ObtenerPorUsuario(usuarioId, new FiltroMovimiento
+                System.Collections.Generic.List<Movimiento> resultado = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId }, new FiltroMovimiento
                 {
                     Texto = "coto"
                 });
@@ -171,9 +171,9 @@ namespace TpIDS.IntegrationTests
                 int otroTipo = insertar("Compra " + texto + " descuento", TipoMovimiento.Ingreso, fechaValida);
                 int otraFecha = insertar("Compra " + texto + " descuento", TipoMovimiento.Egreso, fechaValida.AddMonths(-1));
 
-                var resultado = repositorio.ObtenerPorUsuario(usuarioId, new FiltroMovimiento
+                var resultado = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId }, new FiltroMovimiento
                 {
-                    Texto = texto, CategoriaId = categoriaId, Tipo = TipoMovimiento.Egreso,
+                    Texto = texto, Categoria = new CategoriaRepositorio(accesoDatos).ObtenerPorId(categoriaId), Tipo = TipoMovimiento.Egreso,
                     FechaDesde = fechaValida, FechaHasta = fechaValida
                 });
 
@@ -205,7 +205,7 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaA }, Tipo = TipoMovimiento.Ingreso, Monto = 777m, Fecha = new DateTime(2026, 8, 8) });
 
                 System.Collections.Generic.List<SERVICIOS.TotalPorCategoria> resultado = repositorio.ObtenerTotalesPorCategoria(
-                    usuarioId, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+                    new BE.Usuario { Id = usuarioId }, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
                 SERVICIOS.TotalPorCategoria totalA = resultado.Single(item => item.CategoriaNombre == "CategoriaTestTotalesA");
                 SERVICIOS.TotalPorCategoria totalB = resultado.Single(item => item.CategoriaNombre == "CategoriaTestTotalesB");
@@ -231,7 +231,7 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Ingreso, Monto = 500m, Fecha = new DateTime(2026, 9, 1) });
 
                 System.Collections.Generic.List<SERVICIOS.TotalPorMes> resultado = repositorio.ObtenerTotalesPorMes(
-                    usuarioId, new DateTime(2026, 8, 1), new DateTime(2026, 9, 30));
+                    new BE.Usuario { Id = usuarioId }, new DateTime(2026, 8, 1), new DateTime(2026, 9, 30));
 
                 SERVICIOS.TotalPorMes agosto = resultado.Single(item => item.Anio == 2026 && item.Mes == 8);
                 SERVICIOS.TotalPorMes septiembre = resultado.Single(item => item.Anio == 2026 && item.Mes == 9);
@@ -266,12 +266,12 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Comercio = new Comercio { Id = comercioA }, Tipo = TipoMovimiento.Ingreso, Monto = 888m, Fecha = new DateTime(2026, 8, 5) });
 
                 System.Collections.Generic.List<SERVICIOS.TotalPorComercio> resultado = repositorio.ObtenerTotalesPorComercio(
-                    usuarioId, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+                    new BE.Usuario { Id = usuarioId }, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
                 Assert.AreEqual(150m, resultado.Single(item => item.ComercioNombre == "ComercioTestTotA").Total);
                 Assert.AreEqual(30m, resultado.Single(item => item.ComercioNombre == "ComercioTestTotB").Total);
                 Assert.AreEqual(70m, resultado.Single(item => item.ComercioNombre == null).Total);
-                Assert.IsTrue(repositorio.ObtenerTotalesPorComercio(-1, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31)).Count == 0);
+                Assert.IsTrue(repositorio.ObtenerTotalesPorComercio(new BE.Usuario { Id = -1 }, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31)).Count == 0);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -294,7 +294,7 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Ingreso, Monto = 888m, Fecha = new DateTime(2026, 8, 3) });
 
                 System.Collections.Generic.List<SERVICIOS.TotalPorDia> resultado = repositorio.ObtenerTotalesPorDia(
-                    usuarioId, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+                    new BE.Usuario { Id = usuarioId }, TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
                 Assert.AreEqual(2, resultado.Count);
                 Assert.AreEqual(140m, resultado.Single(item => item.Fecha == new DateTime(2026, 8, 3)).Total);
@@ -333,7 +333,7 @@ namespace TpIDS.IntegrationTests
                 // Fuera de rango: no debe sumar
                 repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Ingreso, Monto = 5000m, Fecha = new DateTime(2026, 1, 1) });
 
-                SERVICIOS.ResumenMovimientos resumen = repositorio.ObtenerResumen(usuarioId, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+                SERVICIOS.ResumenMovimientos resumen = repositorio.ObtenerResumen(new BE.Usuario { Id = usuarioId }, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
                 Assert.AreEqual(1200m, resumen.TotalIngresos);
                 Assert.AreEqual(300m, resumen.TotalEgresos);
@@ -378,7 +378,7 @@ namespace TpIDS.IntegrationTests
                 int categoriaId = ObtenerCategoriaGlobalId(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new Movimiento { Usuario = new BE.Usuario { Id = usuarioId }, Categoria = new Categoria { Id = categoriaId }, Tipo = TipoMovimiento.Egreso, Monto = 20m, Fecha = new DateTime(2026, 8, 6) });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new Movimiento { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
@@ -413,8 +413,8 @@ namespace TpIDS.IntegrationTests
                     });
                 }
 
-                Assert.AreEqual(2, repositorio.ContarPorComercio(comercioConMovimientosId));
-                Assert.AreEqual(0, repositorio.ContarPorComercio(comercioSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorComercio(new Comercio { Id = comercioConMovimientosId }));
+                Assert.AreEqual(0, repositorio.ContarPorComercio(new Comercio { Id = comercioSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -427,7 +427,7 @@ namespace TpIDS.IntegrationTests
 
         private static int ObtenerCategoriaGlobalId(AccesoDatosSqlServer accesoDatos)
         {
-            return new CategoriaDAL().ObtenerVisiblesParaUsuario(0, accesoDatos).First(item => item.EsGlobal).Id;
+            return new CategoriaDAL().ObtenerVisiblesParaUsuario(new BE.Usuario { Id = 0 }, accesoDatos).First(item => item.EsGlobal).Id;
         }
     }
 }

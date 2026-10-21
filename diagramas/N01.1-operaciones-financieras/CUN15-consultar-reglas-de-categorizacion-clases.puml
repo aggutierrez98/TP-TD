@@ -1,0 +1,118 @@
+@startuml
+' Fuente: diagramas/NEG04-reglas-categorizacion/NEG04-reglas-categorizacion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN15 Consultar reglas de categorización — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormReglasCategorizacion {
+    -CargarReglas(reglaSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ReglaCategorizacionBLL {
+    +ObtenerParaUsuarioActual(): List<ReglaCategorizacion>
+    +ObtenerComerciosPorRegla(regla: ReglaCategorizacion): List<Comercio>
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ReglaCategorizacionBLL -[hidden]right-> SesionUsuarioExtensiones
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IReglaCategorizacionRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ReglaCategorizacion>
+  }
+  class ReglaCategorizacionRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ReglaCategorizacion>
+  }
+  class "ComercioReglaCategorizacionRepositorio" as IComercioReglaCategorizacionRepositorio <<IComercioReglaCategorizacionRepositorio>> {
+    +ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion: ReglaCategorizacion):\nList<Comercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IReglaCategorizacionRepositorio -[hidden]right-> ReglaCategorizacionRepositorio
+IReglaCategorizacionRepositorio -[hidden]down-> IComercioReglaCategorizacionRepositorio
+package "DAL" as L_DAL {
+  class ReglaCategorizacionDAL {
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos: AccesoDatosSqlServer):\nList<ReglaCategorizacion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Categoria {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class ReglaCategorizacion {
+    +Id: int
+    +Usuario: Usuario
+    +Categoria: Categoria
+    +Nombre: string
+    +PalabrasClave: string
+  }
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Categoria -[hidden]right-> Comercio
+Categoria -[hidden]down-> ReglaCategorizacion
+ReglaCategorizacion -[hidden]right-> RubroComercio
+ReglaCategorizacion -[hidden]down-> Usuario
+FormReglasCategorizacion ..> ReglaCategorizacionBLL : usa
+ReglaCategorizacionRepositorio ..> ReglaCategorizacionDAL : usa
+ReglaCategorizacionBLL ..> IComercioReglaCategorizacionRepositorio : usa
+ReglaCategorizacionBLL ..> IReglaCategorizacionRepositorio : usa
+ReglaCategorizacionBLL ..> SesionUsuarioExtensiones : usa
+ReglaCategorizacionRepositorio ..|> IReglaCategorizacionRepositorio
+ReglaCategorizacionBLL ..> ReglaCategorizacion : datos
+Categoria --> Usuario : Usuario
+Comercio --> RubroComercio : RubroComercio
+ReglaCategorizacion --> Usuario : Usuario
+ReglaCategorizacion --> Categoria : Categoria
+' BLL/ReglaCategorizacionBLL.cs:42 ReglaCategorizacionBLL.ObtenerParaUsuarioActual
+' BLL/ReglaCategorizacionBLL.cs:47 ReglaCategorizacionBLL.ObtenerComerciosPorRegla
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ReglaCategorizacionDAL.cs:51 ReglaCategorizacionDAL.ObtenerPorUsuario
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:8 IComercioReglaCategorizacionRepositorio.ObtenerComerciosPorReglaCategorizacion
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:10 IReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:30 ReglaCategorizacionRepositorio.ObtenerPorUsuario
+' UI/FormReglasCategorizacion.cs:68 FormReglasCategorizacion.CargarReglas
+@enduml

@@ -28,7 +28,7 @@ namespace BLL.Tests
             MedioPagoFixture fixture = new MedioPagoFixture();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear((TipoMedioPago)99, "Visa"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new MedioPago { Tipo = (TipoMedioPago)99, Marca = "Visa" }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.InvalidType", ex.Message);
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
@@ -40,7 +40,7 @@ namespace BLL.Tests
             MedioPagoFixture fixture = new MedioPagoFixture();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            MedioPago creado = sut.Crear(TipoMedioPago.TarjetaCredito, "  Visa  ");
+            MedioPago creado = sut.Crear(new MedioPago { Tipo = TipoMedioPago.TarjetaCredito, Marca = "  Visa  " });
 
             MedioPago insertado = fixture.MedioPagoRepo.MediosPago[creado.Id];
             Assert.AreEqual(TipoMedioPago.TarjetaCredito, insertado.Tipo);
@@ -56,7 +56,7 @@ namespace BLL.Tests
             MedioPagoFixture fixture = new MedioPagoFixture();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            MedioPago creado = sut.Crear(TipoMedioPago.CuentaDNI, "   ");
+            MedioPago creado = sut.Crear(new MedioPago { Tipo = TipoMedioPago.CuentaDNI, Marca = "   " });
 
             Assert.IsNull(fixture.MedioPagoRepo.MediosPago[creado.Id].Marca);
         }
@@ -68,7 +68,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(TipoMedioPago.TarjetaCredito, "VISA"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new MedioPago { Tipo = TipoMedioPago.TarjetaCredito, Marca = "VISA" }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.Duplicate", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -80,7 +80,7 @@ namespace BLL.Tests
             MedioPagoFixture fixture = new MedioPagoFixture();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, TipoMedioPago.TarjetaCredito, "Visa"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new MedioPago { Id = 99, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.NotFound", ex.Message);
         }
@@ -92,7 +92,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, TipoMedioPago.TarjetaDebito, " Mastercard ");
+            bool resultado = sut.Actualizar(new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaDebito, Marca = " Mastercard " });
 
             Assert.IsTrue(resultado);
             Assert.AreEqual(TipoMedioPago.TarjetaDebito, fixture.MedioPagoRepo.MediosPago[1].Tipo);
@@ -108,7 +108,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            Assert.IsTrue(sut.Actualizar(1, TipoMedioPago.TarjetaCredito, "Visa"));
+            Assert.IsTrue(sut.Actualizar(new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" }));
         }
 
         [TestMethod]
@@ -119,7 +119,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.MediosPago.Add(2, new MedioPago { Id = 2, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Amex" });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(2, TipoMedioPago.TarjetaCredito, "visa"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new MedioPago { Id = 2, Tipo = TipoMedioPago.TarjetaCredito, Marca = "visa" }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.Duplicate", ex.Message);
         }
@@ -130,7 +130,7 @@ namespace BLL.Tests
             MedioPagoFixture fixture = new MedioPagoFixture();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new MedioPago { Id = 99 }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.NotFound", ex.Message);
         }
@@ -148,11 +148,11 @@ namespace BLL.Tests
             });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new MedioPago { Id = 1 }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.InUse", ex.Message);
             Assert.IsTrue(fixture.MedioPagoRepo.MediosPago.ContainsKey(1));
-            Assert.IsNull(fixture.MedioPagoRepo.LastDeletedId);
+            Assert.IsNull(fixture.MedioPagoRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -164,7 +164,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new MedioPago { Id = 1 }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.DeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -178,7 +178,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new MedioPago { Id = 1 }));
 
             Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -191,7 +191,7 @@ namespace BLL.Tests
             fixture.MedioPagoRepo.MediosPago.Add(1, new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             MedioPagoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(new MedioPago { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.MedioPagoRepo.MediosPago.ContainsKey(1));
@@ -207,11 +207,77 @@ namespace BLL.Tests
             fixture.Unidad.PromocionMedioPagoRepo.MedioPagoIdsPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
             MedioPagoBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new MedioPago { Id = 1 }));
 
             Assert.AreEqual("Error.PaymentMethodManagement.InUse", ex.Message);
-            Assert.IsNull(fixture.MedioPagoRepo.LastDeletedId);
+            Assert.IsNull(fixture.MedioPagoRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConId()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            MedioPagoBLL sut = fixture.CreateSut();
+            MedioPago medioPago = new MedioPago { Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" };
+
+            MedioPago creado = sut.Crear(medioPago);
+
+            Assert.AreSame(medioPago, creado);
+            Assert.IsTrue(creado.Id > 0);
+        }
+
+        [TestMethod]
+        public void Crear_MedioPagoNulo_ThrowsExcepcionNegocioInvalidType()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            MedioPagoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+
+            Assert.AreEqual("Error.PaymentMethodManagement.InvalidType", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaTipoYMarcaSobreLaPersistida()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            MedioPago persistido = new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" };
+            fixture.MedioPagoRepo.MediosPago.Add(1, persistido);
+            MedioPagoBLL sut = fixture.CreateSut();
+            MedioPago recibido = new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaDebito, Marca = "Mastercard" };
+
+            sut.Actualizar(recibido);
+
+            Assert.AreSame(persistido, fixture.MedioPagoRepo.LastUpdated);
+            Assert.AreEqual(TipoMedioPago.TarjetaDebito, persistido.Tipo);
+            Assert.AreEqual("Mastercard", persistido.Marca);
+        }
+
+        [TestMethod]
+        public void Eliminar_MedioPagoNulo_ThrowsExcepcionNegocioNotFound()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            MedioPagoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(null));
+
+            Assert.AreEqual("Error.PaymentMethodManagement.NotFound", ex.Message);
+            Assert.IsNull(fixture.MedioPagoRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void Eliminar_Valido_EliminaLaPersistida()
+        {
+            MedioPagoFixture fixture = new MedioPagoFixture();
+            MedioPago persistido = new MedioPago { Id = 1, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" };
+            fixture.MedioPagoRepo.MediosPago.Add(1, persistido);
+            MedioPagoBLL sut = fixture.CreateSut();
+
+            sut.Eliminar(new MedioPago { Id = 1 });
+
+            Assert.AreSame(persistido, fixture.MedioPagoRepo.LastDeleted);
         }
 
         private sealed class MedioPagoFixture

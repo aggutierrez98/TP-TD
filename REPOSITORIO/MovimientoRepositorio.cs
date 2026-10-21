@@ -30,36 +30,36 @@ namespace REPOSITORIO
             return movimiento;
         }
 
-        public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
+        public List<Movimiento> ObtenerPorUsuario(Usuario usuario, FiltroMovimiento filtro)
         {
-            List<Movimiento> movimientos = _movimientoDAL.ObtenerPorUsuario(usuarioId, filtro, _accesoDatos);
+            List<Movimiento> movimientos = _movimientoDAL.ObtenerPorUsuario(usuario, filtro, _accesoDatos);
             movimientos.ForEach(Hidratar);
             return movimientos;
         }
 
-        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            return _movimientoDAL.ObtenerTotalesPorCategoria(usuarioId, tipo, desde, hasta, _accesoDatos);
+            return _movimientoDAL.ObtenerTotalesPorCategoria(usuario, tipo, desde, hasta, _accesoDatos);
         }
 
-        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            return _movimientoDAL.ObtenerTotalesPorComercio(usuarioId, tipo, desde, hasta, _accesoDatos);
+            return _movimientoDAL.ObtenerTotalesPorComercio(usuario, tipo, desde, hasta, _accesoDatos);
         }
 
-        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorDia> ObtenerTotalesPorDia(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            return _movimientoDAL.ObtenerTotalesPorDia(usuarioId, tipo, desde, hasta, _accesoDatos);
+            return _movimientoDAL.ObtenerTotalesPorDia(usuario, tipo, desde, hasta, _accesoDatos);
         }
 
-        public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta)
+        public List<TotalPorMes> ObtenerTotalesPorMes(Usuario usuario, DateTime desde, DateTime hasta)
         {
-            return _movimientoDAL.ObtenerTotalesPorMes(usuarioId, desde, hasta, _accesoDatos);
+            return _movimientoDAL.ObtenerTotalesPorMes(usuario, desde, hasta, _accesoDatos);
         }
 
-        public ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta)
+        public ResumenMovimientos ObtenerResumen(Usuario usuario, DateTime desde, DateTime hasta)
         {
-            return _movimientoDAL.ObtenerResumen(usuarioId, desde, hasta, _accesoDatos);
+            return _movimientoDAL.ObtenerResumen(usuario, desde, hasta, _accesoDatos);
         }
 
         private void Hidratar(Movimiento movimiento)
@@ -87,14 +87,14 @@ namespace REPOSITORIO
             return _movimientoDAL.Actualizar(movimiento, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Movimiento movimiento)
         {
-            return _movimientoDAL.Eliminar(id, _accesoDatos);
+            return _movimientoDAL.Eliminar(movimiento, _accesoDatos);
         }
 
-        public int ContarPorComercio(int comercioId)
+        public int ContarPorComercio(Comercio comercio)
         {
-            return _movimientoDAL.ContarPorComercio(comercioId, _accesoDatos);
+            return _movimientoDAL.ContarPorComercio(comercio, _accesoDatos);
         }
     }
 }

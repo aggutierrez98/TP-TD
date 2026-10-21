@@ -6,10 +6,10 @@ namespace REPOSITORIO
     {
         Dashboard ObtenerPorId(int id);
 
-        Dashboard ObtenerPorUsuario(int usuarioId);
+        Dashboard ObtenerPorUsuario(Usuario usuario);
 
         int InsertarYObtenerId(Dashboard dashboard);
 
-        bool Eliminar(int id);
+        bool Eliminar(Dashboard dashboard);
     }
 }

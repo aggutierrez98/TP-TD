@@ -20,16 +20,16 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<ComercioProducto> ObtenerPorComercio(int comercioId)
+        public List<ComercioProducto> ObtenerPorComercio(Comercio comercio)
         {
-            List<ComercioProducto> asignaciones = _comercioProductoDAL.ObtenerPorComercio(comercioId, _accesoDatos);
+            List<ComercioProducto> asignaciones = _comercioProductoDAL.ObtenerPorComercio(comercio, _accesoDatos);
             asignaciones.ForEach(Hidratar);
             return asignaciones;
         }
 
-        public ComercioProducto ObtenerPorId(int comercioId, int productoId)
+        public ComercioProducto ObtenerPorComercioYProducto(Comercio comercio, Producto producto)
         {
-            ComercioProducto asignacion = _comercioProductoDAL.ObtenerPorId(comercioId, productoId, _accesoDatos);
+            ComercioProducto asignacion = _comercioProductoDAL.ObtenerPorComercioYProducto(comercio, producto, _accesoDatos);
             Hidratar(asignacion);
             return asignacion;
         }
@@ -51,19 +51,19 @@ namespace REPOSITORIO
             return _comercioProductoDAL.Insertar(comercioProducto, _accesoDatos);
         }
 
-        public bool ActualizarPrecio(int comercioId, int productoId, decimal precio)
+        public bool ActualizarPrecio(ComercioProducto comercioProducto)
         {
-            return _comercioProductoDAL.ActualizarPrecio(comercioId, productoId, precio, _accesoDatos);
+            return _comercioProductoDAL.ActualizarPrecio(comercioProducto, _accesoDatos);
         }
 
-        public bool Eliminar(int comercioId, int productoId)
+        public bool Eliminar(ComercioProducto comercioProducto)
         {
-            return _comercioProductoDAL.Eliminar(comercioId, productoId, _accesoDatos);
+            return _comercioProductoDAL.Eliminar(comercioProducto, _accesoDatos);
         }
 
-        public int ContarPorProducto(int productoId)
+        public int ContarPorProducto(Producto producto)
         {
-            return _comercioProductoDAL.ContarPorProducto(productoId, _accesoDatos);
+            return _comercioProductoDAL.ContarPorProducto(producto, _accesoDatos);
         }
     }
 }

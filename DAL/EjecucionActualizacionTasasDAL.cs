@@ -26,12 +26,12 @@ namespace DAL
             };
         }
 
-        private ActualizacionTasaDetalle MapDetalle(DataRow row)
+        private ActualizacionTasaDetalle MapDetalle(DataRow row, EjecucionActualizacionTasas ejecucion)
         {
             return new ActualizacionTasaDetalle
             {
                 Id = (int)row["Id"],
-                EjecucionId = (int)row["EjecucionId"],
+                Ejecucion = ejecucion,
                 MonedaBase = new Moneda { Id = (int)row["MonedaBaseId"] },
                 MonedaConversion = new Moneda { Id = (int)row["MonedaConversionId"] },
                 ValorAnterior = (decimal)row["ValorAnterior"],
@@ -86,7 +86,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@EjecucionId", SqlDbType.Int, detalle.EjecucionId),
+                    accesoDatos.CreateParameter("@EjecucionId", SqlDbType.Int, detalle.Ejecucion.Id),
                     accesoDatos.CreateParameter("@MonedaBaseId", SqlDbType.Int, detalle.MonedaBase.Id),
                     accesoDatos.CreateParameter("@MonedaConversionId", SqlDbType.Int, detalle.MonedaConversion.Id),
                     accesoDatos.CreateParameter("@ValorAnterior", SqlDbType.Decimal, detalle.ValorAnterior),
@@ -140,7 +140,7 @@ namespace DAL
             }
         }
 
-        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(int ejecucionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(EjecucionActualizacionTasas ejecucion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, EjecucionId, MonedaBaseId, MonedaConversionId, ValorAnterior, ValorNuevo, Estado
@@ -155,14 +155,14 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@EjecucionId", SqlDbType.Int, ejecucionId)
+                    accesoDatos.CreateParameter("@EjecucionId", SqlDbType.Int, ejecucion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 List<ActualizacionTasaDetalle> detalles = new List<ActualizacionTasaDetalle>();
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    detalles.Add(MapDetalle(row));
+                    detalles.Add(MapDetalle(row, ejecucion));
                 }
 
                 return detalles;

@@ -1,0 +1,51 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN23 Consultar entidades financieras — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionEntidadesFinancieras" as FormGestionEntidadesFinancieras
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+participant "EntidadFinancieraDAL" as EntidadFinancieraDAL
+boundary "FormDetalleEntidadFinanciera" as FormDetalleEntidadFinanciera
+note over FormGestionEntidadesFinancieras : El actor desea conocer las entidades financieras registradas y los medios de\npago que ofrece cada una.
+Actor -> FormGestionEntidadesFinancieras : selecciona la opción «Entidades financieras» del menú «Operador».
+FormGestionEntidadesFinancieras -> EntidadFinancieraBLL ++ : ObtenerTodas()
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerTodas()
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : List<EntidadFinanciera>
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : List<EntidadFinanciera>
+EntidadFinancieraBLL --> FormGestionEntidadesFinancieras -- : List<EntidadFinanciera>
+FormGestionEntidadesFinancieras --> Actor : presenta la pantalla «Gestión de entidades financieras» con el listado de entidades\nfinancieras ordenado alfabéticamente
+Actor -> FormGestionEntidadesFinancieras : selecciona una entidad del listado.
+FormGestionEntidadesFinancieras --> Actor : muestra el nombre de la entidad seleccionada en el campo «Nombre:».
+Actor -> FormGestionEntidadesFinancieras : presiona el botón «Ver detalle».
+FormDetalleEntidadFinanciera -> EntidadFinancieraBLL ++ : ObtenerMediosPagoEntidad(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio -> EntidadFinancieraDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+EntidadFinancieraDAL --> IEntidadFinancieraRepositorio -- : EntidadFinanciera
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL --> FormDetalleEntidadFinanciera -- : List<MedioPagoEntidad>
+FormGestionEntidadesFinancieras --> Actor : presenta la ventana «Detalle de la entidad financiera», con el nombre de la entidad junto\na «Entidad:» y, en la sección «Medios de pago de esta entidad», el listado de medios de\npago que ofrece
+' BLL/EntidadFinancieraBLL.cs:29 EntidadFinancieraBLL.ObtenerTodas
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' DAL/EntidadFinancieraDAL.cs:19 EntidadFinancieraDAL.ObtenerPorId
+' DAL/EntidadFinancieraDAL.cs:48 EntidadFinancieraDAL.ObtenerTodas
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:27 EntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:35 EntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:12 IEntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' UI/FormGestionEntidadesFinancieras.cs:37 FormGestionEntidadesFinancieras.CargarEntidades
+@enduml

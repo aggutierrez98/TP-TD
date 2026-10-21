@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG11-comercios/NEG11-comercios-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN48 Consultar comercios — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionComercios" as FormGestionComercios
+control "ComercioBLL" as ComercioBLL
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "ComercioDAL" as ComercioDAL
+note over FormGestionComercios : El actor desea consultar los comercios registrados en el sistema.
+Actor -> FormGestionComercios : selecciona la opción «Comercios» del menú «Operador».
+FormGestionComercios -> ComercioBLL ++ : ObtenerTodos()
+ComercioBLL -> IComercioRepositorio ++ : ObtenerTodos()
+IComercioRepositorio -> ComercioDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+ComercioDAL --> IComercioRepositorio -- : List<Comercio>
+IComercioRepositorio --> ComercioBLL -- : List<Comercio>
+ComercioBLL --> FormGestionComercios -- : List<Comercio>
+FormGestionComercios --> Actor : presenta la pantalla «Gestión de Comercios» con el listado de comercios ordenado por\nnombre
+Actor -> FormGestionComercios : selecciona un comercio del listado.
+FormGestionComercios --> Actor : carga los datos del comercio seleccionado en el formulario: nombre, rubro, dirección,\nlocalidad, provincia y coordenadas (o la leyenda «Sin ubicar» si el comercio no tiene\nubicación).
+' BLL/ComercioBLL.cs:27 ComercioBLL.ObtenerTodos
+' DAL/ComercioDAL.cs:90 ComercioDAL.ObtenerTodos
+' REPOSITORIO/ComercioRepositorio.cs:37 ComercioRepositorio.ObtenerTodos
+' REPOSITORIO/IComercioRepositorio.cs:12 IComercioRepositorio.ObtenerTodos
+' UI/FormGestionComercios.cs:62 FormGestionComercios.CargarComercios
+@enduml

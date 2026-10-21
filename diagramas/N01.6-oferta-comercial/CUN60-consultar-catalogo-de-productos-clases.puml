@@ -1,0 +1,70 @@
+@startuml
+' Fuente: diagramas/NEG14-catalogo-productos/NEG14-catalogo-productos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN60 Consultar catálogo de productos — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionProductos {
+    -CargarProductos(productoSeleccionadoId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ProductoBLL {
+    +ObtenerTodos(): List<Producto>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IProductoRepositorio {
+    +ObtenerTodos(): List<Producto>
+  }
+  class ProductoRepositorio {
+    +ObtenerTodos(): List<Producto>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IProductoRepositorio -[hidden]right-> ProductoRepositorio
+package "DAL" as L_DAL {
+  class ProductoDAL {
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Producto>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class CategoriaProducto {
+    +Id: int
+    +Nombre: string
+  }
+  class Producto {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProducto -[hidden]right-> Producto
+FormGestionProductos ..> ProductoBLL : usa
+ProductoRepositorio ..> ProductoDAL : usa
+ProductoBLL ..> IProductoRepositorio : usa
+ProductoRepositorio ..|> IProductoRepositorio
+ProductoBLL ..> Producto : datos
+Producto --> CategoriaProducto : CategoriaProducto
+' BLL/ProductoBLL.cs:28 ProductoBLL.ObtenerTodos
+' DAL/ProductoDAL.cs:49 ProductoDAL.ObtenerTodos
+' REPOSITORIO/IProductoRepositorio.cs:10 IProductoRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoRepositorio.cs:30 ProductoRepositorio.ObtenerTodos
+' UI/FormGestionProductos.cs:61 FormGestionProductos.CargarProductos
+@enduml

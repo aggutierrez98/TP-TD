@@ -1,0 +1,109 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN72 Consultar dashboard de analíticas — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormDashboardAnaliticas" as FormDashboardAnaliticas
+control "DashboardBLL" as DashboardBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "DashboardRepositorio\n:IDashboardRepositorio" as IDashboardRepositorio
+participant "DashboardDAL" as DashboardDAL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+control "MovimientoBLL" as MovimientoBLL
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+note over FormDashboardAnaliticas : El actor desea revisar de forma gráfica el estado de sus finanzas personales.
+Actor -> FormDashboardAnaliticas : selecciona la opción «Dashboard» del menú «Analíticas».
+FormDashboardAnaliticas --> Actor : presenta la pantalla «Dashboard» ocupando el área de trabajo, con el botón «Agregar\ntarjeta» y una tarjeta por cada análisis que el actor haya agregado.
+FormDashboardAnaliticas -> DashboardBLL ++ : ObtenerOCrearDashboardActual()
+DashboardBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> DashboardBLL -- : Usuario
+DashboardBLL -> IDashboardRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IDashboardRepositorio -> DashboardDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+DashboardDAL --> IDashboardRepositorio -- : Dashboard
+IDashboardRepositorio --> DashboardBLL -- : Dashboard
+alt Ya existe para el usuario
+note over DashboardBLL : Reutilizar la entidad persistida; no insertar otra.
+else No existe
+DashboardBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> DashboardBLL -- : IUnidadDeTrabajo
+DashboardBLL -> IDashboardRepositorio ++ : InsertarYObtenerId(dashboard: Dashboard)
+IDashboardRepositorio -> DashboardDAL ++ : InsertarYObtenerId(dashboard: Dashboard, accesoDatos:\nAccesoDatosSqlServer)
+DashboardDAL --> IDashboardRepositorio -- : int
+IDashboardRepositorio --> DashboardBLL -- : int
+DashboardBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> DashboardBLL -- : void
+DashboardBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> DashboardBLL -- : void
+end
+DashboardBLL --> FormDashboardAnaliticas -- : Dashboard
+loop Por cada tarjeta configurada; segun su tipo
+opt Tarjeta del tipo correspondiente
+FormDashboardAnaliticas -> MovimientoBLL ++ : ObtenerTotalesPorCategoria(tipo: TipoMovimiento, desde:\nDateTime, hasta: DateTime)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerTotalesPorCategoria(usuario: Usuario, tipo:\nTipoMovimiento, desde: DateTime, hasta: DateTime)
+IMovimientoRepositorio --> MovimientoBLL -- : List<TotalPorCategoria>
+MovimientoBLL --> FormDashboardAnaliticas -- : List<TotalPorCategoria>
+end
+opt Tarjeta del tipo correspondiente
+FormDashboardAnaliticas -> MovimientoBLL ++ : ObtenerGastoPorComercio(desde: DateTime, hasta: DateTime,\ncantidad: int)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerTotalesPorComercio(usuario: Usuario, tipo:\nTipoMovimiento, desde: DateTime, hasta: DateTime)
+IMovimientoRepositorio --> MovimientoBLL -- : List<TotalPorComercio>
+MovimientoBLL --> FormDashboardAnaliticas -- : GastoPorComercio
+end
+opt Tarjeta del tipo correspondiente
+FormDashboardAnaliticas -> MovimientoBLL ++ : ObtenerGastoAcumuladoMensual(hoy: DateTime)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerTotalesPorDia(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime)
+IMovimientoRepositorio --> MovimientoBLL -- : List<TotalPorDia>
+MovimientoBLL --> FormDashboardAnaliticas -- : GastoAcumuladoMensual
+end
+opt Tarjeta del tipo correspondiente
+FormDashboardAnaliticas -> MovimientoBLL ++ : ObtenerTotalesPorMes(desde: DateTime, hasta: DateTime)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime)
+IMovimientoRepositorio --> MovimientoBLL -- : List<TotalPorMes>
+MovimientoBLL --> FormDashboardAnaliticas -- : List<TotalPorMes>
+end
+end
+FormDashboardAnaliticas --> Actor : muestra en cada tarjeta su título (por ejemplo «Gastos por categoría», «Ingresos por\ncategoría», «Comparativo mensual», «Evolución de balance», «Gastos por comercio» o «Gasto\nacumulado del mes»), un resumen con el período y los…
+Actor -> FormDashboardAnaliticas : revisa los gráficos y los resúmenes de las tarjetas.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DashboardBLL.cs:35 DashboardBLL.ObtenerOCrearDashboardActual
+' BLL/MovimientoBLL.cs:108 MovimientoBLL.ObtenerGastoAcumuladoMensual
+' BLL/MovimientoBLL.cs:156 MovimientoBLL.ObtenerTotalesPorMes
+' BLL/MovimientoBLL.cs:84 MovimientoBLL.ObtenerTotalesPorCategoria
+' BLL/MovimientoBLL.cs:91 MovimientoBLL.ObtenerGastoPorComercio
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/DashboardDAL.cs:48 DashboardDAL.ObtenerPorUsuario
+' DAL/DashboardDAL.cs:77 DashboardDAL.InsertarYObtenerId
+' REPOSITORIO/DashboardRepositorio.cs:32 DashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/DashboardRepositorio.cs:57 DashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:11 IDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:9 IDashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:15 IMovimientoRepositorio.ObtenerTotalesPorCategoria
+' REPOSITORIO/IMovimientoRepositorio.cs:17 IMovimientoRepositorio.ObtenerTotalesPorComercio
+' REPOSITORIO/IMovimientoRepositorio.cs:19 IMovimientoRepositorio.ObtenerTotalesPorDia
+' REPOSITORIO/IMovimientoRepositorio.cs:21 IMovimientoRepositorio.ObtenerTotalesPorMes
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormDashboardAnaliticas.cs:85 FormDashboardAnaliticas.CargarDashboard
+@enduml

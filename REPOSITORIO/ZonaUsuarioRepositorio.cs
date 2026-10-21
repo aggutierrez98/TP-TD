@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return _zonaUsuarioDAL.ObtenerPorId(id, _accesoDatos);
         }
 
-        public List<ZonaUsuario> ObtenerPorUsuario(int usuarioId)
+        public List<ZonaUsuario> ObtenerPorUsuario(Usuario usuario)
         {
-            return _zonaUsuarioDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            return _zonaUsuarioDAL.ObtenerPorUsuario(usuario, _accesoDatos);
         }
 
         public int InsertarYObtenerId(ZonaUsuario zona)
@@ -37,9 +37,9 @@ namespace REPOSITORIO
             return _zonaUsuarioDAL.InsertarYObtenerId(zona, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ZonaUsuario zona)
         {
-            return _zonaUsuarioDAL.Eliminar(id, _accesoDatos);
+            return _zonaUsuarioDAL.Eliminar(zona, _accesoDatos);
         }
     }
 }

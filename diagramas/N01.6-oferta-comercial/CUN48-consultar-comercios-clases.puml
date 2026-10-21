@@ -1,0 +1,75 @@
+@startuml
+' Fuente: diagramas/NEG11-comercios/NEG11-comercios-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN48 Consultar comercios — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionComercios {
+    -CargarComercios(comercioSeleccionadoId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ComercioBLL {
+    +ObtenerTodos(): List<Comercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IComercioRepositorio {
+    +ObtenerTodos(): List<Comercio>
+  }
+  class ComercioRepositorio {
+    +ObtenerTodos(): List<Comercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IComercioRepositorio -[hidden]right-> ComercioRepositorio
+package "DAL" as L_DAL {
+  class ComercioDAL {
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Comercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Comercio -[hidden]right-> RubroComercio
+ComercioBLL ..> IComercioRepositorio : usa
+ComercioRepositorio ..|> IComercioRepositorio
+FormGestionComercios ..> ComercioBLL : usa
+ComercioRepositorio ..> ComercioDAL : usa
+ComercioBLL ..> Comercio : datos
+Comercio --> RubroComercio : RubroComercio
+' BLL/ComercioBLL.cs:27 ComercioBLL.ObtenerTodos
+' DAL/ComercioDAL.cs:90 ComercioDAL.ObtenerTodos
+' REPOSITORIO/ComercioRepositorio.cs:37 ComercioRepositorio.ObtenerTodos
+' REPOSITORIO/IComercioRepositorio.cs:12 IComercioRepositorio.ObtenerTodos
+' UI/FormGestionComercios.cs:62 FormGestionComercios.CargarComercios
+@enduml

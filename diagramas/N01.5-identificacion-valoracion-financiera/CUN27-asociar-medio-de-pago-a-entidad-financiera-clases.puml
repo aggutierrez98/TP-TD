@@ -1,0 +1,127 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN27 Asociar medio de pago a entidad financiera — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormDetalleEntidadFinanciera {
+    -btnAgregarMedioPagoEntidad_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class EntidadFinancieraBLL {
+    +AgregarMedioPagoEntidad(medioPagoEntidad: MedioPagoEntidad): MedioPagoEntidad
+    +ObtenerMediosPagoEntidad(entidad: EntidadFinanciera): List<MedioPagoEntidad>
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+EntidadFinancieraBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class "EntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio <<IEntidadFinancieraRepositorio>> {
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  class "MedioPagoRepositorio" as IMedioPagoRepositorio <<IMedioPagoRepositorio>> {
+    +ObtenerPorId(id: int): MedioPago
+  }
+  interface IMedioPagoEntidadRepositorio {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera): List<MedioPagoEntidad>
+    +InsertarYObtenerId(medioPagoEntidad: MedioPagoEntidad): int
+  }
+  class MedioPagoEntidadRepositorio {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera): List<MedioPagoEntidad>
+    +InsertarYObtenerId(medioPagoEntidad: MedioPagoEntidad): int
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IEntidadFinancieraRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> IMedioPagoRepositorio
+IMedioPagoRepositorio -[hidden]right-> IMedioPagoEntidadRepositorio
+IMedioPagoRepositorio -[hidden]down-> MedioPagoEntidadRepositorio
+MedioPagoEntidadRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class MedioPagoEntidadDAL {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera, accesoDatos:\nAccesoDatosSqlServer): List<MedioPagoEntidad>
+    +InsertarYObtenerId(medioPagoEntidad: MedioPagoEntidad, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class EntidadFinanciera {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class MedioPago {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+  enum TipoMedioPago {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+EntidadFinanciera -[hidden]right-> MedioPago
+EntidadFinanciera -[hidden]down-> MedioPagoEntidad
+MedioPagoEntidad -[hidden]right-> TipoMedioPago
+EntidadFinancieraBLL ..> IBitacoraBLL : usa
+EntidadFinancieraBLL ..> IEntidadFinancieraRepositorio : usa
+EntidadFinancieraBLL ..> IMedioPagoEntidadRepositorio : usa
+EntidadFinancieraBLL ..> IMedioPagoRepositorio : usa
+EntidadFinancieraBLL ..> IUnidadDeTrabajo : usa
+EntidadFinancieraBLL ..> IUnidadDeTrabajoFactory : usa
+FormDetalleEntidadFinanciera ..> EntidadFinancieraBLL : usa
+MedioPagoEntidadRepositorio ..> MedioPagoEntidadDAL : usa
+MedioPagoEntidadRepositorio ..|> IMedioPagoEntidadRepositorio
+EntidadFinancieraBLL ..> MedioPagoEntidad : datos
+EntidadFinanciera --> "*" MedioPagoEntidad : MediosPagoEntidad
+MedioPago --> TipoMedioPago : Tipo
+MedioPagoEntidad --> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad --> MedioPago : MedioPago
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/EntidadFinancieraBLL.cs:161 EntidadFinancieraBLL.AgregarMedioPagoEntidad
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' DAL/MedioPagoEntidadDAL.cs:141 MedioPagoEntidadDAL.InsertarYObtenerId
+' DAL/MedioPagoEntidadDAL.cs:52 MedioPagoEntidadDAL.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:10 IMedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:17 IMedioPagoEntidadRepositorio.InsertarYObtenerId
+' REPOSITORIO/IMedioPagoRepositorio.cs:8 IMedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:34 MedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:66 MedioPagoEntidadRepositorio.InsertarYObtenerId
+' UI/FormDetalleEntidadFinanciera.cs:128 FormDetalleEntidadFinanciera.btnAgregarMedioPagoEntidad_Click
+@enduml

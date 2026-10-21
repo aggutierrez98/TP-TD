@@ -16,9 +16,11 @@ namespace TpIDS
             Load += FormGestionCategoriasProducto_Load;
         }
 
+        // La grilla no autogenera columnas, asi que CategoriaProducto (la entidad que se
+        // pasa al BLL) no se muestra.
         private sealed class FilaCategoriaProducto
         {
-            public int Id { get; set; }
+            public CategoriaProducto CategoriaProducto { get; set; }
             public string Nombre { get; set; }
         }
 
@@ -34,7 +36,7 @@ namespace TpIDS
                 dgvCategoriasProducto.DataSource = null;
                 dgvCategoriasProducto.DataSource = _categoriaProductoBLL.ObtenerTodas()
                     .OrderBy(item => item.Nombre)
-                    .Select(item => new FilaCategoriaProducto { Id = item.Id, Nombre = item.Nombre })
+                    .Select(item => new FilaCategoriaProducto { CategoriaProducto = item, Nombre = item.Nombre })
                     .ToList();
                 dgvCategoriasProducto.ClearSelection();
                 dgvCategoriasProducto.CurrentCell = null;
@@ -42,7 +44,7 @@ namespace TpIDS
                 {
                     DataGridViewRow fila = dgvCategoriasProducto.Rows.Cast<DataGridViewRow>()
                         .FirstOrDefault(item => item.DataBoundItem is FilaCategoriaProducto categoria
-                            && categoria.Id == categoriaSeleccionadaId.Value);
+                            && categoria.CategoriaProducto.Id == categoriaSeleccionadaId.Value);
                     if (fila != null)
                     {
                         fila.Selected = true;
@@ -60,7 +62,7 @@ namespace TpIDS
         {
             try
             {
-                CategoriaProducto creada = _categoriaProductoBLL.Crear(txtbNombreCategoriaProducto.Text);
+                CategoriaProducto creada = _categoriaProductoBLL.Crear(new CategoriaProducto { Nombre = txtbNombreCategoriaProducto.Text });
                 txtbNombreCategoriaProducto.Clear();
                 CargarCategorias(creada.Id);
                 UiDialogHelper.MostrarInfo("FormProductCategoryManagement.Success.CategoriaCreated");
@@ -81,9 +83,10 @@ namespace TpIDS
 
             try
             {
-                if (_categoriaProductoBLL.Actualizar(fila.Id, txtbNombreCategoriaProducto.Text))
+                fila.CategoriaProducto.Nombre = txtbNombreCategoriaProducto.Text;
+                if (_categoriaProductoBLL.Actualizar(fila.CategoriaProducto))
                 {
-                    CargarCategorias(fila.Id);
+                    CargarCategorias(fila.CategoriaProducto.Id);
                     UiDialogHelper.MostrarInfo("FormProductCategoryManagement.Success.CategoriaUpdated");
                 }
             }
@@ -110,7 +113,7 @@ namespace TpIDS
 
             try
             {
-                if (_categoriaProductoBLL.Eliminar(fila.Id))
+                if (_categoriaProductoBLL.Eliminar(fila.CategoriaProducto))
                 {
                     txtbNombreCategoriaProducto.Clear();
                     CargarCategorias(null);

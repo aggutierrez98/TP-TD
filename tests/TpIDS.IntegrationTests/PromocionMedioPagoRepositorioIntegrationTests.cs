@@ -24,10 +24,10 @@ namespace TpIDS.IntegrationTests
                 int medioPagoId1 = InsertarMedioPagoTest(accesoDatos, "MedioTestPromoAsignacion1");
                 int medioPagoId2 = InsertarMedioPagoTest(accesoDatos, "MedioTestPromoAsignacion2");
 
-                bool reemplazado = repositorio.ReemplazarMediosPagoDePromocion(promocionId, new List<int> { medioPagoId1, medioPagoId2 });
+                bool reemplazado = repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioPagoId1 }, new BE.MedioPago { Id = medioPagoId2 } });
 
                 Assert.IsTrue(reemplazado);
-                List<int> asignados = repositorio.ObtenerMedioPagoIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerMediosPagoPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(2, asignados.Count);
                 Assert.IsTrue(asignados.Contains(medioPagoId1));
                 Assert.IsTrue(asignados.Contains(medioPagoId2));
@@ -47,10 +47,10 @@ namespace TpIDS.IntegrationTests
                 int medioPagoIdA = InsertarMedioPagoTest(accesoDatos, "MedioTestPromoReemplazoA");
                 int medioPagoIdB = InsertarMedioPagoTest(accesoDatos, "MedioTestPromoReemplazoB");
 
-                repositorio.ReemplazarMediosPagoDePromocion(promocionId, new List<int> { medioPagoIdA });
-                repositorio.ReemplazarMediosPagoDePromocion(promocionId, new List<int> { medioPagoIdB });
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioPagoIdA } });
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioPagoIdB } });
 
-                List<int> asignados = repositorio.ObtenerMedioPagoIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerMediosPagoPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, asignados.Count);
                 Assert.IsTrue(asignados.Contains(medioPagoIdB));
 
@@ -67,11 +67,11 @@ namespace TpIDS.IntegrationTests
                 PromocionMedioPagoRepositorio repositorio = new PromocionMedioPagoRepositorio(accesoDatos);
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestVaciarMediosPago");
                 int medioPagoId = InsertarMedioPagoTest(accesoDatos, "MedioTestPromoVaciar");
-                repositorio.ReemplazarMediosPagoDePromocion(promocionId, new List<int> { medioPagoId });
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioPagoId } });
 
-                repositorio.ReemplazarMediosPagoDePromocion(promocionId, new List<int>());
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.MedioPago>());
 
-                Assert.AreEqual(0, repositorio.ObtenerMedioPagoIdsPorPromocion(promocionId).Count);
+                Assert.AreEqual(0, repositorio.ObtenerMediosPagoPorPromocion(new BE.Promocion { Id = promocionId }).Count);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -88,11 +88,11 @@ namespace TpIDS.IntegrationTests
                 int medioSinUsoId = InsertarMedioPagoTest(accesoDatos, "MarcaTestContarSinUso");
                 int promocionAId = InsertarPromocionTest(accesoDatos, "PromocionTestContarMedioA");
                 int promocionBId = InsertarPromocionTest(accesoDatos, "PromocionTestContarMedioB");
-                repositorio.ReemplazarMediosPagoDePromocion(promocionAId, new List<int> { medioUsadoId });
-                repositorio.ReemplazarMediosPagoDePromocion(promocionBId, new List<int> { medioUsadoId });
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionAId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioUsadoId } });
+                repositorio.ReemplazarMediosPagoDePromocion(new BE.Promocion { Id = promocionBId }, new List<BE.MedioPago> { new BE.MedioPago { Id = medioUsadoId } });
 
-                Assert.AreEqual(2, repositorio.ContarPorMedioPago(medioUsadoId));
-                Assert.AreEqual(0, repositorio.ContarPorMedioPago(medioSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorMedioPago(new BE.MedioPago { Id = medioUsadoId }));
+                Assert.AreEqual(0, repositorio.ContarPorMedioPago(new BE.MedioPago { Id = medioSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }

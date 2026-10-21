@@ -82,14 +82,15 @@ namespace SERVICIOS
         /// </summary>
         /// <param name="id">El identificador del permiso buscado.</param>
         /// <returns><see langword="true" /> si el permiso esta contenido; en caso contrario, <see langword="false" />.</returns>
-        public bool Contiene(int id)
+        public bool Contiene(IPermiso permiso)
         {
-            if (Id == id)
+            if (permiso == null) return false;
+            if (Id == permiso.Id)
             {
                 return true;
             }
 
-            return Hijos.Any(item => item.Contiene(id));
+            return Hijos.Any(item => item.Contiene(permiso));
         }
 
         /// <summary>

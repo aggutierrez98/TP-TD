@@ -67,14 +67,16 @@ namespace TpIDS
         {
             private readonly Func<string> _texto;
 
-            public OpcionFiltro(int id, string valor, Func<string> texto)
+            public OpcionFiltro(int id, string valor, Func<string> texto, object entidad = null)
             {
                 Id = id;
                 Valor = valor;
                 _texto = texto;
+                Entidad = entidad;
             }
 
             public int Id { get; }
+            public object Entidad { get; }
 
             // Solo para segmentos (texto libre sin id).
             public string Valor { get; }
@@ -105,20 +107,20 @@ namespace TpIDS
 
                 CargarLista(clbComercios, _comercioBLL.ObtenerTodos()
                     .OrderBy(item => item.Nombre)
-                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre)));
+                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre, item)));
 
                 CargarLista(clbRubrosComercio, _rubroComercioBLL.ObtenerTodas()
                     .OrderBy(item => item.Nombre)
-                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre)));
+                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre, item)));
 
                 CargarLista(clbEntidadesFinancieras, _entidadFinancieraBLL.ObtenerTodas()
                     .OrderBy(item => item.Nombre)
-                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre)));
+                    .Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre, item)));
 
                 CargarLista(clbMediosPago, _promocionBLL.ObtenerMediosPago()
                     .OrderBy(item => item.Tipo)
                     .ThenBy(item => item.Marca)
-                    .Select(item => new OpcionFiltro(item.Id, null, () => DescribirMedioPago(item))));
+                    .Select(item => new OpcionFiltro(item.Id, null, () => DescribirMedioPago(item), item)));
 
                 CargarLista(clbSegmentos, _promocionBLL.ObtenerSegmentosDisponibles()
                     .OrderBy(item => item, StringComparer.CurrentCultureIgnoreCase)
@@ -132,8 +134,8 @@ namespace TpIDS
                 List<CategoriaProducto> categorias = _categoriaProductoBLL.ObtenerTodas()
                     .OrderBy(item => item.Nombre)
                     .ToList();
-                CargarLista(clbCategoriasIncluidas, categorias.Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre)));
-                CargarLista(clbCategoriasExcluidas, categorias.Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre)));
+                CargarLista(clbCategoriasIncluidas, categorias.Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre, item)));
+                CargarLista(clbCategoriasExcluidas, categorias.Select(item => new OpcionFiltro(item.Id, null, () => item.Nombre, item)));
             }
             catch (Exception ex)
             {
@@ -166,7 +168,7 @@ namespace TpIDS
         {
             return new OpcionFiltro(producto.Id, null, () => producto.CategoriaProducto == null
                 ? producto.Nombre
-                : string.Format("{0} ({1})", producto.Nombre, producto.CategoriaProducto.Nombre));
+                : string.Format("{0} ({1})", producto.Nombre, producto.CategoriaProducto.Nombre), producto);
         }
 
         private static string DescribirMedioPago(MedioPago medioPago)
@@ -250,6 +252,11 @@ namespace TpIDS
             return lista.CheckedItems.OfType<OpcionFiltro>().Select(item => item.Id).ToList();
         }
 
+        private static List<T> ObtenerEntidadesMarcadas<T>(CheckedListBox lista)
+        {
+            return lista.CheckedItems.OfType<OpcionFiltro>().Select(item => item.Entidad).OfType<T>().ToList();
+        }
+
         private static void MarcarIds(CheckedListBox lista, IEnumerable<int> ids)
         {
             HashSet<int> marcados = new HashSet<int>(ids ?? Enumerable.Empty<int>());
@@ -298,10 +305,10 @@ namespace TpIDS
 
         // --- Busqueda y grilla ---
 
-        private int? ObtenerComercioBusqueda()
+        private Comercio ObtenerComercioBusqueda()
         {
             return cmbComercioBusquedaPromocion.SelectedItem is Comercio comercio && comercio.Id > 0
-                ? (int?)comercio.Id
+                ? comercio
                 : null;
         }
 
@@ -426,15 +433,15 @@ namespace TpIDS
                     par.Value.Checked = promocion.DiasSemana != null && promocion.DiasSemana.Contains(par.Key);
                 }
 
-                MarcarIds(clbComercios, promocion.ComercioIds);
-                MarcarIds(clbRubrosComercio, promocion.RubroComercioIds);
-                MarcarIds(clbEntidadesFinancieras, promocion.EntidadFinancieraIds);
-                MarcarIds(clbMediosPago, promocion.MedioPagoIds);
+                MarcarIds(clbComercios, promocion.Comercios.Select(item => item.Id));
+                MarcarIds(clbRubrosComercio, promocion.RubrosComercio.Select(item => item.Id));
+                MarcarIds(clbEntidadesFinancieras, promocion.EntidadesFinancieras.Select(item => item.Id));
+                MarcarIds(clbMediosPago, promocion.MediosPago.Select(item => item.Id));
                 MarcarSegmentos(promocion.Segmentos);
-                MarcarIds(clbProductosIncluidos, promocion.ProductoIncluidoIds);
-                MarcarIds(clbProductosExcluidos, promocion.ProductoExcluidoIds);
-                MarcarIds(clbCategoriasIncluidas, promocion.CategoriaIncluidaIds);
-                MarcarIds(clbCategoriasExcluidas, promocion.CategoriaExcluidaIds);
+                MarcarIds(clbProductosIncluidos, promocion.ProductosIncluidos.Select(item => item.Id));
+                MarcarIds(clbProductosExcluidos, promocion.ProductosExcluidos.Select(item => item.Id));
+                MarcarIds(clbCategoriasIncluidas, promocion.CategoriasIncluidas.Select(item => item.Id));
+                MarcarIds(clbCategoriasExcluidas, promocion.CategoriasExcluidas.Select(item => item.Id));
             }
             finally
             {
@@ -485,7 +492,7 @@ namespace TpIDS
 
         // Arma la promocion a partir del editor. Solo valida el formato de los numeros: las reglas
         // de negocio (rangos, vigencia, ids) las valida el BLL.
-        private bool TryLeerEditor(out Promocion datos)
+        private bool TryLeerEditor(out Promocion datos, Promocion existente = null)
         {
             datos = null;
 
@@ -507,24 +514,22 @@ namespace TpIDS
                 tope = topeLeido;
             }
 
-            datos = new Promocion
-            {
-                Descripcion = txtbDescripcionPromocion.Text,
-                Descuento = descuento,
-                TopeDescuento = tope,
-                VigenciaDesde = dtpVigenciaDesdePromocion.Value.Date,
-                VigenciaHasta = dtpVigenciaHastaPromocion.Value.Date,
-                DiasSemana = _checksDias.Where(par => par.Value.Checked).Select(par => par.Key).OrderBy(dia => dia).ToList(),
-                ComercioIds = ObtenerIdsMarcados(clbComercios),
-                RubroComercioIds = ObtenerIdsMarcados(clbRubrosComercio),
-                EntidadFinancieraIds = ObtenerIdsMarcados(clbEntidadesFinancieras),
-                MedioPagoIds = ObtenerIdsMarcados(clbMediosPago),
-                Segmentos = ObtenerSegmentosMarcados(),
-                ProductoIncluidoIds = ObtenerIdsMarcados(clbProductosIncluidos),
-                ProductoExcluidoIds = ObtenerIdsMarcados(clbProductosExcluidos),
-                CategoriaIncluidaIds = ObtenerIdsMarcados(clbCategoriasIncluidas),
-                CategoriaExcluidaIds = ObtenerIdsMarcados(clbCategoriasExcluidas)
-            };
+            datos = existente ?? new Promocion();
+            datos.Descripcion = txtbDescripcionPromocion.Text;
+            datos.Descuento = descuento;
+            datos.TopeDescuento = tope;
+            datos.VigenciaDesde = dtpVigenciaDesdePromocion.Value.Date;
+            datos.VigenciaHasta = dtpVigenciaHastaPromocion.Value.Date;
+            datos.DiasSemana = _checksDias.Where(par => par.Value.Checked).Select(par => par.Key).OrderBy(dia => dia).ToList();
+            datos.Comercios = ObtenerEntidadesMarcadas<Comercio>(clbComercios);
+            datos.RubrosComercio = ObtenerEntidadesMarcadas<RubroComercio>(clbRubrosComercio);
+            datos.EntidadesFinancieras = ObtenerEntidadesMarcadas<EntidadFinanciera>(clbEntidadesFinancieras);
+            datos.MediosPago = ObtenerEntidadesMarcadas<MedioPago>(clbMediosPago);
+            datos.Segmentos = ObtenerSegmentosMarcados();
+            datos.ProductosIncluidos = ObtenerEntidadesMarcadas<Producto>(clbProductosIncluidos);
+            datos.ProductosExcluidos = ObtenerEntidadesMarcadas<Producto>(clbProductosExcluidos);
+            datos.CategoriasIncluidas = ObtenerEntidadesMarcadas<CategoriaProducto>(clbCategoriasIncluidas);
+            datos.CategoriasExcluidas = ObtenerEntidadesMarcadas<CategoriaProducto>(clbCategoriasExcluidas);
             return true;
         }
 
@@ -602,12 +607,10 @@ namespace TpIDS
                 return;
             }
 
-            if (!TryLeerEditor(out Promocion datos))
+            if (!TryLeerEditor(out Promocion datos, fila.Promocion))
             {
                 return;
             }
-
-            datos.Id = fila.Id;
 
             try
             {
@@ -645,7 +648,7 @@ namespace TpIDS
 
             try
             {
-                if (_promocionBLL.Eliminar(fila.Id))
+                if (_promocionBLL.Eliminar(fila.Promocion))
                 {
                     LimpiarEditor();
                     CargarPromociones(null);
@@ -675,7 +678,7 @@ namespace TpIDS
             // conservando la seleccion para que se recalculen ante un cambio de idioma en caliente.
             try
             {
-                CargarComboComercios(ObtenerComercioBusqueda());
+                CargarComboComercios(ObtenerComercioBusqueda()?.Id);
             }
             catch (Exception ex)
             {

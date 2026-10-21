@@ -1,0 +1,85 @@
+@startuml
+' Fuente: diagramas/NEG02-movimientos/NEG02-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN09 Eliminar movimiento — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMovimientos" as FormMovimientos
+control "MovimientoBLL" as MovimientoBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+participant "MovimientoDAL" as MovimientoDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormMovimientos : El actor desea quitar un movimiento que ya no corresponde mantener.
+Actor -> FormMovimientos : selecciona la opción «Movimientos» del menú «Finanzas».
+FormMovimientos --> Actor : presenta la pantalla «Gestión de movimientos» con el listado de movimientos del actor.
+Actor -> FormMovimientos : selecciona el movimiento a eliminar.
+FormMovimientos --> Actor : muestra los datos del movimiento seleccionado en la sección «Movimiento».
+Actor -> FormMovimientos : presiona el botón «Eliminar».
+FormMovimientos --> Actor : solicita confirmación con el título «Confirmar eliminación» y el mensaje «Se eliminará el\nmovimiento seleccionado. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormMovimientos : confirma la eliminación.
+FormMovimientos --> Actor : elimina el movimiento, limpia los campos de la sección «Movimiento» y actualiza el\nlistado, que ya no incluye el movimiento eliminado.
+FormMovimientos -> MovimientoBLL ++ : Eliminar(movimiento: Movimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> MovimientoBLL -- : IUnidadDeTrabajo
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorId(id: int)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : Movimiento
+IMovimientoRepositorio --> MovimientoBLL -- : Movimiento
+MovimientoBLL -> IMovimientoRepositorio ++ : Eliminar(movimiento: Movimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : Eliminar(movimiento: Movimiento, accesoDatos:\nAccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : bool
+IMovimientoRepositorio --> MovimientoBLL -- : bool
+MovimientoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> MovimientoBLL -- : void
+MovimientoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> MovimientoBLL -- : void
+MovimientoBLL --> FormMovimientos -- : bool
+group Refrescar listado tras la operacion exitosa
+FormMovimientos -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : List<Movimiento>
+IMovimientoRepositorio --> MovimientoBLL -- : List<Movimiento>
+MovimientoBLL --> FormMovimientos -- : List<Movimiento>
+end
+FormMovimientos --> Actor : muestra el mensaje «Movimiento eliminado con éxito.».
+else El actor cancela la confirmacion
+Actor -> FormMovimientos : Cancelar la operacion
+FormMovimientos --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/MovimientoBLL.cs:289 MovimientoBLL.Eliminar
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/MovimientoDAL.cs:31 MovimientoDAL.ObtenerPorId
+' DAL/MovimientoDAL.cs:399 MovimientoDAL.Eliminar
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:11 IMovimientoRepositorio.ObtenerPorId
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:29 IMovimientoRepositorio.Eliminar
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MovimientoRepositorio.cs:26 MovimientoRepositorio.ObtenerPorId
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:90 MovimientoRepositorio.Eliminar
+' UI/FormMovimientos.cs:452 FormMovimientos.btnEliminarMovimiento_Click
+@enduml

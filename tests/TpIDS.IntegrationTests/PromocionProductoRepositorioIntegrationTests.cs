@@ -24,11 +24,11 @@ namespace TpIDS.IntegrationTests
                 int incluidoId = InsertarProductoTest(accesoDatos, "ProductoTestIncluido");
                 int excluidoId = InsertarProductoTest(accesoDatos, "ProductoTestExcluido");
 
-                bool reemplazado = repositorio.ReemplazarProductosDePromocion(promocionId, new List<int> { incluidoId }, new List<int> { excluidoId });
+                bool reemplazado = repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(incluidoId), Productos(excluidoId));
 
                 Assert.IsTrue(reemplazado);
-                List<int> incluidos = repositorio.ObtenerProductoIdsPorPromocion(promocionId, false);
-                List<int> excluidos = repositorio.ObtenerProductoIdsPorPromocion(promocionId, true);
+                List<int> incluidos = repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, false).ConvertAll(item => item.Id);
+                List<int> excluidos = repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, true).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, incluidos.Count);
                 Assert.AreEqual(incluidoId, incluidos[0]);
                 Assert.AreEqual(1, excluidos.Count);
@@ -48,12 +48,12 @@ namespace TpIDS.IntegrationTests
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestReemplazoProducto");
                 int idA = InsertarProductoTest(accesoDatos, "ProductoTestReemplazoA");
                 int idB = InsertarProductoTest(accesoDatos, "ProductoTestReemplazoB");
-                repositorio.ReemplazarProductosDePromocion(promocionId, new List<int> { idA }, new List<int>());
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(idA), Productos());
 
-                repositorio.ReemplazarProductosDePromocion(promocionId, new List<int>(), new List<int> { idB });
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(), Productos(idB));
 
-                Assert.AreEqual(0, repositorio.ObtenerProductoIdsPorPromocion(promocionId, false).Count);
-                List<int> excluidos = repositorio.ObtenerProductoIdsPorPromocion(promocionId, true);
+                Assert.AreEqual(0, repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, false).Count);
+                List<int> excluidos = repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, true).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, excluidos.Count);
                 Assert.AreEqual(idB, excluidos[0]);
 
@@ -71,12 +71,12 @@ namespace TpIDS.IntegrationTests
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestVaciarProducto");
                 int incluidoId = InsertarProductoTest(accesoDatos, "ProductoTestVaciarInc");
                 int excluidoId = InsertarProductoTest(accesoDatos, "ProductoTestVaciarExc");
-                repositorio.ReemplazarProductosDePromocion(promocionId, new List<int> { incluidoId }, new List<int> { excluidoId });
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(incluidoId), Productos(excluidoId));
 
-                repositorio.ReemplazarProductosDePromocion(promocionId, new List<int>(), new List<int>());
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(), Productos());
 
-                Assert.AreEqual(0, repositorio.ObtenerProductoIdsPorPromocion(promocionId, false).Count);
-                Assert.AreEqual(0, repositorio.ObtenerProductoIdsPorPromocion(promocionId, true).Count);
+                Assert.AreEqual(0, repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, false).Count);
+                Assert.AreEqual(0, repositorio.ObtenerProductosPorPromocion(new BE.Promocion { Id = promocionId }, true).Count);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -94,7 +94,7 @@ namespace TpIDS.IntegrationTests
                 int elementoId = InsertarProductoTest(accesoDatos, "ProductoTestContradiccion");
 
                 Assert.ThrowsExactly<SERVICIOS.ExcepcionTecnica>(() =>
-                    repositorio.ReemplazarProductosDePromocion(promocionId, new List<int> { elementoId }, new List<int> { elementoId }));
+                    repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = promocionId }, Productos(elementoId), Productos(elementoId)));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -111,14 +111,19 @@ namespace TpIDS.IntegrationTests
                 int productoSinUsoId = InsertarProductoTest(accesoDatos, "ProductoTestContarSinUso");
                 int incluyeId = InsertarPromocionTest(accesoDatos, "PromocionTestContarProductoInc");
                 int excluyeId = InsertarPromocionTest(accesoDatos, "PromocionTestContarProductoExc");
-                repositorio.ReemplazarProductosDePromocion(incluyeId, new List<int> { productoUsadoId }, new List<int>());
-                repositorio.ReemplazarProductosDePromocion(excluyeId, new List<int>(), new List<int> { productoUsadoId });
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = incluyeId }, Productos(productoUsadoId), Productos());
+                repositorio.ReemplazarProductosDePromocion(new BE.Promocion { Id = excluyeId }, Productos(), Productos(productoUsadoId));
 
-                Assert.AreEqual(2, repositorio.ContarPorProducto(productoUsadoId));
-                Assert.AreEqual(0, repositorio.ContarPorProducto(productoSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorProducto(new BE.Producto { Id = productoUsadoId }));
+                Assert.AreEqual(0, repositorio.ContarPorProducto(new BE.Producto { Id = productoSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
+        }
+
+        private static List<BE.Producto> Productos(params int[] ids)
+        {
+            return new List<int>(ids).ConvertAll(id => new BE.Producto { Id = id });
         }
 
         private static int InsertarPromocionTest(AccesoDatosSqlServer accesoDatos, string descripcion)

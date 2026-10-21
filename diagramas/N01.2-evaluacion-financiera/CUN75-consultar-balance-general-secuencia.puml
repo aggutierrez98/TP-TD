@@ -1,0 +1,76 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN75 Consultar balance general — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormBalanceGeneral" as FormBalanceGeneral
+control "MovimientoBLL" as MovimientoBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+participant "MovimientoDAL" as MovimientoDAL
+control "CategoriaBLL" as CategoriaBLL
+participant "CategoriaRepositorio\n:ICategoriaRepositorio" as ICategoriaRepositorio
+note over FormBalanceGeneral : El actor desea conocer cuánto ingresó, cuánto gastó y cuál fue su balance en un\nperíodo.
+Actor -> FormBalanceGeneral : selecciona la opción «Balance General» del menú «Analíticas».
+FormBalanceGeneral -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : List<Movimiento>
+IMovimientoRepositorio --> MovimientoBLL -- : List<Movimiento>
+MovimientoBLL --> FormBalanceGeneral -- : List<Movimiento>
+FormBalanceGeneral -> CategoriaBLL ++ : ObtenerVisiblesParaUsuarioActual()
+CategoriaBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> CategoriaBLL -- : Usuario
+CategoriaBLL -> ICategoriaRepositorio ++ : ObtenerVisiblesParaUsuario(usuario: Usuario)
+ICategoriaRepositorio --> CategoriaBLL -- : List<Categoria>
+CategoriaBLL --> FormBalanceGeneral -- : List<Categoria>
+FormBalanceGeneral -> MovimientoBLL ++ : ObtenerResumenBalance(desde: DateTime, hasta: DateTime)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerResumen(usuario: Usuario, desde: DateTime, hasta:\nDateTime)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerResumen(usuario: Usuario, desde: DateTime, hasta:\nDateTime, accesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : ResumenMovimientos
+IMovimientoRepositorio --> MovimientoBLL -- : ResumenMovimientos
+MovimientoBLL --> FormBalanceGeneral -- : ResumenMovimientos
+note over FormBalanceGeneral : Totales: solo rango de fechas.\nTipo y texto filtran el detalle; paginacion local de 20 filas.
+FormBalanceGeneral --> Actor : presenta la pantalla «Balance General» ocupando el área de trabajo, con los filtros\n«Desde:», «Hasta:», «Tipo:» y «Buscar:» y el botón «Buscar». El filtro de fechas aparece\npreestablecido con el mes actual completo.
+FormBalanceGeneral --> Actor : muestra los totales «Ingresos del período:», «Egresos del período:» y «Balance del\nperíodo:» del rango de fechas indicado, y el detalle de los movimientos del período en una\ngrilla
+Actor -> FormBalanceGeneral : modifica el rango de fechas, selecciona un tipo de movimiento («Ingreso» o «Egreso») o\ningresa un texto de búsqueda.
+Actor -> FormBalanceGeneral : selecciona el botón «Buscar».
+FormBalanceGeneral -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL --> FormBalanceGeneral -- : List<Movimiento>
+FormBalanceGeneral -> CategoriaBLL ++ : ObtenerVisiblesParaUsuarioActual()
+CategoriaBLL --> FormBalanceGeneral -- : List<Categoria>
+FormBalanceGeneral -> MovimientoBLL ++ : ObtenerResumenBalance(desde: DateTime, hasta: DateTime)
+MovimientoBLL --> FormBalanceGeneral -- : ResumenMovimientos
+ref over MovimientoBLL : Repetir lectura inicial con nuevo rango/filtro
+FormBalanceGeneral --> Actor : actualiza los totales y la grilla con el nuevo filtro, mostrando la primera página del\nresultado.
+Actor -> FormBalanceGeneral : selecciona los botones «Siguiente» y «Anterior» para recorrer las páginas del detalle.
+FormBalanceGeneral --> Actor : presenta la página solicitada y actualiza el indicador «Página n de N».
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/MovimientoBLL.cs:161 MovimientoBLL.ObtenerResumenBalance
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/MovimientoDAL.cs:284 MovimientoDAL.ObtenerResumen
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:23 IMovimientoRepositorio.ObtenerResumen
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:60 MovimientoRepositorio.ObtenerResumen
+' UI/FormBalanceGeneral.cs:117 FormBalanceGeneral.ActualizarResumen
+@enduml

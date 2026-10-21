@@ -11,10 +11,12 @@ namespace BLL
     {
         public const int VersionCuestionario = CalculadorPerfilInversor.Version;
 
-        public int ObtenerCantidadOpciones(int preguntaId)
+        public IReadOnlyList<PreguntaPerfilInversor> ObtenerPreguntas() => CalculadorPerfilInversor.Preguntas;
+
+        public int ObtenerCantidadOpciones(PreguntaPerfilInversor pregunta)
         {
-            if (preguntaId < 1 || preguntaId > 10) throw new ArgumentOutOfRangeException(nameof(preguntaId));
-            return CalculadorPerfilInversor.CantidadesOpciones[preguntaId - 1];
+            if (pregunta == null || pregunta.Id < 1 || pregunta.Id > 10) throw new ArgumentOutOfRangeException(nameof(pregunta));
+            return CalculadorPerfilInversor.CantidadesOpciones[pregunta.Id - 1];
         }
 
         public PerfilInversor EvaluarCuestionario(int version, IEnumerable<RespuestaPerfilInversor> respuestas) =>
@@ -37,14 +39,14 @@ namespace BLL
 
         public PerfilInversor ObtenerMiPerfil()
         {
-            int propietario = ObtenerPropietarioSesion();
+            Usuario propietario = ObtenerPropietarioSesion();
             try { return _repositorio.ObtenerPorUsuario(propietario); }
             catch (Exception ex) { throw new ExcepcionTecnica("Error.InvestorProfile.ReadFailed", ex); }
         }
 
         public PerfilInversor GuardarMiPerfil(int version, IEnumerable<RespuestaPerfilInversor> respuestas)
         {
-            int propietario = ObtenerPropietarioSesion();
+            Usuario propietario = ObtenerPropietarioSesion();
             return Guardar(propietario, version, respuestas);
         }
 
@@ -55,7 +57,7 @@ namespace BLL
             {
                 if (continuacion.Finalizada || _ahoraUtc() >= continuacion.CreadaUtc.AddMinutes(30))
                     throw new ExcepcionNegocio("Error.InvestorProfile.ContinuationExpired");
-                var perfil = Guardar(continuacion.UsuarioId, version, respuestas);
+                var perfil = Guardar(continuacion.Usuario, version, respuestas);
                 continuacion.Finalizada = true;
                 return perfil;
             }
@@ -67,10 +69,10 @@ namespace BLL
             lock (continuacion.Sincronizacion) continuacion.Finalizada = true;
         }
 
-        private PerfilInversor Guardar(int propietario, int version, IEnumerable<RespuestaPerfilInversor> respuestas)
+        private PerfilInversor Guardar(Usuario propietario, int version, IEnumerable<RespuestaPerfilInversor> respuestas)
         {
             var perfil = CalculadorPerfilInversor.Evaluar(version, respuestas);
-            perfil.UsuarioId = propietario;
+            perfil.Usuario = propietario;
             perfil.FechaEvaluacionUtc = _ahoraUtc();
             try
             {
@@ -86,12 +88,11 @@ namespace BLL
             catch (Exception ex) { throw new ExcepcionTecnica("Error.InvestorProfile.SaveFailed", ex); }
         }
 
-        private int ObtenerPropietarioSesion()
+        private Usuario ObtenerPropietarioSesion()
         {
-            int? propietario = _sesion.GetUsuarioActualId();
-            if (!propietario.HasValue || propietario.Value <= 0)
+            if (!_sesion.HaySesionActiva() || _sesion.ObtenerUsuarioActual().Id <= 0)
                 throw new ExcepcionNegocio("Error.InvestorProfile.NoSession");
-            return propietario.Value;
+            return _sesion.ObtenerUsuarioActual();
         }
     }
 }

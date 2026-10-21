@@ -7,11 +7,11 @@ namespace ABSTRACCIONES
     {
         int HistorialId { get; set; }
 
-        int UsuarioId { get; set; }
+        IUsuarioAutenticado Usuario { get; set; }
 
         DateTime FechaHora { get; set; }
 
-        int? ActorUsuarioId { get; set; }
+        IUsuarioAutenticado ActorUsuario { get; set; }
 
         string ActorUsernameSnapshot { get; set; }
 
@@ -25,8 +25,8 @@ namespace ABSTRACCIONES
 
         bool Activo { get; set; }
 
-        int? IdiomaId { get; set; }
+        IIdioma Idioma { get; set; }
 
-        IList<int> PermisosIds { get; set; }
+        IList<IPermiso> Permisos { get; set; }
     }
 }

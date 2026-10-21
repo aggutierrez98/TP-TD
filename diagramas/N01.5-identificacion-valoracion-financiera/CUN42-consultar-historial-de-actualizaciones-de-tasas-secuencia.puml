@@ -1,0 +1,66 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN42 Consultar historial de actualizaciones de tasas — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormActualizacionTasas" as FormActualizacionTasas
+control "ActualizacionTasasBLL" as ActualizacionTasasBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "EjecucionActualizacionTasasRepositorio\n:IEjecucionActualizacionTasasRepositorio" as IEjecucionActualizacionTasasRepositorio
+participant "EjecucionActualizacionTasasDAL" as EjecucionActualizacionTasasDAL
+note over FormActualizacionTasas : El actor desea revisar cuándo y con qué resultado se actualizaron las tasas de\nconversión.
+Actor -> FormActualizacionTasas : selecciona la opción «Actualizacion de tasas» del menú «Operador».
+FormActualizacionTasas -> ActualizacionTasasBLL ++ : ObtenerUltimasEjecuciones(cantidad: int)
+ActualizacionTasasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ActualizacionTasasBLL -- : IUnidadDeTrabajo
+ActualizacionTasasBLL -> IEjecucionActualizacionTasasRepositorio ++ : ObtenerRecientes(cantidad: int)
+IEjecucionActualizacionTasasRepositorio -> EjecucionActualizacionTasasDAL ++ : ObtenerRecientes(cantidad: int, accesoDatos:\nAccesoDatosSqlServer)
+EjecucionActualizacionTasasDAL --> IEjecucionActualizacionTasasRepositorio -- : List<EjecucionActualizacionTasas>
+IEjecucionActualizacionTasasRepositorio --> ActualizacionTasasBLL -- : List<EjecucionActualizacionTasas>
+ActualizacionTasasBLL --> FormActualizacionTasas -- : List<EjecucionActualizacionTasas>
+FormActualizacionTasas -> ActualizacionTasasBLL ++ : ObtenerRequestsConsumidasDelMes()
+ActualizacionTasasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ActualizacionTasasBLL -- : IUnidadDeTrabajo
+ActualizacionTasasBLL -> IEjecucionActualizacionTasasRepositorio ++ : ContarRequestsDelMes(referencia: DateTime)
+IEjecucionActualizacionTasasRepositorio -> EjecucionActualizacionTasasDAL ++ : ContarRequestsDelMes(referencia: DateTime, accesoDatos:\nAccesoDatosSqlServer)
+EjecucionActualizacionTasasDAL --> IEjecucionActualizacionTasasRepositorio -- : int
+IEjecucionActualizacionTasasRepositorio --> ActualizacionTasasBLL -- : int
+ActualizacionTasasBLL --> FormActualizacionTasas -- : int
+FormActualizacionTasas --> Actor : presenta la pantalla «Actualizacion de tasas» con el listado de las últimas 50\nactualizaciones
+Actor -> FormActualizacionTasas : selecciona una actualización del listado.
+FormActualizacionTasas -> ActualizacionTasasBLL ++ : ObtenerDetalleDeEjecucion(ejecucion:\nEjecucionActualizacionTasas)
+ActualizacionTasasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ActualizacionTasasBLL -- : IUnidadDeTrabajo
+ActualizacionTasasBLL -> IEjecucionActualizacionTasasRepositorio ++ : ObtenerDetallePorEjecucion(ejecucion:\nEjecucionActualizacionTasas)
+IEjecucionActualizacionTasasRepositorio -> EjecucionActualizacionTasasDAL ++ : ObtenerDetallePorEjecucion(ejecucion:\nEjecucionActualizacionTasas, accesoDatos: AccesoDatosSqlServer)
+EjecucionActualizacionTasasDAL --> IEjecucionActualizacionTasasRepositorio -- : List<ActualizacionTasaDetalle>
+IEjecucionActualizacionTasasRepositorio --> ActualizacionTasasBLL -- : List<ActualizacionTasaDetalle>
+ActualizacionTasasBLL --> FormActualizacionTasas -- : List<ActualizacionTasaDetalle>
+FormActualizacionTasas --> Actor : presenta, en «Detalle de la ejecucion seleccionada», las tasas procesadas en esa\nactualización, indicando «Moneda base», «Moneda de conversion», «Valor anterior», «Valor\nnuevo» y «Estado» (Actualizado, Saltado (manual) o Saltado…
+' BLL/ActualizacionTasasBLL.cs:43 ActualizacionTasasBLL.ObtenerUltimasEjecuciones
+' BLL/ActualizacionTasasBLL.cs:48 ActualizacionTasasBLL.ObtenerDetalleDeEjecucion
+' BLL/ActualizacionTasasBLL.cs:54 ActualizacionTasasBLL.ObtenerRequestsConsumidasDelMes
+' DAL/EjecucionActualizacionTasasDAL.cs:108 EjecucionActualizacionTasasDAL.ObtenerRecientes
+' DAL/EjecucionActualizacionTasasDAL.cs:143 EjecucionActualizacionTasasDAL.ObtenerDetallePorEjecucion
+' DAL/EjecucionActualizacionTasasDAL.cs:208 EjecucionActualizacionTasasDAL.ContarRequestsDelMes
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:34 EjecucionActualizacionTasasRepositorio.ObtenerRecientes
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:39 EjecucionActualizacionTasasRepositorio.ObtenerDetallePorEjecucion
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:62 EjecucionActualizacionTasasRepositorio.ContarRequestsDelMes
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:13 IEjecucionActualizacionTasasRepositorio.ObtenerRecientes
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:15 IEjecucionActualizacionTasasRepositorio.ObtenerDetallePorEjecucion
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:21 IEjecucionActualizacionTasasRepositorio.ContarRequestsDelMes
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormActualizacionTasas.cs:61 FormActualizacionTasas.Refrescar
+@enduml

@@ -38,7 +38,7 @@ namespace CRONS
 
                 string resumen = string.Format(
                     "Run {0} for {1:yyyy-MM-dd}: {2} delivered, {3} skipped, {4} failed.",
-                    resultado.CorridaId, resultado.Jornada, resultado.Entregadas, resultado.Omitidas, resultado.Fallidas);
+                    resultado.Corrida?.Id ?? 0, resultado.Jornada, resultado.Entregadas, resultado.Omitidas, resultado.Fallidas);
 
                 if (resultado.Cancelada)
                 {

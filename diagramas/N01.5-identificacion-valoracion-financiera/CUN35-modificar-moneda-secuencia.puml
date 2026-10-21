@@ -1,0 +1,72 @@
+@startuml
+' Fuente: diagramas/NEG08-monedas/NEG08-monedas-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN35 Modificar moneda — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMonedas" as FormGestionMonedas
+control "MonedaBLL" as MonedaBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "MonedaRepositorio\n:IMonedaRepositorio" as IMonedaRepositorio
+participant "MonedaDAL" as MonedaDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionMonedas : El actor desea corregir o actualizar el código o el nombre de una moneda.
+Actor -> FormGestionMonedas : selecciona la opción «Monedas» del menú «Operador».
+FormGestionMonedas --> Actor : presenta la pantalla «Gestion de Monedas» con el listado de monedas registradas.
+Actor -> FormGestionMonedas : selecciona del listado la moneda a modificar.
+FormGestionMonedas --> Actor : muestra el código y el nombre de la moneda en los campos «Codigo:» y «Nombre:».
+Actor -> FormGestionMonedas : modifica el código y/o el nombre.
+Actor -> FormGestionMonedas : presiona el botón «Actualizar» de la sección «Monedas».
+FormGestionMonedas -> MonedaBLL ++ : Actualizar(moneda: Moneda)
+MonedaBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> MonedaBLL -- : IUnidadDeTrabajo
+MonedaBLL -> IMonedaRepositorio ++ : ObtenerPorId(id: int)
+IMonedaRepositorio -> MonedaDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+MonedaDAL --> IMonedaRepositorio -- : Moneda
+IMonedaRepositorio --> MonedaBLL -- : Moneda
+MonedaBLL -> IMonedaRepositorio ++ : Actualizar(moneda: Moneda)
+IMonedaRepositorio -> MonedaDAL ++ : Actualizar(moneda: Moneda, accesoDatos: AccesoDatosSqlServer)
+MonedaDAL --> IMonedaRepositorio -- : bool
+IMonedaRepositorio --> MonedaBLL -- : bool
+MonedaBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> MonedaBLL -- : void
+MonedaBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> MonedaBLL -- : void
+MonedaBLL --> FormGestionMonedas -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionMonedas -> MonedaBLL ++ : ObtenerTodas()
+MonedaBLL -> IMonedaRepositorio ++ : ObtenerTodas()
+IMonedaRepositorio -> MonedaDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+MonedaDAL --> IMonedaRepositorio -- : List<Moneda>
+IMonedaRepositorio --> MonedaBLL -- : List<Moneda>
+MonedaBLL --> FormGestionMonedas -- : List<Moneda>
+end
+FormGestionMonedas --> Actor : guarda los cambios, vacía los campos, actualiza el listado manteniendo seleccionada la\nmoneda, actualiza los datos de la sección «Tasas de Conversion» e informa el resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/MonedaBLL.cs:25 MonedaBLL.ObtenerTodas
+' BLL/MonedaBLL.cs:60 MonedaBLL.Actualizar
+' DAL/MonedaDAL.cs:108 MonedaDAL.Actualizar
+' DAL/MonedaDAL.cs:20 MonedaDAL.ObtenerPorId
+' DAL/MonedaDAL.cs:49 MonedaDAL.ObtenerTodas
+' REPOSITORIO/IMonedaRepositorio.cs:10 IMonedaRepositorio.ObtenerTodas
+' REPOSITORIO/IMonedaRepositorio.cs:14 IMonedaRepositorio.Actualizar
+' REPOSITORIO/IMonedaRepositorio.cs:8 IMonedaRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MonedaRepositorio.cs:23 MonedaRepositorio.ObtenerPorId
+' REPOSITORIO/MonedaRepositorio.cs:28 MonedaRepositorio.ObtenerTodas
+' REPOSITORIO/MonedaRepositorio.cs:38 MonedaRepositorio.Actualizar
+' UI/FormGestionMonedas.cs:112 FormGestionMonedas.btnActualizarMoneda_Click
+@enduml

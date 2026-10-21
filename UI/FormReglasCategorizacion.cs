@@ -13,7 +13,6 @@ namespace TpIDS
         private readonly ReglaCategorizacionBLL reglaBLL = CompositionRoot.ReglaCategorizacion;
         private readonly CategoriaBLL categoriaBLL = CompositionRoot.Categoria;
         private readonly ComercioBLL comercioBLL = CompositionRoot.Comercio;
-        private readonly ISesion sesion = CompositionRoot.Sesion;
 
         public FormReglasCategorizacion()
         {
@@ -28,22 +27,22 @@ namespace TpIDS
             CargarReglas(null);
         }
 
-        // View-model plano para la grilla de reglas.
+        // View-model plano para la grilla de reglas. La grilla no autogenera columnas, asi
+        // que Regla y ComerciosAsociados (las entidades que se pasan al BLL) no se muestran.
         private sealed class FilaRegla
         {
-            public int Id { get; set; }
+            public ReglaCategorizacion Regla { get; set; }
             public string Nombre { get; set; }
             public int CategoriaId { get; set; }
             public string Categoria { get; set; }
             public string PalabrasClave { get; set; }
             public string Comercios { get; set; }
-            public List<int> ComercioIds { get; set; }
+            public List<Comercio> ComerciosAsociados { get; set; }
         }
 
         private void CargarCategorias()
         {
-            int usuarioActualId = sesion.GetUsuarioActualId().Value;
-            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuario(usuarioActualId);
+            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuarioActual();
 
             cmbCategoriaRegla.DataSource = null;
             cmbCategoriaRegla.DisplayMember = "Nombre";
@@ -70,11 +69,10 @@ namespace TpIDS
         {
             try
             {
-                int usuarioActualId = sesion.GetUsuarioActualId().Value;
-                List<ReglaCategorizacion> reglas = reglaBLL.ObtenerPorUsuario(usuarioActualId);
+                List<ReglaCategorizacion> reglas = reglaBLL.ObtenerParaUsuarioActual();
 
                 Dictionary<int, string> nombresCategoria = categoriaBLL
-                    .ObtenerVisiblesParaUsuario(usuarioActualId)
+                    .ObtenerVisiblesParaUsuarioActual()
                     .ToDictionary(item => item.Id, item => item.Nombre);
 
                 Dictionary<int, string> nombresComercio = (comercioBLL.ObtenerTodos() ?? new List<Comercio>())
@@ -85,18 +83,18 @@ namespace TpIDS
                 List<FilaRegla> filas = new List<FilaRegla>();
                 foreach (ReglaCategorizacion regla in reglas)
                 {
-                    List<int> comercioIds = reglaBLL.ObtenerComercioIdsPorRegla(regla.Id) ?? new List<int>();
+                    List<Comercio> comercios = reglaBLL.ObtenerComerciosPorRegla(regla) ?? new List<Comercio>();
 
                     string textoComercios;
-                    if (comercioIds.Count == 0)
+                    if (comercios.Count == 0)
                     {
                         textoComercios = textoTodosComercios;
                     }
                     else
                     {
-                        List<string> nombres = comercioIds
-                            .Where(id => nombresComercio.ContainsKey(id))
-                            .Select(id => nombresComercio[id])
+                        List<string> nombres = comercios
+                            .Where(item => nombresComercio.ContainsKey(item.Id))
+                            .Select(item => nombresComercio[item.Id])
                             .ToList();
                         textoComercios = string.Join(", ", nombres);
                     }
@@ -107,13 +105,13 @@ namespace TpIDS
 
                     filas.Add(new FilaRegla
                     {
-                        Id = regla.Id,
+                        Regla = regla,
                         Nombre = regla.Nombre,
                         CategoriaId = regla.Categoria != null ? regla.Categoria.Id : 0,
                         Categoria = nombreCategoria,
                         PalabrasClave = regla.PalabrasClave,
                         Comercios = textoComercios,
-                        ComercioIds = comercioIds
+                        ComerciosAsociados = comercios
                     });
                 }
 
@@ -141,10 +139,14 @@ namespace TpIDS
 
             try
             {
-                List<int> comercioIds = ObtenerComerciosSeleccionados();
-                int id = reglaBLL.Crear(txtbNombreRegla.Text, categoria.Id, txtbPalabrasClaveRegla.Text, comercioIds);
+                ReglaCategorizacion creada = reglaBLL.Crear(new ReglaCategorizacion
+                {
+                    Nombre = txtbNombreRegla.Text,
+                    Categoria = categoria,
+                    PalabrasClave = txtbPalabrasClaveRegla.Text
+                }, ObtenerComerciosSeleccionados());
                 LimpiarCampos();
-                CargarReglas(id);
+                CargarReglas(creada.Id);
                 UiDialogHelper.MostrarInfo("FormCategorizationRules.Success.RuleCreated");
             }
             catch (Exception ex)
@@ -168,12 +170,16 @@ namespace TpIDS
 
             try
             {
-                List<int> comercioIds = ObtenerComerciosSeleccionados();
-                bool actualizado = reglaBLL.Actualizar(fila.Id, txtbNombreRegla.Text, categoria.Id, txtbPalabrasClaveRegla.Text, comercioIds);
+                // La entidad de la fila no la muestra otro control; si el BLL rechaza el cambio,
+                // la proxima operacion vuelve a escribir todos los campos editables.
+                fila.Regla.Nombre = txtbNombreRegla.Text;
+                fila.Regla.Categoria = categoria;
+                fila.Regla.PalabrasClave = txtbPalabrasClaveRegla.Text;
+                bool actualizado = reglaBLL.Actualizar(fila.Regla, ObtenerComerciosSeleccionados());
                 if (actualizado)
                 {
                     LimpiarCampos();
-                    CargarReglas(fila.Id);
+                    CargarReglas(fila.Regla.Id);
                     UiDialogHelper.MostrarInfo("FormCategorizationRules.Success.RuleUpdated");
                 }
             }
@@ -203,7 +209,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = reglaBLL.Eliminar(fila.Id);
+                bool eliminado = reglaBLL.Eliminar(fila.Regla);
                 if (eliminado)
                 {
                     LimpiarCampos();
@@ -235,7 +241,7 @@ namespace TpIDS
                 txtbPalabrasClaveRegla.Text = fila.PalabrasClave;
                 cmbCategoriaRegla.SelectedValue = fila.CategoriaId;
 
-                HashSet<int> comercioIdsSet = new HashSet<int>(fila.ComercioIds ?? new List<int>());
+                HashSet<int> comercioIdsSet = new HashSet<int>((fila.ComerciosAsociados ?? new List<Comercio>()).Select(item => item.Id));
                 for (int i = 0; i < lstbComerciosRegla.Items.Count; i++)
                 {
                     if (lstbComerciosRegla.Items[i] is Comercio c)
@@ -261,17 +267,17 @@ namespace TpIDS
             dgvReglas.ClearSelection();
         }
 
-        private List<int> ObtenerComerciosSeleccionados()
+        private List<Comercio> ObtenerComerciosSeleccionados()
         {
-            List<int> ids = new List<int>();
+            List<Comercio> comercios = new List<Comercio>();
             foreach (object item in lstbComerciosRegla.CheckedItems)
             {
                 if (item is Comercio c)
                 {
-                    ids.Add(c.Id);
+                    comercios.Add(c);
                 }
             }
-            return ids;
+            return comercios;
         }
 
         private bool ObtenerFilaSeleccionada(out FilaRegla fila)
@@ -290,7 +296,7 @@ namespace TpIDS
         {
             DataGridViewRow fila = dgvReglas.Rows
                 .Cast<DataGridViewRow>()
-                .FirstOrDefault(item => item.DataBoundItem is FilaRegla filaRegla && filaRegla.Id == id);
+                .FirstOrDefault(item => item.DataBoundItem is FilaRegla filaRegla && filaRegla.Regla.Id == id);
 
             if (fila == null)
             {

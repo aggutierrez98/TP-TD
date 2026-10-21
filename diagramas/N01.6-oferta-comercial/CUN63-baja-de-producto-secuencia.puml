@@ -1,0 +1,83 @@
+@startuml
+' Fuente: diagramas/NEG14-catalogo-productos/NEG14-catalogo-productos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN63 Baja de producto — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionProductos" as FormGestionProductos
+control "ProductoBLL" as ProductoBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ProductoRepositorio\n:IProductoRepositorio" as IProductoRepositorio
+participant "ProductoDAL" as ProductoDAL
+participant "ComercioProductoRepositorio\n:IComercioProductoRepositorio" as IComercioProductoRepositorio
+participant "PromocionProductoRepositorio\n:IPromocionProductoRepositorio" as IPromocionProductoRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionProductos : El actor desea eliminar un producto que ya no corresponde mantener en el\ncatálogo.
+Actor -> FormGestionProductos : selecciona un producto del listado.
+Actor -> FormGestionProductos : selecciona la acción «Eliminar».
+FormGestionProductos --> Actor : solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se\neliminará el producto '<nombre>' en forma definitiva. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormGestionProductos : confirma la eliminación.
+FormGestionProductos -> ProductoBLL ++ : Eliminar(producto: Producto)
+ProductoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ProductoBLL -- : IUnidadDeTrabajo
+ProductoBLL -> IProductoRepositorio ++ : ObtenerPorId(id: int)
+IProductoRepositorio -> ProductoDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ProductoDAL --> IProductoRepositorio -- : Producto
+IProductoRepositorio --> ProductoBLL -- : Producto
+ProductoBLL -> IComercioProductoRepositorio ++ : ContarPorProducto(producto: Producto)
+IComercioProductoRepositorio --> ProductoBLL -- : int
+ProductoBLL -> IPromocionProductoRepositorio ++ : ContarPorProducto(producto: Producto)
+IPromocionProductoRepositorio --> ProductoBLL -- : int
+ProductoBLL -> IProductoRepositorio ++ : Eliminar(producto: Producto)
+IProductoRepositorio -> ProductoDAL ++ : Eliminar(producto: Producto, accesoDatos: AccesoDatosSqlServer)
+ProductoDAL --> IProductoRepositorio -- : bool
+IProductoRepositorio --> ProductoBLL -- : bool
+ProductoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ProductoBLL -- : void
+ProductoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ProductoBLL -- : void
+ProductoBLL --> FormGestionProductos -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionProductos -> ProductoBLL ++ : ObtenerTodos()
+ProductoBLL -> IProductoRepositorio ++ : ObtenerTodos()
+IProductoRepositorio -> ProductoDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+ProductoDAL --> IProductoRepositorio -- : List<Producto>
+IProductoRepositorio --> ProductoBLL -- : List<Producto>
+ProductoBLL --> FormGestionProductos -- : List<Producto>
+end
+FormGestionProductos --> Actor : elimina el producto, limpia el formulario, actualiza el listado sin el producto eliminado\ne informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormGestionProductos : Cancelar la operacion
+FormGestionProductos --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ProductoBLL.cs:110 ProductoBLL.Eliminar
+' BLL/ProductoBLL.cs:28 ProductoBLL.ObtenerTodos
+' DAL/ProductoDAL.cs:139 ProductoDAL.Eliminar
+' DAL/ProductoDAL.cs:20 ProductoDAL.ObtenerPorId
+' DAL/ProductoDAL.cs:49 ProductoDAL.ObtenerTodos
+' REPOSITORIO/IComercioProductoRepositorio.cs:20 IComercioProductoRepositorio.ContarPorProducto
+' REPOSITORIO/IProductoRepositorio.cs:10 IProductoRepositorio.ObtenerTodos
+' REPOSITORIO/IProductoRepositorio.cs:16 IProductoRepositorio.Eliminar
+' REPOSITORIO/IProductoRepositorio.cs:8 IProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionProductoRepositorio.cs:13 IPromocionProductoRepositorio.ContarPorProducto
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ProductoRepositorio.cs:23 ProductoRepositorio.ObtenerPorId
+' REPOSITORIO/ProductoRepositorio.cs:30 ProductoRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoRepositorio.cs:57 ProductoRepositorio.Eliminar
+' UI/FormGestionProductos.cs:150 FormGestionProductos.btnEliminarProducto_Click
+@enduml

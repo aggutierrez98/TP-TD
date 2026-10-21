@@ -50,7 +50,7 @@ namespace DAL
             }
         }
 
-        public List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<CuentaFinanciera> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, EntidadFinancieraId, Alias, Tipo, CredencialesCifradas
@@ -65,7 +65,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -86,7 +86,7 @@ namespace DAL
             }
         }
 
-        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId, AccesoDatosSqlServer accesoDatos = null)
+        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, EntidadFinancieraId, Alias, Tipo, CredencialesCifradas
@@ -101,7 +101,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidadFinancieraId)
+                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidad.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -189,7 +189,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(CuentaFinanciera cuenta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM CuentaFinanciera
@@ -202,7 +202,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, cuenta.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

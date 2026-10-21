@@ -37,9 +37,11 @@ namespace TpIDS
         // para que se re-traduzcan solos al cambiar el idioma.
         private sealed class FilaCuentaFinanciera
         {
+            public CuentaFinanciera Cuenta { get; set; }
             public int Id { get; set; }
             public string Alias { get; set; }
             public int EntidadId { get; set; }
+            public EntidadFinanciera EntidadFinanciera { get; set; }
             public string Entidad { get; set; }
             public TipoCuentaFinanciera Tipo { get; set; }
             public List<MedioPagoEntidad> MediosPago { get; set; }
@@ -167,7 +169,9 @@ namespace TpIDS
 
             try
             {
-                EntidadFinanciera entidad = entidadFinancieraBLL.ObtenerPorId(fila.EntidadId);
+                List<MedioPagoEntidad> catalogo = fila.EntidadFinanciera == null
+                    ? new List<MedioPagoEntidad>()
+                    : entidadFinancieraBLL.ObtenerMediosPagoEntidad(fila.EntidadFinanciera);
 
                 _suspenderCambioEntidad = true;
                 try
@@ -187,7 +191,7 @@ namespace TpIDS
                     .FirstOrDefault(item => item.Valor is TipoCuentaFinanciera tipo && tipo == fila.Tipo);
 
                 CargarSelectorMediosPago(
-                    entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>(),
+                    catalogo,
                     new HashSet<int>(fila.MediosPago.Select(item => item.Id)));
             }
             catch (Exception ex)
@@ -200,9 +204,11 @@ namespace TpIDS
         {
             return new FilaCuentaFinanciera
             {
+                Cuenta = cuenta,
                 Id = cuenta.Id,
                 Alias = cuenta.Alias,
                 EntidadId = cuenta.EntidadFinanciera?.Id ?? 0,
+                EntidadFinanciera = cuenta.EntidadFinanciera,
                 Entidad = cuenta.EntidadFinanciera?.Nombre ?? string.Empty,
                 Tipo = cuenta.Tipo,
                 MediosPago = cuenta.MediosPagoEntidad ?? new List<MedioPagoEntidad>()
@@ -242,8 +248,7 @@ namespace TpIDS
             try
             {
                 // La cuenta todavia no existe: el catalogo sale de la entidad elegida.
-                EntidadFinanciera entidad = entidadFinancieraBLL.ObtenerPorId(entidadSeleccionada.Id);
-                CargarSelectorMediosPago(entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>(), null);
+                CargarSelectorMediosPago(entidadFinancieraBLL.ObtenerMediosPagoEntidad(entidadSeleccionada), null);
             }
             catch (Exception ex)
             {
@@ -269,11 +274,11 @@ namespace TpIDS
             clbMediosPagoContratados.EndUpdate();
         }
 
-        private List<int> ObtenerMediosPagoMarcados()
+        private List<MedioPagoEntidad> ObtenerMediosPagoMarcados()
         {
             return clbMediosPagoContratados.CheckedItems
                 .OfType<OpcionMedioPagoEntidad>()
-                .Select(item => item.MedioPagoEntidad.Id)
+                .Select(item => item.MedioPagoEntidad)
                 .ToList();
         }
 
@@ -295,7 +300,11 @@ namespace TpIDS
 
             try
             {
-                CuentaFinanciera creada = cuentaFinancieraBLL.Crear(entidad.Id, txtbAliasCuenta.Text, tipo, ObtenerMediosPagoMarcados());
+                CuentaFinanciera creada = cuentaFinancieraBLL.Crear(new CuentaFinanciera
+                {
+                    EntidadFinanciera = entidad, Alias = txtbAliasCuenta.Text, Tipo = tipo,
+                    MediosPagoEntidad = ObtenerMediosPagoMarcados()
+                });
                 LimpiarFormulario();
                 CargarCuentas(creada.Id);
                 UiDialogHelper.MostrarInfo("FormFinancialAccountManagement.Success.Created");
@@ -328,7 +337,11 @@ namespace TpIDS
 
             try
             {
-                CuentaFinanciera actualizada = cuentaFinancieraBLL.Actualizar(fila.Id, entidad.Id, txtbAliasCuenta.Text, tipo, ObtenerMediosPagoMarcados());
+                fila.Cuenta.EntidadFinanciera = entidad;
+                fila.Cuenta.Alias = txtbAliasCuenta.Text;
+                fila.Cuenta.Tipo = tipo;
+                fila.Cuenta.MediosPagoEntidad = ObtenerMediosPagoMarcados();
+                CuentaFinanciera actualizada = cuentaFinancieraBLL.Actualizar(fila.Cuenta);
                 CargarCuentas(actualizada.Id);
                 UiDialogHelper.MostrarInfo("FormFinancialAccountManagement.Success.Updated");
             }
@@ -359,7 +372,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminada = cuentaFinancieraBLL.Eliminar(fila.Id);
+                bool eliminada = cuentaFinancieraBLL.Eliminar(fila.Cuenta);
                 if (eliminada)
                 {
                     CargarCuentas(null);

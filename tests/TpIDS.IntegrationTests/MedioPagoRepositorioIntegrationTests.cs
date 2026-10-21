@@ -109,7 +109,7 @@ namespace TpIDS.IntegrationTests
                 MedioPagoRepositorio repositorio = new MedioPagoRepositorio(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.MedioPago { Tipo = BE.TipoMedioPago.TarjetaCredito, Marca = "MarcaTestAEliminar" });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.MedioPago { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

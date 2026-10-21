@@ -32,7 +32,7 @@ namespace BLL.Tests
 
             public List<SolicitudGeneracion> Solicitudes { get; } = new List<SolicitudGeneracion>();
 
-            public Func<SolicitudGeneracion, ResultadoGeneracion> Responder { get; set; } = s => ResultadoGeneracion.Valida("Recomendacion " + s.Categoria + " para " + s.UsuarioId);
+            public Func<SolicitudGeneracion, ResultadoGeneracion> Responder { get; set; } = s => ResultadoGeneracion.Valida("Recomendacion " + s.Categoria + " para " + s.Usuario.Id);
 
             public Task<ResultadoGeneracion> GenerarAsync(SolicitudGeneracion solicitud, CancellationToken cancellationToken)
             {
@@ -56,16 +56,16 @@ namespace BLL.Tests
 
             public Func<int, ResumenInversiones> Resumen { get; set; }
 
-            public System.Threading.Tasks.Task<ResumenInversiones> CalcularAsync(int usuarioActualId, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil)
+            public System.Threading.Tasks.Task<ResumenInversiones> CalcularAsync(Usuario usuario, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil)
             {
                 throw new InvalidOperationException("El proceso automatico no calcula con fuentes externas por si mismo.");
             }
 
-            public ResumenInversiones CalcularSaldo(int usuarioActualId, decimal? porcentaje)
+            public ResumenInversiones CalcularSaldo(Usuario usuario, decimal? porcentaje)
             {
                 Consultas++;
                 if (porcentaje.HasValue) throw new InvalidOperationException("La aptitud automatica no usa porcentaje.");
-                return Resumen != null ? Resumen(usuarioActualId) : new ResumenInversiones { Nivel = Nivel };
+                return Resumen != null ? Resumen(usuario.Id) : new ResumenInversiones { Nivel = Nivel };
             }
         }
 
@@ -73,15 +73,15 @@ namespace BLL.Tests
         {
             public Dictionary<int, PerfilInversor> Perfiles { get; } = new Dictionary<int, PerfilInversor>();
 
-            public PerfilInversor ObtenerPorUsuario(int usuarioId)
+            public PerfilInversor ObtenerPorUsuario(Usuario usuario)
             {
                 PerfilInversor perfil;
-                return Perfiles.TryGetValue(usuarioId, out perfil) ? perfil : null;
+                return Perfiles.TryGetValue(usuario.Id, out perfil) ? perfil : null;
             }
 
             public void Guardar(PerfilInversor perfil)
             {
-                Perfiles[perfil.UsuarioId] = perfil;
+                Perfiles[perfil.Usuario.Id] = perfil;
             }
         }
 
@@ -145,19 +145,19 @@ namespace BLL.Tests
             public PerfilInversor PerfilCompleto(int usuarioId)
             {
                 PerfilInversor perfil = PerfilAsistenteTests.Perfil();
-                perfil.UsuarioId = usuarioId;
+                perfil.Usuario = new Usuario { Id = usuarioId };
                 Perfiles.Perfiles[usuarioId] = perfil;
                 return perfil;
             }
 
             public DetalleGeneracionNotificacion Detalle(int usuarioId, TipoNotificacionAutomatica tipo)
             {
-                return Unidad.GeneracionNotificacionesRepo.Detalles.Last(d => d.UsuarioId == usuarioId && d.Tipo == tipo);
+                return Unidad.GeneracionNotificacionesRepo.Detalles.Last(d => d.Usuario.Id == usuarioId && d.Tipo == tipo);
             }
 
             public IEnumerable<DetalleGeneracionNotificacion> Detalles(int usuarioId)
             {
-                return Unidad.GeneracionNotificacionesRepo.Detalles.Where(d => d.UsuarioId == usuarioId);
+                return Unidad.GeneracionNotificacionesRepo.Detalles.Where(d => d.Usuario.Id == usuarioId);
             }
 
             public List<Notificacion> Entregadas(int usuarioId)
@@ -174,7 +174,7 @@ namespace BLL.Tests
             DetalleGeneracionNotificacion detalle = e.Detalle(usuarioId, tipo);
             Assert.AreEqual(ResultadoGeneracionNotificacion.Omitida, detalle.Resultado, "Resultado de " + tipo);
             Assert.AreEqual(motivo, detalle.Motivo);
-            Assert.IsNull(detalle.NotificacionId);
+            Assert.IsNull(detalle.Notificacion);
         }
 
         // ---------------------------------------------------------------- 4.1 jornada, cuentas y omisiones
@@ -219,7 +219,9 @@ namespace BLL.Tests
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
 
-            CorridaGeneracionNotificaciones corrida = e.Unidad.GeneracionNotificacionesRepo.ObtenerCorrida(r.CorridaId);
+            CorridaGeneracionNotificaciones corrida = e.Unidad.GeneracionNotificacionesRepo.ObtenerPorId(r.Corrida.Id);
+            Assert.AreSame(r.Corrida, corrida);
+            Assert.IsTrue(e.Unidad.GeneracionNotificacionesRepo.Detalles.All(d => ReferenceEquals(corrida, d.Corrida)));
             Assert.AreEqual(Jornada, corrida.Jornada.Date);
             Assert.AreEqual(Utc(Local(21, 11, 5)), corrida.InicioUtc);
             Assert.IsTrue(corrida.FinUtc.HasValue);
@@ -228,7 +230,7 @@ namespace BLL.Tests
             Assert.AreEqual(0, corrida.Fallidas);
             Assert.AreEqual(2, r.Entregadas);
             Assert.AreEqual(1, r.Omitidas);
-            Assert.AreEqual(3, e.Unidad.GeneracionNotificacionesRepo.ObtenerDetallePorCorrida(r.CorridaId).Count);
+            Assert.AreEqual(3, e.Unidad.GeneracionNotificacionesRepo.ObtenerDetallePorCorrida(r.Corrida).Count);
             Assert.IsTrue(e.Unidad.GeneracionNotificacionesRepo.Detalles.All(d => d.Jornada.Date == Jornada));
         }
 
@@ -271,7 +273,7 @@ namespace BLL.Tests
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
 
-            Assert.AreEqual(cantidad, e.Unidad.GeneracionNotificacionesRepo.Detalles.Select(d => d.UsuarioId).Distinct().Count());
+            Assert.AreEqual(cantidad, e.Unidad.GeneracionNotificacionesRepo.Detalles.Select(d => d.Usuario.Id).Distinct().Count());
             Assert.AreEqual(cantidad * 3, e.Unidad.GeneracionNotificacionesRepo.Detalles.Count);
             Assert.AreEqual(cantidad, r.Entregadas);
         }
@@ -330,7 +332,8 @@ namespace BLL.Tests
             Assert.IsNotInstanceOfType(n, typeof(RecordatorioCompra));
             Assert.IsNotInstanceOfType(n, typeof(RecordatorioInversion));
             Assert.IsEmpty(e.Generador.Solicitudes, "El aviso de movimientos no usa IA.");
-            Assert.AreEqual(n.Id, e.Detalle(1, TipoNotificacionAutomatica.Movimientos).NotificacionId);
+            Assert.AreSame(n, e.Detalle(1, TipoNotificacionAutomatica.Movimientos).Notificacion);
+            Assert.AreSame(n.Usuario, e.Detalle(1, TipoNotificacionAutomatica.Movimientos).Usuario);
         }
 
         [TestMethod]
@@ -394,7 +397,7 @@ namespace BLL.Tests
             Assert.IsNull(compra.FechaVencimiento);
             SolicitudGeneracion solicitud = e.Generador.Solicitudes.Single();
             Assert.AreEqual(CategoriaConsulta.Compras, solicitud.Categoria);
-            Assert.AreEqual(1, solicitud.UsuarioId);
+            Assert.AreEqual(1, solicitud.Usuario.Id);
             Assert.IsNull(solicitud.NombreLista, "Sin filtro por nombre de lista.");
             Assert.IsNull(solicitud.Pregunta, "El proceso conoce la intencion: texto fijo traducible.");
             Assert.AreSame(e.IdiomaBLL.IdiomaDelUsuario, solicitud.Idioma);
@@ -476,7 +479,7 @@ namespace BLL.Tests
             Assert.AreSame(perfil, s.Perfil);
             Assert.IsTrue(s.OmitirSiSinAlternativas);
             Assert.IsNull(s.Pregunta);
-            Assert.AreEqual(1, s.UsuarioId);
+            Assert.AreEqual(1, s.Usuario.Id);
         }
 
         [TestMethod]
@@ -559,11 +562,11 @@ namespace BLL.Tests
             RecordatorioInversion anterior = new RecordatorioInversion { Usuario = new BE.Usuario { Id = 1 }, Mensaje = "vieja", Fecha = e.Ahora.AddDays(-9), TipoAutomatico = TipoNotificacionAutomatica.Inversiones, FechaJornada = e.Ahora.AddDays(-9).Date };
             RecordatorioInversion reciente = new RecordatorioInversion { Usuario = new BE.Usuario { Id = 1 }, Mensaje = "nueva", Fecha = e.Ahora.AddDays(-2), TipoAutomatico = TipoNotificacionAutomatica.Inversiones, FechaJornada = e.Ahora.AddDays(-2).Date };
             e.Unidad.RecordatorioInversionRepo.InsertarYObtenerId(anterior);
-            int idReciente = e.Unidad.RecordatorioInversionRepo.InsertarYObtenerId(reciente);
+            e.Unidad.RecordatorioInversionRepo.InsertarYObtenerId(reciente);
             await e.Ejecutar();
             AssertOmitida(e, 1, TipoNotificacionAutomatica.Inversiones, "IntervaloNoCumplido");
 
-            e.Unidad.RecordatorioInversionRepo.Eliminar(idReciente);
+            e.Unidad.RecordatorioInversionRepo.Eliminar(reciente);
             await e.Ejecutar();
 
             Assert.AreEqual(1, e.Entregadas(1).OfType<RecordatorioInversion>().Count(n => n.Mensaje.StartsWith("Recomendacion")), "La anterior ya paso los siete dias.");
@@ -589,7 +592,7 @@ namespace BLL.Tests
             Escenario e = new Escenario();
             e.Usuario(1);
             e.PerfilCompleto(1);
-            e.Unidad.ConsultaChatbotRepo.InsertarYObtenerId(new ConsultaChatbot { UsuarioId = 1, Pregunta = "en que invierto?", Respuesta = "Fondo X", Fecha = e.Ahora.AddDays(-1), EsPregunta = true });
+            e.Unidad.ConsultaChatbotRepo.InsertarYObtenerId(new ConsultaChatbot { Usuario = new Usuario { Id = 1 }, Pregunta = "en que invierto?", Respuesta = "Fondo X", Fecha = e.Ahora.AddDays(-1), EsPregunta = true });
 
             await e.Ejecutar();
 
@@ -605,7 +608,7 @@ namespace BLL.Tests
             e.Generador.Responder = s => s.Categoria == CategoriaConsulta.Inversiones ? ResultadoGeneracion.SinCandidatos() : ResultadoGeneracion.Valida("texto");
             await e.Ejecutar();
             AssertOmitida(e, 1, TipoNotificacionAutomatica.Inversiones, "SinAlternativas");
-            Assert.IsNull(e.Unidad.NotificacionRepo.ObtenerFechaUltimaAutomaticaInversionUtc(1));
+            Assert.IsNull(e.Unidad.NotificacionRepo.ObtenerFechaUltimaAutomaticaInversionUtc(new Usuario { Id = 1 }));
 
             e.Generador.Responder = s => ResultadoGeneracion.Valida("texto");
             e.Ahora = Local(21, 11);
@@ -642,7 +645,7 @@ namespace BLL.Tests
 
             CollectionAssert.Contains(e.Unidad.NotificacionRepo.Llamadas, "bloquear:1");
             Assert.AreEqual(1, e.Entregadas(1).Count);
-            Assert.AreEqual(e.Entregadas(1).Single().Id, e.Detalle(1, TipoNotificacionAutomatica.Movimientos).NotificacionId);
+            Assert.AreSame(e.Entregadas(1).Single(), e.Detalle(1, TipoNotificacionAutomatica.Movimientos).Notificacion);
             // Una transaccion para la corrida, una por entrega o registro de omision y una para cerrar la corrida.
             Assert.AreEqual(guardadosAntes + 1 + 3 + 1, e.Unidad.SaveCallCount);
         }
@@ -706,7 +709,7 @@ namespace BLL.Tests
             await e.Ejecutar();
 
             AssertOmitida(e, 1, TipoNotificacionAutomatica.Inversiones, "PerfilCambiado");
-            Assert.IsNull(e.Unidad.NotificacionRepo.ObtenerFechaUltimaAutomaticaInversionUtc(1));
+            Assert.IsNull(e.Unidad.NotificacionRepo.ObtenerFechaUltimaAutomaticaInversionUtc(new Usuario { Id = 1 }));
         }
 
         [TestMethod]
@@ -791,8 +794,8 @@ namespace BLL.Tests
             e.PerfilCompleto(1);
             e.Generador.Responder = s =>
             {
-                if (s.Categoria == CategoriaConsulta.Compras && s.UsuarioId == 1) throw new ExcepcionTecnica("Error.Assistant.ResponseFailed");
-                return ResultadoGeneracion.Valida("texto " + s.Categoria + s.UsuarioId);
+                if (s.Categoria == CategoriaConsulta.Compras && s.Usuario.Id == 1) throw new ExcepcionTecnica("Error.Assistant.ResponseFailed");
+                return ResultadoGeneracion.Valida("texto " + s.Categoria + s.Usuario.Id);
             };
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
@@ -814,7 +817,7 @@ namespace BLL.Tests
             e.Usuario(2);
             e.PerfilCompleto(1);
             e.PerfilCompleto(2);
-            e.Generador.Responder = s => { if (s.UsuarioId == 1) throw new InvalidOperationException("proveedor caido"); return ResultadoGeneracion.Valida("texto"); };
+            e.Generador.Responder = s => { if (s.Usuario.Id == 1) throw new InvalidOperationException("proveedor caido"); return ResultadoGeneracion.Valida("texto"); };
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
 
@@ -845,7 +848,7 @@ namespace BLL.Tests
             e.Usuario(2);
             e.Pendiente(1);
             e.Pendiente(2);
-            e.Generador.Responder = s => { if (s.UsuarioId == 1) throw new TaskCanceledException("timeout"); return ResultadoGeneracion.Valida("texto"); };
+            e.Generador.Responder = s => { if (s.Usuario.Id == 1) throw new TaskCanceledException("timeout"); return ResultadoGeneracion.Valida("texto"); };
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
 
@@ -882,7 +885,7 @@ namespace BLL.Tests
 
             ResultadoCorridaNotificaciones r = await e.Ejecutar();
 
-            DetalleGeneracionNotificacion detalle = e.Unidad.GeneracionNotificacionesRepo.Detalles.Last(d => d.UsuarioId == 1 && d.Tipo == TipoNotificacionAutomatica.Movimientos);
+            DetalleGeneracionNotificacion detalle = e.Unidad.GeneracionNotificacionesRepo.Detalles.Last(d => d.Usuario.Id == 1 && d.Tipo == TipoNotificacionAutomatica.Movimientos);
             Assert.AreEqual(ResultadoGeneracionNotificacion.Fallida, detalle.Resultado);
             Assert.AreEqual("FalloEntrega", detalle.Motivo);
             Assert.AreEqual(1, r.Fallidas);
@@ -934,7 +937,7 @@ namespace BLL.Tests
                 Assert.IsTrue(r.Cancelada);
                 Assert.IsEmpty(e.Detalles(2), "El usuario siguiente no se inicia.");
                 Assert.IsFalse(e.Detalles(1).Any(d => d.Tipo == TipoNotificacionAutomatica.Inversiones), "Tampoco el tipo siguiente del mismo usuario.");
-                Assert.IsTrue(e.Unidad.GeneracionNotificacionesRepo.ObtenerCorrida(r.CorridaId).FinUtc.HasValue);
+                Assert.IsTrue(e.Unidad.GeneracionNotificacionesRepo.ObtenerPorId(r.Corrida.Id).FinUtc.HasValue);
                 Assert.AreEqual(0, r.Fallidas);
             }
         }

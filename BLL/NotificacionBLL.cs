@@ -16,40 +16,40 @@ namespace BLL
 
         private readonly ISesion _sesion;
 
-        private int ObtenerDestinatarioActual()
+        private Usuario ObtenerDestinatarioActual()
         {
-            int? id = _sesion.GetUsuarioActualId();
-            if (!id.HasValue) throw new ExcepcionNegocio("Error.Notification.SessionRequired");
-            return id.Value;
+            if (!_sesion.HaySesionActiva()) throw new ExcepcionNegocio("Error.Notification.SessionRequired");
+            return _sesion.ObtenerUsuarioActual();
         }
 
         public PaginaNotificaciones BuscarPersonales(FiltroNotificacion filtro, int pagina)
         {
-            int usuarioId = ObtenerDestinatarioActual();
+            Usuario usuario = ObtenerDestinatarioActual();
             filtro = filtro ?? new FiltroNotificacion();
             if (pagina < 1) throw new ExcepcionNegocio("Error.Notification.InvalidPage");
             if (filtro.FechaDesde.HasValue && filtro.FechaHasta.HasValue && filtro.FechaDesde.Value.Date > filtro.FechaHasta.Value.Date)
                 throw new ExcepcionNegocio("Error.Notification.InvalidDateRange");
-            return _notificacionRepositorio.ObtenerPaginaPersonal(usuarioId, filtro, pagina);
+            return _notificacionRepositorio.ObtenerPaginaPersonal(usuario, filtro, pagina);
         }
 
         public int ContarPersonalesNoLeidas() => _notificacionRepositorio.ContarNoLeidas(ObtenerDestinatarioActual());
 
-        public Notificacion LeerPersonal(int id)
+        public Notificacion LeerPersonal(Notificacion recibida)
         {
-            int usuarioId = ObtenerDestinatarioActual();
+            Usuario usuario = ObtenerDestinatarioActual();
+            if (recibida == null) throw new ExcepcionNegocio("Error.Notification.NotFound");
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Notificacion n = unidad.Notificaciones.ObtenerPersonal(id, usuarioId);
+                    Notificacion n = unidad.Notificaciones.ObtenerPersonal(recibida, usuario);
                     if (n == null) throw new ExcepcionNegocio("Error.Notification.NotFound");
                     if (!n.Leida)
                     {
-                        bool cambio = unidad.Notificaciones.MarcarPersonalLeida(id, usuarioId);
+                        bool cambio = unidad.Notificaciones.MarcarPersonalLeida(n, usuario);
                         if (!cambio)
                         {
-                            n = unidad.Notificaciones.ObtenerPersonal(id, usuarioId);
+                            n = unidad.Notificaciones.ObtenerPersonal(n, usuario);
                             if (n == null || !n.Leida) throw new ExcepcionTecnica("Error.Notification.UpdateFailed");
                         }
                         else
@@ -67,7 +67,7 @@ namespace BLL
             }
         }
 
-        public void MarcarPersonalLeida(int id) { LeerPersonal(id); }
+        public void MarcarPersonalLeida(Notificacion notificacion) { LeerPersonal(notificacion); }
         private readonly INotificacionRepositorio _notificacionRepositorio;
         private readonly IRecordatorioCompraRepositorio _recordatorioCompraRepositorio;
         private readonly IRecordatorioInversionRepositorio _recordatorioInversionRepositorio;
@@ -102,9 +102,9 @@ namespace BLL
         }
 
         // Alta manual: solo el tipo base. Los subtipos los genera un proceso futuro, fuera de alcance.
-        public Notificacion CrearManual(int usuarioId, string mensaje)
+        public Notificacion CrearManual(Notificacion recibida)
         {
-            string mensajeNormalizado = (mensaje ?? string.Empty).Trim();
+            string mensajeNormalizado = (recibida?.Mensaje ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(mensajeNormalizado))
             {
                 throw new ExcepcionNegocio("Error.Notification.MessageRequired");
@@ -119,19 +119,20 @@ namespace BLL
             {
                 try
                 {
-                    Usuario usuario = unidad.Usuarios.ObtenerPorId(usuarioId);
+                    Usuario usuario = recibida.Usuario == null ? null : unidad.Usuarios.ObtenerPorId(recibida.Usuario.Id);
                     if (usuario == null)
                     {
                         throw new ExcepcionNegocio("Error.Notification.UserNotFound");
                     }
 
-                    Notificacion nuevaNotificacion = new Notificacion
-                    {
-                        Usuario = new Usuario { Id = usuarioId },
-                        Mensaje = mensajeNormalizado,
-                        Fecha = DateTime.Now,
-                        Leida = false
-                    };
+                    Notificacion nuevaNotificacion = recibida;
+                    nuevaNotificacion.Usuario = usuario;
+                    nuevaNotificacion.Mensaje = mensajeNormalizado;
+                    nuevaNotificacion.Fecha = DateTime.Now;
+                    nuevaNotificacion.Leida = false;
+                    nuevaNotificacion.TipoAutomatico = null;
+                    nuevaNotificacion.FechaJornada = null;
+                    nuevaNotificacion.ClaveEjemplo = null;
 
                     int id = unidad.Notificaciones.InsertarYObtenerId(nuevaNotificacion);
                     nuevaNotificacion.Id = id;
@@ -152,13 +153,14 @@ namespace BLL
         }
 
         // El subtipo real no se conoce de antemano: se prueba en orden hasta encontrar la entidad.
-        public bool MarcarLeida(int notificacionId, bool leida)
+        public bool MarcarLeida(Notificacion recibida, bool leida)
         {
+            if (recibida == null) throw new ExcepcionNegocio("Error.Notification.NotFound");
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Notificacion notificacion = unidad.Notificaciones.ObtenerPorId(notificacionId);
+                    Notificacion notificacion = unidad.Notificaciones.ObtenerPorId(recibida.Id);
                     if (notificacion != null)
                     {
                         notificacion.Leida = leida;
@@ -169,7 +171,7 @@ namespace BLL
                     }
                     else
                     {
-                        RecordatorioCompra recordatorioCompra = unidad.RecordatoriosCompra.ObtenerPorId(notificacionId);
+                        RecordatorioCompra recordatorioCompra = unidad.RecordatoriosCompra.ObtenerPorId(recibida.Id);
                         if (recordatorioCompra != null)
                         {
                             recordatorioCompra.Leida = leida;
@@ -180,7 +182,7 @@ namespace BLL
                         }
                         else
                         {
-                            RecordatorioInversion recordatorioInversion = unidad.RecordatoriosInversion.ObtenerPorId(notificacionId);
+                            RecordatorioInversion recordatorioInversion = unidad.RecordatoriosInversion.ObtenerPorId(recibida.Id);
                             if (recordatorioInversion != null)
                             {
                                 recordatorioInversion.Leida = leida;
@@ -215,24 +217,28 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int notificacionId)
+        public bool Eliminar(Notificacion recibida)
         {
+            if (recibida == null) throw new ExcepcionNegocio("Error.Notification.NotFound");
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
                     bool eliminado;
-                    if (unidad.Notificaciones.ObtenerPorId(notificacionId) != null)
+                    RecordatorioCompra compra;
+                    RecordatorioInversion inversion;
+                    Notificacion notificacion = unidad.Notificaciones.ObtenerPorId(recibida.Id);
+                    if (notificacion != null)
                     {
-                        eliminado = unidad.Notificaciones.Eliminar(notificacionId);
+                        eliminado = unidad.Notificaciones.Eliminar(notificacion);
                     }
-                    else if (unidad.RecordatoriosCompra.ObtenerPorId(notificacionId) != null)
+                    else if ((compra = unidad.RecordatoriosCompra.ObtenerPorId(recibida.Id)) != null)
                     {
-                        eliminado = unidad.RecordatoriosCompra.Eliminar(notificacionId);
+                        eliminado = unidad.RecordatoriosCompra.Eliminar(compra);
                     }
-                    else if (unidad.RecordatoriosInversion.ObtenerPorId(notificacionId) != null)
+                    else if ((inversion = unidad.RecordatoriosInversion.ObtenerPorId(recibida.Id)) != null)
                     {
-                        eliminado = unidad.RecordatoriosInversion.Eliminar(notificacionId);
+                        eliminado = unidad.RecordatoriosInversion.Eliminar(inversion);
                     }
                     else
                     {

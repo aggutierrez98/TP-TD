@@ -59,16 +59,16 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, RubroComercio = new RubroComercio { Id = 100 } });
             Promocion sinRestriccion = fixture.AgregarPromocion(1, "Sin restriccion", new DateTime(2026, 1, 1));
             Promocion porRubro = fixture.AgregarPromocion(2, "Por rubro", new DateTime(2026, 1, 1));
-            porRubro.RubroComercioIds.Add(100);
+            porRubro.RubrosComercio.Add(new RubroComercio { Id = 100 });
             Promocion propia = fixture.AgregarPromocion(3, "Propia", new DateTime(2026, 1, 1));
-            propia.ComercioIds.Add(10);
+            propia.Comercios.Add(new Comercio { Id = 10 });
             Promocion ajena = fixture.AgregarPromocion(4, "Ajena", new DateTime(2026, 1, 1));
-            ajena.ComercioIds.Add(11);
+            ajena.Comercios.Add(new Comercio { Id = 11 });
             Promocion otroRubro = fixture.AgregarPromocion(5, "Otro rubro", new DateTime(2026, 1, 1));
-            otroRubro.RubroComercioIds.Add(101);
+            otroRubro.RubrosComercio.Add(new RubroComercio { Id = 101 });
             PromocionBLL sut = fixture.CreateSut();
 
-            List<Promocion> resultado = sut.Buscar(null, 10);
+            List<Promocion> resultado = sut.Buscar(null, new Comercio { Id = 10 });
 
             CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, resultado.ConvertAll(item => item.Id));
         }
@@ -80,11 +80,11 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, RubroComercio = new RubroComercio { Id = 100 } });
             fixture.AgregarPromocion(1, "Martes en el comercio", new DateTime(2026, 1, 1));
             Promocion ajena = fixture.AgregarPromocion(2, "Martes de otro comercio", new DateTime(2026, 1, 1));
-            ajena.ComercioIds.Add(11);
+            ajena.Comercios.Add(new Comercio { Id = 11 });
             fixture.AgregarPromocion(3, "Jueves en el comercio", new DateTime(2026, 1, 1));
             PromocionBLL sut = fixture.CreateSut();
 
-            List<Promocion> resultado = sut.Buscar("martes", 10);
+            List<Promocion> resultado = sut.Buscar("martes", new Comercio { Id = 10 });
 
             Assert.AreEqual(1, resultado.Count);
             Assert.AreEqual(1, resultado[0].Id);
@@ -96,7 +96,7 @@ namespace BLL.Tests
             PromocionFixture fixture = new PromocionFixture();
             PromocionBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Buscar(null, 99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Buscar(null, new Comercio { Id = 99 }));
 
             Assert.AreEqual("Error.PromotionManagement.ComercioNotFound", ex.Message);
         }
@@ -110,7 +110,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, RubroComercio = new RubroComercio { Id = 100 } });
             PromocionBLL sut = fixture.CreateSut();
 
-            Assert.AreEqual(0, sut.ObtenerPorComercio(1).Count);
+            Assert.AreEqual(0, sut.ObtenerPorComercio(new Comercio { Id = 1 }).Count);
         }
 
         [TestMethod]
@@ -119,14 +119,14 @@ namespace BLL.Tests
             PromocionFixture fixture = new PromocionFixture();
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, RubroComercio = new RubroComercio { Id = 100 } });
             Promocion propia = fixture.AgregarPromocion(1, "2x1", new DateTime(2026, 1, 1));
-            propia.ComercioIds.Add(1);
+            propia.Comercios.Add(new Comercio { Id = 1 });
             Promocion porRubro = fixture.AgregarPromocion(2, "20% off", new DateTime(2026, 3, 1));
-            porRubro.RubroComercioIds.Add(100);
+            porRubro.RubrosComercio.Add(new RubroComercio { Id = 100 });
             Promocion ajena = fixture.AgregarPromocion(3, "Otro comercio", new DateTime(2026, 2, 1));
-            ajena.ComercioIds.Add(2);
+            ajena.Comercios.Add(new Comercio { Id = 2 });
             PromocionBLL sut = fixture.CreateSut();
 
-            List<Promocion> resultado = sut.ObtenerPorComercio(1);
+            List<Promocion> resultado = sut.ObtenerPorComercio(new Comercio { Id = 1 });
 
             CollectionAssert.AreEqual(new[] { 2, 1 }, resultado.ConvertAll(item => item.Id));
         }
@@ -138,7 +138,7 @@ namespace BLL.Tests
             fixture.AgregarPromocion(1, "Sin restriccion", new DateTime(2026, 1, 1));
             PromocionBLL sut = fixture.CreateSut();
 
-            Assert.AreEqual(0, sut.ObtenerPorComercio(99).Count);
+            Assert.AreEqual(0, sut.ObtenerPorComercio(new Comercio { Id = 99 }).Count);
         }
 
         // --- Catalogos ---
@@ -248,8 +248,8 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.ProductoIncluidoIds.Add(7);
-            datos.ProductoExcluidoIds.Add(7);
+            datos.ProductosIncluidos.Add(new Producto { Id = 7 });
+            datos.ProductosExcluidos.Add(new Producto { Id = 7 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -263,8 +263,8 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.CategoriaIncluidaIds.Add(3);
-            datos.CategoriaExcluidaIds.Add(3);
+            datos.CategoriasIncluidas.Add(new CategoriaProducto { Id = 3 });
+            datos.CategoriasExcluidas.Add(new CategoriaProducto { Id = 3 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -279,7 +279,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.ComercioIds.Add(99);
+            datos.Comercios.Add(new Comercio { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -293,7 +293,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.RubroComercioIds.Add(99);
+            datos.RubrosComercio.Add(new RubroComercio { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -306,7 +306,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.EntidadFinancieraIds.Add(99);
+            datos.EntidadesFinancieras.Add(new EntidadFinanciera { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -319,7 +319,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.MedioPagoIds.Add(99);
+            datos.MediosPago.Add(new MedioPago { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -332,7 +332,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.ProductoExcluidoIds.Add(99);
+            datos.ProductosExcluidos.Add(new Producto { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -345,7 +345,7 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion datos = fixture.DatosValidos();
-            datos.CategoriaIncluidaIds.Add(99);
+            datos.CategoriasIncluidas.Add(new CategoriaProducto { Id = 99 });
             PromocionBLL sut = fixture.CreateSut();
 
             ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(datos));
@@ -364,20 +364,22 @@ namespace BLL.Tests
             datos.Descripcion = "  Martes de descuento  ";
             datos.TopeDescuento = 5000m;
             datos.DiasSemana.Add(DiaSemana.Martes);
-            datos.ComercioIds.Add(1);
-            datos.RubroComercioIds.Add(2);
-            datos.EntidadFinancieraIds.Add(3);
-            datos.MedioPagoIds.Add(4);
+            datos.Comercios.Add(new Comercio { Id = 1 });
+            datos.RubrosComercio.Add(new RubroComercio { Id = 2 });
+            datos.EntidadesFinancieras.Add(new EntidadFinanciera { Id = 3 });
+            datos.MediosPago.Add(new MedioPago { Id = 4 });
             datos.Segmentos.Add("Black");
-            datos.ProductoIncluidoIds.Add(5);
-            datos.ProductoExcluidoIds.Add(6);
-            datos.CategoriaIncluidaIds.Add(7);
-            datos.CategoriaExcluidaIds.Add(8);
+            datos.ProductosIncluidos.Add(new Producto { Id = 5 });
+            datos.ProductosExcluidos.Add(new Producto { Id = 6 });
+            datos.CategoriasIncluidas.Add(new CategoriaProducto { Id = 7 });
+            datos.CategoriasExcluidas.Add(new CategoriaProducto { Id = 8 });
             PromocionBLL sut = fixture.CreateSut();
 
             Promocion creada = sut.Crear(datos);
 
             Promocion guardada = fixture.Unidad.PromocionRepo.Promociones[creada.Id];
+            Assert.AreSame(datos, creada);
+            Assert.AreSame(creada, guardada);
             Assert.AreEqual("Martes de descuento", guardada.Descripcion);
             Assert.AreEqual(20m, guardada.Descuento);
             Assert.AreEqual(5000m, guardada.TopeDescuento);
@@ -403,7 +405,7 @@ namespace BLL.Tests
             PromocionFixture fixture = new PromocionFixture();
             fixture.SembrarReferencias();
             Promocion datos = fixture.DatosValidos();
-            datos.ComercioIds.AddRange(new[] { 1, 1 });
+            datos.Comercios.AddRange(new[] { new Comercio { Id = 1 }, new Comercio { Id = 1 } });
             datos.Segmentos.AddRange(new[] { "Black", "black", " Black " });
             PromocionBLL sut = fixture.CreateSut();
 
@@ -462,12 +464,12 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             fixture.SembrarReferencias();
-            fixture.AgregarPromocion(1, "Original", new DateTime(2026, 3, 1));
+            Promocion persistida = fixture.AgregarPromocion(1, "Original", new DateTime(2026, 3, 1));
             Promocion datos = fixture.DatosValidos();
             datos.Id = 1;
             datos.Descripcion = "Editada";
             datos.TopeDescuento = 3000m;
-            datos.CategoriaExcluidaIds.Add(8);
+            datos.CategoriasExcluidas.Add(new CategoriaProducto { Id = 8 });
             datos.DiasSemana.Add(DiaSemana.Viernes);
             PromocionBLL sut = fixture.CreateSut();
 
@@ -475,6 +477,8 @@ namespace BLL.Tests
 
             Assert.IsTrue(actualizado);
             Promocion guardada = fixture.Unidad.PromocionRepo.Promociones[1];
+            Assert.AreSame(persistida, guardada);
+            Assert.AreNotSame(datos, guardada);
             Assert.AreEqual("Editada", guardada.Descripcion);
             Assert.AreEqual(3000m, guardada.TopeDescuento);
             CollectionAssert.AreEqual(new[] { DiaSemana.Viernes }, guardada.DiasSemana);
@@ -508,7 +512,7 @@ namespace BLL.Tests
             PromocionFixture fixture = new PromocionFixture();
             PromocionBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Promocion { Id = 99 }));
 
             Assert.AreEqual("Error.PromotionManagement.PromocionNotFound", ex.Message);
         }
@@ -521,7 +525,7 @@ namespace BLL.Tests
             fixture.Unidad.NotificacionRepo.NotificacionesPorPromocion[1] = 1;
             PromocionBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Promocion { Id = 1 }));
 
             Assert.AreEqual("Error.PromotionManagement.PromocionInUse", ex.Message);
             Assert.IsNull(fixture.Unidad.PromocionRepo.LastDeletedId, "No se emitio ninguna baja.");
@@ -535,11 +539,11 @@ namespace BLL.Tests
         {
             PromocionFixture fixture = new PromocionFixture();
             Promocion promocion = fixture.AgregarPromocion(1, "Sin uso", new DateTime(2026, 3, 1));
-            promocion.ComercioIds.Add(1);
-            promocion.ProductoIncluidoIds.Add(5);
+            promocion.Comercios.Add(new Comercio { Id = 1 });
+            promocion.ProductosIncluidos.Add(new Producto { Id = 5 });
             PromocionBLL sut = fixture.CreateSut();
 
-            bool eliminado = sut.Eliminar(1);
+            bool eliminado = sut.Eliminar(new Promocion { Id = 1 });
 
             Assert.IsTrue(eliminado);
             Assert.AreEqual(1, fixture.Unidad.PromocionRepo.LastDeletedId);
@@ -565,7 +569,7 @@ namespace BLL.Tests
             fixture.Unidad.PromocionRepo.EliminarResult = false;
             PromocionBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new Promocion { Id = 1 }));
 
             Assert.AreEqual("Error.PromotionManagement.PromocionDeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -579,7 +583,7 @@ namespace BLL.Tests
             fixture.Unidad.PromocionRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             PromocionBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new Promocion { Id = 1 }));
 
             Assert.AreEqual("Error.PromotionManagement.PromocionDeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);

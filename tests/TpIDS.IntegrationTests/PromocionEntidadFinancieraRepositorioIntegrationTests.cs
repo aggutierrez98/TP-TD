@@ -24,10 +24,10 @@ namespace TpIDS.IntegrationTests
                 int entidadId1 = InsertarEntidadTest(accesoDatos, "EntidadTestPromoAsignacion1");
                 int entidadId2 = InsertarEntidadTest(accesoDatos, "EntidadTestPromoAsignacion2");
 
-                bool reemplazado = repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int> { entidadId1, entidadId2 });
+                bool reemplazado = repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadId1 }, new BE.EntidadFinanciera { Id = entidadId2 } });
 
                 Assert.IsTrue(reemplazado);
-                List<int> asignadas = repositorio.ObtenerEntidadFinancieraIdsPorPromocion(promocionId);
+                List<int> asignadas = repositorio.ObtenerEntidadesFinancierasPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(2, asignadas.Count);
                 Assert.IsTrue(asignadas.Contains(entidadId1));
                 Assert.IsTrue(asignadas.Contains(entidadId2));
@@ -47,10 +47,10 @@ namespace TpIDS.IntegrationTests
                 int entidadIdA = InsertarEntidadTest(accesoDatos, "EntidadTestPromoReemplazoA");
                 int entidadIdB = InsertarEntidadTest(accesoDatos, "EntidadTestPromoReemplazoB");
 
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int> { entidadIdA });
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int> { entidadIdB });
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadIdA } });
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadIdB } });
 
-                List<int> asignadas = repositorio.ObtenerEntidadFinancieraIdsPorPromocion(promocionId);
+                List<int> asignadas = repositorio.ObtenerEntidadesFinancierasPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, asignadas.Count);
                 Assert.IsTrue(asignadas.Contains(entidadIdB));
 
@@ -67,11 +67,11 @@ namespace TpIDS.IntegrationTests
                 PromocionEntidadFinancieraRepositorio repositorio = new PromocionEntidadFinancieraRepositorio(accesoDatos);
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestVaciarEntidades");
                 int entidadId = InsertarEntidadTest(accesoDatos, "EntidadTestPromoVaciar");
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int> { entidadId });
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadId } });
 
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionId, new List<int>());
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.EntidadFinanciera>());
 
-                Assert.AreEqual(0, repositorio.ObtenerEntidadFinancieraIdsPorPromocion(promocionId).Count);
+                Assert.AreEqual(0, repositorio.ObtenerEntidadesFinancierasPorPromocion(new BE.Promocion { Id = promocionId }).Count);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -88,11 +88,11 @@ namespace TpIDS.IntegrationTests
                 int entidadSinUsoId = InsertarEntidadTest(accesoDatos, "EntidadTestContarSinUso");
                 int promocionAId = InsertarPromocionTest(accesoDatos, "PromocionTestContarEntidadA");
                 int promocionBId = InsertarPromocionTest(accesoDatos, "PromocionTestContarEntidadB");
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionAId, new List<int> { entidadUsadaId });
-                repositorio.ReemplazarEntidadesFinancierasDePromocion(promocionBId, new List<int> { entidadUsadaId });
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionAId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadUsadaId } });
+                repositorio.ReemplazarEntidadesFinancierasDePromocion(new BE.Promocion { Id = promocionBId }, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadUsadaId } });
 
-                Assert.AreEqual(2, repositorio.ContarPorEntidadFinanciera(entidadUsadaId));
-                Assert.AreEqual(0, repositorio.ContarPorEntidadFinanciera(entidadSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorEntidadFinanciera(new BE.EntidadFinanciera { Id = entidadUsadaId }));
+                Assert.AreEqual(0, repositorio.ContarPorEntidadFinanciera(new BE.EntidadFinanciera { Id = entidadSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }

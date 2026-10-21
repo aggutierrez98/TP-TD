@@ -11,7 +11,7 @@ namespace DAL
     // tabla propia). Sin filas para una promocion = aplica todos los dias.
     public class PromocionDiaSemanaDAL
     {
-        public List<DiaSemana> ObtenerDiasPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<DiaSemana> ObtenerDiasPorPromocion(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT DiaSemana
@@ -25,7 +25,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -43,7 +43,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarDiasDePromocion(Promocion promocion, List<DiaSemana> dias, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -52,7 +52,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"

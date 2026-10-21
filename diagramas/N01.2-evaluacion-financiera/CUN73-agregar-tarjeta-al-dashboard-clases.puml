@@ -1,0 +1,131 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN73 Agregar tarjeta al dashboard — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormDashboardAnaliticas {
+    -btnAgregarTarjeta_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class DashboardBLL {
+    +ObtenerTiposDisponibles(): IReadOnlyList<TipoTarjetaDashboard>
+    +ObtenerOCrearDashboardActual(): Dashboard
+    +AgregarTarjeta(tipo: TipoTarjetaDashboard): TarjetaDashboard
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+DashboardBLL -[hidden]right-> IBitacoraBLL
+DashboardBLL -[hidden]down-> SesionUsuarioExtensiones
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface ITarjetaDashboardRepositorio {
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard): int
+  }
+  class TarjetaDashboardRepositorio {
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard): int
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+  class "DashboardRepositorio" as IDashboardRepositorio <<IDashboardRepositorio>> {
+    +ObtenerPorUsuario(usuario: Usuario): Dashboard
+    +InsertarYObtenerId(dashboard: Dashboard): int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> ITarjetaDashboardRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> TarjetaDashboardRepositorio
+TarjetaDashboardRepositorio -[hidden]right-> IUnidadDeTrabajo
+TarjetaDashboardRepositorio -[hidden]down-> IDashboardRepositorio
+package "DAL" as L_DAL {
+  class TarjetaDashboardDAL {
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard, accesoDatos: AccesoDatosSqlServer): int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Dashboard {
+    +Id: int
+    +Usuario: Usuario
+    +Tarjetas: List<TarjetaDashboard>
+  }
+  class TarjetaDashboard {
+    +Id: int
+    +Dashboard: Dashboard
+    +Tipo: TipoTarjetaDashboard
+    +Orden: int
+  }
+  enum TipoTarjetaDashboard {
+    GastosPorCategoria
+    IngresosPorCategoria
+    ComparativoMensual
+    EvolucionBalance
+    GastosPorComercio
+    GastoAcumuladoMensual
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Dashboard -[hidden]right-> TarjetaDashboard
+Dashboard -[hidden]down-> TipoTarjetaDashboard
+TipoTarjetaDashboard -[hidden]right-> Usuario
+DashboardBLL ..> IBitacoraBLL : usa
+DashboardBLL ..> IDashboardRepositorio : usa
+DashboardBLL ..> ITarjetaDashboardRepositorio : usa
+DashboardBLL ..> IUnidadDeTrabajo : usa
+DashboardBLL ..> IUnidadDeTrabajoFactory : usa
+DashboardBLL ..> SesionUsuarioExtensiones : usa
+FormDashboardAnaliticas ..> DashboardBLL : usa
+TarjetaDashboardRepositorio ..> TarjetaDashboardDAL : usa
+TarjetaDashboardRepositorio ..|> ITarjetaDashboardRepositorio
+DashboardBLL ..> TarjetaDashboard : datos
+Dashboard --> Usuario : Usuario
+Dashboard --> "*" TarjetaDashboard : Tarjetas
+TarjetaDashboard --> Dashboard : Dashboard
+TarjetaDashboard --> TipoTarjetaDashboard : Tipo
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DashboardBLL.cs:166 DashboardBLL.ObtenerTiposDisponibles
+' BLL/DashboardBLL.cs:35 DashboardBLL.ObtenerOCrearDashboardActual
+' BLL/DashboardBLL.cs:78 DashboardBLL.AgregarTarjeta
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/TarjetaDashboardDAL.cs:87 TarjetaDashboardDAL.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:11 IDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:9 IDashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:12 ITarjetaDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:47 TarjetaDashboardRepositorio.InsertarYObtenerId
+' UI/FormDashboardAnaliticas.cs:241 FormDashboardAnaliticas.btnAgregarTarjeta_Click
+@enduml

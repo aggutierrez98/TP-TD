@@ -1,87 +1,1203 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa REPOSITORIO
-
+title G07 - Diagrama de clases por capa - REPOSITORIO
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "REPOSITORIO (persistencia / Unit of Work)" {
-
-  interface IUnidadDeTrabajoFactory {
-    +Crear() : IUnidadDeTrabajo
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'REPOSITORIO/ChatbotFinancieroRepositorio.cs
+  class "ChatbotFinancieroRepositorio" as REPOSITORIO_ChatbotFinancieroRepositorio {
+    ~ChatbotFinancieroRepositorio()
+    ~ChatbotFinancieroRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerUnico() : ChatbotFinanciero
   }
-  interface IUnidadDeTrabajo <<IDisposable>> {
-    +Usuarios : IUsuarioRepositorio
+  'REPOSITORIO/ConsultaChatbotRepositorio.cs
+  class "ConsultaChatbotRepositorio" as REPOSITORIO_ConsultaChatbotRepositorio {
+    ~ConsultaChatbotRepositorio()
+    ~ConsultaChatbotRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorUsuario(usuario : Usuario) : List<ConsultaChatbot>
+    ~InsertarYObtenerId(consultaChatbot : ConsultaChatbot) : int
+  }
+  'REPOSITORIO/GeneracionNotificacionesRepositorio.cs
+  class "GeneracionNotificacionesRepositorio" as REPOSITORIO_GeneracionNotificacionesRepositorio {
+    ~GeneracionNotificacionesRepositorio()
+    ~GeneracionNotificacionesRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~InsertarCorridaYObtenerId(corrida : CorridaGeneracionNotificaciones) : int
+    ~FinalizarCorrida(corrida : CorridaGeneracionNotificaciones, finUtc : DateTime, entregadas : int, omitidas :\nint, fallidas : int) : bool
+    ~InsertarDetalleYObtenerId(detalle : DetalleGeneracionNotificacion) : int
+    ~ObtenerPorId(id : int) : CorridaGeneracionNotificaciones
+    ~ObtenerRecientes(cantidad : int) : List<CorridaGeneracionNotificaciones>
+    ~ObtenerDetallePorCorrida(corrida : CorridaGeneracionNotificaciones) : List<DetalleGeneracionNotificacion>
+  }
+  'REPOSITORIO/IChatbotFinancieroRepositorio.cs
+  interface "IChatbotFinancieroRepositorio" as REPOSITORIO_IChatbotFinancieroRepositorio {
+    +ObtenerUnico() : ChatbotFinanciero
+  }
+  'REPOSITORIO/IConsultaChatbotRepositorio.cs
+  interface "IConsultaChatbotRepositorio" as REPOSITORIO_IConsultaChatbotRepositorio {
+    +ObtenerPorUsuario(usuario : Usuario) : List<ConsultaChatbot>
+    +InsertarYObtenerId(consultaChatbot : ConsultaChatbot) : int
+  }
+  'REPOSITORIO/IGeneracionNotificacionesRepositorio.cs
+  interface "IGeneracionNotificacionesRepositorio" as REPOSITORIO_IGeneracionNotificacionesRepositorio {
+    +InsertarCorridaYObtenerId(corrida : CorridaGeneracionNotificaciones) : int
+    +FinalizarCorrida(corrida : CorridaGeneracionNotificaciones, finUtc : DateTime, entregadas : int, omitidas :\nint, fallidas : int) : bool
+    +InsertarDetalleYObtenerId(detalle : DetalleGeneracionNotificacion) : int
+    +ObtenerPorId(id : int) : CorridaGeneracionNotificaciones
+    +ObtenerRecientes(cantidad : int) : List<CorridaGeneracionNotificaciones>
+    +ObtenerDetallePorCorrida(corrida : CorridaGeneracionNotificaciones) : List<DetalleGeneracionNotificacion>
+  }
+  'REPOSITORIO/IProductoEmbeddingRepositorio.cs
+  interface "IProductoEmbeddingRepositorio" as REPOSITORIO_IProductoEmbeddingRepositorio {
+    +ObtenerTodos() : List<ProductoEmbedding>
+    +Guardar(embedding : ProductoEmbedding) : void
+  }
+  'REPOSITORIO/IRecomendacionComprasRepositorio.cs
+  interface "IRecomendacionComprasRepositorio" as REPOSITORIO_IRecomendacionComprasRepositorio {
+    +ObtenerItemsPendientesPorUsuario(usuario : Usuario) : List<ItemLista>
+    +ObtenerProductosConCategoria() : List<Producto>
+    +ObtenerOfertas() : List<ComercioProducto>
+    +ObtenerPromocionesVigentesEntre(desde : DateTime, hasta : DateTime) : List<Promocion>
+    +ObtenerCuentasConMediosPorUsuario(usuario : Usuario) : List<CuentaFinanciera>
+  }
+  'REPOSITORIO/ProductoEmbeddingRepositorio.cs
+  class "ProductoEmbeddingRepositorio" as REPOSITORIO_ProductoEmbeddingRepositorio {
+    ~ProductoEmbeddingRepositorio()
+    ~ProductoEmbeddingRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerTodos() : List<ProductoEmbedding>
+    ~Guardar(embedding : ProductoEmbedding) : void
+  }
+  'REPOSITORIO/RecomendacionComprasRepositorio.cs
+  class "RecomendacionComprasRepositorio" as REPOSITORIO_RecomendacionComprasRepositorio {
+    ~RecomendacionComprasRepositorio()
+    ~RecomendacionComprasRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerItemsPendientesPorUsuario(usuario : Usuario) : List<ItemLista>
+    ~ObtenerProductosConCategoria() : List<Producto>
+    ~ObtenerOfertas() : List<ComercioProducto>
+    ~ObtenerPromocionesVigentesEntre(desde : DateTime, hasta : DateTime) : List<Promocion>
+    ~ObtenerCuentasConMediosPorUsuario(usuario : Usuario) : List<CuentaFinanciera>
+  }
+}
+package "Comercios y promociones" as P1 {
+  'REPOSITORIO/CategoriaProductoRepositorio.cs
+  class "CategoriaProductoRepositorio" as REPOSITORIO_CategoriaProductoRepositorio {
+    ~CategoriaProductoRepositorio()
+    ~CategoriaProductoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : CategoriaProducto
+    ~ObtenerTodas() : List<CategoriaProducto>
+    ~InsertarYObtenerId(categoria : CategoriaProducto) : int
+    ~Actualizar(categoria : CategoriaProducto) : bool
+    ~Eliminar(categoria : CategoriaProducto) : bool
+  }
+  'REPOSITORIO/ComercioProductoRepositorio.cs
+  class "ComercioProductoRepositorio" as REPOSITORIO_ComercioProductoRepositorio {
+    ~ComercioProductoRepositorio()
+    ~ComercioProductoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorComercio(comercio : Comercio) : List<ComercioProducto>
+    ~ObtenerPorComercioYProducto(comercio : Comercio, producto : Producto) : ComercioProducto
+    ~Insertar(comercioProducto : ComercioProducto) : bool
+    ~ActualizarPrecio(comercioProducto : ComercioProducto) : bool
+    ~Eliminar(comercioProducto : ComercioProducto) : bool
+    ~ContarPorProducto(producto : Producto) : int
+  }
+  'REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs
+  class "ComercioReglaCategorizacionRepositorio" as REPOSITORIO_ComercioReglaCategorizacionRepositorio {
+    ~ComercioReglaCategorizacionRepositorio()
+    ~ComercioReglaCategorizacionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion) : List<Comercio>
+    ~ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion, comercios :\nIEnumerable<Comercio>) : bool
+    ~ContarPorComercio(comercio : Comercio) : int
+  }
+  'REPOSITORIO/ComercioRepositorio.cs
+  class "ComercioRepositorio" as REPOSITORIO_ComercioRepositorio {
+    ~ComercioRepositorio()
+    ~ComercioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Comercio
+    ~ObtenerPorRubro(rubro : RubroComercio) : List<Comercio>
+    ~ObtenerTodos() : List<Comercio>
+    ~InsertarYObtenerId(comercio : Comercio) : int
+    ~Actualizar(comercio : Comercio) : bool
+    ~Eliminar(comercio : Comercio) : bool
+  }
+  'REPOSITORIO/ICategoriaProductoRepositorio.cs
+  interface "ICategoriaProductoRepositorio" as REPOSITORIO_ICategoriaProductoRepositorio {
+    +ObtenerPorId(id : int) : CategoriaProducto
+    +ObtenerTodas() : List<CategoriaProducto>
+    +InsertarYObtenerId(categoria : CategoriaProducto) : int
+    +Actualizar(categoria : CategoriaProducto) : bool
+    +Eliminar(categoria : CategoriaProducto) : bool
+  }
+  'REPOSITORIO/IComercioProductoRepositorio.cs
+  interface "IComercioProductoRepositorio" as REPOSITORIO_IComercioProductoRepositorio {
+    +ObtenerPorComercio(comercio : Comercio) : List<ComercioProducto>
+    +ObtenerPorComercioYProducto(comercio : Comercio, producto : Producto) : ComercioProducto
+    +Insertar(comercioProducto : ComercioProducto) : bool
+    +ActualizarPrecio(comercioProducto : ComercioProducto) : bool
+    +Eliminar(comercioProducto : ComercioProducto) : bool
+    +ContarPorProducto(producto : Producto) : int
+  }
+  'REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs
+  interface "IComercioReglaCategorizacionRepositorio" as REPOSITORIO_IComercioReglaCategorizacionRepositorio {
+    +ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion) : List<Comercio>
+    +ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion, comercios :\nIEnumerable<Comercio>) : bool
+    +ContarPorComercio(comercio : Comercio) : int
+  }
+  'REPOSITORIO/IComercioRepositorio.cs
+  interface "IComercioRepositorio" as REPOSITORIO_IComercioRepositorio {
+    +ObtenerPorId(id : int) : Comercio
+    +ObtenerPorRubro(rubro : RubroComercio) : List<Comercio>
+    +ObtenerTodos() : List<Comercio>
+    +InsertarYObtenerId(comercio : Comercio) : int
+    +Actualizar(comercio : Comercio) : bool
+    +Eliminar(comercio : Comercio) : bool
+  }
+  'REPOSITORIO/IProductoRepositorio.cs
+  interface "IProductoRepositorio" as REPOSITORIO_IProductoRepositorio {
+    +ObtenerPorId(id : int) : Producto
+    +ObtenerTodos() : List<Producto>
+    +InsertarYObtenerId(producto : Producto) : int
+    +Actualizar(producto : Producto) : bool
+    +Eliminar(producto : Producto) : bool
+    +ContarPorCategoria(categoria : CategoriaProducto) : int
+  }
+  'REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs
+  interface "IPromocionCategoriaProductoRepositorio" as REPOSITORIO_IPromocionCategoriaProductoRepositorio {
+    +ObtenerCategoriasProductoPorPromocion(promocion : Promocion, excluidos : bool) : List<CategoriaProducto>
+    +ReemplazarCategoriasProductoDePromocion(promocion : Promocion, incluidos : List<CategoriaProducto>, excluidos\n: List<CategoriaProducto>) : bool
+    +ContarPorCategoriaProducto(categoriaProducto : CategoriaProducto) : int
+  }
+  'REPOSITORIO/IPromocionComercioRepositorio.cs
+  interface "IPromocionComercioRepositorio" as REPOSITORIO_IPromocionComercioRepositorio {
+    +ObtenerComerciosPorPromocion(promocion : Promocion) : List<Comercio>
+    +ObtenerPromocionesPorComercio(comercio : Comercio) : List<Promocion>
+    +ReemplazarComerciosDePromocion(promocion : Promocion, comercios : List<Comercio>) : bool
+  }
+  'REPOSITORIO/IPromocionEntidadFinancieraRepositorio.cs
+  interface "IPromocionEntidadFinancieraRepositorio" as REPOSITORIO_IPromocionEntidadFinancieraRepositorio {
+    +ObtenerEntidadesFinancierasPorPromocion(promocion : Promocion) : List<EntidadFinanciera>
+    +ReemplazarEntidadesFinancierasDePromocion(promocion : Promocion, entidadesFinancieras :\nList<EntidadFinanciera>) : bool
+    +ContarPorEntidadFinanciera(entidadFinanciera : EntidadFinanciera) : int
+  }
+  'REPOSITORIO/IPromocionMedioPagoRepositorio.cs
+  interface "IPromocionMedioPagoRepositorio" as REPOSITORIO_IPromocionMedioPagoRepositorio {
+    +ObtenerMediosPagoPorPromocion(promocion : Promocion) : List<MedioPago>
+    +ReemplazarMediosPagoDePromocion(promocion : Promocion, mediosPago : List<MedioPago>) : bool
+    +ContarPorMedioPago(medioPago : MedioPago) : int
+  }
+  'REPOSITORIO/IPromocionProductoRepositorio.cs
+  interface "IPromocionProductoRepositorio" as REPOSITORIO_IPromocionProductoRepositorio {
+    +ObtenerProductosPorPromocion(promocion : Promocion, excluidos : bool) : List<Producto>
+    +ReemplazarProductosDePromocion(promocion : Promocion, incluidos : List<Producto>, excluidos : List<Producto>)\n: bool
+    +ContarPorProducto(producto : Producto) : int
+  }
+  'REPOSITORIO/IPromocionRepositorio.cs
+  interface "IPromocionRepositorio" as REPOSITORIO_IPromocionRepositorio {
+    +ObtenerPorId(id : int) : Promocion
+    +ObtenerTodas() : List<Promocion>
+    +InsertarYObtenerId(promocion : Promocion) : int
+    +Actualizar(promocion : Promocion) : bool
+    +Eliminar(promocion : Promocion) : bool
+    +ReemplazarDiasDePromocion(promocion : Promocion, dias : List<DiaSemana>) : bool
+  }
+  'REPOSITORIO/IPromocionRubroComercioRepositorio.cs
+  interface "IPromocionRubroComercioRepositorio" as REPOSITORIO_IPromocionRubroComercioRepositorio {
+    +ObtenerRubrosComercioPorPromocion(promocion : Promocion) : List<RubroComercio>
+    +ReemplazarRubrosComercioDePromocion(promocion : Promocion, rubrosComercio : List<RubroComercio>) : bool
+    +ContarPorRubroComercio(rubroComercio : RubroComercio) : int
+  }
+  'REPOSITORIO/IPromocionSegmentoRepositorio.cs
+  interface "IPromocionSegmentoRepositorio" as REPOSITORIO_IPromocionSegmentoRepositorio {
+    +ObtenerSegmentosPorPromocion(promocion : Promocion) : List<string>
+    +ReemplazarSegmentosDePromocion(promocion : Promocion, segmentos : List<string>) : bool
+  }
+  'REPOSITORIO/IRubroComercioRepositorio.cs
+  interface "IRubroComercioRepositorio" as REPOSITORIO_IRubroComercioRepositorio {
+    +ObtenerPorId(id : int) : RubroComercio
+    +ObtenerTodas() : List<RubroComercio>
+    +InsertarYObtenerId(rubro : RubroComercio) : int
+    +Actualizar(rubro : RubroComercio) : bool
+    +Eliminar(rubro : RubroComercio) : bool
+  }
+  'REPOSITORIO/ProductoRepositorio.cs
+  class "ProductoRepositorio" as REPOSITORIO_ProductoRepositorio {
+    ~ProductoRepositorio()
+    ~ProductoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Producto
+    ~ObtenerTodos() : List<Producto>
+    ~InsertarYObtenerId(producto : Producto) : int
+    ~Actualizar(producto : Producto) : bool
+    ~Eliminar(producto : Producto) : bool
+    ~ContarPorCategoria(categoria : CategoriaProducto) : int
+  }
+  'REPOSITORIO/PromocionCategoriaProductoRepositorio.cs
+  class "PromocionCategoriaProductoRepositorio" as REPOSITORIO_PromocionCategoriaProductoRepositorio {
+    ~PromocionCategoriaProductoRepositorio()
+    ~PromocionCategoriaProductoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerCategoriasProductoPorPromocion(promocion : Promocion, excluidos : bool) : List<CategoriaProducto>
+    ~ReemplazarCategoriasProductoDePromocion(promocion : Promocion, incluidos : List<CategoriaProducto>, excluidos\n: List<CategoriaProducto>) : bool
+    ~ContarPorCategoriaProducto(categoriaProducto : CategoriaProducto) : int
+  }
+  'REPOSITORIO/PromocionComercioRepositorio.cs
+  class "PromocionComercioRepositorio" as REPOSITORIO_PromocionComercioRepositorio {
+    ~PromocionComercioRepositorio()
+    ~PromocionComercioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerComerciosPorPromocion(promocion : Promocion) : List<Comercio>
+    ~ObtenerPromocionesPorComercio(comercio : Comercio) : List<Promocion>
+    ~ReemplazarComerciosDePromocion(promocion : Promocion, comercios : List<Comercio>) : bool
+  }
+  'REPOSITORIO/PromocionEntidadFinancieraRepositorio.cs
+  class "PromocionEntidadFinancieraRepositorio" as REPOSITORIO_PromocionEntidadFinancieraRepositorio {
+    ~PromocionEntidadFinancieraRepositorio()
+    ~PromocionEntidadFinancieraRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerEntidadesFinancierasPorPromocion(promocion : Promocion) : List<EntidadFinanciera>
+    ~ReemplazarEntidadesFinancierasDePromocion(promocion : Promocion, entidadesFinancieras :\nList<EntidadFinanciera>) : bool
+    ~ContarPorEntidadFinanciera(entidadFinanciera : EntidadFinanciera) : int
+  }
+  'REPOSITORIO/PromocionMedioPagoRepositorio.cs
+  class "PromocionMedioPagoRepositorio" as REPOSITORIO_PromocionMedioPagoRepositorio {
+    ~PromocionMedioPagoRepositorio()
+    ~PromocionMedioPagoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerMediosPagoPorPromocion(promocion : Promocion) : List<MedioPago>
+    ~ReemplazarMediosPagoDePromocion(promocion : Promocion, mediosPago : List<MedioPago>) : bool
+    ~ContarPorMedioPago(medioPago : MedioPago) : int
+  }
+  'REPOSITORIO/PromocionProductoRepositorio.cs
+  class "PromocionProductoRepositorio" as REPOSITORIO_PromocionProductoRepositorio {
+    ~PromocionProductoRepositorio()
+    ~PromocionProductoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerProductosPorPromocion(promocion : Promocion, excluidos : bool) : List<Producto>
+    ~ReemplazarProductosDePromocion(promocion : Promocion, incluidos : List<Producto>, excluidos : List<Producto>)\n: bool
+    ~ContarPorProducto(producto : Producto) : int
+  }
+  'REPOSITORIO/PromocionRepositorio.cs
+  class "PromocionRepositorio" as REPOSITORIO_PromocionRepositorio {
+    ~PromocionRepositorio()
+    ~PromocionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Promocion
+    ~ObtenerTodas() : List<Promocion>
+    ~Hidratar(promocion : Promocion) : void
+    ~InsertarYObtenerId(promocion : Promocion) : int
+    ~Actualizar(promocion : Promocion) : bool
+    ~Eliminar(promocion : Promocion) : bool
+    ~ReemplazarDiasDePromocion(promocion : Promocion, dias : List<DiaSemana>) : bool
+  }
+  'REPOSITORIO/PromocionRubroComercioRepositorio.cs
+  class "PromocionRubroComercioRepositorio" as REPOSITORIO_PromocionRubroComercioRepositorio {
+    ~PromocionRubroComercioRepositorio()
+    ~PromocionRubroComercioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerRubrosComercioPorPromocion(promocion : Promocion) : List<RubroComercio>
+    ~ReemplazarRubrosComercioDePromocion(promocion : Promocion, rubrosComercio : List<RubroComercio>) : bool
+    ~ContarPorRubroComercio(rubroComercio : RubroComercio) : int
+  }
+  'REPOSITORIO/PromocionSegmentoRepositorio.cs
+  class "PromocionSegmentoRepositorio" as REPOSITORIO_PromocionSegmentoRepositorio {
+    ~PromocionSegmentoRepositorio()
+    ~PromocionSegmentoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerSegmentosPorPromocion(promocion : Promocion) : List<string>
+    ~ReemplazarSegmentosDePromocion(promocion : Promocion, segmentos : List<string>) : bool
+  }
+  'REPOSITORIO/RubroComercioRepositorio.cs
+  class "RubroComercioRepositorio" as REPOSITORIO_RubroComercioRepositorio {
+    ~RubroComercioRepositorio()
+    ~RubroComercioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : RubroComercio
+    ~ObtenerTodas() : List<RubroComercio>
+    ~InsertarYObtenerId(rubro : RubroComercio) : int
+    ~Actualizar(rubro : RubroComercio) : bool
+    ~Eliminar(rubro : RubroComercio) : bool
+  }
+}
+package "Finanzas personales" as P2 {
+  'REPOSITORIO/CategoriaRepositorio.cs
+  class "CategoriaRepositorio" as REPOSITORIO_CategoriaRepositorio {
+    ~CategoriaRepositorio()
+    ~CategoriaRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Categoria
+    ~ObtenerVisiblesParaUsuario(usuario : Usuario) : List<Categoria>
+    ~InsertarYObtenerId(categoria : Categoria) : int
+    ~Actualizar(categoria : Categoria) : bool
+    ~Eliminar(categoria : Categoria) : bool
+    ~ExisteNombreEnScope(nombre : string, usuario : Usuario, excluida : Categoria) : bool
+  }
+  'REPOSITORIO/CuentaFinancieraRepositorio.cs
+  class "CuentaFinancieraRepositorio" as REPOSITORIO_CuentaFinancieraRepositorio {
+    ~CuentaFinancieraRepositorio()
+    ~CuentaFinancieraRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : CuentaFinanciera
+    ~ObtenerPorUsuario(usuario : Usuario) : List<CuentaFinanciera>
+    ~ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera) : List<CuentaFinanciera>
+    ~InsertarYObtenerId(cuenta : CuentaFinanciera) : int
+    ~Actualizar(cuenta : CuentaFinanciera) : bool
+    ~Eliminar(cuenta : CuentaFinanciera) : bool
+    ~ReemplazarMediosPagoEntidadDeCuenta(cuenta : CuentaFinanciera, medios : IEnumerable<MedioPagoEntidad>) : bool
+    ~ContarPorMedioPagoEntidad(medio : MedioPagoEntidad) : int
+  }
+  'REPOSITORIO/DashboardRepositorio.cs
+  class "DashboardRepositorio" as REPOSITORIO_DashboardRepositorio {
+    ~DashboardRepositorio()
+    ~DashboardRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Dashboard
+    ~ObtenerPorUsuario(usuario : Usuario) : Dashboard
+    ~InsertarYObtenerId(dashboard : Dashboard) : int
+    ~Eliminar(dashboard : Dashboard) : bool
+  }
+  'REPOSITORIO/EntidadFinancieraRepositorio.cs
+  class "EntidadFinancieraRepositorio" as REPOSITORIO_EntidadFinancieraRepositorio {
+    ~EntidadFinancieraRepositorio()
+    ~EntidadFinancieraRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : EntidadFinanciera
+    ~ObtenerTodas() : List<EntidadFinanciera>
+    ~InsertarYObtenerId(entidad : EntidadFinanciera) : int
+    ~Actualizar(entidad : EntidadFinanciera) : bool
+    ~Eliminar(entidad : EntidadFinanciera) : bool
+  }
+  'REPOSITORIO/ICategoriaRepositorio.cs
+  interface "ICategoriaRepositorio" as REPOSITORIO_ICategoriaRepositorio {
+    +ObtenerPorId(id : int) : Categoria
+    +ObtenerVisiblesParaUsuario(usuario : Usuario) : List<Categoria>
+    +InsertarYObtenerId(categoria : Categoria) : int
+    +Actualizar(categoria : Categoria) : bool
+    +Eliminar(categoria : Categoria) : bool
+    +ExisteNombreEnScope(nombre : string, usuario : Usuario, excluida : Categoria) : bool
+  }
+  'REPOSITORIO/ICuentaFinancieraRepositorio.cs
+  interface "ICuentaFinancieraRepositorio" as REPOSITORIO_ICuentaFinancieraRepositorio {
+    +ObtenerPorId(id : int) : CuentaFinanciera
+    +ObtenerPorUsuario(usuario : Usuario) : List<CuentaFinanciera>
+    +ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera) : List<CuentaFinanciera>
+    +InsertarYObtenerId(cuenta : CuentaFinanciera) : int
+    +Actualizar(cuenta : CuentaFinanciera) : bool
+    +Eliminar(cuenta : CuentaFinanciera) : bool
+    +ReemplazarMediosPagoEntidadDeCuenta(cuenta : CuentaFinanciera, medios : IEnumerable<MedioPagoEntidad>) : bool
+    +ContarPorMedioPagoEntidad(medio : MedioPagoEntidad) : int
+  }
+  'REPOSITORIO/IDashboardRepositorio.cs
+  interface "IDashboardRepositorio" as REPOSITORIO_IDashboardRepositorio {
+    +ObtenerPorId(id : int) : Dashboard
+    +ObtenerPorUsuario(usuario : Usuario) : Dashboard
+    +InsertarYObtenerId(dashboard : Dashboard) : int
+    +Eliminar(dashboard : Dashboard) : bool
+  }
+  'REPOSITORIO/IEntidadFinancieraRepositorio.cs
+  interface "IEntidadFinancieraRepositorio" as REPOSITORIO_IEntidadFinancieraRepositorio {
+    +ObtenerPorId(id : int) : EntidadFinanciera
+    +ObtenerTodas() : List<EntidadFinanciera>
+    +InsertarYObtenerId(entidad : EntidadFinanciera) : int
+    +Actualizar(entidad : EntidadFinanciera) : bool
+    +Eliminar(entidad : EntidadFinanciera) : bool
+  }
+  'REPOSITORIO/IItemListaRepositorio.cs
+  interface "IItemListaRepositorio" as REPOSITORIO_IItemListaRepositorio {
+    +ObtenerPorId(id : int) : ItemLista
+    +ObtenerPorListaDeCompras(lista : ListaDeCompras) : List<ItemLista>
+    +InsertarYObtenerId(itemLista : ItemLista) : int
+    +Actualizar(itemLista : ItemLista) : bool
+    +Eliminar(item : ItemLista) : bool
+  }
+  'REPOSITORIO/IListaDeComprasRepositorio.cs
+  interface "IListaDeComprasRepositorio" as REPOSITORIO_IListaDeComprasRepositorio {
+    +ObtenerPorId(id : int) : ListaDeCompras
+    +ObtenerPorUsuario(usuario : Usuario) : List<ListaDeCompras>
+    +InsertarYObtenerId(listaDeCompras : ListaDeCompras) : int
+    +Actualizar(listaDeCompras : ListaDeCompras) : bool
+    +Eliminar(lista : ListaDeCompras) : bool
+  }
+  'REPOSITORIO/IMedioPagoEntidadRepositorio.cs
+  interface "IMedioPagoEntidadRepositorio" as REPOSITORIO_IMedioPagoEntidadRepositorio {
+    +ObtenerPorId(id : int) : MedioPagoEntidad
+    +ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera) : List<MedioPagoEntidad>
+    +ObtenerPorMedioPago(medioPago : MedioPago) : List<MedioPagoEntidad>
+    +ObtenerSegmentosDistintos() : List<string>
+    +InsertarYObtenerId(medioPagoEntidad : MedioPagoEntidad) : int
+    +Actualizar(medioPagoEntidad : MedioPagoEntidad) : bool
+    +Eliminar(medioPagoEntidad : MedioPagoEntidad) : bool
+  }
+  'REPOSITORIO/IMedioPagoRepositorio.cs
+  interface "IMedioPagoRepositorio" as REPOSITORIO_IMedioPagoRepositorio {
+    +ObtenerPorId(id : int) : MedioPago
+    +ObtenerTodos() : List<MedioPago>
+    +InsertarYObtenerId(medioPago : MedioPago) : int
+    +Actualizar(medioPago : MedioPago) : bool
+    +Eliminar(medioPago : MedioPago) : bool
+  }
+  'REPOSITORIO/IMovimientoRepositorio.cs
+  interface "IMovimientoRepositorio" as REPOSITORIO_IMovimientoRepositorio {
+    +ObtenerPorId(id : int) : Movimiento
+    +ObtenerPorUsuario(usuario : Usuario, filtro : FiltroMovimiento) : List<Movimiento>
+    +ObtenerTotalesPorCategoria(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorCategoria>
+    +ObtenerTotalesPorComercio(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorComercio>
+    +ObtenerTotalesPorDia(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorDia>
+    +ObtenerTotalesPorMes(usuario : Usuario, desde : DateTime, hasta : DateTime) : List<TotalPorMes>
+    +ObtenerResumen(usuario : Usuario, desde : DateTime, hasta : DateTime) : ResumenMovimientos
+    +InsertarYObtenerId(movimiento : Movimiento) : int
+    +Actualizar(movimiento : Movimiento) : bool
+    +Eliminar(movimiento : Movimiento) : bool
+    +ContarPorComercio(comercio : Comercio) : int
+  }
+  'REPOSITORIO/IReglaCategorizacionRepositorio.cs
+  interface "IReglaCategorizacionRepositorio" as REPOSITORIO_IReglaCategorizacionRepositorio {
+    +ObtenerPorId(id : int) : ReglaCategorizacion
+    +ObtenerPorUsuario(usuario : Usuario) : List<ReglaCategorizacion>
+    +InsertarYObtenerId(reglaCategorizacion : ReglaCategorizacion) : int
+    +Actualizar(reglaCategorizacion : ReglaCategorizacion) : bool
+    +Eliminar(reglaCategorizacion : ReglaCategorizacion) : bool
+  }
+  'REPOSITORIO/ITarjetaDashboardRepositorio.cs
+  interface "ITarjetaDashboardRepositorio" as REPOSITORIO_ITarjetaDashboardRepositorio {
+    +ObtenerPorId(id : int) : TarjetaDashboard
+    +ObtenerPorDashboard(dashboard : Dashboard) : List<TarjetaDashboard>
+    +InsertarYObtenerId(tarjeta : TarjetaDashboard) : int
+    +Actualizar(tarjeta : TarjetaDashboard) : bool
+    +Eliminar(tarjeta : TarjetaDashboard) : bool
+  }
+  'REPOSITORIO/ItemListaRepositorio.cs
+  class "ItemListaRepositorio" as REPOSITORIO_ItemListaRepositorio {
+    ~ItemListaRepositorio()
+    ~ItemListaRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : ItemLista
+    ~ObtenerPorListaDeCompras(lista : ListaDeCompras) : List<ItemLista>
+    ~InsertarYObtenerId(itemLista : ItemLista) : int
+    ~Actualizar(itemLista : ItemLista) : bool
+    ~Eliminar(item : ItemLista) : bool
+  }
+  'REPOSITORIO/ListaDeComprasRepositorio.cs
+  class "ListaDeComprasRepositorio" as REPOSITORIO_ListaDeComprasRepositorio {
+    ~ListaDeComprasRepositorio()
+    ~ListaDeComprasRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : ListaDeCompras
+    ~ObtenerPorUsuario(usuario : Usuario) : List<ListaDeCompras>
+    ~InsertarYObtenerId(listaDeCompras : ListaDeCompras) : int
+    ~Actualizar(listaDeCompras : ListaDeCompras) : bool
+    ~Eliminar(lista : ListaDeCompras) : bool
+  }
+  'REPOSITORIO/MedioPagoEntidadRepositorio.cs
+  class "MedioPagoEntidadRepositorio" as REPOSITORIO_MedioPagoEntidadRepositorio {
+    ~MedioPagoEntidadRepositorio()
+    ~MedioPagoEntidadRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : MedioPagoEntidad
+    ~ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera) : List<MedioPagoEntidad>
+    ~ObtenerPorMedioPago(medioPago : MedioPago) : List<MedioPagoEntidad>
+    ~ObtenerSegmentosDistintos() : List<string>
+    ~InsertarYObtenerId(medioPagoEntidad : MedioPagoEntidad) : int
+    ~Actualizar(medioPagoEntidad : MedioPagoEntidad) : bool
+    ~Eliminar(medioPagoEntidad : MedioPagoEntidad) : bool
+  }
+  'REPOSITORIO/MedioPagoRepositorio.cs
+  class "MedioPagoRepositorio" as REPOSITORIO_MedioPagoRepositorio {
+    ~MedioPagoRepositorio()
+    ~MedioPagoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : MedioPago
+    ~ObtenerTodos() : List<MedioPago>
+    ~InsertarYObtenerId(medioPago : MedioPago) : int
+    ~Actualizar(medioPago : MedioPago) : bool
+    ~Eliminar(medioPago : MedioPago) : bool
+  }
+  'REPOSITORIO/MovimientoRepositorio.cs
+  class "MovimientoRepositorio" as REPOSITORIO_MovimientoRepositorio {
+    ~MovimientoRepositorio()
+    ~MovimientoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Movimiento
+    ~ObtenerPorUsuario(usuario : Usuario, filtro : FiltroMovimiento) : List<Movimiento>
+    ~ObtenerTotalesPorCategoria(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorCategoria>
+    ~ObtenerTotalesPorComercio(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorComercio>
+    ~ObtenerTotalesPorDia(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorDia>
+    ~ObtenerTotalesPorMes(usuario : Usuario, desde : DateTime, hasta : DateTime) : List<TotalPorMes>
+    ~ObtenerResumen(usuario : Usuario, desde : DateTime, hasta : DateTime) : ResumenMovimientos
+    ~InsertarYObtenerId(movimiento : Movimiento) : int
+    ~Actualizar(movimiento : Movimiento) : bool
+    ~Eliminar(movimiento : Movimiento) : bool
+    ~ContarPorComercio(comercio : Comercio) : int
+  }
+  'REPOSITORIO/ReglaCategorizacionRepositorio.cs
+  class "ReglaCategorizacionRepositorio" as REPOSITORIO_ReglaCategorizacionRepositorio {
+    ~ReglaCategorizacionRepositorio()
+    ~ReglaCategorizacionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : ReglaCategorizacion
+    ~ObtenerPorUsuario(usuario : Usuario) : List<ReglaCategorizacion>
+    ~InsertarYObtenerId(reglaCategorizacion : ReglaCategorizacion) : int
+    ~Actualizar(reglaCategorizacion : ReglaCategorizacion) : bool
+    ~Eliminar(reglaCategorizacion : ReglaCategorizacion) : bool
+  }
+  'REPOSITORIO/TarjetaDashboardRepositorio.cs
+  class "TarjetaDashboardRepositorio" as REPOSITORIO_TarjetaDashboardRepositorio {
+    ~TarjetaDashboardRepositorio()
+    ~TarjetaDashboardRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : TarjetaDashboard
+    ~ObtenerPorDashboard(dashboard : Dashboard) : List<TarjetaDashboard>
+    ~InsertarYObtenerId(tarjeta : TarjetaDashboard) : int
+    ~Actualizar(tarjeta : TarjetaDashboard) : bool
+    ~Eliminar(tarjeta : TarjetaDashboard) : bool
+  }
+}
+package "Idiomas y presentacion" as P3 {
+  'REPOSITORIO/IIdiomaRepositorio.cs
+  interface "IIdiomaRepositorio" as REPOSITORIO_IIdiomaRepositorio {
+    +ObtenerIdiomas() : List<Idioma>
+    +ObtenerPorId(id : int) : Idioma
+    +ObtenerIdiomaDefault() : Idioma
+    +InsertarIdioma(idioma : Idioma) : int
+    +ActualizarIdioma(idioma : Idioma) : bool
+    +EliminarIdioma(idioma : Idioma) : bool
+    +ConsolidarIdioma(origen : Idioma, destino : Idioma) : bool
+    +ObtenerPalabraPorKey(key : string) : Palabra
+    +GuardarTraduccion(traduccion : Traduccion) : bool
+    +EliminarTraduccion(traduccion : Traduccion) : bool
+    +SwitchearIdiomaDefault(idioma : Idioma) : bool
+  }
+  'REPOSITORIO/ITraduccionRepositorio.cs
+  interface "ITraduccionRepositorio" as REPOSITORIO_ITraduccionRepositorio {
+    +ObtenerPalabraPorKey(key : string) : Palabra
+    +GuardarTraduccion(traduccion : Traduccion) : bool
+    +EliminarTraduccion(traduccion : Traduccion) : bool
+  }
+  'REPOSITORIO/IdiomaRepositorio.cs
+  class "IdiomaRepositorio" as REPOSITORIO_IdiomaRepositorio {
+    ~IdiomaRepositorio()
+    ~IdiomaRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerIdiomas() : List<Idioma>
+    ~ObtenerPorId(id : int) : Idioma
+    ~ObtenerIdiomaDefault() : Idioma
+    ~InsertarIdioma(idioma : Idioma) : int
+    ~ActualizarIdioma(idioma : Idioma) : bool
+    ~EliminarIdioma(idioma : Idioma) : bool
+    ~ConsolidarIdioma(origen : Idioma, destino : Idioma) : bool
+    ~ObtenerPalabraPorKey(key : string) : Palabra
+    ~GuardarTraduccion(traduccion : Traduccion) : bool
+    ~EliminarTraduccion(traduccion : Traduccion) : bool
+    ~SwitchearIdiomaDefault(idioma : Idioma) : bool
+  }
+  'REPOSITORIO/TraduccionRepositorio.cs
+  class "TraduccionRepositorio" as REPOSITORIO_TraduccionRepositorio {
+    ~TraduccionRepositorio()
+    ~TraduccionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPalabraPorKey(key : string) : Palabra
+    ~GuardarTraduccion(traduccion : Traduccion) : bool
+    ~EliminarTraduccion(traduccion : Traduccion) : bool
+  }
+}
+package "Infraestructura" as P4 {
+  'REPOSITORIO/IUnidadDeTrabajo.cs
+  interface "IUnidadDeTrabajo" as REPOSITORIO_IUnidadDeTrabajo {
+    +Bitacora : IBitacoraRepositorio
+    +Categorias : ICategoriaRepositorio
+    +CategoriasProducto : ICategoriaProductoRepositorio
+    +Comercios : IComercioRepositorio
+    +CuentasFinancieras : ICuentaFinancieraRepositorio
+    +Dashboards : IDashboardRepositorio
+    +EntidadesFinancieras : IEntidadFinancieraRepositorio
+    +Idiomas : IIdiomaRepositorio
+    +Integridad : IIntegridadRepositorio
+    +ItemsLista : IItemListaRepositorio
+    +ListasDeCompras : IListaDeComprasRepositorio
+    +MediosPago : IMedioPagoRepositorio
+    +MediosPagoEntidad : IMedioPagoEntidadRepositorio
+    +Monedas : IMonedaRepositorio
+    +Movimientos : IMovimientoRepositorio
+    +Notificaciones : INotificacionRepositorio
+    +Permisos : IPermisoRepositorio
+    +Productos : IProductoRepositorio
+    +ProductoEmbeddings : IProductoEmbeddingRepositorio
+    +ComercioProductos : IComercioProductoRepositorio
+    +Promociones : IPromocionRepositorio
+    +PromocionComercio : IPromocionComercioRepositorio
+    +PromocionRubrosComercio : IPromocionRubroComercioRepositorio
+    +PromocionEntidadesFinancieras : IPromocionEntidadFinancieraRepositorio
+    +PromocionMediosPago : IPromocionMedioPagoRepositorio
+    +PromocionSegmentos : IPromocionSegmentoRepositorio
+    +PromocionProductos : IPromocionProductoRepositorio
+    +PromocionCategoriasProducto : IPromocionCategoriaProductoRepositorio
+    +RecordatoriosCompra : IRecordatorioCompraRepositorio
+    +RecordatoriosInversion : IRecordatorioInversionRepositorio
+    +RubrosComercio : IRubroComercioRepositorio
+    +ReglasCategorizacion : IReglaCategorizacionRepositorio
+    +ComercioReglaCategorizacion : IComercioReglaCategorizacionRepositorio
+    +ConsultasChatbot : IConsultaChatbotRepositorio
+    +TarjetasDashboard : ITarjetaDashboardRepositorio
+    +TasasConversion : ITasaConversionRepositorio
+    +EjecucionesActualizacionTasas : IEjecucionActualizacionTasasRepositorio
+    +Traducciones : ITraduccionRepositorio
+    +UsuarioHistorial : IUsuarioHistorialRepositorio
     +UsuarioPermisos : IUsuarioPermisoRepositorio
     +UsuarioPreferencias : IUsuarioPreferenciaRepositorio
-    +UsuarioHistorial : IUsuarioHistorialRepositorio
-    +Permisos : IPermisoRepositorio
-    +Idiomas : IIdiomaRepositorio
-    +Traducciones : ITraduccionRepositorio
-    +Bitacora : IBitacoraRepositorio
-    +Integridad : IIntegridadRepositorio
-    +Categorias : ICategoriaRepositorio
-    +Movimientos : IMovimientoRepositorio
+    +Usuarios : IUsuarioRepositorio
+    +ZonasUsuario : IZonaUsuarioRepositorio
+    +PerfilesInversor : IPerfilInversorRepositorio
+    +GeneracionNotificaciones : IGeneracionNotificacionesRepositorio
     +Save() : void
   }
-
-  class UnidadDeTrabajoFactory
-  class UnidadDeTrabajoSqlServer <<internal>>
-
-  interface IUsuarioRepositorio
-  interface IUsuarioPermisoRepositorio
-  interface IUsuarioPreferenciaRepositorio
-  interface IUsuarioHistorialRepositorio
-  interface IPermisoRepositorio
-  interface IIdiomaRepositorio
-  interface ITraduccionRepositorio
-  interface IBitacoraRepositorio
-  interface IIntegridadRepositorio
-  interface ICategoriaRepositorio
-  interface IMovimientoRepositorio
-  interface IBackupRepositorio
-
-  class UsuarioRepositorio
-  class UsuarioPermisoRepositorio
-  class UsuarioPreferenciaRepositorio
-  class UsuarioHistorialRepositorio
-  class PermisoRepositorio
-  class IdiomaRepositorio
-  class TraduccionRepositorio
-  class BitacoraRepositorio
-  class IntegridadRepositorio
-  class CategoriaRepositorio
-  class MovimientoRepositorio
-  class BackupRepositorio
+  'REPOSITORIO/IUnidadDeTrabajoFactory.cs
+  interface "IUnidadDeTrabajoFactory" as REPOSITORIO_IUnidadDeTrabajoFactory {
+    +Crear() : IUnidadDeTrabajo
+  }
+  'REPOSITORIO/UnidadDeTrabajoFactory.cs
+  class "UnidadDeTrabajoFactory" as REPOSITORIO_UnidadDeTrabajoFactory {
+    ~Crear() : IUnidadDeTrabajo
+  }
+  'REPOSITORIO/UnidadDeTrabajoSqlServer.cs
+  class "UnidadDeTrabajoSqlServer" as REPOSITORIO_UnidadDeTrabajoSqlServer {
+    ~PerfilesInversor : IPerfilInversorRepositorio
+    ~GeneracionNotificaciones : IGeneracionNotificacionesRepositorio
+    ~UnidadDeTrabajoSqlServer()
+    ~Bitacora : IBitacoraRepositorio
+    ~Categorias : ICategoriaRepositorio
+    ~CategoriasProducto : ICategoriaProductoRepositorio
+    ~Comercios : IComercioRepositorio
+    ~CuentasFinancieras : ICuentaFinancieraRepositorio
+    ~Dashboards : IDashboardRepositorio
+    ~EntidadesFinancieras : IEntidadFinancieraRepositorio
+    ~Idiomas : IIdiomaRepositorio
+    ~Integridad : IIntegridadRepositorio
+    ~ItemsLista : IItemListaRepositorio
+    ~ListasDeCompras : IListaDeComprasRepositorio
+    ~MediosPago : IMedioPagoRepositorio
+    ~MediosPagoEntidad : IMedioPagoEntidadRepositorio
+    ~Monedas : IMonedaRepositorio
+    ~Movimientos : IMovimientoRepositorio
+    ~Notificaciones : INotificacionRepositorio
+    ~Permisos : IPermisoRepositorio
+    ~Productos : IProductoRepositorio
+    ~ComercioProductos : IComercioProductoRepositorio
+    ~Promociones : IPromocionRepositorio
+    ~PromocionComercio : IPromocionComercioRepositorio
+    ~PromocionRubrosComercio : IPromocionRubroComercioRepositorio
+    ~PromocionEntidadesFinancieras : IPromocionEntidadFinancieraRepositorio
+    ~PromocionMediosPago : IPromocionMedioPagoRepositorio
+    ~PromocionSegmentos : IPromocionSegmentoRepositorio
+    ~PromocionProductos : IPromocionProductoRepositorio
+    ~PromocionCategoriasProducto : IPromocionCategoriaProductoRepositorio
+    ~RecordatoriosCompra : IRecordatorioCompraRepositorio
+    ~RecordatoriosInversion : IRecordatorioInversionRepositorio
+    ~RubrosComercio : IRubroComercioRepositorio
+    ~ReglasCategorizacion : IReglaCategorizacionRepositorio
+    ~ComercioReglaCategorizacion : IComercioReglaCategorizacionRepositorio
+    ~TarjetasDashboard : ITarjetaDashboardRepositorio
+    ~ConsultasChatbot : IConsultaChatbotRepositorio
+    ~TasasConversion : ITasaConversionRepositorio
+    ~EjecucionesActualizacionTasas : IEjecucionActualizacionTasasRepositorio
+    ~Traducciones : ITraduccionRepositorio
+    ~UsuarioHistorial : IUsuarioHistorialRepositorio
+    ~UsuarioPermisos : IUsuarioPermisoRepositorio
+    ~UsuarioPreferencias : IUsuarioPreferenciaRepositorio
+    ~Usuarios : IUsuarioRepositorio
+    ~ProductoEmbeddings : IProductoEmbeddingRepositorio
+    ~ZonasUsuario : IZonaUsuarioRepositorio
+    ~Save() : void
+  }
+}
+package "Monedas y tasas" as P5 {
+  'REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs
+  class "EjecucionActualizacionTasasRepositorio" as REPOSITORIO_EjecucionActualizacionTasasRepositorio {
+    ~EjecucionActualizacionTasasRepositorio()
+    ~EjecucionActualizacionTasasRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~InsertarYObtenerId(ejecucion : EjecucionActualizacionTasas) : int
+    ~InsertarDetalleYObtenerId(detalle : ActualizacionTasaDetalle) : int
+    ~ObtenerRecientes(cantidad : int) : List<EjecucionActualizacionTasas>
+    ~ObtenerDetallePorEjecucion(ejecucion : EjecucionActualizacionTasas) : List<ActualizacionTasaDetalle>
+    ~ObtenerUltimaExitosa() : EjecucionActualizacionTasas
+    ~ObtenerUltimaExitosaConBloqueo() : EjecucionActualizacionTasas
+    ~ContarRequestsDelMes(referencia : DateTime) : int
+  }
+  'REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs
+  interface "IEjecucionActualizacionTasasRepositorio" as REPOSITORIO_IEjecucionActualizacionTasasRepositorio {
+    +InsertarYObtenerId(ejecucion : EjecucionActualizacionTasas) : int
+    +InsertarDetalleYObtenerId(detalle : ActualizacionTasaDetalle) : int
+    +ObtenerRecientes(cantidad : int) : List<EjecucionActualizacionTasas>
+    +ObtenerDetallePorEjecucion(ejecucion : EjecucionActualizacionTasas) : List<ActualizacionTasaDetalle>
+    +ObtenerUltimaExitosa() : EjecucionActualizacionTasas
+    +ObtenerUltimaExitosaConBloqueo() : EjecucionActualizacionTasas
+    +ContarRequestsDelMes(referencia : DateTime) : int
+  }
+  'REPOSITORIO/IMonedaRepositorio.cs
+  interface "IMonedaRepositorio" as REPOSITORIO_IMonedaRepositorio {
+    +ObtenerPorId(id : int) : Moneda
+    +ObtenerTodas() : List<Moneda>
+    +InsertarYObtenerId(moneda : Moneda) : int
+    +Actualizar(moneda : Moneda) : bool
+    +Eliminar(moneda : Moneda) : bool
+  }
+  'REPOSITORIO/ITasaConversionRepositorio.cs
+  interface "ITasaConversionRepositorio" as REPOSITORIO_ITasaConversionRepositorio {
+    +ObtenerPorId(id : int) : TasaConversion
+    +ObtenerTodas() : List<TasaConversion>
+    +ObtenerPorParDeMonedas(monedaBase : Moneda, monedaConversion : Moneda) : TasaConversion
+    +InsertarYObtenerId(tasa : TasaConversion) : int
+    +Actualizar(tasa : TasaConversion) : bool
+    +ActualizarValorAutomatico(tasa : TasaConversion, calculoConversion : decimal) : bool
+    +MarcarManual(tasa : TasaConversion, usuario : Usuario) : bool
+    +Liberar(tasa : TasaConversion) : bool
+    +Eliminar(tasa : TasaConversion) : bool
+  }
+  'REPOSITORIO/MonedaRepositorio.cs
+  class "MonedaRepositorio" as REPOSITORIO_MonedaRepositorio {
+    ~MonedaRepositorio()
+    ~MonedaRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Moneda
+    ~ObtenerTodas() : List<Moneda>
+    ~InsertarYObtenerId(moneda : Moneda) : int
+    ~Actualizar(moneda : Moneda) : bool
+    ~Eliminar(moneda : Moneda) : bool
+  }
+  'REPOSITORIO/TasaConversionRepositorio.cs
+  class "TasaConversionRepositorio" as REPOSITORIO_TasaConversionRepositorio {
+    ~TasaConversionRepositorio()
+    ~TasaConversionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : TasaConversion
+    ~ObtenerTodas() : List<TasaConversion>
+    ~ObtenerPorParDeMonedas(monedaBase : Moneda, monedaConversion : Moneda) : TasaConversion
+    ~InsertarYObtenerId(tasa : TasaConversion) : int
+    ~Actualizar(tasa : TasaConversion) : bool
+    ~ActualizarValorAutomatico(tasa : TasaConversion, calculoConversion : decimal) : bool
+    ~MarcarManual(tasa : TasaConversion, usuario : Usuario) : bool
+    ~Liberar(tasa : TasaConversion) : bool
+    ~Eliminar(tasa : TasaConversion) : bool
+  }
+}
+package "Notificaciones" as P6 {
+  'REPOSITORIO/INotificacionRepositorio.cs
+  interface "INotificacionRepositorio" as REPOSITORIO_INotificacionRepositorio {
+    +ObtenerPaginaPersonal(usuario : Usuario, filtro : FiltroNotificacion, pagina : int) : PaginaNotificaciones
+    +ContarNoLeidas(usuario : Usuario) : int
+    +ObtenerPersonal(notificacion : Notificacion, usuario : Usuario) : Notificacion
+    +MarcarPersonalLeida(notificacion : Notificacion, usuario : Usuario) : bool
+    +ObtenerPorId(id : int) : Notificacion
+    +ObtenerPorUsuario(usuario : Usuario) : List<Notificacion>
+    +ObtenerTodas() : List<Notificacion>
+    +InsertarYObtenerId(notificacion : Notificacion) : int
+    +Actualizar(notificacion : Notificacion) : bool
+    +Eliminar(notificacion : Notificacion) : bool
+    +ContarPorPromocion(promocion : Promocion) : int
+    +ObtenerFechaUltimaAutomaticaInversionUtc(usuario : Usuario) : DateTime?
+    +BloquearUsuarioParaEntrega(usuario : Usuario) : bool
+    +ExisteAutomatica(usuario : Usuario, tipo : TipoNotificacionAutomatica, jornada : DateTime) : bool
+  }
+  'REPOSITORIO/IRecordatorioCompraRepositorio.cs
+  interface "IRecordatorioCompraRepositorio" as REPOSITORIO_IRecordatorioCompraRepositorio {
+    +ObtenerPorId(id : int) : RecordatorioCompra
+    +ObtenerPorUsuario(usuario : Usuario) : List<RecordatorioCompra>
+    +ObtenerTodas() : List<RecordatorioCompra>
+    +InsertarYObtenerId(recordatorio : RecordatorioCompra) : int
+    +Actualizar(recordatorio : RecordatorioCompra) : bool
+    +Eliminar(recordatorio : RecordatorioCompra) : bool
+  }
+  'REPOSITORIO/IRecordatorioInversionRepositorio.cs
+  interface "IRecordatorioInversionRepositorio" as REPOSITORIO_IRecordatorioInversionRepositorio {
+    +ObtenerPorId(id : int) : RecordatorioInversion
+    +ObtenerPorUsuario(usuario : Usuario) : List<RecordatorioInversion>
+    +ObtenerTodas() : List<RecordatorioInversion>
+    +InsertarYObtenerId(recordatorio : RecordatorioInversion) : int
+    +Actualizar(recordatorio : RecordatorioInversion) : bool
+    +Eliminar(recordatorio : RecordatorioInversion) : bool
+  }
+  'REPOSITORIO/NotificacionRepositorio.cs
+  class "NotificacionRepositorio" as REPOSITORIO_NotificacionRepositorio {
+    ~ObtenerPersonal(recibida : Notificacion, usuario : Usuario) : Notificacion
+    ~MarcarPersonalLeida(notificacion : Notificacion, usuario : Usuario) : bool
+    ~ObtenerPaginaPersonal(usuario : Usuario, filtro : FiltroNotificacion, pagina : int) : PaginaNotificaciones
+    ~ContarNoLeidas(usuario : Usuario) : int
+    ~ObtenerFechaUltimaAutomaticaInversionUtc(usuario : Usuario) : DateTime?
+    ~BloquearUsuarioParaEntrega(usuario : Usuario) : bool
+    ~ExisteAutomatica(usuario : Usuario, tipo : TipoNotificacionAutomatica, jornada : DateTime) : bool
+    ~NotificacionRepositorio()
+    ~NotificacionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Notificacion
+    ~ObtenerPorUsuario(usuario : Usuario) : List<Notificacion>
+    ~ObtenerTodas() : List<Notificacion>
+    ~InsertarYObtenerId(notificacion : Notificacion) : int
+    ~Actualizar(notificacion : Notificacion) : bool
+    ~Eliminar(notificacion : Notificacion) : bool
+    ~ContarPorPromocion(promocion : Promocion) : int
+  }
+  'REPOSITORIO/RecordatorioCompraRepositorio.cs
+  class "RecordatorioCompraRepositorio" as REPOSITORIO_RecordatorioCompraRepositorio {
+    ~RecordatorioCompraRepositorio()
+    ~RecordatorioCompraRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : RecordatorioCompra
+    ~ObtenerPorUsuario(usuario : Usuario) : List<RecordatorioCompra>
+    ~ObtenerTodas() : List<RecordatorioCompra>
+    ~InsertarYObtenerId(recordatorio : RecordatorioCompra) : int
+    ~Actualizar(recordatorio : RecordatorioCompra) : bool
+    ~Eliminar(recordatorio : RecordatorioCompra) : bool
+  }
+  'REPOSITORIO/RecordatorioInversionRepositorio.cs
+  class "RecordatorioInversionRepositorio" as REPOSITORIO_RecordatorioInversionRepositorio {
+    ~RecordatorioInversionRepositorio()
+    ~RecordatorioInversionRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : RecordatorioInversion
+    ~ObtenerPorUsuario(usuario : Usuario) : List<RecordatorioInversion>
+    ~ObtenerTodas() : List<RecordatorioInversion>
+    ~InsertarYObtenerId(recordatorio : RecordatorioInversion) : int
+    ~Actualizar(recordatorio : RecordatorioInversion) : bool
+    ~Eliminar(recordatorio : RecordatorioInversion) : bool
+  }
+}
+package "Perfil inversor" as P7 {
+  'REPOSITORIO/IPerfilInversorRepositorio.cs
+  interface "IPerfilInversorRepositorio" as REPOSITORIO_IPerfilInversorRepositorio {
+    +ObtenerPorUsuario(usuario : Usuario) : PerfilInversor
+    +Guardar(perfil : PerfilInversor) : void
+  }
+  'REPOSITORIO/PerfilInversorRepositorio.cs
+  class "PerfilInversorRepositorio" as REPOSITORIO_PerfilInversorRepositorio {
+    ~PerfilInversorRepositorio()
+    ~PerfilInversorRepositorio(acceso : AccesoDatosSqlServer)
+    ~ObtenerPorUsuario(usuario : Usuario) : PerfilInversor
+    ~Guardar(perfil : PerfilInversor) : void
+  }
+}
+package "Ubicacion y zonas" as P8 {
+  'REPOSITORIO/IZonaUsuarioRepositorio.cs
+  interface "IZonaUsuarioRepositorio" as REPOSITORIO_IZonaUsuarioRepositorio {
+    +ObtenerPorId(id : int) : ZonaUsuario
+    +ObtenerPorUsuario(usuario : Usuario) : List<ZonaUsuario>
+    +InsertarYObtenerId(zona : ZonaUsuario) : int
+    +Eliminar(zona : ZonaUsuario) : bool
+  }
+  'REPOSITORIO/ZonaUsuarioRepositorio.cs
+  class "ZonaUsuarioRepositorio" as REPOSITORIO_ZonaUsuarioRepositorio {
+    ~ZonaUsuarioRepositorio()
+    ~ZonaUsuarioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : ZonaUsuario
+    ~ObtenerPorUsuario(usuario : Usuario) : List<ZonaUsuario>
+    ~InsertarYObtenerId(zona : ZonaUsuario) : int
+    ~Eliminar(zona : ZonaUsuario) : bool
+  }
+}
+package "Usuarios y auditoria" as P9 {
+  'REPOSITORIO/BackupRepositorio.cs
+  class "BackupRepositorio" as REPOSITORIO_BackupRepositorio {
+    ~BackupRepositorio()
+    ~CrearBackup(rutaArchivo : string) : void
+    ~RestaurarBackup(rutaArchivo : string) : void
+  }
+  'REPOSITORIO/BitacoraRepositorio.cs
+  class "BitacoraRepositorio" as REPOSITORIO_BitacoraRepositorio {
+    ~BitacoraRepositorio()
+    ~BitacoraRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~Guardar(evento : EventoBitacora) : int
+    ~Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+  'REPOSITORIO/IBackupRepositorio.cs
+  interface "IBackupRepositorio" as REPOSITORIO_IBackupRepositorio {
+    +CrearBackup(rutaArchivo : string) : void
+    +RestaurarBackup(rutaArchivo : string) : void
+  }
+  'REPOSITORIO/IBitacoraRepositorio.cs
+  interface "IBitacoraRepositorio" as REPOSITORIO_IBitacoraRepositorio {
+    +Guardar(evento : EventoBitacora) : int
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+  'REPOSITORIO/IIntegridadRepositorio.cs
+  interface "IIntegridadRepositorio" as REPOSITORIO_IIntegridadRepositorio {
+    +ObtenerDVV(nombreTabla : string) : string
+    +GuardarDVV(nombreTabla : string, valor : string) : void
+  }
+  'REPOSITORIO/IPermisoRepositorio.cs
+  interface "IPermisoRepositorio" as REPOSITORIO_IPermisoRepositorio {
+    +ObtenerNodos() : List<IPermiso>
+    +ObtenerRelaciones() : List<Tuple<int, int>>
+    +Guardar(permiso : IPermiso) : int
+    +ReemplazarRelaciones(relaciones : List<Tuple<int, int>>) : bool
+    +EliminarPermisos(permisos : List<IPermiso>) : bool
+    +ObtenerPorNombre(nombre : string) : IPermiso
+  }
+  'REPOSITORIO/IUsuarioHistorialRepositorio.cs
+  interface "IUsuarioHistorialRepositorio" as REPOSITORIO_IUsuarioHistorialRepositorio {
+    +GuardarVersion(snapshot : UsuarioHistorialSnapshot) : int
+    +ObtenerVersiones(usuario : IUsuarioAutenticado) : List<UsuarioHistorialSnapshot>
+    +ObtenerPorId(id : int) : UsuarioHistorialSnapshot
+  }
+  'REPOSITORIO/IUsuarioPermisoRepositorio.cs
+  interface "IUsuarioPermisoRepositorio" as REPOSITORIO_IUsuarioPermisoRepositorio {
+    +ObtenerPermisosPorUsuario(usuario : Usuario) : List<IPermiso>
+    +ReemplazarPermisosUsuario(usuario : Usuario, permisos : List<IPermiso>) : bool
+  }
+  'REPOSITORIO/IUsuarioPreferenciaRepositorio.cs
+  interface "IUsuarioPreferenciaRepositorio" as REPOSITORIO_IUsuarioPreferenciaRepositorio {
+    +ObtenerPorUsuario(usuario : IUsuarioAutenticado) : UsuarioPreferencia
+    +Guardar(preferencia : UsuarioPreferencia) : bool
+    +Guardar(usuario : IUsuarioAutenticado, idioma : IIdioma) : bool
+  }
+  'REPOSITORIO/IUsuarioRepositorio.cs
+  interface "IUsuarioRepositorio" as REPOSITORIO_IUsuarioRepositorio {
+    +ObtenerPorId(id : int) : Usuario
+    +ObtenerPorUsername(username : string) : Usuario
+    +InsertarYObtenerId(usuario : Usuario) : int
+    +Actualizar(usuario : Usuario) : bool
+    +ActualizarDVH(usuario : Usuario, dvh : string) : bool
+    +ActualizarEstadoBloqueo(usuario : Usuario, intentosFallidos : int, bloqueado : bool, bloqueadoHasta :\nDateTime?, dvh : string) : bool
+    +GuardarEstadoCompleto(usuario : Usuario) : bool
+    +EliminarFisicamente(usuario : Usuario) : bool
+    +ObtenerTodos() : List<Usuario>
+    +ObtenerActivosDespuesDe(ultimo : Usuario, cantidad : int) : List<Usuario>
+  }
+  'REPOSITORIO/IntegridadRepositorio.cs
+  class "IntegridadRepositorio" as REPOSITORIO_IntegridadRepositorio {
+    ~IntegridadRepositorio()
+    ~IntegridadRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerDVV(nombreTabla : string) : string
+    ~GuardarDVV(nombreTabla : string, valor : string) : void
+  }
+  'REPOSITORIO/PermisoRepositorio.cs
+  class "PermisoRepositorio" as REPOSITORIO_PermisoRepositorio {
+    ~PermisoRepositorio()
+    ~PermisoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerNodos() : List<IPermiso>
+    ~ObtenerRelaciones() : List<Tuple<int, int>>
+    ~Guardar(permiso : IPermiso) : int
+    ~ReemplazarRelaciones(relaciones : List<Tuple<int, int>>) : bool
+    ~EliminarPermisos(permisos : List<IPermiso>) : bool
+    ~ObtenerPorNombre(nombre : string) : IPermiso
+  }
+  'REPOSITORIO/UsuarioHistorialRepositorio.cs
+  class "UsuarioHistorialRepositorio" as REPOSITORIO_UsuarioHistorialRepositorio {
+    ~UsuarioHistorialRepositorio()
+    ~UsuarioHistorialRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~GuardarVersion(snapshot : UsuarioHistorialSnapshot) : int
+    ~ObtenerVersiones(usuario : IUsuarioAutenticado) : List<UsuarioHistorialSnapshot>
+    ~ObtenerPorId(id : int) : UsuarioHistorialSnapshot
+  }
+  'REPOSITORIO/UsuarioPermisoRepositorio.cs
+  class "UsuarioPermisoRepositorio" as REPOSITORIO_UsuarioPermisoRepositorio {
+    ~UsuarioPermisoRepositorio()
+    ~UsuarioPermisoRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPermisosPorUsuario(usuario : Usuario) : List<IPermiso>
+    ~ReemplazarPermisosUsuario(usuario : Usuario, permisos : List<IPermiso>) : bool
+  }
+  'REPOSITORIO/UsuarioPreferenciaRepositorio.cs
+  class "UsuarioPreferenciaRepositorio" as REPOSITORIO_UsuarioPreferenciaRepositorio {
+    ~UsuarioPreferenciaRepositorio()
+    ~UsuarioPreferenciaRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorUsuario(usuario : IUsuarioAutenticado) : UsuarioPreferencia
+    ~Guardar(preferencia : UsuarioPreferencia) : bool
+    ~Guardar(usuario : IUsuarioAutenticado, idioma : IIdioma) : bool
+  }
+  'REPOSITORIO/UsuarioRepositorio.cs
+  class "UsuarioRepositorio" as REPOSITORIO_UsuarioRepositorio {
+    ~UsuarioRepositorio()
+    ~UsuarioRepositorio(accesoDatos : AccesoDatosSqlServer)
+    ~ObtenerPorId(id : int) : Usuario
+    ~ObtenerPorUsername(username : string) : Usuario
+    ~InsertarYObtenerId(usuario : Usuario) : int
+    ~Actualizar(usuario : Usuario) : bool
+    ~ActualizarDVH(usuario : Usuario, dvh : string) : bool
+    ~ActualizarEstadoBloqueo(usuario : Usuario, intentosFallidos : int, bloqueado : bool, bloqueadoHasta :\nDateTime?, dvh : string) : bool
+    ~GuardarEstadoCompleto(usuario : Usuario) : bool
+    ~EliminarFisicamente(usuario : Usuario) : bool
+    ~ObtenerTodos() : List<Usuario>
+    ~ObtenerActivosDespuesDe(ultimo : Usuario, cantidad : int) : List<Usuario>
+  }
 }
 
-UnidadDeTrabajoFactory ..|> IUnidadDeTrabajoFactory
-UnidadDeTrabajoFactory ..> UnidadDeTrabajoSqlServer : <<creates>>
-UnidadDeTrabajoSqlServer ..|> IUnidadDeTrabajo
-IUnidadDeTrabajo o--> IUsuarioRepositorio
-IUnidadDeTrabajo o--> IPermisoRepositorio
-IUnidadDeTrabajo o--> IIdiomaRepositorio
-IUnidadDeTrabajo o--> IBitacoraRepositorio
-IUnidadDeTrabajo o--> IIntegridadRepositorio
-IUnidadDeTrabajo o--> ICategoriaRepositorio
-IUnidadDeTrabajo o--> IMovimientoRepositorio
+REPOSITORIO_BackupRepositorio ..|> REPOSITORIO_IBackupRepositorio
+REPOSITORIO_BitacoraRepositorio ..|> REPOSITORIO_IBitacoraRepositorio
+REPOSITORIO_CategoriaProductoRepositorio ..|> REPOSITORIO_ICategoriaProductoRepositorio
+REPOSITORIO_CategoriaRepositorio ..|> REPOSITORIO_ICategoriaRepositorio
+REPOSITORIO_ChatbotFinancieroRepositorio ..|> REPOSITORIO_IChatbotFinancieroRepositorio
+REPOSITORIO_ComercioProductoRepositorio ..|> REPOSITORIO_IComercioProductoRepositorio
+REPOSITORIO_ComercioReglaCategorizacionRepositorio ..|> REPOSITORIO_IComercioReglaCategorizacionRepositorio
+REPOSITORIO_ComercioRepositorio ..|> REPOSITORIO_IComercioRepositorio
+REPOSITORIO_ConsultaChatbotRepositorio ..|> REPOSITORIO_IConsultaChatbotRepositorio
+REPOSITORIO_CuentaFinancieraRepositorio ..|> REPOSITORIO_ICuentaFinancieraRepositorio
+REPOSITORIO_DashboardRepositorio ..|> REPOSITORIO_IDashboardRepositorio
+REPOSITORIO_EjecucionActualizacionTasasRepositorio ..|> REPOSITORIO_IEjecucionActualizacionTasasRepositorio
+REPOSITORIO_EntidadFinancieraRepositorio ..|> REPOSITORIO_IEntidadFinancieraRepositorio
+REPOSITORIO_GeneracionNotificacionesRepositorio ..|> REPOSITORIO_IGeneracionNotificacionesRepositorio
+REPOSITORIO_IUnidadDeTrabajo --> "*" REPOSITORIO_IItemListaRepositorio : ItemsLista
+REPOSITORIO_IUnidadDeTrabajo --> "*" REPOSITORIO_IListaDeComprasRepositorio : ListasDeCompras
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IBitacoraRepositorio : Bitacora
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ICategoriaProductoRepositorio : CategoriasProducto
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ICategoriaRepositorio : Categorias
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IComercioProductoRepositorio : ComercioProductos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IComercioReglaCategorizacionRepositorio : ComercioReglaCategorizacion
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IComercioRepositorio : Comercios
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IConsultaChatbotRepositorio : ConsultasChatbot
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ICuentaFinancieraRepositorio : CuentasFinancieras
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IDashboardRepositorio : Dashboards
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IEjecucionActualizacionTasasRepositorio : EjecucionesActualizacionTasas
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IEntidadFinancieraRepositorio : EntidadesFinancieras
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IGeneracionNotificacionesRepositorio : GeneracionNotificaciones
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IIdiomaRepositorio : Idiomas
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IIntegridadRepositorio : Integridad
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IMedioPagoEntidadRepositorio : MediosPagoEntidad
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IMedioPagoRepositorio : MediosPago
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IMonedaRepositorio : Monedas
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IMovimientoRepositorio : Movimientos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_INotificacionRepositorio : Notificaciones
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPerfilInversorRepositorio : PerfilesInversor
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPermisoRepositorio : Permisos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IProductoEmbeddingRepositorio : ProductoEmbeddings
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IProductoRepositorio : Productos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionCategoriaProductoRepositorio : PromocionCategoriasProducto
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionComercioRepositorio : PromocionComercio
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionEntidadFinancieraRepositorio : PromocionEntidadesFinancieras
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionMedioPagoRepositorio : PromocionMediosPago
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionProductoRepositorio : PromocionProductos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionRepositorio : Promociones
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionRubroComercioRepositorio : PromocionRubrosComercio
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IPromocionSegmentoRepositorio : PromocionSegmentos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IRecordatorioCompraRepositorio : RecordatoriosCompra
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IRecordatorioInversionRepositorio : RecordatoriosInversion
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IReglaCategorizacionRepositorio : ReglasCategorizacion
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IRubroComercioRepositorio : RubrosComercio
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ITarjetaDashboardRepositorio : TarjetasDashboard
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ITasaConversionRepositorio : TasasConversion
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_ITraduccionRepositorio : Traducciones
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IUsuarioHistorialRepositorio : UsuarioHistorial
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IUsuarioPermisoRepositorio : UsuarioPermisos
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IUsuarioPreferenciaRepositorio : UsuarioPreferencias
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IUsuarioRepositorio : Usuarios
+REPOSITORIO_IUnidadDeTrabajo --> REPOSITORIO_IZonaUsuarioRepositorio : ZonasUsuario
+REPOSITORIO_IdiomaRepositorio ..|> REPOSITORIO_IIdiomaRepositorio
+REPOSITORIO_IntegridadRepositorio ..|> REPOSITORIO_IIntegridadRepositorio
+REPOSITORIO_ItemListaRepositorio ..|> REPOSITORIO_IItemListaRepositorio
+REPOSITORIO_ListaDeComprasRepositorio ..|> REPOSITORIO_IListaDeComprasRepositorio
+REPOSITORIO_MedioPagoEntidadRepositorio ..|> REPOSITORIO_IMedioPagoEntidadRepositorio
+REPOSITORIO_MedioPagoRepositorio ..|> REPOSITORIO_IMedioPagoRepositorio
+REPOSITORIO_MonedaRepositorio ..|> REPOSITORIO_IMonedaRepositorio
+REPOSITORIO_MovimientoRepositorio ..|> REPOSITORIO_IMovimientoRepositorio
+REPOSITORIO_NotificacionRepositorio ..|> REPOSITORIO_INotificacionRepositorio
+REPOSITORIO_PerfilInversorRepositorio ..|> REPOSITORIO_IPerfilInversorRepositorio
+REPOSITORIO_PermisoRepositorio ..|> REPOSITORIO_IPermisoRepositorio
+REPOSITORIO_ProductoEmbeddingRepositorio ..|> REPOSITORIO_IProductoEmbeddingRepositorio
+REPOSITORIO_ProductoRepositorio ..|> REPOSITORIO_IProductoRepositorio
+REPOSITORIO_PromocionCategoriaProductoRepositorio ..|> REPOSITORIO_IPromocionCategoriaProductoRepositorio
+REPOSITORIO_PromocionComercioRepositorio ..|> REPOSITORIO_IPromocionComercioRepositorio
+REPOSITORIO_PromocionEntidadFinancieraRepositorio ..|> REPOSITORIO_IPromocionEntidadFinancieraRepositorio
+REPOSITORIO_PromocionMedioPagoRepositorio ..|> REPOSITORIO_IPromocionMedioPagoRepositorio
+REPOSITORIO_PromocionProductoRepositorio ..|> REPOSITORIO_IPromocionProductoRepositorio
+REPOSITORIO_PromocionRepositorio ..|> REPOSITORIO_IPromocionRepositorio
+REPOSITORIO_PromocionRubroComercioRepositorio ..|> REPOSITORIO_IPromocionRubroComercioRepositorio
+REPOSITORIO_PromocionSegmentoRepositorio ..|> REPOSITORIO_IPromocionSegmentoRepositorio
+REPOSITORIO_RecomendacionComprasRepositorio ..|> REPOSITORIO_IRecomendacionComprasRepositorio
+REPOSITORIO_RecordatorioCompraRepositorio ..|> REPOSITORIO_IRecordatorioCompraRepositorio
+REPOSITORIO_RecordatorioInversionRepositorio ..|> REPOSITORIO_IRecordatorioInversionRepositorio
+REPOSITORIO_ReglaCategorizacionRepositorio ..|> REPOSITORIO_IReglaCategorizacionRepositorio
+REPOSITORIO_RubroComercioRepositorio ..|> REPOSITORIO_IRubroComercioRepositorio
+REPOSITORIO_TarjetaDashboardRepositorio ..|> REPOSITORIO_ITarjetaDashboardRepositorio
+REPOSITORIO_TasaConversionRepositorio ..|> REPOSITORIO_ITasaConversionRepositorio
+REPOSITORIO_TraduccionRepositorio --> REPOSITORIO_IdiomaRepositorio : _idiomaRepositorio
+REPOSITORIO_TraduccionRepositorio ..|> REPOSITORIO_ITraduccionRepositorio
+REPOSITORIO_UnidadDeTrabajoFactory ..|> REPOSITORIO_IUnidadDeTrabajoFactory
+REPOSITORIO_UnidadDeTrabajoSqlServer --> "*" REPOSITORIO_IItemListaRepositorio : ItemsLista
+REPOSITORIO_UnidadDeTrabajoSqlServer --> "*" REPOSITORIO_IItemListaRepositorio : _itemsLista
+REPOSITORIO_UnidadDeTrabajoSqlServer --> "*" REPOSITORIO_IListaDeComprasRepositorio : ListasDeCompras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> "*" REPOSITORIO_IListaDeComprasRepositorio : _listasDeCompras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IBitacoraRepositorio : Bitacora
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IBitacoraRepositorio : _bitacora
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICategoriaProductoRepositorio : CategoriasProducto
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICategoriaProductoRepositorio : _categoriasProducto
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICategoriaRepositorio : Categorias
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICategoriaRepositorio : _categorias
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioProductoRepositorio : ComercioProductos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioProductoRepositorio : _comercioProductos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioReglaCategorizacionRepositorio : ComercioReglaCategorizacion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioReglaCategorizacionRepositorio : _comercioReglaCategorizacion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioRepositorio : Comercios
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IComercioRepositorio : _comercios
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IConsultaChatbotRepositorio : ConsultasChatbot
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IConsultaChatbotRepositorio : _consultasChatbot
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICuentaFinancieraRepositorio : CuentasFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ICuentaFinancieraRepositorio : _cuentasFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IDashboardRepositorio : Dashboards
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IDashboardRepositorio : _dashboards
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IEjecucionActualizacionTasasRepositorio : EjecucionesActualizacionTasas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IEjecucionActualizacionTasasRepositorio : _ejecucionesActualizacionTasas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IEntidadFinancieraRepositorio : EntidadesFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IEntidadFinancieraRepositorio : _entidadesFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IGeneracionNotificacionesRepositorio : GeneracionNotificaciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IGeneracionNotificacionesRepositorio : _generacionNotificaciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IIdiomaRepositorio : Idiomas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IIdiomaRepositorio : _idiomas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IIntegridadRepositorio : Integridad
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IIntegridadRepositorio : _integridad
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMedioPagoEntidadRepositorio : MediosPagoEntidad
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMedioPagoEntidadRepositorio : _mediosPagoEntidad
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMedioPagoRepositorio : MediosPago
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMedioPagoRepositorio : _mediosPago
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMonedaRepositorio : Monedas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMonedaRepositorio : _monedas
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMovimientoRepositorio : Movimientos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IMovimientoRepositorio : _movimientos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_INotificacionRepositorio : Notificaciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_INotificacionRepositorio : _notificaciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPerfilInversorRepositorio : PerfilesInversor
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPerfilInversorRepositorio : _perfilesInversor
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPermisoRepositorio : Permisos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPermisoRepositorio : _permisos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IProductoEmbeddingRepositorio : ProductoEmbeddings
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IProductoEmbeddingRepositorio : _productoEmbeddings
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IProductoRepositorio : Productos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IProductoRepositorio : _productos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionCategoriaProductoRepositorio : PromocionCategoriasProducto
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionCategoriaProductoRepositorio : _promocionCategoriasProducto
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionComercioRepositorio : PromocionComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionComercioRepositorio : _promocionComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionEntidadFinancieraRepositorio : PromocionEntidadesFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionEntidadFinancieraRepositorio : _promocionEntidadesFinancieras
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionMedioPagoRepositorio : PromocionMediosPago
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionMedioPagoRepositorio : _promocionMediosPago
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionProductoRepositorio : PromocionProductos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionProductoRepositorio : _promocionProductos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionRepositorio : Promociones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionRepositorio : _promociones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionRubroComercioRepositorio : PromocionRubrosComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionRubroComercioRepositorio : _promocionRubrosComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionSegmentoRepositorio : PromocionSegmentos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IPromocionSegmentoRepositorio : _promocionSegmentos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRecordatorioCompraRepositorio : RecordatoriosCompra
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRecordatorioCompraRepositorio : _recordatoriosCompra
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRecordatorioInversionRepositorio : RecordatoriosInversion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRecordatorioInversionRepositorio : _recordatoriosInversion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IReglaCategorizacionRepositorio : ReglasCategorizacion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IReglaCategorizacionRepositorio : _reglasCategorizacion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRubroComercioRepositorio : RubrosComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IRubroComercioRepositorio : _rubrosComercio
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITarjetaDashboardRepositorio : TarjetasDashboard
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITarjetaDashboardRepositorio : _tarjetasDashboard
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITasaConversionRepositorio : TasasConversion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITasaConversionRepositorio : _tasasConversion
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITraduccionRepositorio : Traducciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_ITraduccionRepositorio : _traducciones
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioHistorialRepositorio : UsuarioHistorial
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioHistorialRepositorio : _usuarioHistorial
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioPermisoRepositorio : UsuarioPermisos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioPermisoRepositorio : _usuarioPermisos
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioPreferenciaRepositorio : UsuarioPreferencias
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioPreferenciaRepositorio : _usuarioPreferencias
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioRepositorio : Usuarios
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IUsuarioRepositorio : _usuarios
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IZonaUsuarioRepositorio : ZonasUsuario
+REPOSITORIO_UnidadDeTrabajoSqlServer --> REPOSITORIO_IZonaUsuarioRepositorio : _zonasUsuario
+REPOSITORIO_UnidadDeTrabajoSqlServer ..|> REPOSITORIO_IUnidadDeTrabajo
+REPOSITORIO_UsuarioHistorialRepositorio ..|> REPOSITORIO_IUsuarioHistorialRepositorio
+REPOSITORIO_UsuarioPermisoRepositorio ..|> REPOSITORIO_IUsuarioPermisoRepositorio
+REPOSITORIO_UsuarioPreferenciaRepositorio ..|> REPOSITORIO_IUsuarioPreferenciaRepositorio
+REPOSITORIO_UsuarioRepositorio ..|> REPOSITORIO_IUsuarioRepositorio
+REPOSITORIO_ZonaUsuarioRepositorio ..|> REPOSITORIO_IZonaUsuarioRepositorio
 
-UsuarioRepositorio ..|> IUsuarioRepositorio
-UsuarioPermisoRepositorio ..|> IUsuarioPermisoRepositorio
-UsuarioPreferenciaRepositorio ..|> IUsuarioPreferenciaRepositorio
-UsuarioHistorialRepositorio ..|> IUsuarioHistorialRepositorio
-PermisoRepositorio ..|> IPermisoRepositorio
-IdiomaRepositorio ..|> IIdiomaRepositorio
-TraduccionRepositorio ..|> ITraduccionRepositorio
-BitacoraRepositorio ..|> IBitacoraRepositorio
-IntegridadRepositorio ..|> IIntegridadRepositorio
-CategoriaRepositorio ..|> ICategoriaRepositorio
-MovimientoRepositorio ..|> IMovimientoRepositorio
-BackupRepositorio ..|> IBackupRepositorio
-
-
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
+P7 -[hidden]right-> P8
+P5 -[hidden]down-> P8
+P6 -[hidden]down-> P9
 @enduml

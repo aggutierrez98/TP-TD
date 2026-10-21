@@ -41,14 +41,14 @@ namespace REPOSITORIO
             return _permisoDAL.ReemplazarRelaciones(relaciones, _accesoDatos);
         }
 
-        public bool EliminarPermisos(List<int> idsPermiso)
+        public bool EliminarPermisos(List<IPermiso> permisos)
         {
-            return _permisoDAL.EliminarPermisos(idsPermiso, _accesoDatos);
+            return _permisoDAL.EliminarPermisos(permisos, _accesoDatos);
         }
 
-        public int ObtenerIdPorNombre(string nombre)
+        public IPermiso ObtenerPorNombre(string nombre)
         {
-            return _permisoDAL.ObtenerIdPorNombre(nombre, _accesoDatos);
+            return _permisoDAL.ObtenerPorNombre(nombre, _accesoDatos);
         }
     }
 }

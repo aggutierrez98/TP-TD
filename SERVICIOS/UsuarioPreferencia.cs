@@ -4,8 +4,8 @@ namespace SERVICIOS
 {
     public class UsuarioPreferencia : IUsuarioPreferencia
     {
-        public int UsuarioId { get; set; }
+        public IUsuarioAutenticado Usuario { get; set; }
 
-        public int IdiomaId { get; set; }
+        public IIdioma Idioma { get; set; }
     }
 }

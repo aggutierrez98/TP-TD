@@ -27,10 +27,10 @@ namespace TpIDS
         private string ultimaDescripcionSugerida;
         private int? ultimoComercioIdSugerido;
         private bool evaluandoSugerencia;
-        private readonly HashSet<int> movimientosMarcados = new HashSet<int>();
+        private readonly HashSet<Movimiento> movimientosMarcados = new HashSet<Movimiento>();
         private FiltroMovimiento filtroAplicado;
         private string categoriaAplicada;
-        private int usuarioConsulta;
+        private Usuario usuarioConsulta;
         private bool cambiandoMarcas;
         private bool exportandoPdf;
         private bool seleccionHabilitadaAntesEscaneo;
@@ -52,10 +52,11 @@ namespace TpIDS
             RefrescarDatos();
         }
 
-        // View-model plano para la grilla.
+        // View-model plano para la grilla. La grilla no autogenera columnas, asi que
+        // Movimiento (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaMovimiento
         {
-            public int Id { get; set; }
+            public Movimiento Movimiento { get; set; }
             public DateTime Fecha { get; set; }
             public string Tipo { get; set; }
             public string Categoria { get; set; }
@@ -85,8 +86,7 @@ namespace TpIDS
         {
             cargandoCategorias = true;
 
-            int usuarioActualId = sesion.GetUsuarioActualId().Value;
-            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuario(usuarioActualId);
+            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuarioActual();
 
             cmbCategoriaFiltro.DataSource = null;
             cmbCategoriaFiltro.DisplayMember = "Nombre";
@@ -120,26 +120,26 @@ namespace TpIDS
         {
             try
             {
-                int usuarioActualId = sesion.GetUsuarioActualId().Value;
+                Usuario usuarioActual = sesion.GetUsuarioActual() as Usuario;
 
                 FiltroMovimiento filtro = new FiltroMovimiento
                 {
                     FechaDesde = chkbFechaDesdeMovimientos.Checked ? (DateTime?)dtpFechaDesdeMovimientos.Value.Date : null,
                     FechaHasta = chkbFechaHastaMovimientos.Checked ? (DateTime?)dtpFechaHastaMovimientos.Value.Date : null,
-                    CategoriaId = ObtenerCategoriaFiltroSeleccionada(),
+                    Categoria = ObtenerCategoriaFiltroSeleccionada(),
                     Tipo = ObtenerTipoSeleccionado(cmbTipoFiltro),
                     Texto = string.IsNullOrWhiteSpace(txtbDescripcionFiltro.Text) ? null : txtbDescripcionFiltro.Text.Trim()
                 };
 
-                List<Movimiento> movimientos = movimientoBLL.ObtenerPorUsuario(usuarioActualId, filtro);
+                List<Movimiento> movimientos = movimientoBLL.ObtenerParaUsuarioActual(filtro);
                 Dictionary<int, string> nombresCategoria = categoriaBLL
-                    .ObtenerVisiblesParaUsuario(usuarioActualId)
+                    .ObtenerVisiblesParaUsuarioActual()
                     .ToDictionary(item => item.Id, item => item.Nombre);
 
                 var filas = movimientos
                     .Select(item => new FilaMovimiento
                     {
-                        Id = item.Id,
+                        Movimiento = item,
                         Fecha = item.Fecha,
                         Tipo = item.Tipo.ToString(),
                         Categoria = nombresCategoria.ContainsKey(item.Categoria.Id) ? nombresCategoria[item.Categoria.Id] : string.Empty,
@@ -159,9 +159,9 @@ namespace TpIDS
                     foreach (DataGridViewRow row in dgvMovimientos.Rows)
                         row.Cells[colMovimientosSeleccionar.Index].Value = false;
                     filtroAplicado = filtro;
-                    categoriaAplicada = filtro.CategoriaId.HasValue && nombresCategoria.ContainsKey(filtro.CategoriaId.Value)
-                        ? nombresCategoria[filtro.CategoriaId.Value] : string.Empty;
-                    usuarioConsulta = usuarioActualId;
+                    categoriaAplicada = filtro.Categoria != null && nombresCategoria.ContainsKey(filtro.Categoria.Id)
+                        ? nombresCategoria[filtro.Categoria.Id] : string.Empty;
+                    usuarioConsulta = usuarioActual;
                     movimientosMarcados.Clear();
                 }
                 finally { cambiandoMarcas = false; }
@@ -184,8 +184,8 @@ namespace TpIDS
             if (cambiandoMarcas || e.RowIndex < 0 || e.ColumnIndex != colMovimientosSeleccionar.Index) return;
             var row = dgvMovimientos.Rows[e.RowIndex];
             if (!(row.DataBoundItem is FilaMovimiento fila)) return;
-            if (Equals(row.Cells[colMovimientosSeleccionar.Index].Value, true)) movimientosMarcados.Add(fila.Id);
-            else movimientosMarcados.Remove(fila.Id);
+            if (Equals(row.Cells[colMovimientosSeleccionar.Index].Value, true)) movimientosMarcados.Add(fila.Movimiento);
+            else movimientosMarcados.Remove(fila.Movimiento);
             ActualizarSeleccionMovimientos();
         }
 
@@ -209,7 +209,7 @@ namespace TpIDS
                 foreach (DataGridViewRow row in dgvMovimientos.Rows)
                 {
                     row.Cells[colMovimientosSeleccionar.Index].Value = marcar;
-                    if (marcar && row.DataBoundItem is FilaMovimiento fila) movimientosMarcados.Add(fila.Id);
+                    if (marcar && row.DataBoundItem is FilaMovimiento fila) movimientosMarcados.Add(fila.Movimiento);
                 }
             }
             finally { cambiandoMarcas = false; }
@@ -231,7 +231,7 @@ namespace TpIDS
             var columnas = new[] { colMovimientosFecha, colMovimientosTipo, colMovimientosCategoria,
                 colMovimientosComercio, colMovimientosMonto, colMovimientosDescripcion };
             var filas = dgvMovimientos.Rows.Cast<DataGridViewRow>()
-                .Where(row => row.DataBoundItem is FilaMovimiento fila && movimientosMarcados.Contains(fila.Id))
+                .Where(row => row.DataBoundItem is FilaMovimiento fila && movimientosMarcados.Contains(fila.Movimiento))
                 .Select(row => columnas.Select(col => Convert.ToString(row.Cells[col.Index].FormattedValue,
                     CultureInfo.CurrentCulture)).ToArray()).ToArray();
             string sinLimite = UiDialogHelper.Traducir("FormMovements.Report.NoLimit");
@@ -240,7 +240,7 @@ namespace TpIDS
             {
                 UiDialogHelper.Traducir("FormMovements.Report.From", filtroAplicado.FechaDesde?.ToString("d") ?? sinLimite),
                 UiDialogHelper.Traducir("FormMovements.Report.To", filtroAplicado.FechaHasta?.ToString("d") ?? sinLimite),
-                UiDialogHelper.Traducir("FormMovements.Report.Category", filtroAplicado.CategoriaId.HasValue ? categoriaAplicada : todos),
+                UiDialogHelper.Traducir("FormMovements.Report.Category", filtroAplicado.Categoria != null ? categoriaAplicada : todos),
                 UiDialogHelper.Traducir("FormMovements.Report.Type", filtroAplicado.Tipo.HasValue ?
                     UiDialogHelper.Traducir(filtroAplicado.Tipo.Value == TipoMovimiento.Ingreso ?
                         "FormMovements.Value.Type.Income" : "FormMovements.Value.Type.Expense") : todos),
@@ -312,15 +312,22 @@ namespace TpIDS
 
         private void btnAgregarMovimiento_Click(object sender, EventArgs e)
         {
-            if (!ValidarFormularioEdicion(out int categoriaId, out TipoMovimiento tipo, out decimal monto))
+            if (!ValidarFormularioEdicion(out Categoria categoria, out TipoMovimiento tipo, out decimal monto))
             {
                 return;
             }
 
             try
             {
-                int? comercioId = ObtenerComercioSeleccionado();
-                movimientoBLL.Crear(categoriaId, tipo, monto, dtpFechaMovimiento.Value.Date, txtbDescripcionMovimiento.Text, comercioId);
+                movimientoBLL.Crear(new Movimiento
+                {
+                    Categoria = categoria,
+                    Comercio = ObtenerComercioSeleccionado(),
+                    Tipo = tipo,
+                    Monto = monto,
+                    Fecha = dtpFechaMovimiento.Value.Date,
+                    Descripcion = txtbDescripcionMovimiento.Text
+                });
                 LimpiarEdicion();
                 RefrescarDatos();
                 UiDialogHelper.MostrarInfo("FormMovements.Success.MovementCreated");
@@ -413,15 +420,22 @@ namespace TpIDS
                 return;
             }
 
-            if (!ValidarFormularioEdicion(out int categoriaId, out TipoMovimiento tipo, out decimal monto))
+            if (!ValidarFormularioEdicion(out Categoria categoria, out TipoMovimiento tipo, out decimal monto))
             {
                 return;
             }
 
             try
             {
-                int? comercioId = ObtenerComercioSeleccionado();
-                bool actualizado = movimientoBLL.Actualizar(fila.Id, categoriaId, tipo, monto, dtpFechaMovimiento.Value.Date, txtbDescripcionMovimiento.Text, comercioId);
+                // La entidad de la fila no la muestra otro control; si el BLL rechaza el cambio,
+                // la proxima operacion vuelve a escribir todos los campos editables.
+                fila.Movimiento.Categoria = categoria;
+                fila.Movimiento.Comercio = ObtenerComercioSeleccionado();
+                fila.Movimiento.Tipo = tipo;
+                fila.Movimiento.Monto = monto;
+                fila.Movimiento.Fecha = dtpFechaMovimiento.Value.Date;
+                fila.Movimiento.Descripcion = txtbDescripcionMovimiento.Text;
+                bool actualizado = movimientoBLL.Actualizar(fila.Movimiento);
                 if (actualizado)
                 {
                     LimpiarEdicion();
@@ -454,7 +468,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = movimientoBLL.Eliminar(fila.Id);
+                bool eliminado = movimientoBLL.Eliminar(fila.Movimiento);
                 if (eliminado)
                 {
                     LimpiarEdicion();
@@ -523,13 +537,13 @@ namespace TpIDS
             e.FormattingApplied = true;
         }
 
-        private bool ValidarFormularioEdicion(out int categoriaId, out TipoMovimiento tipo, out decimal monto)
+        private bool ValidarFormularioEdicion(out Categoria categoria, out TipoMovimiento tipo, out decimal monto)
         {
-            categoriaId = 0;
+            categoria = cmbCategoriaMovimiento.SelectedItem as Categoria;
             tipo = TipoMovimiento.Ingreso;
             monto = 0;
 
-            if (!(cmbCategoriaMovimiento.SelectedItem is Categoria categoria))
+            if (categoria == null)
             {
                 UiDialogHelper.MostrarWarning("FormMovements.Warning.SelectCategory");
                 return false;
@@ -548,7 +562,6 @@ namespace TpIDS
                 return false;
             }
 
-            categoriaId = categoria.Id;
             tipo = tipoSeleccionado.Value;
             monto = montoParseado;
             return true;
@@ -566,14 +579,14 @@ namespace TpIDS
             return true;
         }
 
-        private int? ObtenerCategoriaFiltroSeleccionada()
+        private Categoria ObtenerCategoriaFiltroSeleccionada()
         {
             if (cargandoCategorias || !(cmbCategoriaFiltro.SelectedItem is Categoria categoria) || categoria.Id == 0)
             {
                 return null;
             }
 
-            return categoria.Id;
+            return categoria;
         }
 
         private int? ObtenerCategoriaIdPorNombre(string nombre)
@@ -640,11 +653,12 @@ namespace TpIDS
             cmbComercioMovimiento.DataSource = opciones;
         }
 
-        private int? ObtenerComercioSeleccionado()
+        // El item "sin comercio" (Id 0) no es un comercio: se informa null.
+        private Comercio ObtenerComercioSeleccionado()
         {
             if (cmbComercioMovimiento.SelectedItem is Comercio comercio && comercio.Id > 0)
             {
-                return comercio.Id;
+                return comercio;
             }
 
             return null;
@@ -668,7 +682,7 @@ namespace TpIDS
                 return;
             }
 
-            int? comercioId = ObtenerComercioSeleccionado();
+            int? comercioId = ObtenerComercioSeleccionado()?.Id;
             if (string.Equals(descripcionActual, ultimaDescripcionSugerida, StringComparison.OrdinalIgnoreCase)
                 && comercioId == ultimoComercioIdSugerido)
             {
@@ -698,11 +712,11 @@ namespace TpIDS
                     return;
                 }
 
-                int? comercioId = ObtenerComercioSeleccionado();
+                Comercio comercio = ObtenerComercioSeleccionado();
                 ultimaDescripcionSugerida = descripcion;
-                ultimoComercioIdSugerido = comercioId;
+                ultimoComercioIdSugerido = comercio?.Id;
 
-                Categoria sugerida = reglaCategorizacionBLL.SugerirCategoria(descripcion, comercioId);
+                Categoria sugerida = reglaCategorizacionBLL.SugerirCategoria(descripcion, comercio);
                 if (sugerida != null)
                 {
                     cmbCategoriaMovimiento.SelectedValue = sugerida.Id;

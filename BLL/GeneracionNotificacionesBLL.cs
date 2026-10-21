@@ -14,7 +14,7 @@ namespace BLL
     // Resumen de una corrida del proceso automatico: lo que informa el ejecutable programado.
     public sealed class ResultadoCorridaNotificaciones
     {
-        public int CorridaId { get; set; }
+        public CorridaGeneracionNotificaciones Corrida { get; set; }
 
         public DateTime Jornada { get; set; }
 
@@ -108,20 +108,20 @@ namespace BLL
                 return resultado;
             }
 
-            resultado.CorridaId = Critico(() => Escribir(unidad => unidad.GeneracionNotificaciones.InsertarCorridaYObtenerId(
-                new CorridaGeneracionNotificaciones { InicioUtc = AhoraUtc(), Jornada = resultado.Jornada })));
+            resultado.Corrida = new CorridaGeneracionNotificaciones { InicioUtc = AhoraUtc(), Jornada = resultado.Jornada };
+            resultado.Corrida.Id = Critico(() => Escribir(unidad => unidad.GeneracionNotificaciones.InsertarCorridaYObtenerId(resultado.Corrida)));
 
-            int ultimoId = 0;
+            Usuario ultimo = null;
             while (!resultado.Cancelada)
             {
-                int desde = ultimoId;
-                List<int> ids = Critico(() => Leer(unidad => unidad.Usuarios.ObtenerIdsActivosDespuesDe(desde, TamanoPagina)));
-                if (ids.Count == 0) break;
+                Usuario desde = ultimo;
+                List<Usuario> usuarios = Critico(() => Leer(unidad => unidad.Usuarios.ObtenerActivosDespuesDe(desde, TamanoPagina)));
+                if (usuarios.Count == 0) break;
 
-                foreach (int usuarioId in ids)
+                foreach (Usuario usuario in usuarios)
                 {
-                    ultimoId = usuarioId;
-                    Lazy<IIdioma> idioma = new Lazy<IIdioma>(() => _idiomaBLL.ObtenerIdiomaParaUsuario(usuarioId));
+                    ultimo = usuario;
+                    Lazy<IIdioma> idioma = new Lazy<IIdioma>(() => _idiomaBLL.ObtenerIdiomaParaUsuario(usuario));
                     foreach (TipoNotificacionAutomatica tipo in Tipos)
                     {
                         if (cancellationToken.IsCancellationRequested)
@@ -130,7 +130,7 @@ namespace BLL
                             break;
                         }
 
-                        await ProcesarAsync(new Unidad(resultado.CorridaId, usuarioId, tipo, resultado.Jornada, idioma, cancellationToken), resultado).ConfigureAwait(false);
+                        await ProcesarAsync(new Unidad(resultado.Corrida, usuario, tipo, resultado.Jornada, idioma, cancellationToken), resultado).ConfigureAwait(false);
                         if (resultado.Cancelada) break;
                     }
 
@@ -139,7 +139,7 @@ namespace BLL
             }
 
             Critico(() => Escribir(unidad => unidad.GeneracionNotificaciones.FinalizarCorrida(
-                resultado.CorridaId, AhoraUtc(), resultado.Entregadas, resultado.Omitidas, resultado.Fallidas)));
+                resultado.Corrida, AhoraUtc(), resultado.Entregadas, resultado.Omitidas, resultado.Fallidas)));
             return resultado;
         }
 
@@ -192,8 +192,13 @@ namespace BLL
         private Desenlace Movimientos(Unidad u)
         {
             DateTime ayer = u.Jornada.AddDays(-1).Date;
-            Func<IUnidadDeTrabajo, string> condicion = unidad => unidad.Movimientos.ObtenerPorUsuario(u.UsuarioId, new FiltroMovimiento { FechaDesde = ayer, FechaHasta = ayer }).Count > 0
-                ? MotivoMovimientosRegistrados : null;
+            // Un usuario inexistente no tiene movimientos.
+            Func<IUnidadDeTrabajo, string> condicion = unidad =>
+            {
+                BE.Usuario usuario = unidad.Usuarios.ObtenerPorId(u.Usuario.Id);
+                return usuario != null && unidad.Movimientos.ObtenerPorUsuario(usuario, new FiltroMovimiento { FechaDesde = ayer, FechaHasta = ayer }).Count > 0
+                    ? MotivoMovimientosRegistrados : null;
+            };
 
             string omision = Fase(MotivoFalloLectura, () => Leer(unidad => OmisionPrevia(unidad, u) ?? condicion(unidad)));
             if (omision != null) return Desenlace.Omitida(omision);
@@ -204,22 +209,22 @@ namespace BLL
                 return string.Format(CultureInfo.InvariantCulture, plantilla, ayer.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
             });
 
-            return Entregar(u, condicion, unidad => unidad.Notificaciones.InsertarYObtenerId(Nueva<Notificacion>(u, mensaje)));
+            return Entregar(u, condicion, unidad => Insertar(Nueva<Notificacion>(u, mensaje), unidad.Notificaciones.InsertarYObtenerId));
         }
 
         // Compras: una recomendacion consolidada de todas las listas con pendientes.
         private async Task<Desenlace> ComprasAsync(Unidad u)
         {
-            Func<IUnidadDeTrabajo, string> condicion = unidad => TienePendientes(unidad, u.UsuarioId) ? null : MotivoSinPendientes;
+            Func<IUnidadDeTrabajo, string> condicion = unidad => TienePendientes(unidad, u.Usuario.Id) ? null : MotivoSinPendientes;
 
             string omision = Fase(MotivoFalloLectura, () => Leer(unidad => OmisionPrevia(unidad, u) ?? condicion(unidad)));
             if (omision != null) return Desenlace.Omitida(omision);
 
             ResultadoGeneracion generado = await FaseAsync(MotivoFalloGeneracion, u.Cancelacion, () => _generador.GenerarAsync(
-                new SolicitudGeneracion { Categoria = CategoriaConsulta.Compras, UsuarioId = u.UsuarioId, Idioma = u.Idioma.Value }, u.Cancelacion)).ConfigureAwait(false);
+                new SolicitudGeneracion { Categoria = CategoriaConsulta.Compras, Usuario = u.Usuario, Idioma = u.Idioma.Value }, u.Cancelacion)).ConfigureAwait(false);
             if (!generado.Aceptada || string.IsNullOrWhiteSpace(generado.Texto)) return Desenlace.Fallida(MotivoRespuestaNoConfiable);
 
-            return Entregar(u, condicion, unidad => unidad.RecordatoriosCompra.InsertarYObtenerId(Nueva<RecordatorioCompra>(u, generado.Texto)));
+            return Entregar(u, condicion, unidad => Insertar(Nueva<RecordatorioCompra>(u, generado.Texto), unidad.RecordatoriosCompra.InsertarYObtenerId));
         }
 
         // Inversiones: perfil completo, siete dias desde la ultima automatica del usuario, nivel Comodo o Alto,
@@ -231,13 +236,13 @@ namespace BLL
             {
                 string yaEntregada = OmisionPrevia(unidad, u);
                 if (yaEntregada != null) return yaEntregada;
-                perfil = unidad.PerfilesInversor.ObtenerPorUsuario(u.UsuarioId);
-                if (!PerfilCompleto(perfil, u.UsuarioId)) return MotivoSinPerfil;
-                return MotivoIntervalo(unidad, u.UsuarioId);
+                perfil = unidad.PerfilesInversor.ObtenerPorUsuario(u.Usuario);
+                if (!PerfilCompleto(perfil, u.Usuario)) return MotivoSinPerfil;
+                return MotivoIntervalo(unidad, u.Usuario);
             }));
             if (omision != null) return Desenlace.Omitida(omision);
 
-            NivelInversion nivel = Fase(MotivoFalloLectura, () => _inversiones.CalcularSaldo(u.UsuarioId, null).Nivel);
+            NivelInversion nivel = Fase(MotivoFalloLectura, () => _inversiones.CalcularSaldo(u.Usuario, null).Nivel);
             if (nivel != NivelInversion.Comodo && nivel != NivelInversion.Alto) return Desenlace.Omitida(MotivoNivelInsuficiente);
 
             PerfilInversor snapshot = perfil;
@@ -245,7 +250,7 @@ namespace BLL
                 new SolicitudGeneracion
                 {
                     Categoria = CategoriaConsulta.Inversiones,
-                    UsuarioId = u.UsuarioId,
+                    Usuario = u.Usuario,
                     Idioma = u.Idioma.Value,
                     Perfil = snapshot,
                     OmitirSiSinAlternativas = true
@@ -254,8 +259,8 @@ namespace BLL
             if (!generado.Aceptada || string.IsNullOrWhiteSpace(generado.Texto)) return Desenlace.Fallida(MotivoRespuestaNoConfiable);
 
             return Entregar(u,
-                unidad => MotivoIntervalo(unidad, u.UsuarioId) ?? (MismoPerfil(unidad.PerfilesInversor.ObtenerPorUsuario(u.UsuarioId), snapshot) ? null : MotivoPerfilCambiado),
-                unidad => unidad.RecordatoriosInversion.InsertarYObtenerId(Nueva<RecordatorioInversion>(u, generado.Texto)));
+                unidad => MotivoIntervalo(unidad, u.Usuario) ?? (MismoPerfil(unidad.PerfilesInversor.ObtenerPorUsuario(u.Usuario), snapshot) ? null : MotivoPerfilCambiado),
+                unidad => Insertar(Nueva<RecordatorioInversion>(u, generado.Texto), unidad.RecordatoriosInversion.InsertarYObtenerId));
         }
 
         // ------------------------------------------------------------------ entrega con transaccion corta
@@ -263,7 +268,7 @@ namespace BLL
         // Bloquea la fila del usuario (serializa lotes concurrentes), revalida destinatario, deduplicacion y
         // la condicion del tipo, y guarda el aviso con su detalle en una sola transaccion. Si algo falla antes
         // de Save no queda aviso, detalle ni intervalo consumido.
-        private Desenlace Entregar(Unidad u, Func<IUnidadDeTrabajo, string> revalidar, Func<IUnidadDeTrabajo, int> insertar)
+        private Desenlace Entregar(Unidad u, Func<IUnidadDeTrabajo, string> revalidar, Func<IUnidadDeTrabajo, Notificacion> insertar)
         {
             return Fase(MotivoFalloEntrega, () =>
             {
@@ -277,8 +282,8 @@ namespace BLL
                         return Desenlace.Omitida(omision, registrado: true);
                     }
 
-                    int notificacionId = insertar(unidad);
-                    InsertarDetalle(unidad, u, ResultadoGeneracionNotificacion.Entregada, null, notificacionId);
+                    Notificacion notificacion = insertar(unidad);
+                    InsertarDetalle(unidad, u, ResultadoGeneracionNotificacion.Entregada, null, notificacion);
                     unidad.Save();
                     return Desenlace.Entregada();
                 }
@@ -287,8 +292,8 @@ namespace BLL
 
         private static string Bloquear(IUnidadDeTrabajo unidad, Unidad u)
         {
-            if (!unidad.Notificaciones.BloquearUsuarioParaEntrega(u.UsuarioId)) return MotivoUsuarioInexistente;
-            BE.Usuario cuenta = unidad.Usuarios.ObtenerPorId(u.UsuarioId);
+            if (!unidad.Notificaciones.BloquearUsuarioParaEntrega(u.Usuario)) return MotivoUsuarioInexistente;
+            BE.Usuario cuenta = unidad.Usuarios.ObtenerPorId(u.Usuario.Id);
             if (cuenta == null || !cuenta.Activo) return MotivoCuentaInactiva;
             return OmisionPrevia(unidad, u);
         }
@@ -296,29 +301,35 @@ namespace BLL
         // Una entrega por usuario, tipo y jornada: el indice unico es la garantia; esto evita trabajo y errores.
         private static string OmisionPrevia(IUnidadDeTrabajo unidad, Unidad u)
         {
-            return unidad.Notificaciones.ExisteAutomatica(u.UsuarioId, u.Tipo, u.Jornada) ? MotivoYaEntregada : null;
+            return unidad.Notificaciones.ExisteAutomatica(u.Usuario, u.Tipo, u.Jornada) ? MotivoYaEntregada : null;
         }
 
-        private void InsertarDetalle(IUnidadDeTrabajo unidad, Unidad u, ResultadoGeneracionNotificacion resultado, string motivo, int? notificacionId)
+        private void InsertarDetalle(IUnidadDeTrabajo unidad, Unidad u, ResultadoGeneracionNotificacion resultado, string motivo, Notificacion notificacion)
         {
             unidad.GeneracionNotificaciones.InsertarDetalleYObtenerId(new DetalleGeneracionNotificacion
             {
-                CorridaId = u.CorridaId,
-                UsuarioId = u.UsuarioId,
+                Corrida = u.Corrida,
+                Usuario = u.Usuario,
                 Tipo = u.Tipo,
                 Jornada = u.Jornada,
                 Resultado = resultado,
                 Motivo = motivo,
-                NotificacionId = notificacionId,
+                Notificacion = notificacion,
                 FechaUtc = AhoraUtc()
             });
+        }
+
+        private static Notificacion Insertar<T>(T notificacion, Func<T, int> insertar) where T : Notificacion
+        {
+            notificacion.Id = insertar(notificacion);
+            return notificacion;
         }
 
         private T Nueva<T>(Unidad u, string mensaje) where T : Notificacion, new()
         {
             return new T
             {
-                Usuario = new BE.Usuario { Id = u.UsuarioId },
+                Usuario = u.Usuario,
                 Mensaje = mensaje,
                 Fecha = Ahora(),
                 Leida = false,
@@ -331,18 +342,20 @@ namespace BLL
 
         private static bool TienePendientes(IUnidadDeTrabajo unidad, int usuarioId)
         {
-            foreach (ListaDeCompras lista in unidad.ListasDeCompras.ObtenerPorUsuario(usuarioId))
+            Usuario usuario = unidad.Usuarios.ObtenerPorId(usuarioId);
+            if (usuario == null) return false;
+            foreach (ListaDeCompras lista in unidad.ListasDeCompras.ObtenerPorUsuario(usuario))
             {
-                if (unidad.ItemsLista.ObtenerPorListaDeCompras(lista.Id).Any(item => !item.Comprado)) return true;
+                if (unidad.ItemsLista.ObtenerPorListaDeCompras(lista).Any(item => !item.Comprado)) return true;
             }
 
             return false;
         }
 
         // Perfil completo: el mismo criterio que exige el calculo con perfil (version vigente y respuestas validas).
-        private static bool PerfilCompleto(PerfilInversor perfil, int usuarioId)
+        private static bool PerfilCompleto(PerfilInversor perfil, Usuario usuario)
         {
-            if (perfil == null || perfil.UsuarioId != usuarioId || perfil.VersionCuestionario != CalculadorPerfilInversor.Version
+            if (perfil == null || perfil.Usuario?.Id != usuario.Id || perfil.VersionCuestionario != CalculadorPerfilInversor.Version
                 || !Enum.IsDefined(typeof(NivelRiesgoInversor), perfil.NivelRiesgo))
             {
                 return false;
@@ -369,9 +382,9 @@ namespace BLL
 
         // Intervalo derivado solo de la ultima notificacion automatica de inversion del usuario. Sin ninguna
         // (nunca recibio una o la elimino) no hay restriccion.
-        private string MotivoIntervalo(IUnidadDeTrabajo unidad, int usuarioId)
+        private string MotivoIntervalo(IUnidadDeTrabajo unidad, Usuario usuario)
         {
-            DateTime? ultima = unidad.Notificaciones.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId);
+            DateTime? ultima = unidad.Notificaciones.ObtenerFechaUltimaAutomaticaInversionUtc(usuario);
             return ultima.HasValue && AhoraUtc() - ultima.Value < IntervaloInversiones ? MotivoIntervaloNoCumplido : null;
         }
 
@@ -462,18 +475,18 @@ namespace BLL
 
         private sealed class Unidad
         {
-            internal Unidad(int corridaId, int usuarioId, TipoNotificacionAutomatica tipo, DateTime jornada, Lazy<IIdioma> idioma, CancellationToken cancelacion)
+            internal Unidad(CorridaGeneracionNotificaciones corrida, Usuario usuario, TipoNotificacionAutomatica tipo, DateTime jornada, Lazy<IIdioma> idioma, CancellationToken cancelacion)
             {
-                CorridaId = corridaId;
-                UsuarioId = usuarioId;
+                Corrida = corrida;
+                Usuario = usuario;
                 Tipo = tipo;
                 Jornada = jornada;
                 Idioma = idioma;
                 Cancelacion = cancelacion;
             }
 
-            internal int CorridaId { get; }
-            internal int UsuarioId { get; }
+            internal CorridaGeneracionNotificaciones Corrida { get; }
+            internal Usuario Usuario { get; }
             internal TipoNotificacionAutomatica Tipo { get; }
             internal DateTime Jornada { get; }
             internal Lazy<IIdioma> Idioma { get; }

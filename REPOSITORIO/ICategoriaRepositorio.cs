@@ -7,14 +7,15 @@ namespace REPOSITORIO
     {
         Categoria ObtenerPorId(int id);
 
-        List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId);
+        List<Categoria> ObtenerVisiblesParaUsuario(Usuario usuario);
 
         int InsertarYObtenerId(Categoria categoria);
 
         bool Actualizar(Categoria categoria);
 
-        bool Eliminar(int id);
+        bool Eliminar(Categoria categoria);
 
-        bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido);
+        // usuario null = scope global; excluida null = sin exclusion.
+        bool ExisteNombreEnScope(string nombre, Usuario usuario, Categoria excluida);
     }
 }

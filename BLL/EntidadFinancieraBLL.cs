@@ -31,28 +31,31 @@ namespace BLL
             return _entidadFinancieraRepositorio.ObtenerTodas();
         }
 
-        // Hidratada con su catalogo MediosPagoEntidad (cada uno con su MedioPago).
-        public EntidadFinanciera ObtenerPorId(int id)
+        // Catalogo MediosPagoEntidad de la entidad persistida (cada uno con su MedioPago).
+        // Vacio si la entidad ya no existe.
+        public List<MedioPagoEntidad> ObtenerMediosPagoEntidad(EntidadFinanciera entidad)
         {
-            return _entidadFinancieraRepositorio.ObtenerPorId(id);
+            EntidadFinanciera persistida = _entidadFinancieraRepositorio.ObtenerPorId(entidad.Id);
+            return persistida?.MediosPagoEntidad ?? new List<MedioPagoEntidad>();
         }
 
-        public EntidadFinanciera Crear(string nombre)
+        // Devuelve la misma instancia recibida, con el nombre normalizado y el Id cargado.
+        public EntidadFinanciera Crear(EntidadFinanciera entidad)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(entidad?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ValidarNombreUnico(unidad, 0, nombreNormalizado);
+                    ValidarNombreUnico(unidad, null, nombreNormalizado);
 
-                    EntidadFinanciera nuevaEntidad = new EntidadFinanciera { Nombre = nombreNormalizado };
-                    nuevaEntidad.Id = unidad.EntidadesFinancieras.InsertarYObtenerId(nuevaEntidad);
+                    entidad.Nombre = nombreNormalizado;
+                    entidad.Id = unidad.EntidadesFinancieras.InsertarYObtenerId(entidad);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormFinancialEntityManagement.Value.Activity.Creation", "FormFinancialEntityManagement.Value.Info.Creation", "EntidadFinancieraBLL", unidad);
                     unidad.Save();
-                    return nuevaEntidad;
+                    return entidad;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -65,24 +68,25 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre)
+        // Recibe la entidad con el nombre nuevo y lo copia sobre la persistida.
+        public bool Actualizar(EntidadFinanciera entidad)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(entidad?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    EntidadFinanciera entidad = unidad.EntidadesFinancieras.ObtenerPorId(id);
-                    if (entidad == null)
+                    EntidadFinanciera persistida = unidad.EntidadesFinancieras.ObtenerPorId(entidad.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.NotFound");
                     }
 
-                    ValidarNombreUnico(unidad, id, nombreNormalizado);
+                    ValidarNombreUnico(unidad, persistida, nombreNormalizado);
 
-                    entidad.Nombre = nombreNormalizado;
-                    if (!unidad.EntidadesFinancieras.Actualizar(entidad))
+                    persistida.Nombre = nombreNormalizado;
+                    if (!unidad.EntidadesFinancieras.Actualizar(persistida))
                     {
                         throw new ExcepcionTecnica("Error.FinancialEntityManagement.UpdateFailed");
                     }
@@ -106,14 +110,14 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(EntidadFinanciera entidad)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    EntidadFinanciera entidad = unidad.EntidadesFinancieras.ObtenerPorId(id);
-                    if (entidad == null)
+                    EntidadFinanciera persistida = entidad == null ? null : unidad.EntidadesFinancieras.ObtenerPorId(entidad.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.NotFound");
                     }
@@ -121,14 +125,14 @@ namespace BLL
                     // Validacion proactiva: no se borra una entidad con catalogo propio, con
                     // cuentas de usuarios asociadas o referenciada por una promocion (hay que
                     // quitarlos primero).
-                    if (unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(id).Count > 0
-                        || unidad.CuentasFinancieras.ObtenerPorEntidadFinanciera(id).Count > 0
-                        || unidad.PromocionEntidadesFinancieras.ContarPorEntidadFinanciera(id) > 0)
+                    if (unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(persistida).Count > 0
+                        || unidad.CuentasFinancieras.ObtenerPorEntidadFinanciera(persistida).Count > 0
+                        || unidad.PromocionEntidadesFinancieras.ContarPorEntidadFinanciera(persistida) > 0)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.InUse");
                     }
 
-                    if (!unidad.EntidadesFinancieras.Eliminar(id))
+                    if (!unidad.EntidadesFinancieras.Eliminar(persistida))
                     {
                         throw new ExcepcionTecnica("Error.FinancialEntityManagement.DeleteFailed");
                     }
@@ -152,45 +156,46 @@ namespace BLL
             }
         }
 
-        public MedioPagoEntidad AgregarMedioPagoEntidad(int entidadFinancieraId, int medioPagoId, string segmento)
+        // Recibe el producto armado por la UI (EntidadFinanciera, MedioPago y Segmento). Relee la
+        // entidad y el medio de pago y devuelve la misma instancia con los persistidos y su Id.
+        public MedioPagoEntidad AgregarMedioPagoEntidad(MedioPagoEntidad medioPagoEntidad)
         {
-            string segmentoNormalizado = NormalizarSegmento(segmento);
+            string segmentoNormalizado = NormalizarSegmento(medioPagoEntidad?.Segmento);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    if (unidad.EntidadesFinancieras.ObtenerPorId(entidadFinancieraId) == null)
+                    EntidadFinanciera entidad = medioPagoEntidad?.EntidadFinanciera == null ? null : unidad.EntidadesFinancieras.ObtenerPorId(medioPagoEntidad.EntidadFinanciera.Id);
+                    if (entidad == null)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.NotFound");
                     }
 
-                    if (unidad.MediosPago.ObtenerPorId(medioPagoId) == null)
+                    MedioPago medioPago = medioPagoEntidad.MedioPago == null ? null : unidad.MediosPago.ObtenerPorId(medioPagoEntidad.MedioPago.Id);
+                    if (medioPago == null)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.PaymentMethodNotFound");
                     }
 
                     // UQ_MedioPagoEntidad_Entidad_Medio_Segmento: se valida antes para un error legible.
-                    bool yaAgregado = unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(entidadFinancieraId).Any(item =>
+                    bool yaAgregado = unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(entidad).Any(item =>
                         item.MedioPago != null
-                        && item.MedioPago.Id == medioPagoId
+                        && item.MedioPago.Id == medioPago.Id
                         && string.Equals(item.Segmento, segmentoNormalizado, StringComparison.OrdinalIgnoreCase));
                     if (yaAgregado)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.PaymentMethodAlreadyAdded");
                     }
 
-                    MedioPagoEntidad nuevoMedioPagoEntidad = new MedioPagoEntidad
-                    {
-                        EntidadFinanciera = new EntidadFinanciera { Id = entidadFinancieraId },
-                        MedioPago = new MedioPago { Id = medioPagoId },
-                        Segmento = segmentoNormalizado
-                    };
-                    nuevoMedioPagoEntidad.Id = unidad.MediosPagoEntidad.InsertarYObtenerId(nuevoMedioPagoEntidad);
+                    medioPagoEntidad.EntidadFinanciera = entidad;
+                    medioPagoEntidad.MedioPago = medioPago;
+                    medioPagoEntidad.Segmento = segmentoNormalizado;
+                    medioPagoEntidad.Id = unidad.MediosPagoEntidad.InsertarYObtenerId(medioPagoEntidad);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormFinancialEntityManagement.Value.Activity.PaymentMethodAddition", "FormFinancialEntityManagement.Value.Info.PaymentMethodAddition", "EntidadFinancieraBLL", unidad);
                     unidad.Save();
-                    return nuevoMedioPagoEntidad;
+                    return medioPagoEntidad;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -203,25 +208,26 @@ namespace BLL
             }
         }
 
-        public bool QuitarMedioPagoEntidad(int medioPagoEntidadId)
+        public bool QuitarMedioPagoEntidad(MedioPagoEntidad medioPagoEntidad)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    if (unidad.MediosPagoEntidad.ObtenerPorId(medioPagoEntidadId) == null)
+                    MedioPagoEntidad persistido = medioPagoEntidad == null ? null : unidad.MediosPagoEntidad.ObtenerPorId(medioPagoEntidad.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.EntityPaymentMethodNotFound");
                     }
 
                     // No se quita un medio de pago de la entidad si hay cuentas de usuarios que
                     // lo tienen contratado.
-                    if (unidad.CuentasFinancieras.ContarPorMedioPagoEntidad(medioPagoEntidadId) > 0)
+                    if (unidad.CuentasFinancieras.ContarPorMedioPagoEntidad(persistido) > 0)
                     {
                         throw new ExcepcionNegocio("Error.FinancialEntityManagement.EntityPaymentMethodInUse");
                     }
 
-                    if (!unidad.MediosPagoEntidad.Eliminar(medioPagoEntidadId))
+                    if (!unidad.MediosPagoEntidad.Eliminar(persistido))
                     {
                         throw new ExcepcionTecnica("Error.FinancialEntityManagement.PaymentMethodRemoveFailed");
                     }
@@ -246,10 +252,12 @@ namespace BLL
         }
 
         // UQ_EntidadFinanciera_Nombre: se valida antes para devolver un error de negocio legible.
-        private static void ValidarNombreUnico(IUnidadDeTrabajo unidad, int idActual, string nombre)
+        // excluida null = alta (sin exclusion).
+        private static void ValidarNombreUnico(IUnidadDeTrabajo unidad, EntidadFinanciera excluida, string nombre)
         {
+            int idExcluido = excluida?.Id ?? 0;
             bool duplicado = unidad.EntidadesFinancieras.ObtenerTodas().Any(item =>
-                item.Id != idActual && string.Equals(item.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
+                item.Id != idExcluido && string.Equals(item.Nombre, nombre, StringComparison.OrdinalIgnoreCase));
 
             if (duplicado)
             {

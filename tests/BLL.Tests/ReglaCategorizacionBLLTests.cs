@@ -18,7 +18,7 @@ namespace BLL.Tests
             ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("   ", 1, "palabra"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nueva("   ", 1, "palabra")));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -28,7 +28,7 @@ namespace BLL.Tests
             ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Regla 1", 1, "   "));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nueva("Regla 1", 1, "   ")));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -38,7 +38,7 @@ namespace BLL.Tests
             ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Regla 1", 99, "palabra"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nueva("Regla 1", 99, "palabra")));
         }
 
         [TestMethod]
@@ -48,7 +48,7 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(5, new Categoria { Id = 5, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Regla 1", 5, "palabra"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nueva("Regla 1", 5, "palabra")));
         }
 
         [TestMethod]
@@ -58,7 +58,7 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Regla 1", 1, "palabra", new List<int> { 99 }));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nueva("Regla 1", 1, "palabra"), Comercios(99)));
         }
 
         [TestMethod]
@@ -69,7 +69,7 @@ namespace BLL.Tests
             fixture.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, Nombre = "Coto" });
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            int id = sut.Crear("Supermercado", 1, "super, coto, mercado", new List<int> { 10 });
+            int id = sut.Crear(Nueva("Supermercado", 1, "super, coto, mercado"), Comercios(10)).Id;
 
             ReglaCategorizacion insertada = fixture.Unidad.ReglaCategorizacionRepo.Reglas[id];
             Assert.AreEqual("Supermercado", insertada.Nombre);
@@ -77,7 +77,7 @@ namespace BLL.Tests
             Assert.AreEqual(3, insertada.Usuario.Id);
             Assert.AreEqual("super, coto, mercado", insertada.PalabrasClave);
 
-            List<int> comerciosAsociados = fixture.Unidad.ComercioReglaCategorizacionRepo.ObtenerComercioIdsPorReglaCategorizacion(id);
+            List<int> comerciosAsociados = fixture.Unidad.ComercioReglaCategorizacionRepo.ComercioIdsDe(id);
             Assert.AreEqual(1, comerciosAsociados.Count);
             Assert.AreEqual(10, comerciosAsociados[0]);
 
@@ -93,7 +93,7 @@ namespace BLL.Tests
             fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(5, new ReglaCategorizacion { Id = 5, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Nombre = "R1", PalabrasClave = "p" });
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(5, "R1", 1, "nueva"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Editada(5, "R1", 1, "nueva")));
         }
 
         [TestMethod]
@@ -104,17 +104,17 @@ namespace BLL.Tests
             fixture.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, Nombre = "Coto" });
             fixture.ComercioRepo.Comercios.Add(20, new Comercio { Id = 20, Nombre = "Dia" });
             fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(3, new ReglaCategorizacion { Id = 3, Usuario = new Usuario { Id = 2 }, Categoria = new Categoria { Id = 1 }, Nombre = "Vieja", PalabrasClave = "v" });
-            fixture.Unidad.ComercioReglaCategorizacionRepo.ReemplazarComerciosDeReglaCategorizacion(3, new List<int> { 10 });
+            fixture.Unidad.ComercioReglaCategorizacionRepo.ComerciosPorRegla[3] = new List<int> { 10 };
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            bool actualizado = sut.Actualizar(3, "Nueva", 1, "nueva, palabra", new List<int> { 20 });
+            bool actualizado = sut.Actualizar(Editada(3, "Nueva", 1, "nueva, palabra"), Comercios(20));
 
             Assert.IsTrue(actualizado);
             ReglaCategorizacion r = fixture.Unidad.ReglaCategorizacionRepo.Reglas[3];
             Assert.AreEqual("Nueva", r.Nombre);
             Assert.AreEqual("nueva, palabra", r.PalabrasClave);
 
-            List<int> comercios = fixture.Unidad.ComercioReglaCategorizacionRepo.ObtenerComercioIdsPorReglaCategorizacion(3);
+            List<int> comercios = fixture.Unidad.ComercioReglaCategorizacionRepo.ComercioIdsDe(3);
             Assert.AreEqual(1, comercios.Count);
             Assert.AreEqual(20, comercios[0]);
 
@@ -129,7 +129,7 @@ namespace BLL.Tests
             fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(5, new ReglaCategorizacion { Id = 5, Usuario = new Usuario { Id = 99 } });
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(5));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new ReglaCategorizacion { Id = 5 }));
         }
 
         [TestMethod]
@@ -137,14 +137,14 @@ namespace BLL.Tests
         {
             ReglaFixture fixture = new ReglaFixture(usuarioActualId: 2);
             fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(3, new ReglaCategorizacion { Id = 3, Usuario = new Usuario { Id = 2 } });
-            fixture.Unidad.ComercioReglaCategorizacionRepo.ReemplazarComerciosDeReglaCategorizacion(3, new List<int> { 10 });
+            fixture.Unidad.ComercioReglaCategorizacionRepo.ComerciosPorRegla[3] = new List<int> { 10 };
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
-            bool eliminado = sut.Eliminar(3);
+            bool eliminado = sut.Eliminar(new ReglaCategorizacion { Id = 3 });
 
             Assert.IsTrue(eliminado);
             Assert.IsFalse(fixture.Unidad.ReglaCategorizacionRepo.Reglas.ContainsKey(3));
-            Assert.AreEqual(0, fixture.Unidad.ComercioReglaCategorizacionRepo.ObtenerComercioIdsPorReglaCategorizacion(3).Count);
+            Assert.AreEqual(0, fixture.Unidad.ComercioReglaCategorizacionRepo.ComercioIdsDe(3).Count);
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls.Single().Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -255,12 +255,12 @@ namespace BLL.Tests
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
             // Si el movimiento no especifica comercio, la regla con comercio no es elegible
-            Assert.IsNull(sut.SugerirCategoria("Carga de nafta", comercioId: null));
+            Assert.IsNull(sut.SugerirCategoria("Carga de nafta", comercio: null));
             // Si el comercio es otro, tampoco
-            Assert.IsNull(sut.SugerirCategoria("Carga de nafta", comercioId: 99));
+            Assert.IsNull(sut.SugerirCategoria("Carga de nafta", comercio: new Comercio { Id = 99 }));
 
             // Si el comercio coincide, es elegible y devuelve la categoria
-            Categoria sugerida = sut.SugerirCategoria("Carga de nafta", comercioId: 5);
+            Categoria sugerida = sut.SugerirCategoria("Carga de nafta", comercio: new Comercio { Id = 5 });
             Assert.IsNotNull(sugerida);
             Assert.AreEqual(catCombustible.Id, sugerida.Id);
         }
@@ -360,7 +360,7 @@ namespace BLL.Tests
             ReglaCategorizacionBLL sut = fixture.CreateSut();
 
             // Ante empate textual, el match de comercio desempata
-            Categoria sugerida = sut.SugerirCategoria("Compra coto", comercioId: 10);
+            Categoria sugerida = sut.SugerirCategoria("Compra coto", comercio: new Comercio { Id = 10 });
             Assert.IsNotNull(sugerida);
             Assert.AreEqual(catComercio.Id, sugerida.Id);
         }
@@ -396,6 +396,129 @@ namespace BLL.Tests
             Assert.IsNull(sugerida);
         }
 
+        [TestMethod]
+        public void ObtenerParaUsuarioActual_DelegaAlRepositorioConElUsuarioDeSesion()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 5);
+            fixture.ReglaRepo.Reglas.Add(1, new ReglaCategorizacion { Id = 1, Usuario = new Usuario { Id = 5 }, Nombre = "Propia" });
+            fixture.ReglaRepo.Reglas.Add(2, new ReglaCategorizacion { Id = 2, Usuario = new Usuario { Id = 99 }, Nombre = "Ajena" });
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+
+            List<ReglaCategorizacion> reglas = sut.ObtenerParaUsuarioActual();
+
+            Assert.AreEqual(1, reglas.Count);
+            Assert.AreEqual("Propia", reglas[0].Nombre);
+        }
+
+        [TestMethod]
+        public void ObtenerComerciosPorRegla_DevuelveLosComerciosAsociadosALaRegla()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
+            fixture.ComercioReglaRepo.ComerciosPorRegla.Add(3, new List<int> { 10, 20 });
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+
+            List<Comercio> comercios = sut.ObtenerComerciosPorRegla(new ReglaCategorizacion { Id = 3 });
+
+            CollectionAssert.AreEqual(new[] { 10, 20 }, comercios.Select(item => item.Id).ToList());
+        }
+
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConIdYUsuarioDeSesion()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 7);
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+            ReglaCategorizacion regla = Nueva("Super", 1, "coto");
+
+            ReglaCategorizacion creada = sut.Crear(regla);
+
+            Assert.AreSame(regla, creada);
+            Assert.IsTrue(creada.Id > 0);
+            Assert.AreSame(fixture.UsuarioActual, creada.Usuario);
+        }
+
+        [TestMethod]
+        public void Crear_ReglaNula_ThrowsExcepcionNegocioNameRequired()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+            Assert.AreEqual("Error.Rule.NameRequired", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_UsuarioAdulteradoEnLaEntidadRecibida_ValidaPropiedadContraLaPersistida()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(5, new ReglaCategorizacion { Id = 5, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Nombre = "Ajena", PalabrasClave = "p" });
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+            ReglaCategorizacion adulterada = Editada(5, "Nueva", 1, "nueva");
+            adulterada.Usuario = fixture.UsuarioActual;
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(adulterada));
+
+            Assert.AreEqual("Error.Rule.NotOwned", ex.Message);
+            Assert.AreEqual("Ajena", fixture.Unidad.ReglaCategorizacionRepo.Reglas[5].Nombre);
+            Assert.IsNull(fixture.Unidad.ReglaCategorizacionRepo.LastUpdated);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaSoloLosCamposEditablesSobreLaPersistida()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 2);
+            fixture.CategoriaRepo.Categorias.Add(4, new Categoria { Id = 4, Nombre = "Global", Usuario = null });
+            ReglaCategorizacion persistida = new ReglaCategorizacion { Id = 3, Usuario = new Usuario { Id = 2 }, Categoria = new Categoria { Id = 1 }, Nombre = "Vieja", PalabrasClave = "v" };
+            fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(3, persistida);
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+            ReglaCategorizacion recibida = Editada(3, "  Nueva  ", 4, "  nueva  ");
+            recibida.Usuario = new Usuario { Id = 99 };
+
+            sut.Actualizar(recibida);
+
+            Assert.AreSame(persistida, fixture.Unidad.ReglaCategorizacionRepo.LastUpdated);
+            Assert.AreEqual("Nueva", persistida.Nombre);
+            Assert.AreEqual("nueva", persistida.PalabrasClave);
+            Assert.AreEqual(4, persistida.Categoria.Id);
+            Assert.AreEqual(2, persistida.Usuario.Id);
+        }
+
+        [TestMethod]
+        public void Eliminar_UsuarioAdulteradoEnLaEntidadRecibida_ValidaPropiedadContraLaPersistida()
+        {
+            ReglaFixture fixture = new ReglaFixture(usuarioActualId: 1);
+            fixture.Unidad.ReglaCategorizacionRepo.Reglas.Add(5, new ReglaCategorizacion { Id = 5, Usuario = new Usuario { Id = 99 } });
+            fixture.Unidad.ComercioReglaCategorizacionRepo.ComerciosPorRegla[5] = new List<int> { 10 };
+            ReglaCategorizacionBLL sut = fixture.CreateSut();
+            ReglaCategorizacion adulterada = new ReglaCategorizacion { Id = 5, Usuario = fixture.UsuarioActual };
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(adulterada));
+
+            Assert.AreEqual("Error.Rule.NotOwned", ex.Message);
+            Assert.IsTrue(fixture.Unidad.ReglaCategorizacionRepo.Reglas.ContainsKey(5));
+            Assert.AreEqual(1, fixture.Unidad.ComercioReglaCategorizacionRepo.ComercioIdsDe(5).Count);
+            Assert.IsNull(fixture.Unidad.ReglaCategorizacionRepo.LastDeleted);
+        }
+
+        private static ReglaCategorizacion Nueva(string nombre, int categoriaId, string palabrasClave)
+        {
+            return new ReglaCategorizacion { Nombre = nombre, Categoria = new Categoria { Id = categoriaId }, PalabrasClave = palabrasClave };
+        }
+
+        private static ReglaCategorizacion Editada(int id, string nombre, int categoriaId, string palabrasClave)
+        {
+            ReglaCategorizacion regla = Nueva(nombre, categoriaId, palabrasClave);
+            regla.Id = id;
+            return regla;
+        }
+
+        private static List<Comercio> Comercios(params int[] ids)
+        {
+            return ids.Select(id => new Comercio { Id = id }).ToList();
+        }
+
         private sealed class ReglaFixture
         {
             public readonly FakeReglaCategorizacionRepositorio ReglaRepo = new FakeReglaCategorizacionRepositorio();
@@ -406,6 +529,7 @@ namespace BLL.Tests
             public readonly FakeSesion Sesion = new FakeSesion();
             public readonly FakeUnidadDeTrabajo Unidad;
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
+            public readonly Usuario UsuarioActual;
 
             public ReglaFixture(int usuarioActualId)
             {
@@ -417,7 +541,8 @@ namespace BLL.Tests
                     ComercioRepo = ComercioRepo
                 };
                 UnidadFactory = new FakeUnidadDeTrabajoFactory(Unidad);
-                Sesion.IniciarSesion(new Usuario { Id = usuarioActualId, Username = "test" });
+                UsuarioActual = new Usuario { Id = usuarioActualId, Username = "test" };
+                Sesion.IniciarSesion(UsuarioActual);
             }
 
             public ReglaCategorizacionBLL CreateSut()

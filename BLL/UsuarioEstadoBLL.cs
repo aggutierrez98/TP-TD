@@ -3,6 +3,7 @@ using System.Linq;
 using ABSTRACCIONES;
 using REPOSITORIO;
 using SERVICIOS;
+using BE;
 
 namespace BLL
 {
@@ -31,68 +32,67 @@ namespace BLL
             _sesion = sesion;
         }
 
-        internal UsuarioHistorialSnapshot ConstruirSnapshotActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        internal UsuarioHistorialSnapshot ConstruirSnapshotActualInterno(Usuario recibida, string accion, string observaciones, IUnidadDeTrabajo unidad)
         {
             if (unidad == null)
             {
                 throw new System.ArgumentNullException("unidad");
             }
 
-            BE.Usuario usuario = unidad.Usuarios.ObtenerPorId(usuarioId);
+            BE.Usuario usuario = recibida == null ? null : unidad.Usuarios.ObtenerPorId(recibida.Id);
             if (usuario == null)
             {
                 return null;
             }
 
-            UsuarioPreferencia preferencia = unidad.UsuarioPreferencias.ObtenerPorUsuarioId(usuarioId);
+            UsuarioPreferencia preferencia = unidad.UsuarioPreferencias.ObtenerPorUsuario(usuario);
 
             return new UsuarioHistorialSnapshot
             {
-                UsuarioId = usuario.Id,
+                Usuario = usuario,
                 FechaHora = System.DateTime.Now,
-                ActorUsuarioId = _sesion.GetUsuarioActualId(),
+                ActorUsuario = _sesion.HaySesionActiva() ? _sesion.ObtenerUsuarioActual() : null,
                 ActorUsernameSnapshot = _sesion.GetUsuarioActualNombre(),
                 Accion = accion,
                 Observaciones = observaciones,
                 Username = usuario.Username,
                 PasswordHash = usuario.PasswordHash,
                 Activo = usuario.Activo,
-                IdiomaId = preferencia == null ? (int?)null : preferencia.IdiomaId,
-                PermisosIds = unidad.UsuarioPermisos.ObtenerPermisoIdsPorUsuario(usuarioId)
+                Idioma = preferencia?.Idioma,
+                Permisos = unidad.UsuarioPermisos.ObtenerPermisosPorUsuario(usuario)
             };
         }
 
-        public int GuardarVersionActual(int usuarioId, string accion, string observaciones)
+        public UsuarioHistorialSnapshot GuardarVersionActual(Usuario usuario, string accion, string observaciones)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
-                int resultado = GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
+                UsuarioHistorialSnapshot resultado = GuardarVersionActualInterno(usuario, accion, observaciones, unidad);
                 unidad.Save();
                 return resultado;
             }
         }
 
-        internal int GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        internal UsuarioHistorialSnapshot GuardarVersionActualInterno(Usuario usuario, string accion, string observaciones, IUnidadDeTrabajo unidad)
         {
-            UsuarioHistorialSnapshot snapshot = ConstruirSnapshotActualInterno(usuarioId, accion, observaciones, unidad);
-            return snapshot == null
-                ? 0
-                : unidad.UsuarioHistorial.GuardarVersion(snapshot);
+            UsuarioHistorialSnapshot snapshot = ConstruirSnapshotActualInterno(usuario, accion, observaciones, unidad);
+            if (snapshot != null) snapshot.HistorialId = unidad.UsuarioHistorial.GuardarVersion(snapshot);
+            return snapshot;
         }
 
-        public List<UsuarioHistorialSnapshot> ObtenerHistorial(int usuarioId)
+        public List<UsuarioHistorialSnapshot> ObtenerHistorial(Usuario usuario)
         {
             return HistorialEstadosService.GetInstance()
-                .ObtenerVersionesUsuario(usuarioId)
+                .ObtenerVersionesUsuario(usuario)
                 .OfType<UsuarioHistorialSnapshot>()
                 .OrderByDescending(item => item.FechaHora)
                 .ThenByDescending(item => item.HistorialId)
                 .ToList();
         }
 
-        public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
+        public UsuarioHistorialSnapshot ObtenerVersion(IUsuarioSnapshot snapshot)
         {
-            return HistorialEstadosService.GetInstance().ObtenerVersionUsuario(historialId) as UsuarioHistorialSnapshot;
+            return snapshot == null ? null : HistorialEstadosService.GetInstance().ObtenerVersionUsuario(snapshot) as UsuarioHistorialSnapshot;
         }
 
         public List<ResultadoComparacionEstado> CompararVersiones(UsuarioHistorialSnapshot versionActual, UsuarioHistorialSnapshot versionAnterior)
@@ -106,8 +106,8 @@ namespace BLL
             AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Username", versionAnterior == null ? null : versionAnterior.Username, versionActual.Username);
             AgregarCambioProtegidoPassword(diferencias, versionActual, versionAnterior);
             AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Active", versionAnterior == null ? null : FormatearBool(versionAnterior.Activo), FormatearBool(versionActual.Activo));
-            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.LanguageId", versionAnterior == null ? null : FormatearNullable(versionAnterior.IdiomaId), FormatearNullable(versionActual.IdiomaId));
-            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Permissions", versionAnterior == null ? null : FormatearPermisos(versionAnterior.PermisosIds), FormatearPermisos(versionActual.PermisosIds));
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.LanguageId", versionAnterior == null ? null : FormatearNullable(versionAnterior.Idioma?.Id), FormatearNullable(versionActual.Idioma?.Id));
+            AgregarDiferencia(diferencias, "FormUserHistory.Value.Field.Permissions", versionAnterior == null ? null : FormatearPermisos(versionAnterior.Permisos), FormatearPermisos(versionActual.Permisos));
 
             if (diferencias.Count == 0)
             {
@@ -129,22 +129,19 @@ namespace BLL
                 throw new System.ArgumentNullException("unidad");
             }
 
-            BE.Usuario usuario = new BE.Usuario
-            {
-                Id = snapshot.UsuarioId,
-                Username = snapshot.Username,
-                PasswordHash = snapshot.PasswordHash,
-                Activo = snapshot.Activo
-            };
+            BE.Usuario usuario = unidad.Usuarios.ObtenerPorId(snapshot.Usuario.Id);
+            usuario.Username = snapshot.Username;
+            usuario.PasswordHash = snapshot.PasswordHash;
+            usuario.Activo = snapshot.Activo;
 
             unidad.Usuarios.GuardarEstadoCompleto(usuario);
-            unidad.UsuarioPermisos.ReemplazarPermisosUsuario(snapshot.UsuarioId, snapshot.PermisosIds == null ? new List<int>() : snapshot.PermisosIds.ToList());
-            unidad.UsuarioPreferencias.Guardar(snapshot.UsuarioId, snapshot.IdiomaId);
+            unidad.UsuarioPermisos.ReemplazarPermisosUsuario(usuario, snapshot.Permisos == null ? new List<IPermiso>() : snapshot.Permisos.ToList());
+            unidad.UsuarioPreferencias.Guardar(usuario, snapshot.Idioma);
         }
 
-        int IUsuarioEstadoBLL.GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        UsuarioHistorialSnapshot IUsuarioEstadoBLL.GuardarVersionActualInterno(Usuario usuario, string accion, string observaciones, IUnidadDeTrabajo unidad)
         {
-            return GuardarVersionActualInterno(usuarioId, accion, observaciones, unidad);
+            return GuardarVersionActualInterno(usuario, accion, observaciones, unidad);
         }
 
         void IUsuarioEstadoBLL.AplicarSnapshotInterno(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad)
@@ -195,14 +192,14 @@ namespace BLL
             return valor ? "FormUserHistory.Value.Boolean.Yes" : "FormUserHistory.Value.Boolean.No";
         }
 
-        private string FormatearPermisos(IEnumerable<int> permisosIds)
+        private string FormatearPermisos(IEnumerable<IPermiso> permisos)
         {
-            if (permisosIds == null)
+            if (permisos == null)
             {
                 return "-";
             }
 
-            List<int> ordenados = permisosIds.Distinct().OrderBy(id => id).ToList();
+            List<int> ordenados = permisos.Select(p => p.Id).Distinct().OrderBy(id => id).ToList();
             if (ordenados.Count == 0)
             {
                 return "-";

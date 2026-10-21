@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN37 Consultar tasas de conversion — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMonedas" as FormGestionMonedas
+control "TasaConversionBLL" as TasaConversionBLL
+participant "TasaConversionRepositorio\n:ITasaConversionRepositorio" as ITasaConversionRepositorio
+participant "TasaConversionDAL" as TasaConversionDAL
+note over FormGestionMonedas : El actor desea conocer las tasas de conversión vigentes entre las monedas del\nsistema.
+Actor -> FormGestionMonedas : selecciona la opción «Monedas» del menú «Operador».
+FormGestionMonedas -> TasaConversionBLL ++ : ObtenerTodas()
+TasaConversionBLL -> ITasaConversionRepositorio ++ : ObtenerTodas()
+ITasaConversionRepositorio -> TasaConversionDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+TasaConversionDAL --> ITasaConversionRepositorio -- : List<TasaConversion>
+ITasaConversionRepositorio --> TasaConversionBLL -- : List<TasaConversion>
+TasaConversionBLL --> FormGestionMonedas -- : List<TasaConversion>
+FormGestionMonedas --> Actor : presenta la pantalla «Gestion de Monedas» con la sección «Tasas de Conversion», que\ncontiene el listado de tasas indicando para cada una su «Moneda Base», «Moneda\nConversion», «Calculo», «Fecha Actualizacion» y «Manual» (casilla…
+Actor -> FormGestionMonedas : selecciona una tasa del listado.
+FormGestionMonedas --> Actor : muestra la moneda base, la moneda de conversión y el cálculo de la tasa seleccionada en\nlos campos «Moneda Base:», «Moneda Conversion:» y «Calculo:». Si la tasa es manual, el\nbotón «Liberar» queda habilitado.
+' BLL/TasaConversionBLL.cs:76 TasaConversionBLL.ObtenerTodas
+' DAL/TasaConversionDAL.cs:55 TasaConversionDAL.ObtenerTodas
+' REPOSITORIO/ITasaConversionRepositorio.cs:10 ITasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/TasaConversionRepositorio.cs:30 TasaConversionRepositorio.ObtenerTodas
+' UI/FormGestionMonedas.cs:198 FormGestionMonedas.CargarTasas
+@enduml

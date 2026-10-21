@@ -33,45 +33,38 @@ namespace BLL
 
         public List<CuentaFinanciera> ObtenerMisCuentas()
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            return _cuentaFinancieraRepositorio.ObtenerPorUsuario(usuarioActualId);
+            return _cuentaFinancieraRepositorio.ObtenerPorUsuario(_sesion.ObtenerUsuarioActual());
         }
 
-        // medioPagoEntidadIds: productos del catalogo de la entidad que el usuario contrata
-        // (null = ninguno; los repetidos se ignoran).
-        public CuentaFinanciera Crear(int entidadFinancieraId, string alias, TipoCuentaFinanciera tipo, List<int> medioPagoEntidadIds)
+        // La cuenta conserva los productos contratados (null = ninguno; repetidos se ignoran).
+        public CuentaFinanciera Crear(CuentaFinanciera cuenta)
         {
-            string aliasNormalizado = NormalizarAlias(alias);
-            ValidarTipo(tipo);
-            List<int> idsDistintos = (medioPagoEntidadIds ?? new List<int>()).Distinct().ToList();
+            string aliasNormalizado = NormalizarAlias(cuenta?.Alias);
+            ValidarTipo(cuenta.Tipo);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ValidarEntidadExiste(unidad, entidadFinancieraId);
-                    ValidarMediosDelCatalogo(unidad, entidadFinancieraId, idsDistintos);
+                    EntidadFinanciera entidad = ValidarEntidadExiste(unidad, cuenta.EntidadFinanciera);
+                    List<MedioPagoEntidad> medios = ValidarMediosDelCatalogo(unidad, entidad, cuenta.MediosPagoEntidad);
+                    cuenta.Usuario = usuarioActual;
+                    cuenta.EntidadFinanciera = entidad;
+                    cuenta.Alias = aliasNormalizado;
+                    cuenta.CredencialesCifradas = null;
+                    cuenta.MediosPagoEntidad = medios;
+                    cuenta.Id = unidad.CuentasFinancieras.InsertarYObtenerId(cuenta);
 
-                    CuentaFinanciera nuevaCuenta = new CuentaFinanciera
+                    if (medios.Count > 0)
                     {
-                        Usuario = new Usuario { Id = usuarioActualId },
-                        EntidadFinanciera = new EntidadFinanciera { Id = entidadFinancieraId },
-                        Alias = aliasNormalizado,
-                        Tipo = tipo,
-                        CredencialesCifradas = null
-                    };
-                    nuevaCuenta.Id = unidad.CuentasFinancieras.InsertarYObtenerId(nuevaCuenta);
-
-                    if (idsDistintos.Count > 0)
-                    {
-                        unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(nuevaCuenta.Id, idsDistintos);
+                        unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(cuenta, medios);
                     }
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormFinancialAccountManagement.Value.Activity.Creation", "FormFinancialAccountManagement.Value.Info.Creation", "CuentaFinancieraBLL", unidad);
                     unidad.Save();
-                    return nuevaCuenta;
+                    return cuenta;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -86,38 +79,31 @@ namespace BLL
 
         // Mismas reglas que Crear sobre una cuenta propia. Los medios contratados se reemplazan
         // por completo y las credenciales se conservan (el UPDATE del repositorio las sobreescribe).
-        public CuentaFinanciera Actualizar(int id, int entidadFinancieraId, string alias, TipoCuentaFinanciera tipo, List<int> medioPagoEntidadIds)
+        public CuentaFinanciera Actualizar(CuentaFinanciera cuenta)
         {
-            string aliasNormalizado = NormalizarAlias(alias);
-            ValidarTipo(tipo);
-            List<int> idsDistintos = (medioPagoEntidadIds ?? new List<int>()).Distinct().ToList();
+            string aliasNormalizado = NormalizarAlias(cuenta?.Alias);
+            ValidarTipo(cuenta.Tipo);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    CuentaFinanciera cuentaExistente = unidad.CuentasFinancieras.ObtenerPorId(id);
-                    ValidarPropiedad(cuentaExistente, usuarioActualId);
-                    ValidarEntidadExiste(unidad, entidadFinancieraId);
-                    ValidarMediosDelCatalogo(unidad, entidadFinancieraId, idsDistintos);
-
-                    CuentaFinanciera cuentaActualizada = new CuentaFinanciera
-                    {
-                        Id = id,
-                        Usuario = new Usuario { Id = usuarioActualId },
-                        EntidadFinanciera = new EntidadFinanciera { Id = entidadFinancieraId },
-                        Alias = aliasNormalizado,
-                        Tipo = tipo,
-                        CredencialesCifradas = cuentaExistente.CredencialesCifradas
-                    };
+                    CuentaFinanciera cuentaActualizada = unidad.CuentasFinancieras.ObtenerPorId(cuenta.Id);
+                    ValidarPropiedad(cuentaActualizada, usuarioActual);
+                    EntidadFinanciera entidad = ValidarEntidadExiste(unidad, cuenta.EntidadFinanciera);
+                    List<MedioPagoEntidad> medios = ValidarMediosDelCatalogo(unidad, entidad, cuenta.MediosPagoEntidad);
+                    cuentaActualizada.EntidadFinanciera = entidad;
+                    cuentaActualizada.Alias = aliasNormalizado;
+                    cuentaActualizada.Tipo = cuenta.Tipo;
+                    cuentaActualizada.MediosPagoEntidad = medios;
                     if (!unidad.CuentasFinancieras.Actualizar(cuentaActualizada))
                     {
                         throw new ExcepcionTecnica("Error.FinancialAccountManagement.UpdateFailed");
                     }
 
-                    unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(id, idsDistintos);
+                    unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(cuentaActualizada, medios);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormFinancialAccountManagement.Value.Activity.Update", "FormFinancialAccountManagement.Value.Info.Update", "CuentaFinancieraBLL", unidad);
                     unidad.Save();
@@ -138,20 +124,20 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(CuentaFinanciera cuenta)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    CuentaFinanciera cuenta = unidad.CuentasFinancieras.ObtenerPorId(id);
-                    ValidarPropiedad(cuenta, usuarioActualId);
+                    CuentaFinanciera persistida = cuenta == null ? null : unidad.CuentasFinancieras.ObtenerPorId(cuenta.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
                     // Primero la tabla puente (FK hacia CuentaFinanciera), luego la cuenta.
-                    unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(id, new List<int>());
-                    if (!unidad.CuentasFinancieras.Eliminar(id))
+                    unidad.CuentasFinancieras.ReemplazarMediosPagoEntidadDeCuenta(persistida, new List<MedioPagoEntidad>());
+                    if (!unidad.CuentasFinancieras.Eliminar(persistida))
                     {
                         throw new ExcepcionTecnica("Error.FinancialAccountManagement.DeleteFailed");
                     }
@@ -175,39 +161,38 @@ namespace BLL
             }
         }
 
-        private static void ValidarEntidadExiste(IUnidadDeTrabajo unidad, int entidadFinancieraId)
+        private static EntidadFinanciera ValidarEntidadExiste(IUnidadDeTrabajo unidad, EntidadFinanciera recibida)
         {
-            if (unidad.EntidadesFinancieras.ObtenerPorId(entidadFinancieraId) == null)
+            EntidadFinanciera entidad = recibida == null ? null : unidad.EntidadesFinancieras.ObtenerPorId(recibida.Id);
+            if (entidad == null)
             {
                 throw new ExcepcionNegocio("Error.FinancialAccountManagement.EntityNotFound");
             }
+            return entidad;
         }
 
         // Solo se pueden contratar productos del catalogo de la entidad de la cuenta.
-        private static void ValidarMediosDelCatalogo(IUnidadDeTrabajo unidad, int entidadFinancieraId, List<int> medioPagoEntidadIds)
+        private static List<MedioPagoEntidad> ValidarMediosDelCatalogo(IUnidadDeTrabajo unidad, EntidadFinanciera entidad, IEnumerable<MedioPagoEntidad> medios)
         {
-            if (medioPagoEntidadIds.Count == 0)
-            {
-                return;
-            }
-
-            HashSet<int> idsDelCatalogo = new HashSet<int>(
-                unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(entidadFinancieraId).Select(item => item.Id));
-            if (medioPagoEntidadIds.Any(medioPagoEntidadId => !idsDelCatalogo.Contains(medioPagoEntidadId)))
+            List<MedioPagoEntidad> seleccionados = (medios ?? Enumerable.Empty<MedioPagoEntidad>()).ToList();
+            if (seleccionados.Count == 0) return seleccionados;
+            List<MedioPagoEntidad> catalogo = unidad.MediosPagoEntidad.ObtenerPorEntidadFinanciera(entidad);
+            if (seleccionados.Any(medio => medio == null || !catalogo.Any(item => item.Id == medio.Id)))
             {
                 throw new ExcepcionNegocio("Error.FinancialAccountManagement.PaymentMethodNotFromEntity");
             }
+            return seleccionados.GroupBy(item => item.Id).Select(grupo => catalogo.First(item => item.Id == grupo.Key)).ToList();
         }
 
         // Una cuenta solo puede ser vista o eliminada por su dueno.
-        private static void ValidarPropiedad(CuentaFinanciera cuenta, int usuarioActualId)
+        private static void ValidarPropiedad(CuentaFinanciera cuenta, Usuario usuarioActual)
         {
             if (cuenta == null)
             {
                 throw new ExcepcionNegocio("Error.FinancialAccountManagement.NotFound");
             }
 
-            if (cuenta.Usuario == null || cuenta.Usuario.Id != usuarioActualId)
+            if (cuenta.Usuario == null || cuenta.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.FinancialAccountManagement.NotOwned");
             }

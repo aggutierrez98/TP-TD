@@ -18,7 +18,7 @@ namespace SERVICIOS
         private readonly Func<DateTime> _ahora;
         private readonly TimeSpan _vigencia;
         private readonly object _candado = new object();
-        private readonly Dictionary<string, Tuple<DateTime, IReadOnlyList<DatoMercado>>> _cache = new Dictionary<string, Tuple<DateTime, IReadOnlyList<DatoMercado>>>();
+        private readonly Dictionary<string, Tuple<DateTime, IReadOnlyList<IDatoMercado>>> _cache = new Dictionary<string, Tuple<DateTime, IReadOnlyList<IDatoMercado>>>();
 
         internal ClienteMercadoPublico(HttpMessageHandler handler, TimeSpan timeout, Func<DateTime> ahora, TimeSpan vigencia)
         {
@@ -30,7 +30,7 @@ namespace SERVICIOS
             _vigencia = vigencia;
         }
 
-        internal async Task<IReadOnlyList<DatoMercado>> ObtenerAsync(string url, Func<JsonElement, List<DatoMercado>> parsear, CancellationToken ct)
+        internal async Task<IReadOnlyList<IDatoMercado>> ObtenerAsync(string url, Func<JsonElement, List<DatoMercado>> parsear, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
             lock (_candado)
@@ -49,7 +49,7 @@ namespace SERVICIOS
                         {
                             List<DatoMercado> datos = parsear(json.RootElement);
                             if (datos.Count == 0) throw new FormatException("La fuente no contiene datos utilizables.");
-                            IReadOnlyList<DatoMercado> resultado = datos.AsReadOnly();
+                            IReadOnlyList<IDatoMercado> resultado = datos.AsReadOnly();
                             ct.ThrowIfCancellationRequested();
                             lock (_candado) _cache[url] = Tuple.Create(_ahora(), resultado);
                             return resultado;

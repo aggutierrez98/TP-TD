@@ -13,6 +13,6 @@ namespace REPOSITORIO
 
         bool Actualizar(MedioPago medioPago);
 
-        bool Eliminar(int id);
+        bool Eliminar(MedioPago medioPago);
     }
 }

@@ -4,16 +4,14 @@ namespace BE
 {
     // Una fila = un intercambio completo (pregunta + respuesta ya resuelta por el
     // asistente); se inserta una unica vez cuando ya se tiene la respuesta de Gemini,
-    // nunca en dos pasos. Usa FKs planas (ChatbotFinancieroId/UsuarioId) en lugar de
-    // navegacion a BE anidado: a diferencia de ReglaCategorizacion, no hace falta
-    // hidratar Usuario/ChatbotFinanciero completos para el uso actual (solo chat).
+    // nunca en dos pasos.
     public class ConsultaChatbot
     {
         public int Id { get; set; }
 
-        public int ChatbotFinancieroId { get; set; }
+        public ChatbotFinanciero ChatbotFinanciero { get; set; }
 
-        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
 
         public string Pregunta { get; set; }
 

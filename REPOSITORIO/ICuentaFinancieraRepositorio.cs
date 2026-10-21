@@ -7,18 +7,18 @@ namespace REPOSITORIO
     {
         CuentaFinanciera ObtenerPorId(int id);
 
-        List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId);
+        List<CuentaFinanciera> ObtenerPorUsuario(Usuario usuario);
 
-        List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId);
+        List<CuentaFinanciera> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad);
 
         int InsertarYObtenerId(CuentaFinanciera cuenta);
 
         bool Actualizar(CuentaFinanciera cuenta);
 
-        bool Eliminar(int id);
+        bool Eliminar(CuentaFinanciera cuenta);
 
-        bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds);
+        bool ReemplazarMediosPagoEntidadDeCuenta(CuentaFinanciera cuenta, IEnumerable<MedioPagoEntidad> medios);
 
-        int ContarPorMedioPagoEntidad(int medioPagoEntidadId);
+        int ContarPorMedioPagoEntidad(MedioPagoEntidad medio);
     }
 }

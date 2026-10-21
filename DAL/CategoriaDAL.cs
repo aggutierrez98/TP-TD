@@ -46,7 +46,7 @@ namespace DAL
             }
         }
 
-        public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<Categoria> ObtenerVisiblesParaUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, Nombre, UsuarioId
@@ -61,7 +61,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -140,7 +140,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(Categoria categoria, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Categoria
@@ -153,7 +153,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoria.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -167,9 +167,10 @@ namespace DAL
             }
         }
 
-        public bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido, AccesoDatosSqlServer accesoDatos = null)
+        // usuario null = scope global; excluida null = sin exclusion.
+        public bool ExisteNombreEnScope(string nombre, Usuario usuario, Categoria excluida, AccesoDatosSqlServer accesoDatos = null)
         {
-            string query = usuarioId.HasValue
+            string query = usuario != null
                 ? @"SELECT COUNT(1) FROM Categoria
                     WHERE UsuarioId = @UsuarioId AND Nombre = @Nombre AND (@IdExcluido IS NULL OR Id <> @IdExcluido)"
                 : @"SELECT COUNT(1) FROM Categoria
@@ -183,12 +184,12 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@Nombre", SqlDbType.VarChar, nombre),
-                    accesoDatos.CreateParameter("@IdExcluido", SqlDbType.Int, idExcluido)
+                    accesoDatos.CreateParameter("@IdExcluido", SqlDbType.Int, excluida?.Id)
                 };
 
-                if (usuarioId.HasValue)
+                if (usuario != null)
                 {
-                    parametros.Add(accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId));
+                    parametros.Add(accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id));
                 }
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

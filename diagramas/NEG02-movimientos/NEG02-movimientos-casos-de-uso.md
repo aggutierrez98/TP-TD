@@ -1,0 +1,154 @@
+# Gestión de movimientos
+
+_Especificaciones de casos de uso_
+
+---
+
+**ID y Nombre:** CUN06 Consultar movimientos  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor consultar sus movimientos de ingresos y egresos, filtrarlos por criterios de búsqueda y visualizar el detalle de un movimiento seleccionado.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de movimientos.  
+**Puntos de Extension:** Desde el listado, el actor puede continuar con CUN07 Registrar movimiento, CUN08 Modificar movimiento, CUN09 Eliminar movimiento y CUN10 Exportar movimientos seleccionados a PDF.  
+**Condicion:** El actor desea consultar sus movimientos registrados.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Movimientos» del menú «Finanzas». La pantalla también se presenta al iniciar sesión cuando el actor cuenta con autorización para acceder a ella.
+2. El sistema presenta la pantalla «Gestión de movimientos» con la sección «Filtros» y el listado de movimientos del actor, indicando para cada uno su fecha, tipo, categoría, comercio, monto y descripción.
+3. El actor define uno o más criterios de búsqueda: marca «Desde:» y/o «Hasta:» e indica las fechas, elige una «Categoría:», elige un «Tipo:» (Ingreso o Egreso) o ingresa un texto en «Descripción:».
+4. El actor presiona el botón «Buscar» o presiona la tecla Enter en el campo «Descripción:».
+5. El sistema actualiza el listado con los movimientos del actor que cumplen todos los criterios indicados.
+6. El actor selecciona un movimiento del listado.
+7. El sistema muestra en la sección «Movimiento» la categoría, el tipo, el monto, la fecha, la descripción y el comercio del movimiento seleccionado.
+
+**Flujos Alternativos:**
+2a. Si el actor no tiene movimientos registrados, el sistema presenta el listado vacío.
+3a. Si el actor no define criterios de búsqueda, al presionar «Buscar» el sistema presenta todos sus movimientos.
+5a. Si ningún movimiento cumple los criterios indicados, el sistema presenta el listado vacío.
+5b. Si ocurre un error al realizar la consulta, el sistema muestra un mensaje de error y conserva el listado y los criterios de búsqueda anteriores.
+6a. Si el actor solo necesita consultar el listado, omite la selección de un movimiento. El caso de uso finaliza con el listado disponible.
+
+**Postcondiciones:** El actor dispone del listado de sus movimientos según los criterios aplicados y, si seleccionó uno, de su detalle. La consulta no modifica los movimientos.
+
+---
+
+**ID y Nombre:** CUN07 Registrar movimiento  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor registrar un nuevo movimiento de ingreso o egreso indicando su categoría, monto, fecha y, opcionalmente, descripción y comercio.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de movimientos. Existe al menos una categoría disponible para el actor.  
+**Puntos de Extension:** Antes del paso 4, el actor puede precargar los datos escaneando un ticket (flujo 3a) o solicitar una sugerencia de categoría (flujo 3b).  
+**Condicion:** El actor desea dejar registrado un ingreso o un egreso.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Movimientos» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de movimientos» con la sección «Movimiento», que incluye los campos «Categoría:», «Tipo:», «Monto:», «Fecha:», «Descripción:» y «Comercio (opcional):».
+3. El actor selecciona la categoría y el tipo (Ingreso o Egreso), ingresa el monto y la fecha y, si lo desea, ingresa una descripción y selecciona un comercio.
+4. El actor presiona el botón «Agregar».
+5. El sistema registra el movimiento, limpia los campos de la sección «Movimiento» y actualiza el listado, que incorpora el nuevo movimiento.
+6. El sistema muestra el mensaje «Movimiento creado con éxito.».
+
+**Flujos Alternativos:**
+3a. Si el actor presiona «Escanear ticket», el sistema presenta un diálogo para elegir una imagen (jpg, jpeg o png). Si el actor elige un archivo, el sistema muestra «Analizando ticket...» y completa el tipo, la fecha, la descripción y el monto detectados; el escenario continúa en el paso 3. Si no detecta el monto, deja el campo «Monto:» vacío y muestra el mensaje «No se pudo detectar el monto del ticket automáticamente. Completa el campo a mano.» seguido del texto detectado. Si el actor cancela el diálogo, no se completan datos. Si ocurre un error durante el análisis, el sistema muestra un mensaje de error.
+3b. Si el actor presiona «Sugerir cat.» o abandona el campo «Descripción:» luego de completarlo, el sistema selecciona en «Categoría:» la categoría sugerida según la descripción y el comercio indicados. Si la descripción está vacía, el sistema muestra el mensaje «Debe ingresar una descripción para sugerir la categoría.». Si no encuentra una categoría para sugerir, muestra el mensaje «No se pudo sugerir una categoría automáticamente. Por favor seleccioná una categoría manualmente.». En ambos casos el escenario continúa en el paso 3.
+4a. Si no hay una categoría seleccionada, el sistema muestra el mensaje «Debe seleccionar una categoría.». El movimiento no se registra.
+4b. Si no hay un tipo seleccionado, el sistema muestra el mensaje «Debe seleccionar un tipo.». El movimiento no se registra.
+4c. Si el monto no es un número válido o no es mayor que cero, el sistema muestra el mensaje «Debe ingresar un monto válido.». El movimiento no se registra.
+5a. Si ocurre un error al registrar el movimiento, el sistema muestra el mensaje «No se pudo crear el movimiento.». El movimiento no se registra y los datos ingresados permanecen en pantalla.
+
+**Postcondiciones:** El nuevo movimiento figura en el listado de movimientos del actor. Si el caso de uso no se completa, el listado no cambia.
+
+---
+
+**ID y Nombre:** CUN08 Modificar movimiento  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor modificar los datos de un movimiento propio ya registrado.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de movimientos. El actor tiene al menos un movimiento registrado.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El actor necesita corregir o actualizar los datos de un movimiento registrado.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Movimientos» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de movimientos» con el listado de movimientos del actor.
+3. El actor selecciona el movimiento a modificar.
+4. El sistema muestra en la sección «Movimiento» la categoría, el tipo, el monto, la fecha, la descripción y el comercio del movimiento seleccionado.
+5. El actor modifica los datos que desea cambiar.
+6. El actor presiona el botón «Actualizar».
+7. El sistema aplica los cambios, limpia los campos de la sección «Movimiento» y actualiza el listado con los datos modificados.
+8. El sistema muestra el mensaje «Movimiento actualizado con éxito.».
+
+**Flujos Alternativos:**
+6a. Si no hay un movimiento seleccionado, el sistema muestra el mensaje «Debe seleccionar un movimiento.». No se realizan cambios.
+6b. Si no hay una categoría seleccionada, el sistema muestra el mensaje «Debe seleccionar una categoría.». No se realizan cambios.
+6c. Si no hay un tipo seleccionado, el sistema muestra el mensaje «Debe seleccionar un tipo.». No se realizan cambios.
+6d. Si el monto no es un número válido o no es mayor que cero, el sistema muestra el mensaje «Debe ingresar un monto válido.». No se realizan cambios.
+7a. Si ocurre un error al actualizar el movimiento, el sistema muestra el mensaje «No se pudo actualizar el movimiento.». El movimiento conserva sus datos anteriores.
+
+**Postcondiciones:** El movimiento figura en el listado con los datos modificados. Si el caso de uso no se completa, el movimiento conserva sus datos anteriores.
+
+---
+
+**ID y Nombre:** CUN09 Eliminar movimiento  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor eliminar un movimiento propio previamente registrado.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de movimientos. El actor tiene al menos un movimiento registrado.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El actor desea quitar un movimiento que ya no corresponde mantener.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Movimientos» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de movimientos» con el listado de movimientos del actor.
+3. El actor selecciona el movimiento a eliminar.
+4. El sistema muestra los datos del movimiento seleccionado en la sección «Movimiento».
+5. El actor presiona el botón «Eliminar».
+6. El sistema solicita confirmación con el título «Confirmar eliminación» y el mensaje «Se eliminará el movimiento seleccionado. ¿Desea continuar?».
+7. El actor confirma la eliminación.
+8. El sistema elimina el movimiento, limpia los campos de la sección «Movimiento» y actualiza el listado, que ya no incluye el movimiento eliminado.
+9. El sistema muestra el mensaje «Movimiento eliminado con éxito.».
+
+**Flujos Alternativos:**
+5a. Si no hay un movimiento seleccionado, el sistema muestra el mensaje «Debe seleccionar un movimiento.». No se realizan cambios.
+7a. Si el actor no confirma la eliminación, el caso de uso finaliza sin cambios.
+8a. Si ocurre un error al eliminar el movimiento, el sistema muestra el mensaje «No se pudo eliminar el movimiento.». El movimiento permanece en el listado.
+
+**Postcondiciones:** El movimiento eliminado no figura en el listado del actor. Si el caso de uso no se completa, el movimiento permanece sin cambios.
+
+---
+
+**ID y Nombre:** CUN10 Exportar movimientos seleccionados a PDF  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor generar un documento PDF con los movimientos que marque en el listado, junto con los criterios de búsqueda aplicados.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de movimientos. El listado de movimientos contiene al menos un movimiento.  
+**Puntos de Extension:** El listado a exportar surge de CUN06 Consultar movimientos.  
+**Condicion:** El actor necesita contar con un reporte en PDF de sus movimientos.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Movimientos» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de movimientos» con el listado de movimientos, el contador de movimientos seleccionados y el botón «Exportar a PDF» deshabilitado.
+3. El actor define criterios de búsqueda si lo desea y presiona «Buscar».
+4. El actor marca la casilla de la columna «Exportar» de uno o más movimientos, o presiona «Seleccionar todos».
+5. El sistema actualiza el contador con la cantidad de movimientos seleccionados sobre el total del listado, por ejemplo «2 de 5 seleccionados», y habilita el botón «Exportar a PDF».
+6. El actor presiona el botón «Exportar a PDF».
+7. El sistema presenta el diálogo «Guardar reporte de movimientos», con un nombre de archivo sugerido de la forma «FINAZAPP-movimientos-AAAAMMDD-HHMMSS.pdf».
+8. El actor elige la ubicación y el nombre del archivo y confirma.
+9. El sistema deshabilita temporalmente la pantalla mientras genera el documento «Listado de movimientos», que incluye los movimientos marcados y los criterios de búsqueda aplicados.
+10. El sistema guarda el archivo, habilita nuevamente la pantalla y muestra el mensaje «PDF guardado correctamente en:» seguido de la ruta del archivo.
+
+**Flujos Alternativos:**
+4a. Si el actor presiona «Desmarcar todos» o desmarca todas las casillas, el contador vuelve a «0 de N seleccionados» y el botón «Exportar a PDF» se deshabilita. El caso de uso finaliza sin generar el documento.
+4b. Si el actor realiza una nueva búsqueda, el sistema actualiza el listado y desmarca los movimientos seleccionados.
+8a. Si el actor cancela el diálogo, el caso de uso finaliza sin generar el documento.
+8b. Si el archivo elegido ya existe, el sistema solicita confirmar el reemplazo. Si el actor no confirma, el sistema vuelve al diálogo de guardado.
+9a. Si el actor intenta cerrar la pantalla mientras se genera el documento, el sistema no permite cerrarla hasta que finalice.
+10a. Si no es posible guardar el archivo, el sistema muestra el mensaje «No se pudo guardar el PDF. Verificá los permisos de la carpeta y que el archivo no esté abierto.». El documento no se guarda.
+10b. Si ocurre otro error al generar el documento, el sistema muestra el mensaje «No se pudo generar el PDF de movimientos.». El documento no se guarda.
+
+**Postcondiciones:** El archivo PDF con los movimientos seleccionados queda guardado en la ubicación elegida. Los movimientos no se modifican. Si el caso de uso no se completa, no se genera ningún archivo.

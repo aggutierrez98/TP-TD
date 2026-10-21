@@ -54,14 +54,14 @@ namespace REPOSITORIO
             return _productoDAL.Actualizar(producto, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Producto producto)
         {
-            return _productoDAL.Eliminar(id, _accesoDatos);
+            return _productoDAL.Eliminar(producto, _accesoDatos);
         }
 
-        public int ContarPorCategoria(int categoriaProductoId)
+        public int ContarPorCategoria(CategoriaProducto categoria)
         {
-            return _productoDAL.ContarPorCategoria(categoriaProductoId, _accesoDatos);
+            return _productoDAL.ContarPorCategoria(categoria, _accesoDatos);
         }
     }
 }

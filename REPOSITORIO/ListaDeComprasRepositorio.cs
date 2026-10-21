@@ -29,9 +29,9 @@ namespace REPOSITORIO
             return listaDeCompras;
         }
 
-        public List<ListaDeCompras> ObtenerPorUsuario(int usuarioId)
+        public List<ListaDeCompras> ObtenerPorUsuario(Usuario usuario)
         {
-            List<ListaDeCompras> listas = _listaDeComprasDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            List<ListaDeCompras> listas = _listaDeComprasDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             listas.ForEach(Hidratar);
             return listas;
         }
@@ -47,7 +47,7 @@ namespace REPOSITORIO
 
             // Se leen los items directo del DAL (no via ItemListaRepositorio) para no
             // reingresar en su Hidratar y volver a pedir esta misma ListaDeCompras al infinito.
-            listaDeCompras.ItemsLista = _itemListaDAL.ObtenerPorListaDeCompras(listaDeCompras.Id, _accesoDatos);
+            listaDeCompras.ItemsLista = _itemListaDAL.ObtenerPorListaDeCompras(listaDeCompras, _accesoDatos);
             foreach (ItemLista item in listaDeCompras.ItemsLista)
             {
                 item.ListaDeCompras = listaDeCompras;
@@ -64,9 +64,9 @@ namespace REPOSITORIO
             return _listaDeComprasDAL.Actualizar(listaDeCompras, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ListaDeCompras lista)
         {
-            return _listaDeComprasDAL.Eliminar(id, _accesoDatos);
+            return _listaDeComprasDAL.Eliminar(lista, _accesoDatos);
         }
     }
 }

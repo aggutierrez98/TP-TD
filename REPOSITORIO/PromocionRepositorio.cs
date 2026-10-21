@@ -8,13 +8,7 @@ namespace REPOSITORIO
     {
         private readonly PromocionDAL _promocionDAL;
         private readonly PromocionDiaSemanaDAL _promocionDiaSemanaDAL;
-        private readonly PromocionComercioDAL _promocionComercioDAL;
-        private readonly PromocionRubroComercioDAL _promocionRubroComercioDAL;
-        private readonly PromocionEntidadFinancieraDAL _promocionEntidadFinancieraDAL;
-        private readonly PromocionMedioPagoDAL _promocionMedioPagoDAL;
         private readonly PromocionSegmentoDAL _promocionSegmentoDAL;
-        private readonly PromocionProductoDAL _promocionProductoDAL;
-        private readonly PromocionCategoriaProductoDAL _promocionCategoriaProductoDAL;
         private readonly AccesoDatosSqlServer _accesoDatos;
 
         public PromocionRepositorio()
@@ -26,13 +20,7 @@ namespace REPOSITORIO
         {
             _promocionDAL = new PromocionDAL();
             _promocionDiaSemanaDAL = new PromocionDiaSemanaDAL();
-            _promocionComercioDAL = new PromocionComercioDAL();
-            _promocionRubroComercioDAL = new PromocionRubroComercioDAL();
-            _promocionEntidadFinancieraDAL = new PromocionEntidadFinancieraDAL();
-            _promocionMedioPagoDAL = new PromocionMedioPagoDAL();
             _promocionSegmentoDAL = new PromocionSegmentoDAL();
-            _promocionProductoDAL = new PromocionProductoDAL();
-            _promocionCategoriaProductoDAL = new PromocionCategoriaProductoDAL();
             _accesoDatos = accesoDatos;
         }
 
@@ -50,23 +38,25 @@ namespace REPOSITORIO
             return promociones;
         }
 
-        private void Hidratar(Promocion promocion)
+        internal void Hidratar(Promocion promocion)
         {
             if (promocion == null)
             {
                 return;
             }
 
-            promocion.DiasSemana = _promocionDiaSemanaDAL.ObtenerDiasPorPromocion(promocion.Id, _accesoDatos);
-            promocion.ComercioIds = _promocionComercioDAL.ObtenerComercioIdsPorPromocion(promocion.Id, _accesoDatos);
-            promocion.RubroComercioIds = _promocionRubroComercioDAL.ObtenerRubroComercioIdsPorPromocion(promocion.Id, _accesoDatos);
-            promocion.EntidadFinancieraIds = _promocionEntidadFinancieraDAL.ObtenerEntidadFinancieraIdsPorPromocion(promocion.Id, _accesoDatos);
-            promocion.MedioPagoIds = _promocionMedioPagoDAL.ObtenerMedioPagoIdsPorPromocion(promocion.Id, _accesoDatos);
-            promocion.Segmentos = _promocionSegmentoDAL.ObtenerSegmentosPorPromocion(promocion.Id, _accesoDatos);
-            promocion.ProductoIncluidoIds = _promocionProductoDAL.ObtenerProductoIdsPorPromocion(promocion.Id, false, _accesoDatos);
-            promocion.ProductoExcluidoIds = _promocionProductoDAL.ObtenerProductoIdsPorPromocion(promocion.Id, true, _accesoDatos);
-            promocion.CategoriaIncluidaIds = _promocionCategoriaProductoDAL.ObtenerCategoriaProductoIdsPorPromocion(promocion.Id, false, _accesoDatos);
-            promocion.CategoriaExcluidaIds = _promocionCategoriaProductoDAL.ObtenerCategoriaProductoIdsPorPromocion(promocion.Id, true, _accesoDatos);
+            promocion.DiasSemana = _promocionDiaSemanaDAL.ObtenerDiasPorPromocion(promocion, _accesoDatos);
+            promocion.Comercios = new PromocionComercioRepositorio(_accesoDatos).ObtenerComerciosPorPromocion(promocion);
+            promocion.RubrosComercio = new PromocionRubroComercioRepositorio(_accesoDatos).ObtenerRubrosComercioPorPromocion(promocion);
+            promocion.EntidadesFinancieras = new PromocionEntidadFinancieraRepositorio(_accesoDatos).ObtenerEntidadesFinancierasPorPromocion(promocion);
+            promocion.MediosPago = new PromocionMedioPagoRepositorio(_accesoDatos).ObtenerMediosPagoPorPromocion(promocion);
+            promocion.Segmentos = _promocionSegmentoDAL.ObtenerSegmentosPorPromocion(promocion, _accesoDatos);
+            PromocionProductoRepositorio productos = new PromocionProductoRepositorio(_accesoDatos);
+            promocion.ProductosIncluidos = productos.ObtenerProductosPorPromocion(promocion, false);
+            promocion.ProductosExcluidos = productos.ObtenerProductosPorPromocion(promocion, true);
+            PromocionCategoriaProductoRepositorio categorias = new PromocionCategoriaProductoRepositorio(_accesoDatos);
+            promocion.CategoriasIncluidas = categorias.ObtenerCategoriasProductoPorPromocion(promocion, false);
+            promocion.CategoriasExcluidas = categorias.ObtenerCategoriasProductoPorPromocion(promocion, true);
         }
 
         public int InsertarYObtenerId(Promocion promocion)
@@ -79,14 +69,14 @@ namespace REPOSITORIO
             return _promocionDAL.Actualizar(promocion, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Promocion promocion)
         {
-            return _promocionDAL.Eliminar(id, _accesoDatos);
+            return _promocionDAL.Eliminar(promocion, _accesoDatos);
         }
 
-        public bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias)
+        public bool ReemplazarDiasDePromocion(Promocion promocion, List<DiaSemana> dias)
         {
-            return _promocionDiaSemanaDAL.ReemplazarDiasDePromocion(promocionId, dias ?? new List<DiaSemana>(), _accesoDatos);
+            return _promocionDiaSemanaDAL.ReemplazarDiasDePromocion(promocion, dias ?? new List<DiaSemana>(), _accesoDatos);
         }
     }
 }

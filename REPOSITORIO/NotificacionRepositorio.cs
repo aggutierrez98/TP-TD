@@ -7,20 +7,27 @@ namespace REPOSITORIO
 {
     public class NotificacionRepositorio : INotificacionRepositorio
     {
-        public Notificacion ObtenerPersonal(int id, int usuarioId) => _notificacionDAL.ObtenerPersonal(id, usuarioId, _accesoDatos);
-        public bool MarcarPersonalLeida(int id, int usuarioId) => _notificacionDAL.MarcarPersonalLeida(id, usuarioId, _accesoDatos);
-        public PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina)
+        public Notificacion ObtenerPersonal(Notificacion recibida, Usuario usuario)
         {
-            return _notificacionDAL.ObtenerPaginaPersonal(usuarioId, filtro, pagina, _accesoDatos);
+            Notificacion notificacion = _notificacionDAL.ObtenerPersonal(recibida, usuario, _accesoDatos);
+            Hidratar(notificacion);
+            return notificacion;
+        }
+        public bool MarcarPersonalLeida(Notificacion notificacion, Usuario usuario) => _notificacionDAL.MarcarPersonalLeida(notificacion, usuario, _accesoDatos);
+        public PaginaNotificaciones ObtenerPaginaPersonal(Usuario usuario, FiltroNotificacion filtro, int pagina)
+        {
+            PaginaNotificaciones resultado = _notificacionDAL.ObtenerPaginaPersonal(usuario, filtro, pagina, _accesoDatos);
+            resultado.Elementos.ForEach(Hidratar);
+            return resultado;
         }
 
-        public int ContarNoLeidas(int usuarioId)
+        public int ContarNoLeidas(Usuario usuario)
         {
-            return _notificacionDAL.ContarNoLeidas(usuarioId, _accesoDatos);
+            return _notificacionDAL.ContarNoLeidas(usuario, _accesoDatos);
         }
-        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId) => _notificacionDAL.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId, _accesoDatos);
-        public bool BloquearUsuarioParaEntrega(int usuarioId) => _notificacionDAL.BloquearUsuarioParaEntrega(usuarioId, _accesoDatos);
-        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, DateTime jornada) => _notificacionDAL.ExisteAutomatica(usuarioId, tipo, jornada, _accesoDatos);
+        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(Usuario usuario) => _notificacionDAL.ObtenerFechaUltimaAutomaticaInversionUtc(usuario, _accesoDatos);
+        public bool BloquearUsuarioParaEntrega(Usuario usuario) => _notificacionDAL.BloquearUsuarioParaEntrega(usuario, _accesoDatos);
+        public bool ExisteAutomatica(Usuario usuario, TipoNotificacionAutomatica tipo, DateTime jornada) => _notificacionDAL.ExisteAutomatica(usuario, tipo, jornada, _accesoDatos);
 
         private readonly NotificacionDAL _notificacionDAL;
         private readonly AccesoDatosSqlServer _accesoDatos;
@@ -43,9 +50,9 @@ namespace REPOSITORIO
             return notificacion;
         }
 
-        public List<Notificacion> ObtenerPorUsuario(int usuarioId)
+        public List<Notificacion> ObtenerPorUsuario(Usuario usuario)
         {
-            List<Notificacion> notificaciones = _notificacionDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            List<Notificacion> notificaciones = _notificacionDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             notificaciones.ForEach(Hidratar);
             return notificaciones;
         }
@@ -65,6 +72,11 @@ namespace REPOSITORIO
             }
 
             notificacion.Usuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(notificacion.Usuario.Id);
+            if (notificacion is RecordatorioCompra compra)
+            {
+                if (compra.ItemLista != null) compra.ItemLista = new ItemListaRepositorio(_accesoDatos).ObtenerPorId(compra.ItemLista.Id);
+                if (compra.Promocion != null) compra.Promocion = new PromocionRepositorio(_accesoDatos).ObtenerPorId(compra.Promocion.Id);
+            }
         }
 
         public int InsertarYObtenerId(Notificacion notificacion)
@@ -77,14 +89,14 @@ namespace REPOSITORIO
             return _notificacionDAL.Actualizar(notificacion, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Notificacion notificacion)
         {
-            return _notificacionDAL.Eliminar(id, _accesoDatos);
+            return _notificacionDAL.Eliminar(notificacion, _accesoDatos);
         }
 
-        public int ContarPorPromocion(int promocionId)
+        public int ContarPorPromocion(Promocion promocion)
         {
-            return _notificacionDAL.ContarPorPromocion(promocionId, _accesoDatos);
+            return _notificacionDAL.ContarPorPromocion(promocion, _accesoDatos);
         }
     }
 }

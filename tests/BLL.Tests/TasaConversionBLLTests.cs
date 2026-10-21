@@ -36,7 +36,7 @@ namespace BLL.Tests
             TasaConversionFixture fixture = new TasaConversionFixture();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 1, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 1, 850m)));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -46,8 +46,8 @@ namespace BLL.Tests
             TasaConversionFixture fixture = new TasaConversionFixture();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 2, 0m));
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 2, -5m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 2, 0m)));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 2, -5m)));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -58,7 +58,7 @@ namespace BLL.Tests
             fixture.MonedaRepo.Monedas.Add(2, new Moneda { Id = 2, Codigo = "USD" });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 2, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 2, 850m)));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -69,7 +69,7 @@ namespace BLL.Tests
             fixture.MonedaRepo.Monedas.Add(1, new Moneda { Id = 1, Codigo = "ARS" });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 2, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 2, 850m)));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -89,7 +89,7 @@ namespace BLL.Tests
             });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, 2, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Tasa(1, 2, 850m)));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -101,7 +101,9 @@ namespace BLL.Tests
             fixture.MonedaRepo.Monedas.Add(2, new Moneda { Id = 2, Codigo = "USD" });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            TasaConversion creada = sut.Crear(1, 2, 850.5m);
+            TasaConversion recibida = Tasa(1, 2, 850.5m);
+            TasaConversion creada = sut.Crear(recibida);
+            Assert.AreSame(recibida, creada);
 
             TasaConversion insertada = fixture.Unidad.TasaConversionRepo.Tasas[creada.Id];
             Assert.AreEqual(1, insertada.MonedaBase.Id);
@@ -117,7 +119,7 @@ namespace BLL.Tests
             TasaConversionFixture fixture = new TasaConversionFixture();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, 1, 2, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Tasa(1, 2, 850m, 99)));
         }
 
         [TestMethod]
@@ -136,7 +138,7 @@ namespace BLL.Tests
             });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, 1, 2, 900m);
+            bool resultado = sut.Actualizar(Tasa(1, 2, 900m, 1));
 
             Assert.IsTrue(resultado);
             Assert.AreEqual(900m, fixture.Unidad.TasaConversionRepo.Tasas[1].CalculoConversion);
@@ -154,7 +156,7 @@ namespace BLL.Tests
             fixture.Unidad.TasaConversionRepo.Tasas.Add(2, new TasaConversion { Id = 2, MonedaBase = new Moneda { Id = 2 }, MonedaConversion = new Moneda { Id = 1 }, CalculoConversion = 0.001m, FechaActualizacion = DateTime.Now });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(2, 1, 2, 850m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Tasa(1, 2, 850m, 2)));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -166,10 +168,10 @@ namespace BLL.Tests
             fixture.MonedaRepo.Monedas.Add(2, new Moneda { Id = 2, Codigo = "USD" });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            TasaConversion creada = sut.Crear(1, 2, 850.5m);
+            TasaConversion creada = sut.Crear(Tasa(1, 2, 850.5m));
 
             Assert.IsFalse(fixture.Unidad.TasaConversionRepo.Tasas[creada.Id].EsManual);
-            Assert.IsNull(fixture.Unidad.TasaConversionRepo.Tasas[creada.Id].ProtegidaPorUsuarioId);
+            Assert.IsNull(fixture.Unidad.TasaConversionRepo.Tasas[creada.Id].ProtegidaPorUsuario);
             Assert.AreEqual(1, fixture.Bitacora.Calls.Count);
         }
 
@@ -180,11 +182,11 @@ namespace BLL.Tests
             fixture.AgregarParExistente(800m);
             TasaConversionBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 1, 2, 900m);
+            sut.Actualizar(Tasa(1, 2, 900m, 1));
 
             TasaConversion tasa = fixture.Unidad.TasaConversionRepo.Tasas[1];
             Assert.IsTrue(tasa.EsManual);
-            Assert.AreEqual(TasaConversionFixture.UsuarioId, tasa.ProtegidaPorUsuarioId);
+            Assert.AreEqual(TasaConversionFixture.UsuarioId, tasa.ProtegidaPorUsuario.Id);
             Assert.IsNotNull(tasa.FechaProteccion);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -196,7 +198,7 @@ namespace BLL.Tests
             fixture.AgregarParExistente(800m);
             TasaConversionBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 1, 2, 900m);
+            sut.Actualizar(Tasa(1, 2, 900m, 1));
 
             BitacoraCall proteccion = fixture.Bitacora.Calls.SingleOrDefault(c => c.Actividad == "FormCurrencyManagement.Value.Activity.TasaMarkedManual");
             Assert.IsNotNull(proteccion);
@@ -212,7 +214,7 @@ namespace BLL.Tests
             fixture.MonedaRepo.Monedas.Add(3, new Moneda { Id = 3, Codigo = "EUR" });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 1, 3, 800m);
+            sut.Actualizar(Tasa(1, 3, 800m, 1));
 
             Assert.IsTrue(fixture.Unidad.TasaConversionRepo.Tasas[1].EsManual);
         }
@@ -224,7 +226,7 @@ namespace BLL.Tests
             fixture.AgregarParExistente(800m);
             TasaConversionBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 1, 2, 800m);
+            sut.Actualizar(Tasa(1, 2, 800m, 1));
 
             Assert.IsFalse(fixture.Unidad.TasaConversionRepo.Tasas[1].EsManual);
             Assert.IsNull(fixture.Bitacora.Calls.SingleOrDefault(c => c.Actividad == "FormCurrencyManagement.Value.Activity.TasaMarkedManual"));
@@ -237,7 +239,7 @@ namespace BLL.Tests
             fixture.Sesion.CerrarSesion();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<InvalidOperationException>(() => sut.Actualizar(1, 1, 2, 900m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Tasa(1, 2, 900m, 1)));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -246,15 +248,15 @@ namespace BLL.Tests
         {
             TasaConversionFixture fixture = new TasaConversionFixture();
             fixture.AgregarParExistente(800m);
-            fixture.Unidad.TasaConversionRepo.MarcarManual(1, 99);
+            fixture.Unidad.TasaConversionRepo.MarcarManual(fixture.Unidad.TasaConversionRepo.Tasas[1], new Usuario { Id = 99 });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Liberar(1);
+            bool resultado = sut.Liberar(new TasaConversion { Id = 1 });
 
             TasaConversion tasa = fixture.Unidad.TasaConversionRepo.Tasas[1];
             Assert.IsTrue(resultado);
             Assert.IsFalse(tasa.EsManual);
-            Assert.IsNull(tasa.ProtegidaPorUsuarioId);
+            Assert.IsNull(tasa.ProtegidaPorUsuario);
             Assert.IsNull(tasa.FechaProteccion);
             BitacoraCall liberacion = fixture.Bitacora.Calls.Single();
             Assert.AreEqual("FormCurrencyManagement.Value.Activity.TasaReleased", liberacion.Actividad);
@@ -268,7 +270,7 @@ namespace BLL.Tests
             TasaConversionFixture fixture = new TasaConversionFixture();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Liberar(99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Liberar(new TasaConversion { Id = 99 }));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -279,7 +281,7 @@ namespace BLL.Tests
             fixture.AgregarParExistente(800m);
             TasaConversionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Liberar(1);
+            bool resultado = sut.Liberar(new TasaConversion { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.AreEqual(0, fixture.Bitacora.Calls.Count);
@@ -292,7 +294,7 @@ namespace BLL.Tests
             TasaConversionFixture fixture = new TasaConversionFixture();
             TasaConversionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new TasaConversion { Id = 99 }));
         }
 
         [TestMethod]
@@ -302,12 +304,17 @@ namespace BLL.Tests
             fixture.Unidad.TasaConversionRepo.Tasas.Add(1, new TasaConversion { Id = 1, MonedaBase = new Moneda { Id = 1 }, MonedaConversion = new Moneda { Id = 2 }, CalculoConversion = 800m, FechaActualizacion = DateTime.Now });
             TasaConversionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(new TasaConversion { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.TasaConversionRepo.Tasas.ContainsKey(1));
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls[0].Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        private static TasaConversion Tasa(int baseId, int conversionId, decimal calculo, int id = 0)
+        {
+            return new TasaConversion { Id = id, MonedaBase = new Moneda { Id = baseId }, MonedaConversion = new Moneda { Id = conversionId }, CalculoConversion = calculo };
         }
 
         private sealed class TasaConversionFixture

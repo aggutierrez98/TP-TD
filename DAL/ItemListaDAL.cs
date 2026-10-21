@@ -48,7 +48,7 @@ namespace DAL
             }
         }
 
-        public List<ItemLista> ObtenerPorListaDeCompras(int listaDeComprasId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ItemLista> ObtenerPorListaDeCompras(ListaDeCompras lista, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, ListaDeComprasId, Descripcion, Cantidad, Comprado
@@ -63,7 +63,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ListaDeComprasId", SqlDbType.Int, listaDeComprasId)
+                    accesoDatos.CreateParameter("@ListaDeComprasId", SqlDbType.Int, lista.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -148,7 +148,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(ItemLista item, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM ItemLista
@@ -161,7 +161,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, item.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

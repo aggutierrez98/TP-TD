@@ -18,7 +18,7 @@ namespace DAL
             };
         }
 
-        public List<ComercioProducto> ObtenerPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ComercioProducto> ObtenerPorComercio(Comercio comercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT cp.ComercioId, cp.ProductoId, cp.MonedaId, cp.Precio
@@ -34,7 +34,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId)
+                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercio.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -55,7 +55,7 @@ namespace DAL
             }
         }
 
-        public ComercioProducto ObtenerPorId(int comercioId, int productoId, AccesoDatosSqlServer accesoDatos = null)
+        public ComercioProducto ObtenerPorComercioYProducto(Comercio comercio, Producto producto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT ComercioId, ProductoId, MonedaId, Precio
@@ -69,8 +69,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId),
-                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, productoId)
+                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercio.Id),
+                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, producto.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -115,7 +115,7 @@ namespace DAL
             }
         }
 
-        public bool ActualizarPrecio(int comercioId, int productoId, decimal precio, AccesoDatosSqlServer accesoDatos = null)
+        public bool ActualizarPrecio(ComercioProducto comercioProducto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE ComercioProducto
@@ -129,9 +129,9 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Precio", SqlDbType.Decimal, precio),
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId),
-                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, productoId)
+                    accesoDatos.CreateParameter("@Precio", SqlDbType.Decimal, comercioProducto.Precio),
+                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioProducto.Comercio.Id),
+                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, comercioProducto.Producto.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -145,7 +145,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int comercioId, int productoId, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(ComercioProducto comercioProducto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM ComercioProducto
@@ -158,8 +158,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId),
-                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, productoId)
+                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioProducto.Comercio.Id),
+                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, comercioProducto.Producto.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -173,7 +173,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorProducto(int productoId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorProducto(Producto producto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -187,7 +187,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, productoId)
+                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, producto.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

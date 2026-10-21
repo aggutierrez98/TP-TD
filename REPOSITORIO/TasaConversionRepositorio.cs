@@ -38,9 +38,9 @@ namespace REPOSITORIO
             return tasas;
         }
 
-        public TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId)
+        public TasaConversion ObtenerPorParDeMonedas(Moneda monedaBase, Moneda monedaConversion)
         {
-            TasaConversion tasa = _tasaConversionDAL.ObtenerPorParDeMonedas(monedaBaseId, monedaConversionId, _accesoDatos);
+            TasaConversion tasa = _tasaConversionDAL.ObtenerPorParDeMonedas(monedaBase, monedaConversion, _accesoDatos);
             Hidratar(tasa);
             return tasa;
         }
@@ -55,6 +55,10 @@ namespace REPOSITORIO
             MonedaRepositorio monedaRepositorio = new MonedaRepositorio(_accesoDatos);
             tasa.MonedaBase = monedaRepositorio.ObtenerPorId(tasa.MonedaBase.Id);
             tasa.MonedaConversion = monedaRepositorio.ObtenerPorId(tasa.MonedaConversion.Id);
+            if (tasa.ProtegidaPorUsuario != null)
+            {
+                tasa.ProtegidaPorUsuario = new UsuarioRepositorio(_accesoDatos).ObtenerPorId(tasa.ProtegidaPorUsuario.Id);
+            }
         }
 
         public int InsertarYObtenerId(TasaConversion tasa)
@@ -67,24 +71,24 @@ namespace REPOSITORIO
             return _tasaConversionDAL.Actualizar(tasa, _accesoDatos);
         }
 
-        public bool ActualizarValorAutomatico(int id, decimal calculoConversion)
+        public bool ActualizarValorAutomatico(TasaConversion tasa, decimal calculoConversion)
         {
-            return _tasaConversionDAL.ActualizarValorAutomatico(id, calculoConversion, _accesoDatos);
+            return _tasaConversionDAL.ActualizarValorAutomatico(tasa, calculoConversion, _accesoDatos);
         }
 
-        public bool MarcarManual(int id, int usuarioId)
+        public bool MarcarManual(TasaConversion tasa, Usuario usuario)
         {
-            return _tasaConversionDAL.MarcarManual(id, usuarioId, _accesoDatos);
+            return _tasaConversionDAL.MarcarManual(tasa, usuario, _accesoDatos);
         }
 
-        public bool Liberar(int id)
+        public bool Liberar(TasaConversion tasa)
         {
-            return _tasaConversionDAL.Liberar(id, _accesoDatos);
+            return _tasaConversionDAL.Liberar(tasa, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(TasaConversion tasa)
         {
-            return _tasaConversionDAL.Eliminar(id, _accesoDatos);
+            return _tasaConversionDAL.Eliminar(tasa, _accesoDatos);
         }
     }
 }

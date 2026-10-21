@@ -1,0 +1,1243 @@
+@startuml N01.6-oferta-comercial-clases
+title N01.6 · Preparar y actualizar la oferta comercial para las recomendaciones de\ncompra\nDiagrama de clases por proceso de negocio
+caption CUN44, CUN45, CUN46, CUN47, CUN48, CUN49, CUN50, CUN51, CUN52, CUN53, CUN54, CUN55, CUN56, CUN57, CUN58, CUN59, CUN60, CUN61, CUN62, CUN63, CUN64, CUN65, CUN66, CUN67
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class FilaCategoriaProducto #DBEAFE {
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class FormDetalleComercio #DBEAFE {
+    -CargarProductos(productoSeleccionadoId: int?): void
+    -btnActualizarProducto_Click(sender: object, e: EventArgs): void
+    -btnAgregarProducto_Click(sender: object, e: EventArgs): void
+    -btnQuitarProducto_Click(sender: object, e: EventArgs): void
+  }
+  class FormGestionCategoriasProducto #DBEAFE {
+    -CargarCategorias(categoriaSeleccionadaId: int?): void
+    -btnActualizarCategoriaProducto_Click(sender: object, e: EventArgs):\nvoid
+    -btnAgregarCategoriaProducto_Click(sender: object, e: EventArgs): void
+    -btnEliminarCategoriaProducto_Click(sender: object, e: EventArgs):\nvoid
+  }
+  class FormGestionComercios #DBEAFE {
+    -CargarComercios(comercioSeleccionadoId: int?): void
+    -CargarRubros(rubroSeleccionadoId: int?): void
+    -btnActualizarComercio_Click(sender: object, e: EventArgs): void
+    -btnActualizarRubro_Click(sender: object, e: EventArgs): void
+    -btnAgregarComercio_Click(sender: object, e: EventArgs): void
+    -btnAgregarRubro_Click(sender: object, e: EventArgs): void
+    -btnEliminarComercio_Click(sender: object, e: EventArgs): void
+    -btnEliminarRubro_Click(sender: object, e: EventArgs): void
+  }
+  class FormGestionProductos #DBEAFE {
+    -CargarProductos(productoSeleccionadoId: int?): void
+    -btnActualizarProducto_Click(sender: object, e: EventArgs): void
+    -btnAgregarProducto_Click(sender: object, e: EventArgs): void
+    -btnEliminarProducto_Click(sender: object, e: EventArgs): void
+  }
+  class FormGestionPromociones #DBEAFE {
+    -CargarPromociones(promocionSeleccionadaId: int?): void
+    -btnActualizarPromocion_Click(sender: object, e: EventArgs): void
+    -btnAgregarPromocion_Click(sender: object, e: EventArgs): void
+    -btnEliminarPromocion_Click(sender: object, e: EventArgs): void
+  }
+  class UiDialogHelper #DBEAFE {
+    +Confirmar(messageKey: string): DialogResult
+    +Confirmar(messageKey: string, titleKey: string, icon:\nMessageBoxIcon): DialogResult
+    +MostrarError(messageKey: string): void
+    +MostrarInfo(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+    +Traducir(key: string): string
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  FilaCategoriaProducto -[hidden]right-> FormDetalleComercio
+  FormDetalleComercio -[hidden]right-> FormGestionCategoriasProducto
+  FormGestionCategoriasProducto -[hidden]right-> FormGestionComercios
+  FormGestionComercios -[hidden]right-> FormGestionProductos
+  FormGestionProductos -[hidden]right-> FormGestionPromociones
+  FormGestionPromociones -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class AlcancePromocion #DCFCE7 {
+    +FiltrarPorComercio(promociones: IEnumerable<Promocion>, comercio:\nComercio): List<Promocion>
+  }
+  class BitacoraBLL #DCFCE7 {
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class CategoriaProductoBLL #DCFCE7 {
+    +Actualizar(categoria: CategoriaProducto): bool
+    +Crear(categoria: CategoriaProducto): CategoriaProducto
+    +Eliminar(categoria: CategoriaProducto): bool
+    +ObtenerTodas(): List<CategoriaProducto>
+  }
+  class ComercioBLL #DCFCE7 {
+    +Actualizar(comercio: Comercio): bool
+    +Crear(comercio: Comercio): Comercio
+    +Eliminar(comercio: Comercio): bool
+    +ObtenerTodos(): List<Comercio>
+  }
+  class ComercioProductoBLL #DCFCE7 {
+    +ActualizarPrecio(asignacion: ComercioProducto): bool
+    +Asignar(asignacion: ComercioProducto): ComercioProducto
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+    +Quitar(asignacion: ComercioProducto): bool
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  class ProductoBLL #DCFCE7 {
+    +Actualizar(producto: Producto): bool
+    +Crear(producto: Producto): Producto
+    +Eliminar(producto: Producto): bool
+    +ObtenerTodos(): List<Producto>
+  }
+  class PromocionBLL #DCFCE7 {
+    +Actualizar(datos: Promocion): bool
+    +Buscar(texto: string, recibido: Comercio): List<Promocion>
+    +Crear(datos: Promocion): Promocion
+    +Eliminar(recibida: Promocion): bool
+    +ObtenerPorComercio(recibido: Comercio): List<Promocion>
+  }
+  class RubroComercioBLL #DCFCE7 {
+    +Actualizar(rubro: RubroComercio): bool
+    +Crear(rubro: RubroComercio): RubroComercio
+    +Eliminar(rubro: RubroComercio): bool
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AlcancePromocion -[hidden]right-> BitacoraBLL
+  BitacoraBLL -[hidden]right-> CategoriaProductoBLL
+  CategoriaProductoBLL -[hidden]right-> ComercioBLL
+  ComercioBLL -[hidden]right-> ComercioProductoBLL
+  ComercioProductoBLL -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> ProductoBLL
+  ProductoBLL -[hidden]right-> PromocionBLL
+  PromocionBLL -[hidden]right-> RubroComercioBLL
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  class CategoriaProductoRepositorio #FEF3C7 {
+    +Actualizar(categoria: CategoriaProducto): bool
+    +Eliminar(categoria: CategoriaProducto): bool
+    +InsertarYObtenerId(categoria: CategoriaProducto): int
+    +ObtenerPorId(id: int): CategoriaProducto
+    +ObtenerTodas(): List<CategoriaProducto>
+  }
+  class ComercioProductoRepositorio #FEF3C7 {
+    +ActualizarPrecio(comercioProducto: ComercioProducto): bool
+    +ContarPorProducto(producto: Producto): int
+    +Eliminar(comercioProducto: ComercioProducto): bool
+    +Insertar(comercioProducto: ComercioProducto): bool
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+    +ObtenerPorComercioYProducto(comercio: Comercio, producto: Producto):\nComercioProducto
+  }
+  class ComercioReglaCategorizacionRepositorio #FEF3C7 {
+    +ContarPorComercio(comercio: Comercio): int
+  }
+  class ComercioRepositorio #FEF3C7 {
+    +Actualizar(comercio: Comercio): bool
+    +Eliminar(comercio: Comercio): bool
+    +InsertarYObtenerId(comercio: Comercio): int
+    +ObtenerPorId(id: int): Comercio
+    +ObtenerPorRubro(rubro: RubroComercio): List<Comercio>
+    +ObtenerTodos(): List<Comercio>
+  }
+  class EntidadFinancieraRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  interface ICategoriaProductoRepositorio #FEF3C7 {
+    +Actualizar(categoria: CategoriaProducto): bool
+    +Eliminar(categoria: CategoriaProducto): bool
+    +InsertarYObtenerId(categoria: CategoriaProducto): int
+    +ObtenerPorId(id: int): CategoriaProducto
+    +ObtenerTodas(): List<CategoriaProducto>
+  }
+  interface IComercioProductoRepositorio #FEF3C7 {
+    +ActualizarPrecio(comercioProducto: ComercioProducto): bool
+    +ContarPorProducto(producto: Producto): int
+    +Eliminar(comercioProducto: ComercioProducto): bool
+    +Insertar(comercioProducto: ComercioProducto): bool
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+    +ObtenerPorComercioYProducto(comercio: Comercio, producto: Producto):\nComercioProducto
+  }
+  interface IComercioReglaCategorizacionRepositorio #FEF3C7 {
+    +ContarPorComercio(comercio: Comercio): int
+  }
+  interface IComercioRepositorio #FEF3C7 {
+    +Actualizar(comercio: Comercio): bool
+    +Eliminar(comercio: Comercio): bool
+    +InsertarYObtenerId(comercio: Comercio): int
+    +ObtenerPorId(id: int): Comercio
+    +ObtenerPorRubro(rubro: RubroComercio): List<Comercio>
+    +ObtenerTodos(): List<Comercio>
+  }
+  interface IEntidadFinancieraRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  interface IMedioPagoRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): MedioPago
+  }
+  interface IMonedaRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Moneda
+  }
+  interface IMovimientoRepositorio #FEF3C7 {
+    +ContarPorComercio(comercio: Comercio): int
+  }
+  interface INotificacionRepositorio #FEF3C7 {
+    +ContarPorPromocion(promocion: Promocion): int
+  }
+  interface IProductoRepositorio #FEF3C7 {
+    +Actualizar(producto: Producto): bool
+    +ContarPorCategoria(categoria: CategoriaProducto): int
+    +Eliminar(producto: Producto): bool
+    +InsertarYObtenerId(producto: Producto): int
+    +ObtenerPorId(id: int): Producto
+    +ObtenerTodos(): List<Producto>
+  }
+  interface IPromocionCategoriaProductoRepositorio #FEF3C7 {
+    +ContarPorCategoriaProducto(categoriaProducto: CategoriaProducto): int
+    +ReemplazarCategoriasProductoDePromocion(promocion: Promocion,\nincluidos: List<CategoriaProducto>, excluidos:\nList<CategoriaProducto>): bool
+  }
+  interface IPromocionComercioRepositorio #FEF3C7 {
+    +ObtenerPromocionesPorComercio(comercio: Comercio): List<Promocion>
+    +ReemplazarComerciosDePromocion(promocion: Promocion, comercios:\nList<Comercio>): bool
+  }
+  interface IPromocionEntidadFinancieraRepositorio #FEF3C7 {
+    +ReemplazarEntidadesFinancierasDePromocion(promocion: Promocion,\nentidadesFinancieras: List<EntidadFinanciera>): bool
+  }
+  interface IPromocionMedioPagoRepositorio #FEF3C7 {
+    +ReemplazarMediosPagoDePromocion(promocion: Promocion, mediosPago:\nList<MedioPago>): bool
+  }
+  interface IPromocionProductoRepositorio #FEF3C7 {
+    +ContarPorProducto(producto: Producto): int
+    +ReemplazarProductosDePromocion(promocion: Promocion, incluidos:\nList<Producto>, excluidos: List<Producto>): bool
+  }
+  interface IPromocionRepositorio #FEF3C7 {
+    +Actualizar(promocion: Promocion): bool
+    +Eliminar(promocion: Promocion): bool
+    +InsertarYObtenerId(promocion: Promocion): int
+    +ObtenerPorId(id: int): Promocion
+    +ObtenerTodas(): List<Promocion>
+    +ReemplazarDiasDePromocion(promocion: Promocion, dias:\nList<DiaSemana>): bool
+  }
+  interface IPromocionRubroComercioRepositorio #FEF3C7 {
+    +ContarPorRubroComercio(rubroComercio: RubroComercio): int
+    +ReemplazarRubrosComercioDePromocion(promocion: Promocion,\nrubrosComercio: List<RubroComercio>): bool
+  }
+  interface IPromocionSegmentoRepositorio #FEF3C7 {
+    +ReemplazarSegmentosDePromocion(promocion: Promocion, segmentos:\nList<string>): bool
+  }
+  interface IRubroComercioRepositorio #FEF3C7 {
+    +Actualizar(rubro: RubroComercio): bool
+    +Eliminar(rubro: RubroComercio): bool
+    +InsertarYObtenerId(rubro: RubroComercio): int
+    +ObtenerPorId(id: int): RubroComercio
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +CategoriasProducto: ICategoriaProductoRepositorio
+    +ComercioProductos: IComercioProductoRepositorio
+    +ComercioReglaCategorizacion: IComercioReglaCategorizacionRepositorio
+    +Comercios: IComercioRepositorio
+    +EntidadesFinancieras: IEntidadFinancieraRepositorio
+    +MediosPago: IMedioPagoRepositorio
+    +Movimientos: IMovimientoRepositorio
+    +Notificaciones: INotificacionRepositorio
+    +Productos: IProductoRepositorio
+    +PromocionCategoriasProducto: IPromocionCategoriaProductoRepositorio
+    +PromocionComercio: IPromocionComercioRepositorio
+    +PromocionEntidadesFinancieras: IPromocionEntidadFinancieraRepositorio
+    +PromocionMediosPago: IPromocionMedioPagoRepositorio
+    +PromocionProductos: IPromocionProductoRepositorio
+    +PromocionRubrosComercio: IPromocionRubroComercioRepositorio
+    +PromocionSegmentos: IPromocionSegmentoRepositorio
+    +Promociones: IPromocionRepositorio
+    +RubrosComercio: IRubroComercioRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class MedioPagoRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): MedioPago
+  }
+  class MonedaRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Moneda
+  }
+  class MovimientoRepositorio #FEF3C7 {
+    +ContarPorComercio(comercio: Comercio): int
+  }
+  class NotificacionRepositorio #FEF3C7 {
+    +ContarPorPromocion(promocion: Promocion): int
+  }
+  class ProductoRepositorio #FEF3C7 {
+    +Actualizar(producto: Producto): bool
+    +ContarPorCategoria(categoria: CategoriaProducto): int
+    +Eliminar(producto: Producto): bool
+    +InsertarYObtenerId(producto: Producto): int
+    +ObtenerPorId(id: int): Producto
+    +ObtenerTodos(): List<Producto>
+  }
+  class PromocionCategoriaProductoRepositorio #FEF3C7 {
+    +ContarPorCategoriaProducto(categoriaProducto: CategoriaProducto): int
+    +ReemplazarCategoriasProductoDePromocion(promocion: Promocion,\nincluidos: List<CategoriaProducto>, excluidos:\nList<CategoriaProducto>): bool
+  }
+  class PromocionComercioRepositorio #FEF3C7 {
+    +ObtenerPromocionesPorComercio(comercio: Comercio): List<Promocion>
+    +ReemplazarComerciosDePromocion(promocion: Promocion, comercios:\nList<Comercio>): bool
+  }
+  class PromocionEntidadFinancieraRepositorio #FEF3C7 {
+    +ReemplazarEntidadesFinancierasDePromocion(promocion: Promocion,\nentidadesFinancieras: List<EntidadFinanciera>): bool
+  }
+  class PromocionMedioPagoRepositorio #FEF3C7 {
+    +ReemplazarMediosPagoDePromocion(promocion: Promocion, mediosPago:\nList<MedioPago>): bool
+  }
+  class PromocionProductoRepositorio #FEF3C7 {
+    +ContarPorProducto(producto: Producto): int
+    +ReemplazarProductosDePromocion(promocion: Promocion, incluidos:\nList<Producto>, excluidos: List<Producto>): bool
+  }
+  class PromocionRepositorio #FEF3C7 {
+    +Actualizar(promocion: Promocion): bool
+    +Eliminar(promocion: Promocion): bool
+    +InsertarYObtenerId(promocion: Promocion): int
+    +ObtenerPorId(id: int): Promocion
+    +ObtenerTodas(): List<Promocion>
+    +ReemplazarDiasDePromocion(promocion: Promocion, dias:\nList<DiaSemana>): bool
+  }
+  class PromocionRubroComercioRepositorio #FEF3C7 {
+    +ContarPorRubroComercio(rubroComercio: RubroComercio): int
+    +ReemplazarRubrosComercioDePromocion(promocion: Promocion,\nrubrosComercio: List<RubroComercio>): bool
+  }
+  class PromocionSegmentoRepositorio #FEF3C7 {
+    +ReemplazarSegmentosDePromocion(promocion: Promocion, segmentos:\nList<string>): bool
+  }
+  class RubroComercioRepositorio #FEF3C7 {
+    +Actualizar(rubro: RubroComercio): bool
+    +Eliminar(rubro: RubroComercio): bool
+    +InsertarYObtenerId(rubro: RubroComercio): int
+    +ObtenerPorId(id: int): RubroComercio
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaProductoRepositorio -[hidden]right-> ComercioProductoRepositorio
+  ComercioProductoRepositorio -[hidden]right-> ComercioReglaCategorizacionRepositorio
+  ComercioReglaCategorizacionRepositorio -[hidden]right-> ComercioRepositorio
+  ComercioRepositorio -[hidden]right-> EntidadFinancieraRepositorio
+  EntidadFinancieraRepositorio -[hidden]right-> ICategoriaProductoRepositorio
+  ICategoriaProductoRepositorio -[hidden]right-> IComercioProductoRepositorio
+  IComercioProductoRepositorio -[hidden]right-> IComercioReglaCategorizacionRepositorio
+  IComercioReglaCategorizacionRepositorio -[hidden]right-> IComercioRepositorio
+  IComercioRepositorio -[hidden]right-> IEntidadFinancieraRepositorio
+  IEntidadFinancieraRepositorio -[hidden]right-> IMedioPagoRepositorio
+  IMedioPagoRepositorio -[hidden]right-> IMonedaRepositorio
+  IMonedaRepositorio -[hidden]right-> IMovimientoRepositorio
+  IMovimientoRepositorio -[hidden]right-> INotificacionRepositorio
+  CategoriaProductoRepositorio -[hidden]down-> IProductoRepositorio
+  IProductoRepositorio -[hidden]right-> IPromocionCategoriaProductoRepositorio
+  IPromocionCategoriaProductoRepositorio -[hidden]right-> IPromocionComercioRepositorio
+  IPromocionComercioRepositorio -[hidden]right-> IPromocionEntidadFinancieraRepositorio
+  IPromocionEntidadFinancieraRepositorio -[hidden]right-> IPromocionMedioPagoRepositorio
+  IPromocionMedioPagoRepositorio -[hidden]right-> IPromocionProductoRepositorio
+  IPromocionProductoRepositorio -[hidden]right-> IPromocionRepositorio
+  IPromocionRepositorio -[hidden]right-> IPromocionRubroComercioRepositorio
+  IPromocionRubroComercioRepositorio -[hidden]right-> IPromocionSegmentoRepositorio
+  IPromocionSegmentoRepositorio -[hidden]right-> IRubroComercioRepositorio
+  IRubroComercioRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> MedioPagoRepositorio
+  MedioPagoRepositorio -[hidden]right-> MonedaRepositorio
+  IProductoRepositorio -[hidden]down-> MovimientoRepositorio
+  MovimientoRepositorio -[hidden]right-> NotificacionRepositorio
+  NotificacionRepositorio -[hidden]right-> ProductoRepositorio
+  ProductoRepositorio -[hidden]right-> PromocionCategoriaProductoRepositorio
+  PromocionCategoriaProductoRepositorio -[hidden]right-> PromocionComercioRepositorio
+  PromocionComercioRepositorio -[hidden]right-> PromocionEntidadFinancieraRepositorio
+  PromocionEntidadFinancieraRepositorio -[hidden]right-> PromocionMedioPagoRepositorio
+  PromocionMedioPagoRepositorio -[hidden]right-> PromocionProductoRepositorio
+  PromocionProductoRepositorio -[hidden]right-> PromocionRepositorio
+  PromocionRepositorio -[hidden]right-> PromocionRubroComercioRepositorio
+  PromocionRubroComercioRepositorio -[hidden]right-> PromocionSegmentoRepositorio
+  PromocionSegmentoRepositorio -[hidden]right-> RubroComercioRepositorio
+  RubroComercioRepositorio -[hidden]right-> UnidadDeTrabajoFactory
+  UnidadDeTrabajoFactory -[hidden]right-> UnidadDeTrabajoSqlServer
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class CategoriaProductoDAL #FFEDD5 {
+    +Actualizar(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer): bool
+    +InsertarYObtenerId(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nCategoriaProducto
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer):\nList<CategoriaProducto>
+  }
+  class ComercioDAL #FFEDD5 {
+    +Actualizar(comercio: Comercio, accesoDatos: AccesoDatosSqlServer):\nbool
+    +Eliminar(comercio: Comercio, accesoDatos: AccesoDatosSqlServer): bool
+    +InsertarYObtenerId(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Comercio
+    +ObtenerPorRubro(rubro: RubroComercio, accesoDatos:\nAccesoDatosSqlServer): List<Comercio>
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Comercio>
+  }
+  class ComercioProductoDAL #FFEDD5 {
+    +ActualizarPrecio(comercioProducto: ComercioProducto, accesoDatos:\nAccesoDatosSqlServer): bool
+    +ContarPorProducto(producto: Producto, accesoDatos:\nAccesoDatosSqlServer): int
+    +Eliminar(comercioProducto: ComercioProducto, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Insertar(comercioProducto: ComercioProducto, accesoDatos:\nAccesoDatosSqlServer): bool
+    +ObtenerPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer): List<ComercioProducto>
+    +ObtenerPorComercioYProducto(comercio: Comercio, producto: Producto,\naccesoDatos: AccesoDatosSqlServer): ComercioProducto
+  }
+  class ComercioReglaCategorizacionDAL #FFEDD5 {
+    +ContarPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+  class EntidadFinancieraDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nEntidadFinanciera
+  }
+  class MedioPagoDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): MedioPago
+  }
+  class MedioPagoEntidadDAL #FFEDD5 {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera, accesoDatos:\nAccesoDatosSqlServer): List<MedioPagoEntidad>
+  }
+  class MonedaDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Moneda
+  }
+  class MovimientoDAL #FFEDD5 {
+    +ContarPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+  class NotificacionDAL #FFEDD5 {
+    +ContarPorPromocion(promocion: Promocion, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+  class ProductoDAL #FFEDD5 {
+    +Actualizar(producto: Producto, accesoDatos: AccesoDatosSqlServer):\nbool
+    +ContarPorCategoria(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer): int
+    +Eliminar(producto: Producto, accesoDatos: AccesoDatosSqlServer): bool
+    +InsertarYObtenerId(producto: Producto, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Producto
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Producto>
+  }
+  class PromocionCategoriaProductoDAL #FFEDD5 {
+    +ContarPorCategoriaProducto(categoriaProducto: CategoriaProducto,\naccesoDatos: AccesoDatosSqlServer): int
+    +ReemplazarCategoriasProductoDePromocion(promocion: Promocion,\nincluidos: List<CategoriaProducto>, excluidos:\nList<CategoriaProducto>, accesoDatos: AccesoDatosSqlServer): bool
+  }
+  class PromocionComercioDAL #FFEDD5 {
+    +ObtenerPromocionesPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer): List<Promocion>
+    +ReemplazarComerciosDePromocion(promocion: Promocion, comercios:\nList<Comercio>, accesoDatos: AccesoDatosSqlServer): bool
+  }
+  class PromocionDAL #FFEDD5 {
+    +Actualizar(promocion: Promocion, accesoDatos: AccesoDatosSqlServer):\nbool
+    +Eliminar(promocion: Promocion, accesoDatos: AccesoDatosSqlServer):\nbool
+    +InsertarYObtenerId(promocion: Promocion, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Promocion
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<Promocion>
+  }
+  class PromocionDiaSemanaDAL #FFEDD5 {
+    +ObtenerDiasPorPromocion(promocion: Promocion, accesoDatos:\nAccesoDatosSqlServer): List<DiaSemana>
+    +ReemplazarDiasDePromocion(promocion: Promocion, dias:\nList<DiaSemana>, accesoDatos: AccesoDatosSqlServer): bool
+  }
+  class PromocionEntidadFinancieraDAL #FFEDD5 {
+    +ReemplazarEntidadesFinancierasDePromocion(promocion: Promocion,\nentidadesFinancieras: List<EntidadFinanciera>, accesoDatos:\nAccesoDatosSqlServer): bool
+  }
+  class PromocionMedioPagoDAL #FFEDD5 {
+    +ReemplazarMediosPagoDePromocion(promocion: Promocion, mediosPago:\nList<MedioPago>, accesoDatos: AccesoDatosSqlServer): bool
+  }
+  class PromocionProductoDAL #FFEDD5 {
+    +ContarPorProducto(producto: Producto, accesoDatos:\nAccesoDatosSqlServer): int
+    +ReemplazarProductosDePromocion(promocion: Promocion, incluidos:\nList<Producto>, excluidos: List<Producto>, accesoDatos:\nAccesoDatosSqlServer): bool
+  }
+  class PromocionRubroComercioDAL #FFEDD5 {
+    +ContarPorRubroComercio(rubroComercio: RubroComercio, accesoDatos:\nAccesoDatosSqlServer): int
+    +ReemplazarRubrosComercioDePromocion(promocion: Promocion,\nrubrosComercio: List<RubroComercio>, accesoDatos:\nAccesoDatosSqlServer): bool
+  }
+  class PromocionSegmentoDAL #FFEDD5 {
+    +ObtenerSegmentosPorPromocion(promocion: Promocion, accesoDatos:\nAccesoDatosSqlServer): List<string>
+    +ReemplazarSegmentosDePromocion(promocion: Promocion, segmentos:\nList<string>, accesoDatos: AccesoDatosSqlServer): bool
+  }
+  class RubroComercioDAL #FFEDD5 {
+    +Actualizar(rubro: RubroComercio, accesoDatos: AccesoDatosSqlServer):\nbool
+    +Eliminar(rubro: RubroComercio, accesoDatos: AccesoDatosSqlServer):\nbool
+    +InsertarYObtenerId(rubro: RubroComercio, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nRubroComercio
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<RubroComercio>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> CategoriaProductoDAL
+  CategoriaProductoDAL -[hidden]right-> ComercioDAL
+  ComercioDAL -[hidden]right-> ComercioProductoDAL
+  ComercioProductoDAL -[hidden]right-> ComercioReglaCategorizacionDAL
+  ComercioReglaCategorizacionDAL -[hidden]right-> EntidadFinancieraDAL
+  EntidadFinancieraDAL -[hidden]right-> MedioPagoDAL
+  MedioPagoDAL -[hidden]right-> MedioPagoEntidadDAL
+  MedioPagoEntidadDAL -[hidden]right-> MonedaDAL
+  MonedaDAL -[hidden]right-> MovimientoDAL
+  MovimientoDAL -[hidden]right-> NotificacionDAL
+  NotificacionDAL -[hidden]right-> ProductoDAL
+  ProductoDAL -[hidden]right-> PromocionCategoriaProductoDAL
+  PromocionCategoriaProductoDAL -[hidden]right-> PromocionComercioDAL
+  AccesoDatosSqlServer -[hidden]down-> PromocionDAL
+  PromocionDAL -[hidden]right-> PromocionDiaSemanaDAL
+  PromocionDiaSemanaDAL -[hidden]right-> PromocionEntidadFinancieraDAL
+  PromocionEntidadFinancieraDAL -[hidden]right-> PromocionMedioPagoDAL
+  PromocionMedioPagoDAL -[hidden]right-> PromocionProductoDAL
+  PromocionProductoDAL -[hidden]right-> PromocionRubroComercioDAL
+  PromocionRubroComercioDAL -[hidden]right-> PromocionSegmentoDAL
+  PromocionSegmentoDAL -[hidden]right-> RubroComercioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class CategoriaProducto #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class Comercio #F3E8FF {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class ComercioProducto #F3E8FF {
+    +Comercio: Comercio
+    +Producto: Producto
+    +Moneda: Moneda
+    +Precio: decimal
+  }
+  enum DiaSemana #F3E8FF {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+  class EntidadFinanciera #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class MedioPago #F3E8FF {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad #F3E8FF {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+  class Moneda #F3E8FF {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  class Producto #F3E8FF {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class Promocion #F3E8FF {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RubroComercio #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  enum TipoMedioPago #F3E8FF {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaProducto -[hidden]right-> Comercio
+  Comercio -[hidden]right-> ComercioProducto
+  ComercioProducto -[hidden]right-> DiaSemana
+  DiaSemana -[hidden]right-> EntidadFinanciera
+  EntidadFinanciera -[hidden]right-> MedioPago
+  MedioPago -[hidden]right-> MedioPagoEntidad
+  MedioPagoEntidad -[hidden]right-> Moneda
+  Moneda -[hidden]right-> Producto
+  Producto -[hidden]right-> Promocion
+  Promocion -[hidden]right-> RubroComercio
+  RubroComercio -[hidden]right-> TipoMedioPago
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class Sesion #CFFAFE {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IdiomaService -[hidden]right-> Sesion
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface ISesion #F1F5F9 {
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IIdioma -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> ISesion
+  ISesion -[hidden]right-> ITraduccion
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+FilaCategoriaProducto -[hidden]down-> AlcancePromocion
+AlcancePromocion -[hidden]down-> CategoriaProductoRepositorio
+MovimientoRepositorio -[hidden]down-> AccesoDatosSqlServer
+PromocionDAL -[hidden]down-> CategoriaProducto
+CategoriaProducto -[hidden]down-> IdiomaService
+IdiomaService -[hidden]down-> IIdioma
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+CategoriaProductoBLL .[norank].> CategoriaProducto
+CategoriaProductoBLL .[norank].> IBitacoraBLL
+CategoriaProductoBLL .[norank].> ICategoriaProductoRepositorio
+CategoriaProductoBLL .[norank].> IProductoRepositorio
+CategoriaProductoBLL .[norank].> IPromocionCategoriaProductoRepositorio
+CategoriaProductoBLL .[norank].> IUnidadDeTrabajo
+CategoriaProductoBLL .[norank].> IUnidadDeTrabajoFactory
+CategoriaProductoDAL .[norank].> AccesoDatosSqlServer
+CategoriaProductoRepositorio .[norank].> AccesoDatosSqlServer
+CategoriaProductoRepositorio .[norank].> CategoriaProductoDAL
+CategoriaProductoRepositorio .[norank].|> ICategoriaProductoRepositorio
+Comercio -[norank]-> RubroComercio : RubroComercio
+ComercioBLL .[norank].> Comercio
+ComercioBLL .[norank].> IBitacoraBLL
+ComercioBLL .[norank].> IComercioProductoRepositorio
+ComercioBLL .[norank].> IComercioReglaCategorizacionRepositorio
+ComercioBLL .[norank].> IComercioRepositorio
+ComercioBLL .[norank].> IMovimientoRepositorio
+ComercioBLL .[norank].> IPromocionComercioRepositorio
+ComercioBLL .[norank].> IRubroComercioRepositorio
+ComercioBLL .[norank].> IUnidadDeTrabajo
+ComercioBLL .[norank].> IUnidadDeTrabajoFactory
+ComercioDAL .[norank].> AccesoDatosSqlServer
+ComercioProducto -[norank]-> Comercio : Comercio
+ComercioProducto -[norank]-> Moneda : Moneda
+ComercioProducto -[norank]-> Producto : Producto
+ComercioProductoBLL .[norank].> ComercioProducto
+ComercioProductoBLL .[norank].> IBitacoraBLL
+ComercioProductoBLL .[norank].> IComercioProductoRepositorio
+ComercioProductoBLL .[norank].> IComercioRepositorio
+ComercioProductoBLL .[norank].> IMonedaRepositorio
+ComercioProductoBLL .[norank].> IProductoRepositorio
+ComercioProductoBLL .[norank].> IUnidadDeTrabajo
+ComercioProductoBLL .[norank].> IUnidadDeTrabajoFactory
+ComercioProductoDAL .[norank].> AccesoDatosSqlServer
+ComercioProductoRepositorio .[norank].> AccesoDatosSqlServer
+ComercioProductoRepositorio .[norank].> ComercioProductoDAL
+ComercioProductoRepositorio .[norank].> ComercioRepositorio
+ComercioProductoRepositorio .[norank].> MonedaRepositorio
+ComercioProductoRepositorio .[norank].> ProductoRepositorio
+ComercioProductoRepositorio .[norank].|> IComercioProductoRepositorio
+ComercioReglaCategorizacionDAL .[norank].> AccesoDatosSqlServer
+ComercioReglaCategorizacionRepositorio .[norank].> AccesoDatosSqlServer
+ComercioReglaCategorizacionRepositorio .[norank].> ComercioReglaCategorizacionDAL
+ComercioReglaCategorizacionRepositorio .[norank].|> IComercioReglaCategorizacionRepositorio
+ComercioRepositorio .[norank].> AccesoDatosSqlServer
+ComercioRepositorio .[norank].> ComercioDAL
+ComercioRepositorio .[norank].> RubroComercioRepositorio
+ComercioRepositorio .[norank].|> IComercioRepositorio
+EntidadFinanciera -[norank]-> MedioPagoEntidad : MediosPagoEntidad
+EntidadFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+EntidadFinancieraDAL .[norank].> AccesoDatosSqlServer
+EntidadFinancieraRepositorio .[norank].> AccesoDatosSqlServer
+EntidadFinancieraRepositorio .[norank].> EntidadFinancieraDAL
+EntidadFinancieraRepositorio .[norank].> MedioPagoDAL
+EntidadFinancieraRepositorio .[norank].> MedioPagoEntidadDAL
+EntidadFinancieraRepositorio .[norank].|> IEntidadFinancieraRepositorio
+FilaCategoriaProducto -[norank]-> CategoriaProducto : CategoriaProducto
+FormDetalleComercio .[norank].> Comercio
+FormDetalleComercio .[norank].> ComercioProducto
+FormDetalleComercio .[norank].> ComercioProductoBLL
+FormDetalleComercio .[norank].> ProductoBLL
+FormDetalleComercio .[norank].> PromocionBLL
+FormDetalleComercio .[norank].> UiDialogHelper
+FormDetalleComercio .[norank].> UiExceptionHandler
+FormGestionCategoriasProducto .[norank].> CategoriaProducto
+FormGestionCategoriasProducto .[norank].> CategoriaProductoBLL
+FormGestionCategoriasProducto .[norank].> FilaCategoriaProducto
+FormGestionCategoriasProducto .[norank].> UiDialogHelper
+FormGestionCategoriasProducto .[norank].> UiExceptionHandler
+FormGestionComercios .[norank].> Comercio
+FormGestionComercios .[norank].> ComercioBLL
+FormGestionComercios .[norank].> RubroComercio
+FormGestionComercios .[norank].> RubroComercioBLL
+FormGestionComercios .[norank].> UiDialogHelper
+FormGestionComercios .[norank].> UiExceptionHandler
+FormGestionProductos .[norank].> CategoriaProductoBLL
+FormGestionProductos .[norank].> Producto
+FormGestionProductos .[norank].> ProductoBLL
+FormGestionProductos .[norank].> UiDialogHelper
+FormGestionProductos .[norank].> UiExceptionHandler
+FormGestionPromociones .[norank].> CategoriaProductoBLL
+FormGestionPromociones .[norank].> ComercioBLL
+FormGestionPromociones .[norank].> DiaSemana
+FormGestionPromociones .[norank].> Producto
+FormGestionPromociones .[norank].> ProductoBLL
+FormGestionPromociones .[norank].> Promocion
+FormGestionPromociones .[norank].> PromocionBLL
+FormGestionPromociones .[norank].> RubroComercioBLL
+FormGestionPromociones .[norank].> UiDialogHelper
+FormGestionPromociones .[norank].> UiExceptionHandler
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> ICategoriaProductoRepositorio : CategoriasProducto
+IUnidadDeTrabajo -[norank]-> IComercioProductoRepositorio : ComercioProductos
+IUnidadDeTrabajo -[norank]-> IComercioReglaCategorizacionRepositorio : ComercioReglaCategorizacion
+IUnidadDeTrabajo -[norank]-> IComercioRepositorio : Comercios
+IUnidadDeTrabajo -[norank]-> IEntidadFinancieraRepositorio : EntidadesFinancieras
+IUnidadDeTrabajo -[norank]-> IMedioPagoRepositorio : MediosPago
+IUnidadDeTrabajo -[norank]-> IMovimientoRepositorio : Movimientos
+IUnidadDeTrabajo -[norank]-> INotificacionRepositorio : Notificaciones
+IUnidadDeTrabajo -[norank]-> IProductoRepositorio : Productos
+IUnidadDeTrabajo -[norank]-> IPromocionCategoriaProductoRepositorio : PromocionCategoriasProducto
+IUnidadDeTrabajo -[norank]-> IPromocionComercioRepositorio : PromocionComercio
+IUnidadDeTrabajo -[norank]-> IPromocionEntidadFinancieraRepositorio : PromocionEntidadesFinancieras
+IUnidadDeTrabajo -[norank]-> IPromocionMedioPagoRepositorio : PromocionMediosPago
+IUnidadDeTrabajo -[norank]-> IPromocionProductoRepositorio : PromocionProductos
+IUnidadDeTrabajo -[norank]-> IPromocionRepositorio : Promociones
+IUnidadDeTrabajo -[norank]-> IPromocionRubroComercioRepositorio : PromocionRubrosComercio
+IUnidadDeTrabajo -[norank]-> IPromocionSegmentoRepositorio : PromocionSegmentos
+IUnidadDeTrabajo -[norank]-> IRubroComercioRepositorio : RubrosComercio
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+MedioPago -[norank]-> TipoMedioPago : Tipo
+MedioPagoDAL .[norank].> AccesoDatosSqlServer
+MedioPagoEntidad -[norank]-> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad -[norank]-> MedioPago : MedioPago
+MedioPagoEntidadDAL .[norank].> AccesoDatosSqlServer
+MedioPagoRepositorio .[norank].> AccesoDatosSqlServer
+MedioPagoRepositorio .[norank].> MedioPagoDAL
+MedioPagoRepositorio .[norank].|> IMedioPagoRepositorio
+MonedaDAL .[norank].> AccesoDatosSqlServer
+MonedaRepositorio .[norank].> AccesoDatosSqlServer
+MonedaRepositorio .[norank].> MonedaDAL
+MonedaRepositorio .[norank].|> IMonedaRepositorio
+MovimientoDAL .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> MovimientoDAL
+MovimientoRepositorio .[norank].|> IMovimientoRepositorio
+NotificacionDAL .[norank].> AccesoDatosSqlServer
+NotificacionRepositorio .[norank].> AccesoDatosSqlServer
+NotificacionRepositorio .[norank].> NotificacionDAL
+NotificacionRepositorio .[norank].|> INotificacionRepositorio
+Producto -[norank]-> CategoriaProducto : CategoriaProducto
+ProductoBLL .[norank].> IBitacoraBLL
+ProductoBLL .[norank].> ICategoriaProductoRepositorio
+ProductoBLL .[norank].> IComercioProductoRepositorio
+ProductoBLL .[norank].> IProductoRepositorio
+ProductoBLL .[norank].> IPromocionProductoRepositorio
+ProductoBLL .[norank].> IUnidadDeTrabajo
+ProductoBLL .[norank].> IUnidadDeTrabajoFactory
+ProductoBLL .[norank].> Producto
+ProductoDAL .[norank].> AccesoDatosSqlServer
+ProductoRepositorio .[norank].> AccesoDatosSqlServer
+ProductoRepositorio .[norank].> CategoriaProductoRepositorio
+ProductoRepositorio .[norank].> ProductoDAL
+ProductoRepositorio .[norank].|> IProductoRepositorio
+Promocion -[norank]-> CategoriaProducto : CategoriasExcluidas
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasExcluidas
+Promocion -[norank]-> CategoriaProducto : CategoriasIncluidas
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasIncluidas
+Promocion -[norank]-> Comercio : Comercios
+Promocion -[norank]-> "*" Comercio : Comercios
+Promocion -[norank]-> DiaSemana : DiasSemana
+Promocion -[norank]-> "*" DiaSemana : DiasSemana
+Promocion -[norank]-> EntidadFinanciera : EntidadesFinancieras
+Promocion -[norank]-> "*" EntidadFinanciera : EntidadesFinancieras
+Promocion -[norank]-> MedioPago : MediosPago
+Promocion -[norank]-> "*" MedioPago : MediosPago
+Promocion -[norank]-> Producto : ProductosExcluidos
+Promocion -[norank]-> "*" Producto : ProductosExcluidos
+Promocion -[norank]-> Producto : ProductosIncluidos
+Promocion -[norank]-> "*" Producto : ProductosIncluidos
+Promocion -[norank]-> RubroComercio : RubrosComercio
+Promocion -[norank]-> "*" RubroComercio : RubrosComercio
+PromocionBLL .[norank].> AlcancePromocion
+PromocionBLL .[norank].> IBitacoraBLL
+PromocionBLL .[norank].> ICategoriaProductoRepositorio
+PromocionBLL .[norank].> IComercioRepositorio
+PromocionBLL .[norank].> IEntidadFinancieraRepositorio
+PromocionBLL .[norank].> IMedioPagoRepositorio
+PromocionBLL .[norank].> INotificacionRepositorio
+PromocionBLL .[norank].> IProductoRepositorio
+PromocionBLL .[norank].> IPromocionCategoriaProductoRepositorio
+PromocionBLL .[norank].> IPromocionComercioRepositorio
+PromocionBLL .[norank].> IPromocionEntidadFinancieraRepositorio
+PromocionBLL .[norank].> IPromocionMedioPagoRepositorio
+PromocionBLL .[norank].> IPromocionProductoRepositorio
+PromocionBLL .[norank].> IPromocionRepositorio
+PromocionBLL .[norank].> IPromocionRubroComercioRepositorio
+PromocionBLL .[norank].> IPromocionSegmentoRepositorio
+PromocionBLL .[norank].> IRubroComercioRepositorio
+PromocionBLL .[norank].> IUnidadDeTrabajo
+PromocionBLL .[norank].> IUnidadDeTrabajoFactory
+PromocionBLL .[norank].> Promocion
+PromocionCategoriaProductoDAL .[norank].> AccesoDatosSqlServer
+PromocionCategoriaProductoRepositorio .[norank].> AccesoDatosSqlServer
+PromocionCategoriaProductoRepositorio .[norank].> PromocionCategoriaProductoDAL
+PromocionCategoriaProductoRepositorio .[norank].|> IPromocionCategoriaProductoRepositorio
+PromocionComercioDAL .[norank].> AccesoDatosSqlServer
+PromocionComercioRepositorio .[norank].> AccesoDatosSqlServer
+PromocionComercioRepositorio .[norank].> PromocionComercioDAL
+PromocionComercioRepositorio .[norank].> PromocionRepositorio
+PromocionComercioRepositorio .[norank].|> IPromocionComercioRepositorio
+PromocionDAL .[norank].> AccesoDatosSqlServer
+PromocionDiaSemanaDAL .[norank].> AccesoDatosSqlServer
+PromocionEntidadFinancieraDAL .[norank].> AccesoDatosSqlServer
+PromocionEntidadFinancieraRepositorio .[norank].> AccesoDatosSqlServer
+PromocionEntidadFinancieraRepositorio .[norank].> PromocionEntidadFinancieraDAL
+PromocionEntidadFinancieraRepositorio .[norank].|> IPromocionEntidadFinancieraRepositorio
+PromocionMedioPagoDAL .[norank].> AccesoDatosSqlServer
+PromocionMedioPagoRepositorio .[norank].> AccesoDatosSqlServer
+PromocionMedioPagoRepositorio .[norank].> PromocionMedioPagoDAL
+PromocionMedioPagoRepositorio .[norank].|> IPromocionMedioPagoRepositorio
+PromocionProductoDAL .[norank].> AccesoDatosSqlServer
+PromocionProductoRepositorio .[norank].> AccesoDatosSqlServer
+PromocionProductoRepositorio .[norank].> PromocionProductoDAL
+PromocionProductoRepositorio .[norank].|> IPromocionProductoRepositorio
+PromocionRepositorio .[norank].> AccesoDatosSqlServer
+PromocionRepositorio .[norank].> PromocionCategoriaProductoRepositorio
+PromocionRepositorio .[norank].> PromocionComercioRepositorio
+PromocionRepositorio .[norank].> PromocionDAL
+PromocionRepositorio .[norank].> PromocionDiaSemanaDAL
+PromocionRepositorio .[norank].> PromocionEntidadFinancieraRepositorio
+PromocionRepositorio .[norank].> PromocionMedioPagoRepositorio
+PromocionRepositorio .[norank].> PromocionProductoRepositorio
+PromocionRepositorio .[norank].> PromocionRubroComercioRepositorio
+PromocionRepositorio .[norank].> PromocionSegmentoDAL
+PromocionRepositorio .[norank].|> IPromocionRepositorio
+PromocionRubroComercioDAL .[norank].> AccesoDatosSqlServer
+PromocionRubroComercioRepositorio .[norank].> AccesoDatosSqlServer
+PromocionRubroComercioRepositorio .[norank].> PromocionRubroComercioDAL
+PromocionRubroComercioRepositorio .[norank].|> IPromocionRubroComercioRepositorio
+PromocionSegmentoDAL .[norank].> AccesoDatosSqlServer
+PromocionSegmentoRepositorio .[norank].> AccesoDatosSqlServer
+PromocionSegmentoRepositorio .[norank].> PromocionSegmentoDAL
+PromocionSegmentoRepositorio .[norank].|> IPromocionSegmentoRepositorio
+RubroComercioBLL .[norank].> IBitacoraBLL
+RubroComercioBLL .[norank].> IComercioRepositorio
+RubroComercioBLL .[norank].> IPromocionRubroComercioRepositorio
+RubroComercioBLL .[norank].> IRubroComercioRepositorio
+RubroComercioBLL .[norank].> IUnidadDeTrabajo
+RubroComercioBLL .[norank].> IUnidadDeTrabajoFactory
+RubroComercioBLL .[norank].> RubroComercio
+RubroComercioDAL .[norank].> AccesoDatosSqlServer
+RubroComercioRepositorio .[norank].> AccesoDatosSqlServer
+RubroComercioRepositorio .[norank].> RubroComercioDAL
+RubroComercioRepositorio .[norank].|> IRubroComercioRepositorio
+Sesion .[norank].|> ISesion
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> ICategoriaProductoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IComercioProductoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IComercioReglaCategorizacionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IComercioRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IEntidadFinancieraRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMedioPagoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMonedaRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMovimientoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> INotificacionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IProductoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionCategoriaProductoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionComercioRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionEntidadFinancieraRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionMedioPagoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionProductoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionRubroComercioRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPromocionSegmentoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IRubroComercioRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+' Trazabilidad de cobertura: CUN44, CUN45, CUN46, CUN47, CUN48, CUN49, CUN50, CUN51, CUN52, CUN53, CUN54, CUN55, CUN56, CUN57, CUN58, CUN59, CUN60, CUN61, CUN62, CUN63, CUN64, CUN65, CUN66, CUN67
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: BLL/AlcancePromocion.cs :: AlcancePromocion
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: BE/CategoriaProducto.cs :: CategoriaProducto
+' Participante: BLL/CategoriaProductoBLL.cs :: CategoriaProductoBLL
+' Participante: DAL/CategoriaProductoDAL.cs :: CategoriaProductoDAL
+' Participante: REPOSITORIO/CategoriaProductoRepositorio.cs :: CategoriaProductoRepositorio
+' Participante: BE/Comercio.cs :: Comercio
+' Participante: BLL/ComercioBLL.cs :: ComercioBLL
+' Participante: DAL/ComercioDAL.cs :: ComercioDAL
+' Participante: BE/ComercioProducto.cs :: ComercioProducto
+' Participante: BLL/ComercioProductoBLL.cs :: ComercioProductoBLL
+' Participante: DAL/ComercioProductoDAL.cs :: ComercioProductoDAL
+' Participante: REPOSITORIO/ComercioProductoRepositorio.cs :: ComercioProductoRepositorio
+' Participante: DAL/ComercioReglaCategorizacionDAL.cs :: ComercioReglaCategorizacionDAL
+' Participante: REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs :: ComercioReglaCategorizacionRepositorio
+' Participante: REPOSITORIO/ComercioRepositorio.cs :: ComercioRepositorio
+' Participante: BE/DiaSemana.cs :: DiaSemana
+' Participante: BE/EntidadFinanciera.cs :: EntidadFinanciera
+' Participante: DAL/EntidadFinancieraDAL.cs :: EntidadFinancieraDAL
+' Participante: REPOSITORIO/EntidadFinancieraRepositorio.cs :: EntidadFinancieraRepositorio
+' Participante: UI/FormGestionCategoriasProducto.cs :: FilaCategoriaProducto
+' Participante: UI/FormDetalleComercio.cs :: FormDetalleComercio
+' Participante: UI/FormGestionCategoriasProducto.cs :: FormGestionCategoriasProducto
+' Participante: UI/FormGestionComercios.cs :: FormGestionComercios
+' Participante: UI/FormGestionProductos.cs :: FormGestionProductos
+' Participante: UI/FormGestionPromociones.cs :: FormGestionPromociones
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: REPOSITORIO/ICategoriaProductoRepositorio.cs :: ICategoriaProductoRepositorio
+' Participante: REPOSITORIO/IComercioProductoRepositorio.cs :: IComercioProductoRepositorio
+' Participante: REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs :: IComercioReglaCategorizacionRepositorio
+' Participante: REPOSITORIO/IComercioRepositorio.cs :: IComercioRepositorio
+' Participante: REPOSITORIO/IEntidadFinancieraRepositorio.cs :: IEntidadFinancieraRepositorio
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: REPOSITORIO/IMedioPagoRepositorio.cs :: IMedioPagoRepositorio
+' Participante: REPOSITORIO/IMonedaRepositorio.cs :: IMonedaRepositorio
+' Participante: REPOSITORIO/IMovimientoRepositorio.cs :: IMovimientoRepositorio
+' Participante: REPOSITORIO/INotificacionRepositorio.cs :: INotificacionRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: REPOSITORIO/IProductoRepositorio.cs :: IProductoRepositorio
+' Participante: REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs :: IPromocionCategoriaProductoRepositorio
+' Participante: REPOSITORIO/IPromocionComercioRepositorio.cs :: IPromocionComercioRepositorio
+' Participante: REPOSITORIO/IPromocionEntidadFinancieraRepositorio.cs :: IPromocionEntidadFinancieraRepositorio
+' Participante: REPOSITORIO/IPromocionMedioPagoRepositorio.cs :: IPromocionMedioPagoRepositorio
+' Participante: REPOSITORIO/IPromocionProductoRepositorio.cs :: IPromocionProductoRepositorio
+' Participante: REPOSITORIO/IPromocionRepositorio.cs :: IPromocionRepositorio
+' Participante: REPOSITORIO/IPromocionRubroComercioRepositorio.cs :: IPromocionRubroComercioRepositorio
+' Participante: REPOSITORIO/IPromocionSegmentoRepositorio.cs :: IPromocionSegmentoRepositorio
+' Participante: REPOSITORIO/IRubroComercioRepositorio.cs :: IRubroComercioRepositorio
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: BE/MedioPago.cs :: MedioPago
+' Participante: DAL/MedioPagoDAL.cs :: MedioPagoDAL
+' Participante: BE/MedioPagoEntidad.cs :: MedioPagoEntidad
+' Participante: DAL/MedioPagoEntidadDAL.cs :: MedioPagoEntidadDAL
+' Participante: REPOSITORIO/MedioPagoRepositorio.cs :: MedioPagoRepositorio
+' Participante: BE/Moneda.cs :: Moneda
+' Participante: DAL/MonedaDAL.cs :: MonedaDAL
+' Participante: REPOSITORIO/MonedaRepositorio.cs :: MonedaRepositorio
+' Participante: DAL/MovimientoDAL.cs :: MovimientoDAL
+' Participante: REPOSITORIO/MovimientoRepositorio.cs :: MovimientoRepositorio
+' Participante: DAL/NotificacionDAL.cs :: NotificacionDAL
+' Participante: REPOSITORIO/NotificacionRepositorio.cs :: NotificacionRepositorio
+' Participante: BE/Producto.cs :: Producto
+' Participante: BLL/ProductoBLL.cs :: ProductoBLL
+' Participante: DAL/ProductoDAL.cs :: ProductoDAL
+' Participante: REPOSITORIO/ProductoRepositorio.cs :: ProductoRepositorio
+' Participante: BE/Promocion.cs :: Promocion
+' Participante: BLL/PromocionBLL.cs :: PromocionBLL
+' Participante: DAL/PromocionCategoriaProductoDAL.cs :: PromocionCategoriaProductoDAL
+' Participante: REPOSITORIO/PromocionCategoriaProductoRepositorio.cs :: PromocionCategoriaProductoRepositorio
+' Participante: DAL/PromocionComercioDAL.cs :: PromocionComercioDAL
+' Participante: REPOSITORIO/PromocionComercioRepositorio.cs :: PromocionComercioRepositorio
+' Participante: DAL/PromocionDAL.cs :: PromocionDAL
+' Participante: DAL/PromocionDiaSemanaDAL.cs :: PromocionDiaSemanaDAL
+' Participante: DAL/PromocionEntidadFinancieraDAL.cs :: PromocionEntidadFinancieraDAL
+' Participante: REPOSITORIO/PromocionEntidadFinancieraRepositorio.cs :: PromocionEntidadFinancieraRepositorio
+' Participante: DAL/PromocionMedioPagoDAL.cs :: PromocionMedioPagoDAL
+' Participante: REPOSITORIO/PromocionMedioPagoRepositorio.cs :: PromocionMedioPagoRepositorio
+' Participante: DAL/PromocionProductoDAL.cs :: PromocionProductoDAL
+' Participante: REPOSITORIO/PromocionProductoRepositorio.cs :: PromocionProductoRepositorio
+' Participante: REPOSITORIO/PromocionRepositorio.cs :: PromocionRepositorio
+' Participante: DAL/PromocionRubroComercioDAL.cs :: PromocionRubroComercioDAL
+' Participante: REPOSITORIO/PromocionRubroComercioRepositorio.cs :: PromocionRubroComercioRepositorio
+' Participante: DAL/PromocionSegmentoDAL.cs :: PromocionSegmentoDAL
+' Participante: REPOSITORIO/PromocionSegmentoRepositorio.cs :: PromocionSegmentoRepositorio
+' Participante: BE/RubroComercio.cs :: RubroComercio
+' Participante: BLL/RubroComercioBLL.cs :: RubroComercioBLL
+' Participante: DAL/RubroComercioDAL.cs :: RubroComercioDAL
+' Participante: REPOSITORIO/RubroComercioRepositorio.cs :: RubroComercioRepositorio
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BE/TipoMedioPago.cs :: TipoMedioPago
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' BLL/AlcancePromocion.cs:23 AlcancePromocion.FiltrarPorComercio
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/CategoriaProductoBLL.cs:104 CategoriaProductoBLL.Eliminar
+' BLL/CategoriaProductoBLL.cs:28 CategoriaProductoBLL.ObtenerTodas
+' BLL/CategoriaProductoBLL.cs:34 CategoriaProductoBLL.Crear
+' BLL/CategoriaProductoBLL.cs:63 CategoriaProductoBLL.Actualizar
+' BLL/ComercioBLL.cs:118 ComercioBLL.Eliminar
+' BLL/ComercioBLL.cs:27 ComercioBLL.ObtenerTodos
+' BLL/ComercioBLL.cs:33 ComercioBLL.Crear
+' BLL/ComercioBLL.cs:68 ComercioBLL.Actualizar
+' BLL/ComercioProductoBLL.cs:109 ComercioProductoBLL.ActualizarPrecio
+' BLL/ComercioProductoBLL.cs:149 ComercioProductoBLL.Quitar
+' BLL/ComercioProductoBLL.cs:33 ComercioProductoBLL.ObtenerPorComercio
+' BLL/ComercioProductoBLL.cs:47 ComercioProductoBLL.Asignar
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/ProductoBLL.cs:110 ProductoBLL.Eliminar
+' BLL/ProductoBLL.cs:28 ProductoBLL.ObtenerTodos
+' BLL/ProductoBLL.cs:35 ProductoBLL.Crear
+' BLL/ProductoBLL.cs:66 ProductoBLL.Actualizar
+' BLL/PromocionBLL.cs:126 PromocionBLL.Actualizar
+' BLL/PromocionBLL.cs:169 PromocionBLL.Eliminar
+' BLL/PromocionBLL.cs:42 PromocionBLL.Buscar
+' BLL/PromocionBLL.cs:72 PromocionBLL.ObtenerPorComercio
+' BLL/PromocionBLL.cs:94 PromocionBLL.Crear
+' BLL/RubroComercioBLL.cs:100 RubroComercioBLL.Eliminar
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' BLL/RubroComercioBLL.cs:33 RubroComercioBLL.Crear
+' BLL/RubroComercioBLL.cs:60 RubroComercioBLL.Actualizar
+' DAL/CategoriaProductoDAL.cs:106 CategoriaProductoDAL.Actualizar
+' DAL/CategoriaProductoDAL.cs:135 CategoriaProductoDAL.Eliminar
+' DAL/CategoriaProductoDAL.cs:19 CategoriaProductoDAL.ObtenerPorId
+' DAL/CategoriaProductoDAL.cs:48 CategoriaProductoDAL.ObtenerTodas
+' DAL/CategoriaProductoDAL.cs:78 CategoriaProductoDAL.InsertarYObtenerId
+' DAL/ComercioDAL.cs:120 ComercioDAL.InsertarYObtenerId
+' DAL/ComercioDAL.cs:154 ComercioDAL.Actualizar
+' DAL/ComercioDAL.cs:195 ComercioDAL.Eliminar
+' DAL/ComercioDAL.cs:25 ComercioDAL.ObtenerPorId
+' DAL/ComercioDAL.cs:54 ComercioDAL.ObtenerPorRubro
+' DAL/ComercioDAL.cs:90 ComercioDAL.ObtenerTodos
+' DAL/ComercioProductoDAL.cs:118 ComercioProductoDAL.ActualizarPrecio
+' DAL/ComercioProductoDAL.cs:148 ComercioProductoDAL.Eliminar
+' DAL/ComercioProductoDAL.cs:176 ComercioProductoDAL.ContarPorProducto
+' DAL/ComercioProductoDAL.cs:21 ComercioProductoDAL.ObtenerPorComercio
+' DAL/ComercioProductoDAL.cs:58 ComercioProductoDAL.ObtenerPorComercioYProducto
+' DAL/ComercioProductoDAL.cs:88 ComercioProductoDAL.Insertar
+' DAL/ComercioReglaCategorizacionDAL.cs:81 ComercioReglaCategorizacionDAL.ContarPorComercio
+' DAL/EntidadFinancieraDAL.cs:19 EntidadFinancieraDAL.ObtenerPorId
+' DAL/MedioPagoDAL.cs:21 MedioPagoDAL.ObtenerPorId
+' DAL/MedioPagoEntidadDAL.cs:52 MedioPagoEntidadDAL.ObtenerPorEntidadFinanciera
+' DAL/MonedaDAL.cs:20 MonedaDAL.ObtenerPorId
+' DAL/MovimientoDAL.cs:426 MovimientoDAL.ContarPorComercio
+' DAL/NotificacionDAL.cs:190 NotificacionDAL.ContarPorPromocion
+' DAL/ProductoDAL.cs:108 ProductoDAL.Actualizar
+' DAL/ProductoDAL.cs:139 ProductoDAL.Eliminar
+' DAL/ProductoDAL.cs:166 ProductoDAL.ContarPorCategoria
+' DAL/ProductoDAL.cs:20 ProductoDAL.ObtenerPorId
+' DAL/ProductoDAL.cs:49 ProductoDAL.ObtenerTodos
+' DAL/ProductoDAL.cs:79 ProductoDAL.InsertarYObtenerId
+' DAL/PromocionCategoriaProductoDAL.cs:46 PromocionCategoriaProductoDAL.ReemplazarCategoriasProductoDePromocion
+' DAL/PromocionCategoriaProductoDAL.cs:91 PromocionCategoriaProductoDAL.ContarPorCategoriaProducto
+' DAL/PromocionComercioDAL.cs:43 PromocionComercioDAL.ObtenerPromocionesPorComercio
+' DAL/PromocionComercioDAL.cs:75 PromocionComercioDAL.ReemplazarComerciosDePromocion
+' DAL/PromocionDAL.cs:114 PromocionDAL.Actualizar
+' DAL/PromocionDAL.cs:151 PromocionDAL.Eliminar
+' DAL/PromocionDAL.cs:23 PromocionDAL.ObtenerPorId
+' DAL/PromocionDAL.cs:52 PromocionDAL.ObtenerTodas
+' DAL/PromocionDAL.cs:82 PromocionDAL.InsertarYObtenerId
+' DAL/PromocionDiaSemanaDAL.cs:14 PromocionDiaSemanaDAL.ObtenerDiasPorPromocion
+' DAL/PromocionDiaSemanaDAL.cs:46 PromocionDiaSemanaDAL.ReemplazarDiasDePromocion
+' DAL/PromocionEntidadFinancieraDAL.cs:43 PromocionEntidadFinancieraDAL.ReemplazarEntidadesFinancierasDePromocion
+' DAL/PromocionMedioPagoDAL.cs:43 PromocionMedioPagoDAL.ReemplazarMediosPagoDePromocion
+' DAL/PromocionProductoDAL.cs:46 PromocionProductoDAL.ReemplazarProductosDePromocion
+' DAL/PromocionProductoDAL.cs:91 PromocionProductoDAL.ContarPorProducto
+' DAL/PromocionRubroComercioDAL.cs:43 PromocionRubroComercioDAL.ReemplazarRubrosComercioDePromocion
+' DAL/PromocionRubroComercioDAL.cs:79 PromocionRubroComercioDAL.ContarPorRubroComercio
+' DAL/PromocionSegmentoDAL.cs:11 PromocionSegmentoDAL.ObtenerSegmentosPorPromocion
+' DAL/PromocionSegmentoDAL.cs:43 PromocionSegmentoDAL.ReemplazarSegmentosDePromocion
+' DAL/RubroComercioDAL.cs:106 RubroComercioDAL.Actualizar
+' DAL/RubroComercioDAL.cs:135 RubroComercioDAL.Eliminar
+' DAL/RubroComercioDAL.cs:19 RubroComercioDAL.ObtenerPorId
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' DAL/RubroComercioDAL.cs:78 RubroComercioDAL.InsertarYObtenerId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:23 CategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:28 CategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:33 CategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:38 CategoriaProductoRepositorio.Actualizar
+' REPOSITORIO/CategoriaProductoRepositorio.cs:43 CategoriaProductoRepositorio.Eliminar
+' REPOSITORIO/ComercioProductoRepositorio.cs:23 ComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/ComercioProductoRepositorio.cs:30 ComercioProductoRepositorio.ObtenerPorComercioYProducto
+' REPOSITORIO/ComercioProductoRepositorio.cs:49 ComercioProductoRepositorio.Insertar
+' REPOSITORIO/ComercioProductoRepositorio.cs:54 ComercioProductoRepositorio.ActualizarPrecio
+' REPOSITORIO/ComercioProductoRepositorio.cs:59 ComercioProductoRepositorio.Eliminar
+' REPOSITORIO/ComercioProductoRepositorio.cs:64 ComercioProductoRepositorio.ContarPorProducto
+' REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs:36 ComercioReglaCategorizacionRepositorio.ContarPorComercio
+' REPOSITORIO/ComercioRepositorio.cs:23 ComercioRepositorio.ObtenerPorId
+' REPOSITORIO/ComercioRepositorio.cs:30 ComercioRepositorio.ObtenerPorRubro
+' REPOSITORIO/ComercioRepositorio.cs:37 ComercioRepositorio.ObtenerTodos
+' REPOSITORIO/ComercioRepositorio.cs:54 ComercioRepositorio.InsertarYObtenerId
+' REPOSITORIO/ComercioRepositorio.cs:59 ComercioRepositorio.Actualizar
+' REPOSITORIO/ComercioRepositorio.cs:64 ComercioRepositorio.Eliminar
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:27 EntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:10 ICategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:12 ICategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:14 ICategoriaProductoRepositorio.Actualizar
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:16 ICategoriaProductoRepositorio.Eliminar
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:8 ICategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IComercioProductoRepositorio.cs:11 IComercioProductoRepositorio.ObtenerPorComercioYProducto
+' REPOSITORIO/IComercioProductoRepositorio.cs:13 IComercioProductoRepositorio.Insertar
+' REPOSITORIO/IComercioProductoRepositorio.cs:16 IComercioProductoRepositorio.ActualizarPrecio
+' REPOSITORIO/IComercioProductoRepositorio.cs:18 IComercioProductoRepositorio.Eliminar
+' REPOSITORIO/IComercioProductoRepositorio.cs:20 IComercioProductoRepositorio.ContarPorProducto
+' REPOSITORIO/IComercioProductoRepositorio.cs:8 IComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:12 IComercioReglaCategorizacionRepositorio.ContarPorComercio
+' REPOSITORIO/IComercioRepositorio.cs:10 IComercioRepositorio.ObtenerPorRubro
+' REPOSITORIO/IComercioRepositorio.cs:12 IComercioRepositorio.ObtenerTodos
+' REPOSITORIO/IComercioRepositorio.cs:14 IComercioRepositorio.InsertarYObtenerId
+' REPOSITORIO/IComercioRepositorio.cs:16 IComercioRepositorio.Actualizar
+' REPOSITORIO/IComercioRepositorio.cs:18 IComercioRepositorio.Eliminar
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoRepositorio.cs:8 IMedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/IMonedaRepositorio.cs:8 IMonedaRepositorio.ObtenerPorId
+' REPOSITORIO/IMovimientoRepositorio.cs:31 IMovimientoRepositorio.ContarPorComercio
+' REPOSITORIO/INotificacionRepositorio.cs:29 INotificacionRepositorio.ContarPorPromocion
+' REPOSITORIO/IProductoRepositorio.cs:10 IProductoRepositorio.ObtenerTodos
+' REPOSITORIO/IProductoRepositorio.cs:12 IProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IProductoRepositorio.cs:14 IProductoRepositorio.Actualizar
+' REPOSITORIO/IProductoRepositorio.cs:16 IProductoRepositorio.Eliminar
+' REPOSITORIO/IProductoRepositorio.cs:18 IProductoRepositorio.ContarPorCategoria
+' REPOSITORIO/IProductoRepositorio.cs:8 IProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs:10 IPromocionCategoriaProductoRepositorio.ReemplazarCategoriasProductoDePromocion
+' REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs:13 IPromocionCategoriaProductoRepositorio.ContarPorCategoriaProducto
+' REPOSITORIO/IPromocionComercioRepositorio.cs:10 IPromocionComercioRepositorio.ObtenerPromocionesPorComercio
+' REPOSITORIO/IPromocionComercioRepositorio.cs:12 IPromocionComercioRepositorio.ReemplazarComerciosDePromocion
+' REPOSITORIO/IPromocionEntidadFinancieraRepositorio.cs:10 IPromocionEntidadFinancieraRepositorio.ReemplazarEntidadesFinancierasDePromocion
+' REPOSITORIO/IPromocionMedioPagoRepositorio.cs:10 IPromocionMedioPagoRepositorio.ReemplazarMediosPagoDePromocion
+' REPOSITORIO/IPromocionProductoRepositorio.cs:10 IPromocionProductoRepositorio.ReemplazarProductosDePromocion
+' REPOSITORIO/IPromocionProductoRepositorio.cs:13 IPromocionProductoRepositorio.ContarPorProducto
+' REPOSITORIO/IPromocionRepositorio.cs:10 IPromocionRepositorio.ObtenerTodas
+' REPOSITORIO/IPromocionRepositorio.cs:12 IPromocionRepositorio.InsertarYObtenerId
+' REPOSITORIO/IPromocionRepositorio.cs:14 IPromocionRepositorio.Actualizar
+' REPOSITORIO/IPromocionRepositorio.cs:16 IPromocionRepositorio.Eliminar
+' REPOSITORIO/IPromocionRepositorio.cs:18 IPromocionRepositorio.ReemplazarDiasDePromocion
+' REPOSITORIO/IPromocionRepositorio.cs:8 IPromocionRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionRubroComercioRepositorio.cs:10 IPromocionRubroComercioRepositorio.ReemplazarRubrosComercioDePromocion
+' REPOSITORIO/IPromocionRubroComercioRepositorio.cs:12 IPromocionRubroComercioRepositorio.ContarPorRubroComercio
+' REPOSITORIO/IPromocionSegmentoRepositorio.cs:10 IPromocionSegmentoRepositorio.ReemplazarSegmentosDePromocion
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:12 IRubroComercioRepositorio.InsertarYObtenerId
+' REPOSITORIO/IRubroComercioRepositorio.cs:14 IRubroComercioRepositorio.Actualizar
+' REPOSITORIO/IRubroComercioRepositorio.cs:16 IRubroComercioRepositorio.Eliminar
+' REPOSITORIO/IRubroComercioRepositorio.cs:8 IRubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoRepositorio.cs:24 MedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/MonedaRepositorio.cs:23 MonedaRepositorio.ObtenerPorId
+' REPOSITORIO/MovimientoRepositorio.cs:95 MovimientoRepositorio.ContarPorComercio
+' REPOSITORIO/NotificacionRepositorio.cs:97 NotificacionRepositorio.ContarPorPromocion
+' REPOSITORIO/ProductoRepositorio.cs:23 ProductoRepositorio.ObtenerPorId
+' REPOSITORIO/ProductoRepositorio.cs:30 ProductoRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoRepositorio.cs:47 ProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/ProductoRepositorio.cs:52 ProductoRepositorio.Actualizar
+' REPOSITORIO/ProductoRepositorio.cs:57 ProductoRepositorio.Eliminar
+' REPOSITORIO/ProductoRepositorio.cs:62 ProductoRepositorio.ContarPorCategoria
+' REPOSITORIO/PromocionCategoriaProductoRepositorio.cs:30 PromocionCategoriaProductoRepositorio.ReemplazarCategoriasProductoDePromocion
+' REPOSITORIO/PromocionCategoriaProductoRepositorio.cs:35 PromocionCategoriaProductoRepositorio.ContarPorCategoriaProducto
+' REPOSITORIO/PromocionComercioRepositorio.cs:30 PromocionComercioRepositorio.ObtenerPromocionesPorComercio
+' REPOSITORIO/PromocionComercioRepositorio.cs:36 PromocionComercioRepositorio.ReemplazarComerciosDePromocion
+' REPOSITORIO/PromocionEntidadFinancieraRepositorio.cs:30 PromocionEntidadFinancieraRepositorio.ReemplazarEntidadesFinancierasDePromocion
+' REPOSITORIO/PromocionMedioPagoRepositorio.cs:30 PromocionMedioPagoRepositorio.ReemplazarMediosPagoDePromocion
+' REPOSITORIO/PromocionProductoRepositorio.cs:30 PromocionProductoRepositorio.ReemplazarProductosDePromocion
+' REPOSITORIO/PromocionProductoRepositorio.cs:35 PromocionProductoRepositorio.ContarPorProducto
+' REPOSITORIO/PromocionRepositorio.cs:27 PromocionRepositorio.ObtenerPorId
+' REPOSITORIO/PromocionRepositorio.cs:34 PromocionRepositorio.ObtenerTodas
+' REPOSITORIO/PromocionRepositorio.cs:62 PromocionRepositorio.InsertarYObtenerId
+' REPOSITORIO/PromocionRepositorio.cs:67 PromocionRepositorio.Actualizar
+' REPOSITORIO/PromocionRepositorio.cs:72 PromocionRepositorio.Eliminar
+' REPOSITORIO/PromocionRepositorio.cs:77 PromocionRepositorio.ReemplazarDiasDePromocion
+' REPOSITORIO/PromocionRubroComercioRepositorio.cs:30 PromocionRubroComercioRepositorio.ReemplazarRubrosComercioDePromocion
+' REPOSITORIO/PromocionRubroComercioRepositorio.cs:35 PromocionRubroComercioRepositorio.ContarPorRubroComercio
+' REPOSITORIO/PromocionSegmentoRepositorio.cs:28 PromocionSegmentoRepositorio.ReemplazarSegmentosDePromocion
+' REPOSITORIO/RubroComercioRepositorio.cs:23 RubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:33 RubroComercioRepositorio.InsertarYObtenerId
+' REPOSITORIO/RubroComercioRepositorio.cs:38 RubroComercioRepositorio.Actualizar
+' REPOSITORIO/RubroComercioRepositorio.cs:43 RubroComercioRepositorio.Eliminar
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' UI/FormDetalleComercio.cs:152 FormDetalleComercio.btnAgregarProducto_Click
+' UI/FormDetalleComercio.cs:191 FormDetalleComercio.btnActualizarProducto_Click
+' UI/FormDetalleComercio.cs:221 FormDetalleComercio.btnQuitarProducto_Click
+' UI/FormDetalleComercio.cs:77 FormDetalleComercio.CargarProductos
+' UI/FormGestionCategoriasProducto.cs:32 FormGestionCategoriasProducto.CargarCategorias
+' UI/FormGestionCategoriasProducto.cs:61 FormGestionCategoriasProducto.btnAgregarCategoriaProducto_Click
+' UI/FormGestionCategoriasProducto.cs:76 FormGestionCategoriasProducto.btnActualizarCategoriaProducto_Click
+' UI/FormGestionCategoriasProducto.cs:99 FormGestionCategoriasProducto.btnEliminarCategoriaProducto_Click
+' UI/FormGestionComercios.cs:100 FormGestionComercios.btnAgregarComercio_Click
+' UI/FormGestionComercios.cs:130 FormGestionComercios.btnActualizarComercio_Click
+' UI/FormGestionComercios.cs:166 FormGestionComercios.btnEliminarComercio_Click
+' UI/FormGestionComercios.cs:280 FormGestionComercios.CargarRubros
+' UI/FormGestionComercios.cs:312 FormGestionComercios.btnAgregarRubro_Click
+' UI/FormGestionComercios.cs:328 FormGestionComercios.btnActualizarRubro_Click
+' UI/FormGestionComercios.cs:357 FormGestionComercios.btnEliminarRubro_Click
+' UI/FormGestionComercios.cs:62 FormGestionComercios.CargarComercios
+' UI/FormGestionProductos.cs:118 FormGestionProductos.btnActualizarProducto_Click
+' UI/FormGestionProductos.cs:150 FormGestionProductos.btnEliminarProducto_Click
+' UI/FormGestionProductos.cs:61 FormGestionProductos.CargarProductos
+' UI/FormGestionProductos.cs:97 FormGestionProductos.btnAgregarProducto_Click
+' UI/FormGestionPromociones.cs:315 FormGestionPromociones.CargarPromociones
+' UI/FormGestionPromociones.cs:582 FormGestionPromociones.btnAgregarPromocion_Click
+' UI/FormGestionPromociones.cs:602 FormGestionPromociones.btnActualizarPromocion_Click
+' UI/FormGestionPromociones.cs:630 FormGestionPromociones.btnEliminarPromocion_Click
+' UI/UiDialogHelper.cs:10 UiDialogHelper.MostrarInfo
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:40 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:45 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:54 UiDialogHelper.Traducir
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

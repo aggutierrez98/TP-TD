@@ -25,17 +25,17 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public void Sesion_IniciarSesion_SetsCurrentUser()
         {
-            Sesion.GetInstance().IniciarSesion(5, "admin");
+            Sesion.GetInstance().IniciarSesion(new UsuarioAutenticadoPrueba { Id = 5, Username = "admin" });
 
             Assert.IsTrue(Sesion.GetInstance().HaySesionActiva());
-            Assert.AreEqual(5, Sesion.GetInstance().GetUsuarioActualId());
+            Assert.AreEqual(5, Sesion.GetInstance().GetUsuarioActual().Id);
             Assert.AreEqual("admin", Sesion.GetInstance().GetUsuarioActualNombre());
         }
 
         [TestMethod]
         public void Sesion_ActualizarUsuarioActualNombre_ChangesCurrentName()
         {
-            Sesion.GetInstance().IniciarSesion(5, "admin");
+            Sesion.GetInstance().IniciarSesion(new UsuarioAutenticadoPrueba { Id = 5, Username = "admin" });
 
             Sesion.GetInstance().ActualizarUsuarioActualNombre("renamed");
 
@@ -45,7 +45,7 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public void Sesion_CerrarSesion_ClearsCurrentUser()
         {
-            Sesion.GetInstance().IniciarSesion(5, "admin");
+            Sesion.GetInstance().IniciarSesion(new UsuarioAutenticadoPrueba { Id = 5, Username = "admin" });
 
             Sesion.GetInstance().CerrarSesion();
 

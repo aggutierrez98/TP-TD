@@ -39,41 +39,40 @@ namespace BLL
             _bitacoraBLL = bitacoraBLL;
         }
 
-        public List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId)
+        public List<ReglaCategorizacion> ObtenerParaUsuarioActual()
         {
-            return _reglaRepositorio.ObtenerPorUsuario(usuarioId);
+            return _reglaRepositorio.ObtenerPorUsuario(_sesion.ObtenerUsuarioActual());
         }
 
-        public List<int> ObtenerComercioIdsPorRegla(int reglaId)
+        public List<Comercio> ObtenerComerciosPorRegla(ReglaCategorizacion regla)
         {
-            return _comercioReglaRepositorio.ObtenerComercioIdsPorReglaCategorizacion(reglaId);
+            return _comercioReglaRepositorio.ObtenerComerciosPorReglaCategorizacion(regla);
         }
 
-        public int Crear(string nombre, int categoriaId, string palabrasClave, List<int> comercioIds = null)
+        // Devuelve la misma instancia recibida, con Id, Usuario (el de sesion) y la categoria
+        // persistida cargados. Sin comercios la regla es general.
+        public ReglaCategorizacion Crear(ReglaCategorizacion regla, IEnumerable<Comercio> comercios = null)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            string nombreNormalizado = ValidarNombre(nombre);
-            string palabrasClaveNormalizadas = ValidarPalabrasClave(palabrasClave);
-            ValidarCategoriaVisible(categoriaId, usuarioActualId);
-            ValidarComercios(comercioIds);
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
+            string nombreNormalizado = ValidarNombre(regla?.Nombre);
+            string palabrasClaveNormalizadas = ValidarPalabrasClave(regla.PalabrasClave);
+            Categoria categoria = ValidarCategoriaVisible(regla.Categoria, usuarioActual);
+            List<Comercio> comerciosAAsociar = ValidarComercios(comercios);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ReglaCategorizacion nuevaRegla = new ReglaCategorizacion
-                    {
-                        Usuario = new Usuario { Id = usuarioActualId },
-                        Categoria = new Categoria { Id = categoriaId },
-                        Nombre = nombreNormalizado,
-                        PalabrasClave = palabrasClaveNormalizadas
-                    };
+                    regla.Usuario = usuarioActual;
+                    regla.Categoria = categoria;
+                    regla.Nombre = nombreNormalizado;
+                    regla.PalabrasClave = palabrasClaveNormalizadas;
 
-                    int id = unidad.ReglasCategorizacion.InsertarYObtenerId(nuevaRegla);
+                    regla.Id = unidad.ReglasCategorizacion.InsertarYObtenerId(regla);
 
-                    if (comercioIds != null && comercioIds.Count > 0)
+                    if (comerciosAAsociar.Count > 0)
                     {
-                        unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(id, comercioIds.Distinct().ToList());
+                        unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(regla, comerciosAAsociar);
                     }
 
                     _bitacoraBLL.RegistrarOperacionInterno(
@@ -83,7 +82,7 @@ namespace BLL
                         unidad);
 
                     unidad.Save();
-                    return id;
+                    return regla;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -96,33 +95,35 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre, int categoriaId, string palabrasClave, List<int> comercioIds = null)
+        // Recibe la regla con los valores nuevos. Valida la propiedad sobre la persistida
+        // (no confia en el Usuario recibido), copia solo los campos editables y reemplaza
+        // sus comercios.
+        public bool Actualizar(ReglaCategorizacion regla, IEnumerable<Comercio> comercios = null)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            string nombreNormalizado = ValidarNombre(nombre);
-            string palabrasClaveNormalizadas = ValidarPalabrasClave(palabrasClave);
-            ValidarCategoriaVisible(categoriaId, usuarioActualId);
-            ValidarComercios(comercioIds);
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
+            string nombreNormalizado = ValidarNombre(regla?.Nombre);
+            string palabrasClaveNormalizadas = ValidarPalabrasClave(regla.PalabrasClave);
+            Categoria categoria = ValidarCategoriaVisible(regla.Categoria, usuarioActual);
+            List<Comercio> comerciosAAsociar = ValidarComercios(comercios);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ReglaCategorizacion regla = unidad.ReglasCategorizacion.ObtenerPorId(id);
-                    ValidarPropiedad(regla, usuarioActualId);
+                    ReglaCategorizacion persistida = unidad.ReglasCategorizacion.ObtenerPorId(regla.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
-                    regla.Nombre = nombreNormalizado;
-                    regla.Categoria = new Categoria { Id = categoriaId };
-                    regla.PalabrasClave = palabrasClaveNormalizadas;
+                    persistida.Nombre = nombreNormalizado;
+                    persistida.Categoria = categoria;
+                    persistida.PalabrasClave = palabrasClaveNormalizadas;
 
-                    bool actualizado = unidad.ReglasCategorizacion.Actualizar(regla);
+                    bool actualizado = unidad.ReglasCategorizacion.Actualizar(persistida);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.Rule.UpdateFailed");
                     }
 
-                    List<int> comerciosAAsociar = comercioIds == null ? new List<int>() : comercioIds.Distinct().ToList();
-                    unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(id, comerciosAAsociar);
+                    unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(persistida, comerciosAAsociar);
 
                     _bitacoraBLL.RegistrarOperacionInterno(
                         "FormCategorizationRules.Value.Activity.RuleUpdate",
@@ -148,19 +149,19 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ReglaCategorizacion regla)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ReglaCategorizacion regla = unidad.ReglasCategorizacion.ObtenerPorId(id);
-                    ValidarPropiedad(regla, usuarioActualId);
+                    ReglaCategorizacion persistida = regla == null ? null : unidad.ReglasCategorizacion.ObtenerPorId(regla.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
-                    unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(id, new List<int>());
-                    bool eliminado = unidad.ReglasCategorizacion.Eliminar(id);
+                    unidad.ComercioReglaCategorizacion.ReemplazarComerciosDeReglaCategorizacion(persistida, new List<Comercio>());
+                    bool eliminado = unidad.ReglasCategorizacion.Eliminar(persistida);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.Rule.DeleteFailed");
@@ -192,20 +193,19 @@ namespace BLL
 
         // Sugiere la categoria para una descripcion y comercio opcional segun las reglas del usuario actual.
         // Devuelve null si no hay coincidencia o si hay empate residual, exigiendo seleccion manual.
-        public Categoria SugerirCategoria(string descripcion, int? comercioId = null)
+        public Categoria SugerirCategoria(string descripcion, Comercio comercio = null)
         {
             if (string.IsNullOrWhiteSpace(descripcion))
             {
                 return null;
             }
 
-            int? usuarioActualId = _sesion.GetUsuarioActualId();
-            if (!usuarioActualId.HasValue)
+            if (!_sesion.HaySesionActiva())
             {
                 return null;
             }
 
-            List<ReglaCategorizacion> reglas = _reglaRepositorio.ObtenerPorUsuario(usuarioActualId.Value);
+            List<ReglaCategorizacion> reglas = _reglaRepositorio.ObtenerPorUsuario(_sesion.ObtenerUsuarioActual());
             if (reglas == null || reglas.Count == 0)
             {
                 return null;
@@ -217,8 +217,8 @@ namespace BLL
 
             foreach (ReglaCategorizacion regla in reglas)
             {
-                List<int> comercioIds = _comercioReglaRepositorio.ObtenerComercioIdsPorReglaCategorizacion(regla.Id);
-                bool tieneComerciosAsociados = comercioIds != null && comercioIds.Count > 0;
+                List<Comercio> comerciosRegla = _comercioReglaRepositorio.ObtenerComerciosPorReglaCategorizacion(regla);
+                bool tieneComerciosAsociados = comerciosRegla != null && comerciosRegla.Count > 0;
 
                 // Elegibilidad:
                 // Regla general (sin comercios) -> siempre elegible, TieneMatchComercio = false
@@ -228,7 +228,7 @@ namespace BLL
 
                 if (tieneComerciosAsociados)
                 {
-                    if (comercioId.HasValue && comercioIds.Contains(comercioId.Value))
+                    if (comercio != null && comerciosRegla.Any(item => item.Id == comercio.Id))
                     {
                         esElegible = true;
                         tieneMatchComercio = true;
@@ -367,45 +367,57 @@ namespace BLL
             return normalizado;
         }
 
-        private void ValidarCategoriaVisible(int categoriaId, int usuarioActualId)
+        // Devuelve la categoria persistida: debe existir y ser global o del usuario actual.
+        private Categoria ValidarCategoriaVisible(Categoria recibida, Usuario usuarioActual)
         {
-            Categoria categoria = _categoriaRepositorio.ObtenerPorId(categoriaId);
+            Categoria categoria = recibida == null ? null : _categoriaRepositorio.ObtenerPorId(recibida.Id);
             if (categoria == null)
             {
                 throw new ExcepcionNegocio("Error.Rule.CategoryNotFound");
             }
 
-            if (categoria.Usuario != null && categoria.Usuario.Id != usuarioActualId)
+            if (categoria.Usuario != null && categoria.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Rule.CategoryNotAllowed");
             }
+
+            return categoria;
         }
 
-        private void ValidarComercios(List<int> comercioIds)
+        // Devuelve los comercios persistidos, sin repetidos; ninguno = regla general.
+        private List<Comercio> ValidarComercios(IEnumerable<Comercio> comercios)
         {
-            if (comercioIds == null || comercioIds.Count == 0)
+            List<Comercio> persistidos = new List<Comercio>();
+            if (comercios == null)
             {
-                return;
+                return persistidos;
             }
 
-            foreach (int id in comercioIds)
+            foreach (Comercio recibido in comercios)
             {
-                Comercio comercio = _comercioRepositorio.ObtenerPorId(id);
+                Comercio comercio = recibido == null ? null : _comercioRepositorio.ObtenerPorId(recibido.Id);
                 if (comercio == null)
                 {
                     throw new ExcepcionNegocio("Error.Rule.CommerceNotFound");
                 }
+
+                if (!persistidos.Any(item => item.Id == comercio.Id))
+                {
+                    persistidos.Add(comercio);
+                }
             }
+
+            return persistidos;
         }
 
-        private static void ValidarPropiedad(ReglaCategorizacion regla, int usuarioActualId)
+        private static void ValidarPropiedad(ReglaCategorizacion regla, Usuario usuarioActual)
         {
             if (regla == null)
             {
                 throw new ExcepcionNegocio("Error.Rule.NotFound");
             }
 
-            if (regla.Usuario == null || regla.Usuario.Id != usuarioActualId)
+            if (regla.Usuario == null || regla.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Rule.NotOwned");
             }

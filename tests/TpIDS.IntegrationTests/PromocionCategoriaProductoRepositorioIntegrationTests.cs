@@ -24,11 +24,11 @@ namespace TpIDS.IntegrationTests
                 int incluidoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestIncluido");
                 int excluidoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestExcluido");
 
-                bool reemplazado = repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int> { incluidoId }, new List<int> { excluidoId });
+                bool reemplazado = repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(incluidoId), Categorias(excluidoId));
 
                 Assert.IsTrue(reemplazado);
-                List<int> incluidos = repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, false);
-                List<int> excluidos = repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, true);
+                List<int> incluidos = repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, false).ConvertAll(item => item.Id);
+                List<int> excluidos = repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, true).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, incluidos.Count);
                 Assert.AreEqual(incluidoId, incluidos[0]);
                 Assert.AreEqual(1, excluidos.Count);
@@ -48,12 +48,12 @@ namespace TpIDS.IntegrationTests
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestReemplazoCategoria");
                 int idA = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestReemplazoA");
                 int idB = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestReemplazoB");
-                repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int> { idA }, new List<int>());
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(idA), Categorias());
 
-                repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int>(), new List<int> { idB });
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(), Categorias(idB));
 
-                Assert.AreEqual(0, repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, false).Count);
-                List<int> excluidos = repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, true);
+                Assert.AreEqual(0, repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, false).Count);
+                List<int> excluidos = repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, true).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, excluidos.Count);
                 Assert.AreEqual(idB, excluidos[0]);
 
@@ -71,12 +71,12 @@ namespace TpIDS.IntegrationTests
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestVaciarCategoria");
                 int incluidoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestVaciarInc");
                 int excluidoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestVaciarExc");
-                repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int> { incluidoId }, new List<int> { excluidoId });
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(incluidoId), Categorias(excluidoId));
 
-                repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int>(), new List<int>());
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(), Categorias());
 
-                Assert.AreEqual(0, repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, false).Count);
-                Assert.AreEqual(0, repositorio.ObtenerCategoriaProductoIdsPorPromocion(promocionId, true).Count);
+                Assert.AreEqual(0, repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, false).Count);
+                Assert.AreEqual(0, repositorio.ObtenerCategoriasProductoPorPromocion(new BE.Promocion { Id = promocionId }, true).Count);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -94,7 +94,7 @@ namespace TpIDS.IntegrationTests
                 int elementoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestContradiccion");
 
                 Assert.ThrowsExactly<SERVICIOS.ExcepcionTecnica>(() =>
-                    repositorio.ReemplazarCategoriasProductoDePromocion(promocionId, new List<int> { elementoId }, new List<int> { elementoId }));
+                    repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = promocionId }, Categorias(elementoId), Categorias(elementoId)));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -111,14 +111,19 @@ namespace TpIDS.IntegrationTests
                 int categoriaSinUsoId = InsertarCategoriaProductoTest(accesoDatos, "CategoriaTestContarSinUso");
                 int incluyeId = InsertarPromocionTest(accesoDatos, "PromocionTestContarCategoriaInc");
                 int excluyeId = InsertarPromocionTest(accesoDatos, "PromocionTestContarCategoriaExc");
-                repositorio.ReemplazarCategoriasProductoDePromocion(incluyeId, new List<int> { categoriaUsadaId }, new List<int>());
-                repositorio.ReemplazarCategoriasProductoDePromocion(excluyeId, new List<int>(), new List<int> { categoriaUsadaId });
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = incluyeId }, Categorias(categoriaUsadaId), Categorias());
+                repositorio.ReemplazarCategoriasProductoDePromocion(new BE.Promocion { Id = excluyeId }, Categorias(), Categorias(categoriaUsadaId));
 
-                Assert.AreEqual(2, repositorio.ContarPorCategoriaProducto(categoriaUsadaId));
-                Assert.AreEqual(0, repositorio.ContarPorCategoriaProducto(categoriaSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorCategoriaProducto(new BE.CategoriaProducto { Id = categoriaUsadaId }));
+                Assert.AreEqual(0, repositorio.ContarPorCategoriaProducto(new BE.CategoriaProducto { Id = categoriaSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
+        }
+
+        private static List<BE.CategoriaProducto> Categorias(params int[] ids)
+        {
+            return new List<int>(ids).ConvertAll(id => new BE.CategoriaProducto { Id = id });
         }
 
         private static int InsertarPromocionTest(AccesoDatosSqlServer accesoDatos, string descripcion)

@@ -14,7 +14,7 @@ namespace SERVICIOS.Tests
     [TestClass]
     public sealed class NominatimBusquedaUbicacionesErroresTests
     {
-        private static ConsultaUbicacion Consulta()
+        private static IConsultaUbicacion Consulta()
         {
             return new ConsultaUbicacion("Obelisco", "es", null);
         }
@@ -79,7 +79,7 @@ namespace SERVICIOS.Tests
             ManejadorHttpFalso manejador = new ManejadorHttpFalso((p, ct) => EsperarCancelacionAsync(ct), reloj);
             NominatimBusquedaUbicacionesService servicio = BusquedaUbicacionesPruebas.Crear(manejador, reloj);
 
-            Task<IReadOnlyList<ResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), CancellationToken.None);
+            Task<IReadOnlyList<IResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), CancellationToken.None);
             await reloj.EsperaPendienteAsync(TimeSpan.FromSeconds(15));
             reloj.Avanzar(TimeSpan.FromSeconds(14));
             Assert.IsFalse(busqueda.IsCompleted);
@@ -120,7 +120,7 @@ namespace SERVICIOS.Tests
 
             using (CancellationTokenSource cts = new CancellationTokenSource())
             {
-                Task<IReadOnlyList<ResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), cts.Token);
+                Task<IReadOnlyList<IResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), cts.Token);
                 await enviada.Task;
                 cts.Cancel();
 
@@ -139,7 +139,7 @@ namespace SERVICIOS.Tests
             ManejadorHttpFalso manejador = new ManejadorHttpFalso((p, ct) => EsperarCancelacionAsync(ct), reloj);
             NominatimBusquedaUbicacionesService servicio = BusquedaUbicacionesPruebas.Crear(manejador, reloj);
 
-            Task<IReadOnlyList<ResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), CancellationToken.None);
+            Task<IReadOnlyList<IResultadoBusquedaUbicacion>> busqueda = servicio.BuscarAsync(Consulta(), CancellationToken.None);
             await reloj.EsperaPendienteAsync(TimeSpan.FromSeconds(15));
             reloj.Avanzar(TimeSpan.FromSeconds(15));
             await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => busqueda);

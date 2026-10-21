@@ -1,0 +1,91 @@
+@startuml
+' Fuente: diagramas/NEG11-comercios/NEG11-comercios-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN51 Baja de comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionComercios" as FormGestionComercios
+control "ComercioBLL" as ComercioBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "ComercioDAL" as ComercioDAL
+participant "ComercioProductoRepositorio\n:IComercioProductoRepositorio" as IComercioProductoRepositorio
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+participant "PromocionComercioRepositorio\n:IPromocionComercioRepositorio" as IPromocionComercioRepositorio
+participant "ComercioReglaCategorizacionRepositorio\n:IComercioReglaCategorizacionRepositorio" as IComercioReglaCategorizacionRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionComercios : El actor desea eliminar un comercio que ya no corresponde mantener en el\nsistema.
+Actor -> FormGestionComercios : selecciona un comercio del listado.
+Actor -> FormGestionComercios : selecciona la acción «Eliminar».
+FormGestionComercios --> Actor : solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se\neliminará el comercio seleccionado. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormGestionComercios : confirma la eliminación.
+FormGestionComercios -> ComercioBLL ++ : Eliminar(comercio: Comercio)
+ComercioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ComercioBLL -- : IUnidadDeTrabajo
+ComercioBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio -> ComercioDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ComercioDAL --> IComercioRepositorio -- : Comercio
+IComercioRepositorio --> ComercioBLL -- : Comercio
+ComercioBLL -> IComercioProductoRepositorio ++ : ObtenerPorComercio(comercio: Comercio)
+IComercioProductoRepositorio --> ComercioBLL -- : List<ComercioProducto>
+ComercioBLL -> IMovimientoRepositorio ++ : ContarPorComercio(comercio: Comercio)
+IMovimientoRepositorio --> ComercioBLL -- : int
+ComercioBLL -> IPromocionComercioRepositorio ++ : ObtenerPromocionesPorComercio(comercio: Comercio)
+IPromocionComercioRepositorio --> ComercioBLL -- : List<Promocion>
+ComercioBLL -> IComercioReglaCategorizacionRepositorio ++ : ContarPorComercio(comercio: Comercio)
+IComercioReglaCategorizacionRepositorio --> ComercioBLL -- : int
+ComercioBLL -> IComercioRepositorio ++ : Eliminar(comercio: Comercio)
+IComercioRepositorio -> ComercioDAL ++ : Eliminar(comercio: Comercio, accesoDatos: AccesoDatosSqlServer)
+ComercioDAL --> IComercioRepositorio -- : bool
+IComercioRepositorio --> ComercioBLL -- : bool
+ComercioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ComercioBLL -- : void
+ComercioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ComercioBLL -- : void
+ComercioBLL --> FormGestionComercios -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionComercios -> ComercioBLL ++ : ObtenerTodos()
+ComercioBLL -> IComercioRepositorio ++ : ObtenerTodos()
+IComercioRepositorio -> ComercioDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+ComercioDAL --> IComercioRepositorio -- : List<Comercio>
+IComercioRepositorio --> ComercioBLL -- : List<Comercio>
+ComercioBLL --> FormGestionComercios -- : List<Comercio>
+end
+FormGestionComercios --> Actor : elimina el comercio, limpia el formulario, actualiza el listado sin el comercio eliminado\ne informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormGestionComercios : Cancelar la operacion
+FormGestionComercios --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ComercioBLL.cs:118 ComercioBLL.Eliminar
+' BLL/ComercioBLL.cs:27 ComercioBLL.ObtenerTodos
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' DAL/ComercioDAL.cs:195 ComercioDAL.Eliminar
+' DAL/ComercioDAL.cs:25 ComercioDAL.ObtenerPorId
+' DAL/ComercioDAL.cs:90 ComercioDAL.ObtenerTodos
+' REPOSITORIO/ComercioRepositorio.cs:23 ComercioRepositorio.ObtenerPorId
+' REPOSITORIO/ComercioRepositorio.cs:37 ComercioRepositorio.ObtenerTodos
+' REPOSITORIO/ComercioRepositorio.cs:64 ComercioRepositorio.Eliminar
+' REPOSITORIO/IComercioProductoRepositorio.cs:8 IComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:12 IComercioReglaCategorizacionRepositorio.ContarPorComercio
+' REPOSITORIO/IComercioRepositorio.cs:12 IComercioRepositorio.ObtenerTodos
+' REPOSITORIO/IComercioRepositorio.cs:18 IComercioRepositorio.Eliminar
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IMovimientoRepositorio.cs:31 IMovimientoRepositorio.ContarPorComercio
+' REPOSITORIO/IPromocionComercioRepositorio.cs:10 IPromocionComercioRepositorio.ObtenerPromocionesPorComercio
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionComercios.cs:166 FormGestionComercios.btnEliminarComercio_Click
+@enduml

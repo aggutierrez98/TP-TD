@@ -31,5 +31,6 @@ Ninguna.
 - **Tests**: `tests/BLL.Tests`, `tests/SERVICIOS.Tests`, `tests/TpIDS.IntegrationTests` y `tests/TpIDS.UiTests` se adaptan a las firmas nuevas. Los tests de `LimiteUsoAsistente` pasan a `SERVICIOS.Tests`.
 - **Build**: `Directory.Build.targets` suma la guardia nueva junto a las dos existentes.
 - **Documentacion**: `.agents/02-architecture-7-layers.md`, `AGENTS.md` y la skill `architecture-dependency-guard`. Los diagramas de clases G07/G08 cambian de firmas; ese pendiente se registra en `actualizar-diagramas-tp`.
-- **Cambios en curso**: `unificar-crons`, `notificaciones-automaticas-diarias`, `perfil-inversor-usuario` y `listas-filtros-escalables` tocan modulos afectados. El trinquete evita que sumen violaciones nuevas mientras tanto.
+- **CRONS**: la consola de tareas programadas, agregada por `unificar-crons`, es un segundo punto de entrada con las mismas referencias que la UI. Su codigo no tiene violaciones, pero la matriz de `.agents/02-architecture-7-layers.md` y de `AGENTS.md` no la menciona (solo la guardia y la referencia de la skill). Este change la documenta.
+- **Cambios en curso**: `listas-filtros-escalables` y `gestion-categorias-producto` tocan modulos afectados. El trinquete evita que sumen violaciones nuevas mientras tanto.
 - **Sin dependencias nuevas** y sin impacto en la restriccion de compilar sin NuGet.

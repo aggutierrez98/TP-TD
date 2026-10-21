@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG14-catalogo-productos/NEG14-catalogo-productos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN60 Consultar catálogo de productos — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionProductos" as FormGestionProductos
+control "ProductoBLL" as ProductoBLL
+participant "ProductoRepositorio\n:IProductoRepositorio" as IProductoRepositorio
+participant "ProductoDAL" as ProductoDAL
+note over FormGestionProductos : El actor desea conocer los productos registrados en el catálogo.
+Actor -> FormGestionProductos : selecciona la opción «Productos» del menú «Operador».
+FormGestionProductos -> ProductoBLL ++ : ObtenerTodos()
+ProductoBLL -> IProductoRepositorio ++ : ObtenerTodos()
+IProductoRepositorio -> ProductoDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+ProductoDAL --> IProductoRepositorio -- : List<Producto>
+IProductoRepositorio --> ProductoBLL -- : List<Producto>
+ProductoBLL --> FormGestionProductos -- : List<Producto>
+FormGestionProductos --> Actor : presenta la pantalla «Gestión de Productos» con el listado de productos
+Actor -> FormGestionProductos : selecciona un producto del listado.
+FormGestionProductos --> Actor : muestra el nombre y la categoría del producto seleccionado en los campos «Nombre» y\n«Categoría».
+' BLL/ProductoBLL.cs:28 ProductoBLL.ObtenerTodos
+' DAL/ProductoDAL.cs:49 ProductoDAL.ObtenerTodos
+' REPOSITORIO/IProductoRepositorio.cs:10 IProductoRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoRepositorio.cs:30 ProductoRepositorio.ObtenerTodos
+' UI/FormGestionProductos.cs:61 FormGestionProductos.CargarProductos
+@enduml

@@ -13,6 +13,6 @@ namespace REPOSITORIO
 
         bool Actualizar(Moneda moneda);
 
-        bool Eliminar(int id);
+        bool Eliminar(Moneda moneda);
     }
 }

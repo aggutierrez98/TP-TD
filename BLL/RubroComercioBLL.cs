@@ -29,22 +29,21 @@ namespace BLL
             return _rubroComercioRepositorio.ObtenerTodas();
         }
 
-        public RubroComercio Crear(string nombre)
+        // Devuelve la misma instancia recibida, con el nombre normalizado y el Id cargado.
+        public RubroComercio Crear(RubroComercio rubro)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(rubro?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    RubroComercio nuevoRubro = new RubroComercio { Nombre = nombreNormalizado };
-
-                    int id = unidad.RubrosComercio.InsertarYObtenerId(nuevoRubro);
-                    nuevoRubro.Id = id;
+                    rubro.Nombre = nombreNormalizado;
+                    rubro.Id = unidad.RubrosComercio.InsertarYObtenerId(rubro);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormMerchantManagement.Value.Activity.RubroCreation", "FormMerchantManagement.Value.Info.RubroCreation", "RubroComercioBLL", unidad);
                     unidad.Save();
-                    return nuevoRubro;
+                    return rubro;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -57,22 +56,23 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre)
+        // Recibe el rubro con el nombre nuevo y lo copia sobre el persistido.
+        public bool Actualizar(RubroComercio rubro)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(rubro?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    RubroComercio rubro = unidad.RubrosComercio.ObtenerPorId(id);
-                    if (rubro == null)
+                    RubroComercio persistido = unidad.RubrosComercio.ObtenerPorId(rubro.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
                     }
 
-                    rubro.Nombre = nombreNormalizado;
-                    bool actualizado = unidad.RubrosComercio.Actualizar(rubro);
+                    persistido.Nombre = nombreNormalizado;
+                    bool actualizado = unidad.RubrosComercio.Actualizar(persistido);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.RubroUpdateFailed");
@@ -97,27 +97,27 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RubroComercio rubro)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    RubroComercio rubro = unidad.RubrosComercio.ObtenerPorId(id);
-                    if (rubro == null)
+                    RubroComercio persistido = rubro == null ? null : unidad.RubrosComercio.ObtenerPorId(rubro.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
                     }
 
                     // Validacion proactiva: un rubro con comercios o referenciado por una
                     // promocion no se da de baja.
-                    if (unidad.Comercios.ObtenerPorRubro(id).Count > 0
-                        || unidad.PromocionRubrosComercio.ContarPorRubroComercio(id) > 0)
+                    if (unidad.Comercios.ObtenerPorRubro(persistido).Count > 0
+                        || unidad.PromocionRubrosComercio.ContarPorRubroComercio(persistido) > 0)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.RubroInUse");
                     }
 
-                    bool eliminado = unidad.RubrosComercio.Eliminar(id);
+                    bool eliminado = unidad.RubrosComercio.Eliminar(persistido);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.RubroDeleteFailed");

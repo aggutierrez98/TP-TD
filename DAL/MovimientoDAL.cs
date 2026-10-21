@@ -57,7 +57,7 @@ namespace DAL
             }
         }
 
-        public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro, AccesoDatosSqlServer accesoDatos = null)
+        public List<Movimiento> ObtenerPorUsuario(Usuario usuario, FiltroMovimiento filtro, AccesoDatosSqlServer accesoDatos = null)
         {
             filtro = filtro ?? new FiltroMovimiento();
 
@@ -79,10 +79,10 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@FechaDesde", SqlDbType.Date, filtro.FechaDesde),
                     accesoDatos.CreateParameter("@FechaHasta", SqlDbType.Date, filtro.FechaHasta),
-                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, filtro.CategoriaId),
+                    accesoDatos.CreateParameter("@CategoriaId", SqlDbType.Int, filtro.Categoria == null ? (int?)null : filtro.Categoria.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, filtro.Tipo.HasValue ? filtro.Tipo.Value.ToString() : null),
                     accesoDatos.CreateParameter("@Texto", SqlDbType.VarChar, filtro.Texto == null ? null :
                         filtro.Texto.Replace("~", "~~").Replace("%", "~%").Replace("_", "~_").Replace("[", "~["))
@@ -106,7 +106,7 @@ namespace DAL
             }
         }
 
-        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT c.Nombre AS CategoriaNombre, SUM(m.Monto) AS Total
@@ -121,7 +121,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
@@ -150,7 +150,7 @@ namespace DAL
         }
 
         // Los movimientos sin comercio se agrupan en una fila con ComercioNombre = null.
-        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT c.Nombre AS ComercioNombre, SUM(m.Monto) AS Total
@@ -165,7 +165,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
@@ -193,7 +193,7 @@ namespace DAL
             }
         }
 
-        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        public List<TotalPorDia> ObtenerTotalesPorDia(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Fecha, SUM(Monto) AS Total
@@ -208,7 +208,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
@@ -236,7 +236,7 @@ namespace DAL
             }
         }
 
-        public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        public List<TotalPorMes> ObtenerTotalesPorMes(Usuario usuario, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT YEAR(Fecha) AS Anio, MONTH(Fecha) AS Mes,
@@ -252,7 +252,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
                 };
@@ -281,7 +281,7 @@ namespace DAL
             }
         }
 
-        public ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
+        public ResumenMovimientos ObtenerResumen(Usuario usuario, DateTime desde, DateTime hasta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT
@@ -296,7 +296,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.Date, desde),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.Date, hasta)
                 };
@@ -396,7 +396,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(Movimiento movimiento, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Movimiento
@@ -409,7 +409,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, movimiento.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -423,7 +423,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorComercio(Comercio comercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -437,7 +437,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercioId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercio.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

@@ -1,61 +1,385 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa ABSTRACCIONES
-
+title G07 - Diagrama de clases por capa - ABSTRACCIONES
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "ABSTRACCIONES (contratos / interfaces)" {
-
-  ' --- Seguridad / sesion / autorizacion ---
-  interface ISesion
-  interface IAutorizacion
-  interface IUsuarioAutenticado
-  interface IPasswordHasher
-  interface IPermiso {
-    +Agregar(permiso : IPermiso) : void
-    +ObtenerPermisosHoja() : IList<IPermiso>
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'ABSTRACCIONES/IAsistenteFinancieroService.cs
+  interface "IAsistenteFinancieroService" as ABSTRACCIONES_IAsistenteFinancieroService {
+    +ObtenerRespuestaAsync(solicitud : ISolicitudAsistente) : Task<string>
+    +ObtenerLlamadaHerramientaAsync(solicitud : ISolicitudAsistente, herramienta : IHerramientaAsistente,\ncancellationToken : CancellationToken) : Task<ILlamadaHerramientaAsistente>
   }
-
-  ' --- Idioma (Observer) ---
-  interface IObservado
-  interface IObservador
-  interface IIdioma
-  interface ITraduccion
-  interface IPalabra
-  interface IUsuarioPreferencia
-
-  ' --- Bitacora ---
-  interface IBitacora
-  interface IEventoBitacora
-  interface IFiltroBitacora
-
-  ' --- Integridad (DV) ---
-  interface IIntegridadService
-  interface IIntegrable
-  class DigitoVerificadorAttribute <<Attribute>> {
-    +Orden : int
+  'ABSTRACCIONES/IContextoAsistente.cs
+  interface "IContextoAsistente" as ABSTRACCIONES_IContextoAsistente {
+    +DatosJson : string
+    +ReferenciasPermitidas : IReadOnlyList<IReferenciaAsistente>
   }
-
-  ' --- Control de cambios / historial ---
-  interface IServicioHistorialEstados
-  interface IUsuarioSnapshot
-  interface IResultadoComparacionEstado
-
-  ' --- Movimientos (dominio financiero, NEG01/NEG02) ---
-  enum TipoMovimiento {
+  'ABSTRACCIONES/IDatoMercado.cs
+  interface "IDatoMercado" as ABSTRACCIONES_IDatoMercado {
+    +Nombre : string
+    +Tipo : string
+    +Fuente : string
+    +Fecha : DateTime
+    +Precio : decimal?
+    +Volumen : decimal?
+    +Vcp : decimal?
+    +Tasa : decimal?
+    +TipoTasa : string
+    +Moneda : string
+    +MesesInmovilizacion : int?
+    +DiasHabilesDisponibilidad : int?
+    +RequierePreaviso : bool?
+    +RequierePermanencia : bool?
+    +FuenteCondiciones : string
+    +FechaDisponibilidadMaxima : DateTime?
+  }
+  'ABSTRACCIONES/IHerramientaAsistente.cs
+  interface "IHerramientaAsistente" as ABSTRACCIONES_IHerramientaAsistente {
+    +Nombre : string
+    +Descripcion : string
+    +ParametrosJson : string
+  }
+  'ABSTRACCIONES/IIntercambioChatbot.cs
+  interface "IIntercambioChatbot" as ABSTRACCIONES_IIntercambioChatbot {
+    +Pregunta : string
+    +Respuesta : string
+  }
+  'ABSTRACCIONES/ILimiteUsoAsistente.cs
+  interface "ILimiteUsoAsistente" as ABSTRACCIONES_ILimiteUsoAsistente {
+    +IntentarConsumir(usuario : IUsuarioAutenticado) : bool
+  }
+  'ABSTRACCIONES/ILlamadaHerramientaAsistente.cs
+  interface "ILlamadaHerramientaAsistente" as ABSTRACCIONES_ILlamadaHerramientaAsistente {
+    +Nombre : string
+    +ArgumentosJson : string
+  }
+  'ABSTRACCIONES/ProveedoresMercado.cs
+  interface "IProveedorArgentinaDatos" as ABSTRACCIONES_IProveedorArgentinaDatos {
+    +ObtenerFondosAsync(tipo : string, fecha : DateTime?, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+    +ObtenerPlazosFijosAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+    +ObtenerCuentasRemuneradasAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+    +ObtenerInflacionAsync(cancellationToken : CancellationToken) : Task<IReadOnlyList<IDatoMercado>>
+  }
+  'ABSTRACCIONES/ProveedoresMercado.cs
+  interface "IProveedorCriptoYa" as ABSTRACCIONES_IProveedorCriptoYa {
+    +ObtenerPreciosAsync(moneda : string, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  'ABSTRACCIONES/ProveedoresMercado.cs
+  interface "IProveedorMercadoData912" as ABSTRACCIONES_IProveedorMercadoData912 {
+    +ObtenerCotizacionesAsync(cedears : bool, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  'ABSTRACCIONES/IReferenciaAsistente.cs
+  interface "IReferenciaAsistente" as ABSTRACCIONES_IReferenciaAsistente {
+    +Tipo : TipoReferenciaAsistente
+    +Nombre : string
+    +EsTicker : bool
+  }
+  'ABSTRACCIONES/IServicioEmbeddings.cs
+  interface "IServicioEmbeddings" as ABSTRACCIONES_IServicioEmbeddings {
+    +Modelo : string
+    +CalcularAsync(textos : IReadOnlyList<string>, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<float[]>>
+  }
+  'ABSTRACCIONES/ISolicitudAsistente.cs
+  interface "ISolicitudAsistente" as ABSTRACCIONES_ISolicitudAsistente {
+    +Categoria : CategoriaConsulta
+    +Pregunta : string
+    +Historial : IReadOnlyList<IIntercambioChatbot>
+    +Contexto : IContextoAsistente
+  }
+  'ABSTRACCIONES/TipoReferenciaAsistente.cs
+  enum "TipoReferenciaAsistente" as ABSTRACCIONES_TipoReferenciaAsistente {
+    Comercio
+    Promocion
+    Cuenta
+    Instrumento
+  }
+}
+package "Finanzas personales" as P1 {
+  'ABSTRACCIONES/CategoriaConsulta.cs
+  enum "CategoriaConsulta" as ABSTRACCIONES_CategoriaConsulta {
+    Compras
+    Inversiones
+    FinanzasGenerales
+    FueraDeTema
+    Inyeccion
+  }
+  'ABSTRACCIONES/IReporteTabularPdfService.cs
+  interface "IReporteTabularPdf" as ABSTRACCIONES_IReporteTabularPdf {
+    +Titulo : string
+    +Encabezados : IReadOnlyList<string>
+    +Filas : IReadOnlyList<IReadOnlyList<string>>
+    +Filtros : IReadOnlyList<string>
+    +Logo : byte[]
+    +FechaGeneracion : DateTime
+    +EtiquetaFechaGeneracion : string
+    +EtiquetaCantidad : string
+    +FormatoPagina : string
+    +TextoContinuacion : string
+  }
+  'ABSTRACCIONES/IReporteTabularPdfService.cs
+  interface "IReporteTabularPdfService" as ABSTRACCIONES_IReporteTabularPdfService {
+    +Generar(reporte : IReporteTabularPdf) : byte[]
+  }
+  'ABSTRACCIONES/TipoMovimiento.cs
+  enum "TipoMovimiento" as ABSTRACCIONES_TipoMovimiento {
     Ingreso
     Egreso
   }
 }
+package "Idiomas y presentacion" as P2 {
+  'ABSTRACCIONES/IIdioma.cs
+  interface "IIdioma" as ABSTRACCIONES_IIdioma {
+    +Id : int
+    +Nombre : string
+    +Default : bool
+    +Traducciones : IList<ITraduccion>
+    +ObtenerTraduccion(key : string) : string
+    +TieneTraduccion(key : string) : bool
+  }
+  'ABSTRACCIONES/IObservado.cs
+  interface "IObservado" as ABSTRACCIONES_IObservado {
+    +IdiomaActual : IIdioma
+    +RegistrarObservador(observador : IObservador) : void
+    +DesregistrarObservador(observador : IObservador) : void
+    +Notificar() : void
+    +CambiarIdioma(idioma : IIdioma) : void
+  }
+  'ABSTRACCIONES/IObservador.cs
+  interface "IObservador" as ABSTRACCIONES_IObservador {
+    +Actualizar(observado : IObservado) : void
+  }
+  'ABSTRACCIONES/IPalabra.cs
+  interface "IPalabra" as ABSTRACCIONES_IPalabra {
+    +Id : int
+    +Key : string
+  }
+  'ABSTRACCIONES/ITraduccion.cs
+  interface "ITraduccion" as ABSTRACCIONES_ITraduccion {
+    +Idioma : IIdioma
+    +Valor : string
+    +Palabra : IPalabra
+  }
+}
+package "Infraestructura" as P3 {
+  'ABSTRACCIONES/IClasificadorConsultas.cs
+  interface "IClasificadorConsultas" as ABSTRACCIONES_IClasificadorConsultas {
+    +ClasificarAsync(pregunta : string, cancellationToken : CancellationToken) : Task<CategoriaConsulta>
+  }
+  'ABSTRACCIONES/IEscaneoTicketService.cs
+  interface "IEscaneoTicketService" as ABSTRACCIONES_IEscaneoTicketService {
+    +EscanearTicketAsync(imagenBytes : byte[]) : Task<ITicketEscaneado>
+  }
+  'ABSTRACCIONES/ITicketEscaneado.cs
+  interface "ITicketEscaneado" as ABSTRACCIONES_ITicketEscaneado {
+    +Monto : decimal?
+    +Fecha : DateTime?
+    +Descripcion : string
+    +TextoCrudo : string
+  }
+}
+package "Monedas y tasas" as P4 {
+  'ABSTRACCIONES/EstadoProveedorTasas.cs
+  enum "EstadoProveedorTasas" as ABSTRACCIONES_EstadoProveedorTasas {
+    ClaveFaltante
+    ClaveInvalida
+    LimiteExcedido
+    Rechazado
+    ConexionFallida
+    RespuestaInvalida
+  }
+  'ABSTRACCIONES/IProveedorTasasCambio.cs
+  interface "IProveedorTasasCambio" as ABSTRACCIONES_IProveedorTasasCambio {
+    +ObtenerTasasAsync(cancellationToken : CancellationToken) : Task<ITasasCambioObtenidas>
+  }
+  'ABSTRACCIONES/ITasasCambioObtenidas.cs
+  interface "ITasasCambioObtenidas" as ABSTRACCIONES_ITasasCambioObtenidas {
+    +MonedaBase : string
+    +FechaFuenteUtc : DateTime?
+    +Tasas : IReadOnlyDictionary<string, decimal>
+  }
+}
+package "Ubicacion y zonas" as P5 {
+  'ABSTRACCIONES/EstadoBusquedaUbicacion.cs
+  enum "EstadoBusquedaUbicacion" as ABSTRACCIONES_EstadoBusquedaUbicacion {
+    ConexionFallida
+    TiempoAgotado
+    LimiteExcedido
+    RespuestaInvalida
+    ConfiguracionInvalida
+  }
+  'ABSTRACCIONES/IBusquedaUbicacionesService.cs
+  interface "IBusquedaUbicacionesService" as ABSTRACCIONES_IBusquedaUbicacionesService {
+    +BuscarAsync(consulta : IConsultaUbicacion, cancellationToken : CancellationToken) :\nTask<IReadOnlyList<IResultadoBusquedaUbicacion>>
+  }
+  'ABSTRACCIONES/IConsultaUbicacion.cs
+  interface "IConsultaUbicacion" as ABSTRACCIONES_IConsultaUbicacion {
+    +Texto : string
+    +Idioma : string
+    +ZonaPreferida : ILimitesGeograficos
+  }
+  'ABSTRACCIONES/ILimitesGeograficos.cs
+  interface "ILimitesGeograficos" as ABSTRACCIONES_ILimitesGeograficos {
+    +Sur : double
+    +Oeste : double
+    +Norte : double
+    +Este : double
+  }
+  'ABSTRACCIONES/IResultadoBusquedaUbicacion.cs
+  interface "IResultadoBusquedaUbicacion" as ABSTRACCIONES_IResultadoBusquedaUbicacion {
+    +Descripcion : string
+    +Latitud : double
+    +Longitud : double
+    +Tipo : string
+    +Limites : ILimitesGeograficos
+  }
+}
+package "Usuarios y auditoria" as P6 {
+  'ABSTRACCIONES/IAutorizacion.cs
+  interface "IAutorizacion" as ABSTRACCIONES_IAutorizacion {
+    +ActualizarPermisosUsuarioActual(permisos : IEnumerable<IPermiso>) : void
+    +Limpiar() : void
+    +TienePermiso(rutaPermiso : string) : bool
+  }
+  'ABSTRACCIONES/IBitacora.cs
+  interface "IBitacora" as ABSTRACCIONES_IBitacora {
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    +ConsultarBitacora(filtro : IFiltroBitacora) : IList<IEventoBitacora>
+  }
+  'ABSTRACCIONES/IDigitoVerificador.cs
+  interface "IDigitoVerificador" as ABSTRACCIONES_IDigitoVerificador {
+    +Orden : int
+  }
+  'ABSTRACCIONES/IEventoBitacora.cs
+  interface "IEventoBitacora" as ABSTRACCIONES_IEventoBitacora {
+    +Id : int
+    +FechaHora : DateTime
+    +UsuarioId : int?
+    +UsernameSnapshot : string
+    +Actividad : string
+    +Informacion : string
+    +Nivel : string
+    +Origen : string
+    +EsTecnica : bool
+  }
+  'ABSTRACCIONES/IFiltroBitacora.cs
+  interface "IFiltroBitacora" as ABSTRACCIONES_IFiltroBitacora {
+    +FechaDesde : DateTime?
+    +FechaHasta : DateTime?
+    +Usuario : string
+    +Actividad : string
+    +Nivel : string
+    +EsTecnica : bool?
+  }
+  'ABSTRACCIONES/IIntegrable.cs
+  interface "IIntegrable" as ABSTRACCIONES_IIntegrable {
+    +DVH : string
+  }
+  'ABSTRACCIONES/IIntegridadService.cs
+  interface "IIntegridadService" as ABSTRACCIONES_IIntegridadService {
+    +CalcularDVH<T>(entidad : T) : string
+    +CalcularDVV(listaDVH : IEnumerable<string>) : string
+    +CalcularDVVIncremental(dvvActual : string, dvhAnterior : string, dvhNuevo : string) : string
+  }
+  'ABSTRACCIONES/IPasswordHasher.cs
+  interface "IPasswordHasher" as ABSTRACCIONES_IPasswordHasher {
+    +HashPassword(password : string) : string
+    +VerifyPassword(password : string, storedHash : string) : bool
+  }
+  'ABSTRACCIONES/IPermiso.cs
+  interface "IPermiso" as ABSTRACCIONES_IPermiso {
+    +Id : int
+    +Nombre : string
+    +EsGrupo : bool
+    +Hijos : IList<IPermiso>
+    +Agregar(permiso : IPermiso) : void
+    +Quitar(permiso : IPermiso) : void
+    +Contiene(permiso : IPermiso) : bool
+    +ObtenerPermisosHoja() : IList<IPermiso>
+  }
+  'ABSTRACCIONES/IResultadoComparacionEstado.cs
+  interface "IResultadoComparacionEstado" as ABSTRACCIONES_IResultadoComparacionEstado {
+    +Campo : string
+    +ValorAnterior : string
+    +ValorNuevo : string
+  }
+  'ABSTRACCIONES/IServicioHistorialEstados.cs
+  interface "IServicioHistorialEstados" as ABSTRACCIONES_IServicioHistorialEstados {
+    +ObtenerVersionesUsuario(usuario : IUsuarioAutenticado) : IList<IUsuarioSnapshot>
+    +ObtenerVersionUsuario(snapshot : IUsuarioSnapshot) : IUsuarioSnapshot
+  }
+  'ABSTRACCIONES/ISesion.cs
+  interface "ISesion" as ABSTRACCIONES_ISesion {
+    +IniciarSesion(usuario : IUsuarioAutenticado) : void
+    +CerrarSesion() : void
+    +GetUsuarioActual() : IUsuarioAutenticado
+    +GetUsuarioActualNombre() : string
+    +ActualizarUsuarioActualNombre(username : string) : void
+    +HaySesionActiva() : bool
+  }
+  'ABSTRACCIONES/IUsuarioAutenticado.cs
+  interface "IUsuarioAutenticado" as ABSTRACCIONES_IUsuarioAutenticado {
+    +Id : int
+    +Username : string
+  }
+  'ABSTRACCIONES/IUsuarioPreferencia.cs
+  interface "IUsuarioPreferencia" as ABSTRACCIONES_IUsuarioPreferencia {
+    +Usuario : IUsuarioAutenticado
+    +Idioma : IIdioma
+  }
+  'ABSTRACCIONES/IUsuarioSnapshot.cs
+  interface "IUsuarioSnapshot" as ABSTRACCIONES_IUsuarioSnapshot {
+    +HistorialId : int
+    +Usuario : IUsuarioAutenticado
+    +FechaHora : DateTime
+    +ActorUsuario : IUsuarioAutenticado
+    +ActorUsernameSnapshot : string
+    +Accion : string
+    +Observaciones : string
+    +Username : string
+    +PasswordHash : string
+    +Activo : bool
+    +Idioma : IIdioma
+    +Permisos : IList<IPermiso>
+  }
+}
 
-IObservado ..> IObservador : notifica
-IObservado ..> IIdioma
-IIdioma o--> "*" ITraduccion
-IPermiso o--> "*" IPermiso : Composite
+ABSTRACCIONES_IConsultaUbicacion --> ABSTRACCIONES_ILimitesGeograficos : ZonaPreferida
+ABSTRACCIONES_IContextoAsistente --> "*" ABSTRACCIONES_IReferenciaAsistente : ReferenciasPermitidas
+ABSTRACCIONES_IIdioma --> "*" ABSTRACCIONES_ITraduccion : Traducciones
+ABSTRACCIONES_IObservado --> ABSTRACCIONES_IIdioma : IdiomaActual
+ABSTRACCIONES_IResultadoBusquedaUbicacion --> ABSTRACCIONES_ILimitesGeograficos : Limites
+ABSTRACCIONES_ISolicitudAsistente --> "*" ABSTRACCIONES_IIntercambioChatbot : Historial
+ABSTRACCIONES_ISolicitudAsistente --> ABSTRACCIONES_IContextoAsistente : Contexto
+ABSTRACCIONES_ITraduccion --> ABSTRACCIONES_IIdioma : Idioma
+ABSTRACCIONES_ITraduccion --> ABSTRACCIONES_IPalabra : Palabra
+ABSTRACCIONES_IUsuarioPreferencia --> ABSTRACCIONES_IIdioma : Idioma
+ABSTRACCIONES_IUsuarioPreferencia --> ABSTRACCIONES_IUsuarioAutenticado : Usuario
+ABSTRACCIONES_IUsuarioSnapshot --> "*" ABSTRACCIONES_IPermiso : Permisos
+ABSTRACCIONES_IUsuarioSnapshot --> ABSTRACCIONES_IIdioma : Idioma
+ABSTRACCIONES_IUsuarioSnapshot --> ABSTRACCIONES_IUsuarioAutenticado : ActorUsuario
+ABSTRACCIONES_IUsuarioSnapshot --> ABSTRACCIONES_IUsuarioAutenticado : Usuario
 
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
 @enduml

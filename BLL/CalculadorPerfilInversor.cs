@@ -10,19 +10,21 @@ namespace BLL
     {
         internal const int Version = 1;
         internal static readonly int[] CantidadesOpciones = { 3, 4, 3, 4, 3, 3, 4, 4, 4, 3 };
+        internal static readonly IReadOnlyList<PreguntaPerfilInversor> Preguntas =
+            Enumerable.Range(1, CantidadesOpciones.Length).Select(numero => new PreguntaPerfilInversor(numero)).ToList().AsReadOnly();
 
         internal static PerfilInversor Evaluar(int version, IEnumerable<RespuestaPerfilInversor> respuestas)
         {
             var copia = respuestas?.ToArray();
             if (version != Version || copia == null || copia.Length != 10
-                || copia.Any(r => r == null || r.PreguntaId < 1 || r.PreguntaId > 10
+                || copia.Any(r => r == null || r.Pregunta == null || r.Pregunta.Id < 1 || r.Pregunta.Id > 10
                     || r.OpcionId == null || r.OpcionId.Length != 1 || r.OpcionId[0] < 'A'
-                    || r.OpcionId[0] >= 'A' + CantidadesOpciones[r.PreguntaId - 1])
-                || copia.Select(r => r.PreguntaId).Distinct().Count() != 10)
+                    || r.OpcionId[0] >= 'A' + CantidadesOpciones[r.Pregunta.Id - 1])
+                || copia.Select(r => r.Pregunta.Id).Distinct().Count() != 10)
                 throw new ExcepcionNegocio("Error.InvestorProfile.InvalidAnswers");
 
-            var ordenadas = copia.OrderBy(r => r.PreguntaId)
-                .Select(r => new RespuestaPerfilInversor { PreguntaId = r.PreguntaId, OpcionId = r.OpcionId }).ToList();
+            var ordenadas = copia.OrderBy(r => r.Pregunta.Id)
+                .Select(r => new RespuestaPerfilInversor { Pregunta = r.Pregunta, OpcionId = r.OpcionId }).ToList();
             int[] opciones = ordenadas.Select(r => r.OpcionId[0] - 'A').ToArray();
             decimal[] puntos = opciones.Select((o, i) => CantidadesOpciones[i] == 3
                 ? new[] { 0m, 50m, 100m }[o] : new[] { 0m, 33m, 67m, 100m }[o]).ToArray();

@@ -1,0 +1,89 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN37 Consultar tasas de conversion — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionMonedas {
+    -CargarTasas(tasaSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class TasaConversionBLL {
+    +ObtenerTodas(): List<TasaConversion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface ITasaConversionRepositorio {
+    +ObtenerTodas(): List<TasaConversion>
+  }
+  class TasaConversionRepositorio {
+    +ObtenerTodas(): List<TasaConversion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ITasaConversionRepositorio -[hidden]right-> TasaConversionRepositorio
+package "DAL" as L_DAL {
+  class TasaConversionDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<TasaConversion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Moneda {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  class TasaConversion {
+    +Id: int
+    +MonedaBase: Moneda
+    +MonedaConversion: Moneda
+    +CalculoConversion: decimal
+    +FechaActualizacion: DateTime
+    +EsManual: bool
+    +ProtegidaPorUsuario: Usuario
+    +FechaProteccion: DateTime?
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Moneda -[hidden]right-> TasaConversion
+Moneda -[hidden]down-> Usuario
+FormGestionMonedas ..> TasaConversionBLL : usa
+TasaConversionRepositorio ..> TasaConversionDAL : usa
+TasaConversionBLL ..> ITasaConversionRepositorio : usa
+TasaConversionRepositorio ..|> ITasaConversionRepositorio
+TasaConversionBLL ..> TasaConversion : datos
+TasaConversion --> Moneda : MonedaBase
+TasaConversion --> Moneda : MonedaConversion
+TasaConversion --> Usuario : ProtegidaPorUsuario
+' BLL/TasaConversionBLL.cs:76 TasaConversionBLL.ObtenerTodas
+' DAL/TasaConversionDAL.cs:55 TasaConversionDAL.ObtenerTodas
+' REPOSITORIO/ITasaConversionRepositorio.cs:10 ITasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/TasaConversionRepositorio.cs:30 TasaConversionRepositorio.ObtenerTodas
+' UI/FormGestionMonedas.cs:198 FormGestionMonedas.CargarTasas
+@enduml

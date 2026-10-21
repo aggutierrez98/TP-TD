@@ -18,18 +18,18 @@ namespace BLL
         Task<ResultadoGeneracion> GenerarAsync(SolicitudGeneracion solicitud, CancellationToken cancellationToken);
     }
 
-    // Todo lo que el colaborador necesita saber de un pedido. UsuarioId lo captura el llamador
+    // Todo lo que el colaborador necesita saber de un pedido. Usuario lo captura el llamador
     // (el chat desde la sesion al enviar; la generacion automatica desde su propio listado):
     // el colaborador nunca consulta la sesion. Idioma es el del destinatario y se usa solo
     // para leer textos fijos, sin cambiar el idioma global de la aplicacion.
     internal sealed class SolicitudGeneracion
     {
         public CategoriaConsulta Categoria { get; set; }
-        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
         // Null solo en los canales que conocen la intencion (generacion automatica): se usa
         // el texto fijo traducible de esa intencion, sin clasificador ni function calling.
         public string Pregunta { get; set; }
-        public IReadOnlyList<IntercambioChatbot> Historial { get; set; }
+        public IReadOnlyList<IIntercambioChatbot> Historial { get; set; }
         public IIdioma Idioma { get; set; }
         public string NombreLista { get; set; }
         public PerfilInversor Perfil { get; set; }
@@ -97,21 +97,21 @@ namespace BLL
         public async Task<ResultadoGeneracion> GenerarAsync(SolicitudGeneracion solicitud, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            ContextoAsistente contexto = ContextoAsistente.Vacio;
-            IReadOnlyList<ReferenciaAsistente> universo = new ReferenciaAsistente[0];
-            IReadOnlyList<IntercambioChatbot> historial = solicitud.Historial ?? new IntercambioChatbot[0];
+            IContextoAsistente contexto = ContextoAsistente.Vacio;
+            IReadOnlyList<IReferenciaAsistente> universo = new ReferenciaAsistente[0];
+            IReadOnlyList<IIntercambioChatbot> historial = solicitud.Historial ?? new IntercambioChatbot[0];
             ResumenCompras compras = null;
             ResumenInversiones inversiones = null;
 
             if (solicitud.Categoria == CategoriaConsulta.Compras && _compras != null)
             {
-                compras = await _compras.CalcularAsync(solicitud.UsuarioId, solicitud.NombreLista, cancellationToken).ConfigureAwait(false);
+                compras = await _compras.CalcularAsync(solicitud.Usuario, solicitud.NombreLista, cancellationToken).ConfigureAwait(false);
                 contexto = compras.CrearContexto();
-                universo = _compras.ObtenerUniversoReferencias(solicitud.UsuarioId);
+                universo = _compras.ObtenerUniversoReferencias(solicitud.Usuario);
             }
             else if (solicitud.Categoria == CategoriaConsulta.Inversiones && _inversiones != null)
             {
-                inversiones = await _inversiones.CalcularAsync(solicitud.UsuarioId, solicitud.Porcentaje, cancellationToken, solicitud.Perfil).ConfigureAwait(false);
+                inversiones = await _inversiones.CalcularAsync(solicitud.Usuario, solicitud.Porcentaje, cancellationToken, solicitud.Perfil).ConfigureAwait(false);
                 contexto = inversiones.CrearContexto();
                 universo = inversiones.UniversoReferencias;
                 if (solicitud.OmitirSiSinAlternativas && inversiones.Instrumentos.Count == 0)
@@ -147,7 +147,7 @@ namespace BLL
             }
         }
 
-        private async Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud)
+        private async Task<string> ObtenerRespuestaAsync(ISolicitudAsistente solicitud)
         {
             try
             {

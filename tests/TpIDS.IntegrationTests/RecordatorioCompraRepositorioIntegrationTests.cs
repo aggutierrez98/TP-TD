@@ -117,7 +117,7 @@ namespace TpIDS.IntegrationTests
                     FechaVencimiento = new System.DateTime(2026, 2, 23)
                 });
 
-                System.Collections.Generic.List<BE.RecordatorioCompra> propios = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.RecordatorioCompra> propios = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propios.Any(item => item.Id == idPropio));
                 Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
@@ -231,7 +231,7 @@ namespace TpIDS.IntegrationTests
                     FechaVencimiento = new System.DateTime(2026, 2, 25)
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

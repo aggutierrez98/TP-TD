@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG07-medios-pago/NEG07-medios-pago-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN29 Consultar medios de pago — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMediosPago" as FormGestionMediosPago
+control "MedioPagoBLL" as MedioPagoBLL
+participant "MedioPagoRepositorio\n:IMedioPagoRepositorio" as IMedioPagoRepositorio
+participant "MedioPagoDAL" as MedioPagoDAL
+note over FormGestionMediosPago : El actor desea conocer los medios de pago registrados en el catálogo.
+Actor -> FormGestionMediosPago : selecciona la opción «Medios de pago» del menú «Operador».
+FormGestionMediosPago -> MedioPagoBLL ++ : ObtenerTodos()
+MedioPagoBLL -> IMedioPagoRepositorio ++ : ObtenerTodos()
+IMedioPagoRepositorio -> MedioPagoDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+MedioPagoDAL --> IMedioPagoRepositorio -- : List<MedioPago>
+IMedioPagoRepositorio --> MedioPagoBLL -- : List<MedioPago>
+MedioPagoBLL --> FormGestionMediosPago -- : List<MedioPago>
+FormGestionMediosPago --> Actor : presenta la pantalla «Gestión de medios de pago» con el listado de medios de pago ordenado\npor tipo y marca
+Actor -> FormGestionMediosPago : selecciona un medio de pago del listado.
+FormGestionMediosPago --> Actor : muestra el tipo y la marca del medio seleccionado en los campos «Tipo:» y «Marca:».
+' BLL/MedioPagoBLL.cs:28 MedioPagoBLL.ObtenerTodos
+' DAL/MedioPagoDAL.cs:50 MedioPagoDAL.ObtenerTodos
+' REPOSITORIO/IMedioPagoRepositorio.cs:10 IMedioPagoRepositorio.ObtenerTodos
+' REPOSITORIO/MedioPagoRepositorio.cs:29 MedioPagoRepositorio.ObtenerTodos
+' UI/FormGestionMediosPago.cs:55 FormGestionMediosPago.CargarMediosPago
+@enduml

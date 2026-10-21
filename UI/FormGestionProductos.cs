@@ -20,10 +20,11 @@ namespace TpIDS
             Load += FormGestionProductos_Load;
         }
 
-        // View-model plano para bindear la grilla.
+        // View-model plano para bindear la grilla. La grilla no autogenera columnas, asi que
+        // Producto (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaProducto
         {
-            public int Id { get; set; }
+            public Producto Producto { get; set; }
             public int CategoriaId { get; set; }
             public string Nombre { get; set; }
             public string Categoria { get; set; }
@@ -68,7 +69,7 @@ namespace TpIDS
 
                 if (productoSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila(dgvProductos, fila => fila.Id == productoSeleccionadoId.Value);
+                    SeleccionarFila(dgvProductos, fila => fila.Producto.Id == productoSeleccionadoId.Value);
                 }
                 else
                 {
@@ -86,7 +87,7 @@ namespace TpIDS
         {
             return new FilaProducto
             {
-                Id = producto.Id,
+                Producto = producto,
                 CategoriaId = producto.CategoriaProducto?.Id ?? 0,
                 Nombre = producto.Nombre,
                 Categoria = producto.CategoriaProducto?.Nombre ?? string.Empty
@@ -103,7 +104,7 @@ namespace TpIDS
 
             try
             {
-                Producto creado = _productoBLL.Crear(txtbNombreProducto.Text, categoriaSeleccionada.Id);
+                Producto creado = _productoBLL.Crear(new Producto { Nombre = txtbNombreProducto.Text, CategoriaProducto = categoriaSeleccionada });
                 LimpiarFormulario();
                 CargarProductos(creado.Id);
                 UiDialogHelper.MostrarInfo("FormProductManagement.Success.ProductoCreated");
@@ -130,11 +131,13 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = _productoBLL.Actualizar(fila.Id, txtbNombreProducto.Text, categoriaSeleccionada.Id);
+                fila.Producto.Nombre = txtbNombreProducto.Text;
+                fila.Producto.CategoriaProducto = categoriaSeleccionada;
+                bool actualizado = _productoBLL.Actualizar(fila.Producto);
                 if (actualizado)
                 {
                     LimpiarFormulario();
-                    CargarProductos(fila.Id);
+                    CargarProductos(fila.Producto.Id);
                     UiDialogHelper.MostrarInfo("FormProductManagement.Success.ProductoUpdated");
                 }
             }
@@ -165,7 +168,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = _productoBLL.Eliminar(fila.Id);
+                bool eliminado = _productoBLL.Eliminar(fila.Producto);
                 if (eliminado)
                 {
                     LimpiarFormulario();

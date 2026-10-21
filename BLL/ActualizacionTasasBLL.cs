@@ -45,9 +45,9 @@ namespace BLL
             return Leer(unidad => unidad.EjecucionesActualizacionTasas.ObtenerRecientes(cantidad));
         }
 
-        public List<ActualizacionTasaDetalle> ObtenerDetalleDeEjecucion(int ejecucionId)
+        public List<ActualizacionTasaDetalle> ObtenerDetalleDeEjecucion(EjecucionActualizacionTasas ejecucion)
         {
-            return Leer(unidad => unidad.EjecucionesActualizacionTasas.ObtenerDetallePorEjecucion(ejecucionId));
+            return Leer(unidad => unidad.EjecucionesActualizacionTasas.ObtenerDetallePorEjecucion(ejecucion));
         }
 
         // Requests consumidas en el mes calendario del reloj inyectado, exitosas o fallidas (estimacion: la API puede facturar con otro corte).
@@ -86,7 +86,7 @@ namespace BLL
                         return Guardar(unidad, omitida, ultimaExitosa.FechaInicio + TopeConsulta);
                     }
 
-                    TasasCambioObtenidas obtenidas;
+                    ITasasCambioObtenidas obtenidas;
                     try
                     {
                         obtenidas = await _proveedorTasasCambio.ObtenerTasasAsync(cancellationToken).ConfigureAwait(false);
@@ -142,7 +142,7 @@ namespace BLL
             };
         }
 
-        private static void ActualizarPares(IUnidadDeTrabajo unidad, TasasCambioObtenidas obtenidas, EjecucionActualizacionTasas ejecucion)
+        private static void ActualizarPares(IUnidadDeTrabajo unidad, ITasasCambioObtenidas obtenidas, EjecucionActualizacionTasas ejecucion)
         {
             Dictionary<string, decimal> cotizaciones = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
             foreach (KeyValuePair<string, decimal> cotizacion in obtenidas.Tasas)
@@ -171,7 +171,7 @@ namespace BLL
                     {
                         detalle.Estado = EstadoActualizacionTasa.SaltadoSinDato;
                     }
-                    else if (unidad.TasasConversion.ActualizarValorAutomatico(tasa.Id, valorNuevo.Value))
+                    else if (unidad.TasasConversion.ActualizarValorAutomatico(tasa, valorNuevo.Value))
                     {
                         detalle.Estado = EstadoActualizacionTasa.Actualizado;
                         detalle.ValorNuevo = valorNuevo.Value;
@@ -223,7 +223,7 @@ namespace BLL
             ejecucion.Id = unidad.EjecucionesActualizacionTasas.InsertarYObtenerId(ejecucion);
             foreach (ActualizacionTasaDetalle detalle in ejecucion.Detalles)
             {
-                detalle.EjecucionId = ejecucion.Id;
+                detalle.Ejecucion = ejecucion;
                 detalle.Id = unidad.EjecucionesActualizacionTasas.InsertarDetalleYObtenerId(detalle);
             }
 

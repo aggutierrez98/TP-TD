@@ -25,9 +25,9 @@ namespace REPOSITORIO
             return _idiomaDAL.ObtenerIdiomas(_accesoDatos);
         }
 
-        public Idioma ObtenerIdiomaCompleto(int idiomaId)
+        public Idioma ObtenerPorId(int id)
         {
-            return _idiomaDAL.ObtenerIdiomaCompleto(idiomaId, _accesoDatos);
+            return _idiomaDAL.ObtenerPorId(id, _accesoDatos);
         }
 
         public Idioma ObtenerIdiomaDefault()
@@ -45,34 +45,34 @@ namespace REPOSITORIO
             return _idiomaDAL.ActualizarIdioma(idioma, _accesoDatos);
         }
 
-        public bool EliminarIdioma(int idiomaId)
+        public bool EliminarIdioma(Idioma idioma)
         {
-            return _idiomaDAL.EliminarIdioma(idiomaId, _accesoDatos);
+            return _idiomaDAL.EliminarIdioma(idioma, _accesoDatos);
         }
 
-        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
+        public bool ConsolidarIdioma(Idioma origen, Idioma destino)
         {
-            return _idiomaDAL.ConsolidarIdioma(idiomaOrigenId, idiomaDestinoId, _accesoDatos);
+            return _idiomaDAL.ConsolidarIdioma(origen, destino, _accesoDatos);
         }
 
-        public int ObtenerPalabraIdPorKey(string key)
+        public Palabra ObtenerPalabraPorKey(string key)
         {
-            return _idiomaDAL.ObtenerPalabraIdPorKey(key, _accesoDatos);
+            return _idiomaDAL.ObtenerPalabraPorKey(key, _accesoDatos);
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
+        public bool GuardarTraduccion(Traduccion traduccion)
         {
-            return _idiomaDAL.GuardarTraduccion(idiomaId, palabraId, valor, _accesoDatos);
+            return _idiomaDAL.GuardarTraduccion(traduccion, _accesoDatos);
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(Traduccion traduccion)
         {
-            return _idiomaDAL.EliminarTraduccion(idiomaId, palabraId, _accesoDatos);
+            return _idiomaDAL.EliminarTraduccion(traduccion, _accesoDatos);
         }
 
-        public bool SwitchearIdiomaDefault(int idiomaId)
+        public bool SwitchearIdiomaDefault(Idioma idioma)
         {
-            return _idiomaDAL.SwitchearIdiomaDefault(idiomaId, _accesoDatos);
+            return _idiomaDAL.SwitchearIdiomaDefault(idioma, _accesoDatos);
         }
     }
 }

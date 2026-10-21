@@ -11,14 +11,14 @@ namespace TpIDS
     public partial class FormHistorialUsuario : FormTraducibleBase
     {
         private readonly UsuarioBLL _usuarioBLL;
-        private readonly int _usuarioId;
+        private readonly BE.Usuario _usuario;
         private readonly string _username;
 
-        public FormHistorialUsuario(int usuarioId, string username)
+        public FormHistorialUsuario(BE.Usuario usuario)
         {
             _usuarioBLL = CompositionRoot.Usuario;
-            _usuarioId = usuarioId;
-            _username = username;
+            _usuario = usuario;
+            _username = usuario.Username;
             InitializeComponent();
 
             // El username es dato fijo del constructor, no depende del idioma:
@@ -75,7 +75,7 @@ namespace TpIDS
                 return;
             }
 
-            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistoryId"].Value);
+            var snapshot = dgvHistorialUsuario.SelectedRows[0].DataBoundItem as UsuarioHistorialSnapshot;
             DialogResult confirmacion = UiDialogHelper.Confirmar(
                 "FormUserHistory.Confirm.RestoreVersionMessage",
                 "FormUserHistory.Confirm.RestoreVersionTitle",
@@ -88,7 +88,7 @@ namespace TpIDS
 
             try
             {
-                _usuarioBLL.RestaurarVersion(historialId);
+                _usuarioBLL.RestaurarVersion(snapshot);
                 UiDialogHelper.MostrarInfo("FormUserHistory.Success.VersionRestored");
                 RefrescarDatos();
             }
@@ -106,10 +106,10 @@ namespace TpIDS
                 return;
             }
 
-            int historialId = Convert.ToInt32(dgvHistorialUsuario.SelectedRows[0].Cells["HistoryId"].Value);
+            var snapshot = dgvHistorialUsuario.SelectedRows[0].DataBoundItem as UsuarioHistorialSnapshot;
             try
             {
-                List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(historialId);
+                List<ResultadoComparacionEstado> diferencias = _usuarioBLL.ObtenerDiferenciasConVersionAnterior(snapshot);
                 dgvCambiosEstado.DataSource = null;
                 dgvCambiosEstado.DataSource = diferencias;
             }
@@ -123,7 +123,7 @@ namespace TpIDS
         {
             try
             {
-                List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuarioId);
+                List<UsuarioHistorialSnapshot> historial = _usuarioBLL.ObtenerHistorialEstados(_usuario);
                 dgvHistorialUsuario.DataSource = null;
                 dgvHistorialUsuario.DataSource = historial;
             }

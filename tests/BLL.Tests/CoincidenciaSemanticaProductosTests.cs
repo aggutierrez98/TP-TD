@@ -63,7 +63,8 @@ namespace BLL.Tests
 
             Assert.AreEqual(cerveza.Id, resultado[1].Single().Producto.Id);
             ProductoEmbedding guardado = escenario.Unidad.ProductoEmbeddingRepo.Guardados.Single();
-            Assert.AreEqual(155, guardado.ProductoId);
+            Assert.AreEqual(155, guardado.Producto.Id);
+            Assert.AreSame(cerveza, guardado.Producto);
             Assert.AreEqual(FakeServicioEmbeddings.ModeloFalso, guardado.Modelo);
             Assert.AreEqual("Cerveza rubia Quilmes Bebidas alcohólicas", guardado.TextoFuente);
             Assert.AreEqual(Ahora, guardado.FechaCalculo);
@@ -203,7 +204,7 @@ namespace BLL.Tests
                 Producto producto = AgregarProductoSinVector(id, nombre, categoria);
                 Lectura.Embeddings[id] = new ProductoEmbedding
                 {
-                    ProductoId = id,
+                    Producto = producto,
                     Modelo = modelo,
                     TextoFuente = nombre + " " + categoria,
                     Vector = new[] { x, y },

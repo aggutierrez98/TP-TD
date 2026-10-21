@@ -21,10 +21,18 @@ La revision del 26-27/08/2026 dejo T01-T07, G06 y G07 balanceados contra el codi
 - El Word de la catedra queda sincronizado con los `.puml` del repo.
 
 **Non-Goals:**
-- Diagramas N0X, A0X o D0X: van en sus propios changes cuando el usuario los pida.
+- Artefactos N0X adicionales a las secuencias CUN06-CUN87 y a los siete diagramas de clases por proceso aprobados; artefactos A0X o D0X no autorizados expresamente.
 - Reescribir G00-G05 (aprobados el 26/08/2026), salvo el modelo de dominio Comercio-Producto.
 
 ## Decisions
+
+**Clases integradas por negocio (correccion aprobada).** La entrega solicitada comprende siete diagramas, uno por N01.1-N01.7 y con la asignacion de CUN indicada en la decision de negocio de abajo. Cada fuente vive en su carpeta N01.* como `<proceso>-clases.puml`, con su SVG. Se integran sin duplicados las clases, operaciones y relaciones participantes de todos los CU del proceso, contrastadas contra el codigo vigente. Los paquetes UI, BLL, REPOSITORIO, DAL, BE, SERVICIOS y ABSTRACCIONES se distinguen por rotulos y colores consistentes cuando participan. Se muestra una vista de los miembros relevantes al proceso, evitando copiar capas completas. Se revisan cobertura, firmas, relaciones reales, sintaxis y proporcion/legibilidad. La entrega de imagenes contiene exactamente siete PNG a 200 DPI en `diagramas/exportaciones/clases-negocio-png/`.
+
+**Exportacion y presentacion de los CUN (pedido posterior del usuario).** Las fuentes PlantUML de los 164 diagramas CUN06-CUN87 no llevan bloques `legend`/`endlegend`, tanto en secuencias como en clases. Los SVG se regeneran desde esas fuentes. Las 82 secuencias se exportan ademas como PNG a 200 DPI en una unica carpeta `diagramas/exportaciones/secuencias-png/`, conservando sus nombres CUN y sin subcarpetas por proceso.
+
+**Diagramas de negocio aprobados (20/10/2026).** Se agregan 82 pares de diagramas (164 fuentes PlantUML y sus SVG): CUN06-CUN87, sin CUN01-CUN05. Carpetas bajo `diagramas/`: `N01.1-operaciones-financieras` (06-09,11-22), `N01.2-evaluacion-financiera` (10,72-75), `N01.3-planificacion-compras` (68-71,78-80), `N01.4-orientacion-financiera` (76-77,87), `N01.5-identificacion-valoracion-financiera` (23-43), `N01.6-oferta-comercial` (44-67), `N01.7-comunicacion-usuarios` (81-86). Los archivos se llaman `CUNnn-<slug>-{secuencia,clases}.puml`; los titulos identifican solo el CUN y su nombre. Cada clase/operacion de la secuencia se contrasta con el codigo y se refleja en el diagrama de clases del mismo CUN. La vista de clases es una proyeccion de las operaciones y entidades participantes, no una copia completa de cada capa. Las especificaciones NEGxx existentes se conservan como referencia de los escenarios. No se requiere DER ni editar el Word externo para esta entrega. Se valida cobertura exacta, sintaxis, renderizado SVG, proporciones y balanceo de nombres/firmas, y se compila la solucion al cierre.
+
+**Especificaciones de negocio aprobadas (20/10/2026).** El usuario aprobo la muestra CUN01 y solicito el mismo detalle para CUN01-CUN87. Un grupo equivale a una carpeta `diagramas/NEGxx-<slug>/`, en el orden de su listado (22 grupos), con un JSON y un Word/Markdown generado por grupo. Se conservan exactamente los identificadores CUN; el generador se ejecuta en modo puntual con `--sin-renumerar`. El escenario muestra exclusivamente acciones del actor y respuestas observables de la interfaz, tratando el sistema como caja negra. Las validaciones se contrastan contra el codigo vigente. Esta entrega solo comprende especificaciones: la generacion del consolidado, los diagramas y la edicion del Word externo requieren otro pedido. La consulta del perfil guardado requiere autenticacion; la posibilidad de completar el cuestionario inmediatamente despues del registro se describe en CUN77.
 
 **Un unico change para todos los diagramas atrasados.** Es mas simple que un change por modulo, porque comparten G07, G08 y el Word.
 

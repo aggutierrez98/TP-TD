@@ -48,7 +48,7 @@ namespace DAL
             }
         }
 
-        public List<TarjetaDashboard> ObtenerPorDashboard(int dashboardId, AccesoDatosSqlServer accesoDatos = null)
+        public List<TarjetaDashboard> ObtenerPorDashboard(Dashboard dashboard, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, DashboardId, Tipo, Orden
@@ -63,7 +63,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@DashboardId", SqlDbType.Int, dashboardId)
+                    accesoDatos.CreateParameter("@DashboardId", SqlDbType.Int, dashboard.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -145,7 +145,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(TarjetaDashboard tarjeta, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM TarjetaDashboard
@@ -158,7 +158,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, tarjeta.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

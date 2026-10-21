@@ -1,0 +1,121 @@
+@startuml
+' Fuente: diagramas/NEG03-categorias-movimientos/NEG03-categorias-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN13 Modificar categoría de movimientos — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionCategorias {
+    -btnActualizarCategoria_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class CategoriaBLL {
+    +Actualizar(categoria: Categoria): bool
+    +ObtenerVisiblesParaUsuarioActual(): List<Categoria>
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaBLL -[hidden]right-> SesionUsuarioExtensiones
+CategoriaBLL -[hidden]down-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface ICategoriaRepositorio {
+    +ObtenerPorId(id: int): Categoria
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida: Categoria): bool
+    +Actualizar(categoria: Categoria): bool
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  class CategoriaRepositorio {
+    +ObtenerPorId(id: int): Categoria
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida: Categoria): bool
+    +Actualizar(categoria: Categoria): bool
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> ICategoriaRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> CategoriaRepositorio
+CategoriaRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class CategoriaDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Categoria
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida: Categoria,\naccesoDatos: AccesoDatosSqlServer): bool
+    +Actualizar(categoria: Categoria, accesoDatos: AccesoDatosSqlServer): bool
+    +ObtenerVisiblesParaUsuario(usuario: Usuario, accesoDatos: AccesoDatosSqlServer):\nList<Categoria>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Categoria {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Categoria -[hidden]right-> Usuario
+CategoriaBLL ..> IBitacoraBLL : usa
+CategoriaBLL ..> ICategoriaRepositorio : usa
+CategoriaBLL ..> IUnidadDeTrabajo : usa
+CategoriaBLL ..> IUnidadDeTrabajoFactory : usa
+CategoriaBLL ..> SesionUsuarioExtensiones : usa
+CategoriaRepositorio ..|> ICategoriaRepositorio
+FormGestionCategorias ..> CategoriaBLL : usa
+CategoriaRepositorio ..> CategoriaDAL : usa
+CategoriaBLL ..> Categoria : datos
+Categoria --> Usuario : Usuario
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/CategoriaBLL.cs:70 CategoriaBLL.Actualizar
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CategoriaDAL.cs:114 CategoriaDAL.Actualizar
+' DAL/CategoriaDAL.cs:171 CategoriaDAL.ExisteNombreEnScope
+' DAL/CategoriaDAL.cs:20 CategoriaDAL.ObtenerPorId
+' DAL/CategoriaDAL.cs:49 CategoriaDAL.ObtenerVisiblesParaUsuario
+' REPOSITORIO/CategoriaRepositorio.cs:23 CategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/CategoriaRepositorio.cs:30 CategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/CategoriaRepositorio.cs:52 CategoriaRepositorio.Actualizar
+' REPOSITORIO/CategoriaRepositorio.cs:62 CategoriaRepositorio.ExisteNombreEnScope
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:14 ICategoriaRepositorio.Actualizar
+' REPOSITORIO/ICategoriaRepositorio.cs:19 ICategoriaRepositorio.ExisteNombreEnScope
+' REPOSITORIO/ICategoriaRepositorio.cs:8 ICategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionCategorias.cs:57 FormGestionCategorias.btnActualizarCategoria_Click
+@enduml

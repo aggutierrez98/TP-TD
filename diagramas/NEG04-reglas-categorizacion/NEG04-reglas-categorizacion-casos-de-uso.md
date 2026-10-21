@@ -1,0 +1,114 @@
+# Gestión de reglas de categorización
+
+_Especificaciones de casos de uso_
+
+---
+
+**ID y Nombre:** CUN15 Consultar reglas de categorización  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor consultar sus reglas de categorización y visualizar los datos de una regla seleccionada.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de reglas de categorización.  
+**Puntos de Extension:** Desde el listado, el actor puede continuar con CUN16 Alta de regla de categorización, CUN17 Modificar regla de categorización y CUN18 Baja de regla de categorización.  
+**Condicion:** El actor desea conocer las reglas con las que el sistema le sugiere categorías para sus movimientos.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Reglas de categorización» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas del actor, indicando para cada una su nombre, categoría, palabras clave y comercios asociados. Si una regla no tiene comercios asociados, la columna muestra «(Todos los comercios)».
+3. El actor selecciona una regla del listado.
+4. El sistema muestra en la sección «Datos de la regla» el nombre, la categoría y las palabras clave de la regla seleccionada, y marca en «Comercios asociados (opcional):» los comercios asociados a ella.
+
+**Flujos Alternativos:**
+2a. Si el actor no tiene reglas registradas, el sistema presenta el listado vacío.
+2b. Si ocurre un error al cargar el listado, el sistema muestra un mensaje de error. El caso de uso finaliza sin completar la consulta.
+3a. Si el actor solo necesita consultar el listado, omite la selección de una regla. El caso de uso finaliza con el listado disponible.
+
+**Postcondiciones:** El actor dispone del listado de sus reglas y, si seleccionó una, de sus datos. La consulta no modifica las reglas.
+
+---
+
+**ID y Nombre:** CUN16 Alta de regla de categorización  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor crear una regla que asocia palabras clave, y opcionalmente comercios, a una categoría para que el sistema la sugiera al registrar movimientos.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de reglas de categorización. Existe al menos una categoría disponible para el actor.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El actor desea que sus movimientos se categoricen automáticamente a partir de palabras clave o de comercios.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Reglas de categorización» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas y la sección «Datos de la regla», que incluye los campos «Nombre de la regla:», «Categoría:», «Palabras clave (separadas por comas):» y «Comercios asociados (opcional):».
+3. El actor ingresa el nombre de la regla, selecciona la categoría, ingresa las palabras clave separadas por comas y, si lo desea, marca uno o más comercios asociados.
+4. El actor presiona el botón «Agregar regla».
+5. El sistema crea la regla, limpia los campos de la sección «Datos de la regla» y actualiza el listado, donde la nueva regla queda seleccionada.
+6. El sistema muestra el mensaje «Regla de categorización creada con éxito.».
+
+**Flujos Alternativos:**
+3a. Si el actor presiona «Limpiar campos», el sistema vacía los campos de la sección «Datos de la regla», desmarca los comercios y deja de seleccionar la regla del listado. El escenario continúa en el paso 3.
+4a. Si no hay una categoría seleccionada, el sistema muestra el mensaje «Debe seleccionar una categoría.». La regla no se crea.
+5a. Si el nombre de la regla está vacío, el sistema muestra el mensaje «El nombre de la regla no puede estar vacío.». La regla no se crea.
+5b. Si las palabras clave están vacías, el sistema muestra el mensaje «Debe especificar al menos una palabra clave válida.». La regla no se crea.
+5c. Si ocurre un error al crear la regla, el sistema muestra el mensaje «No se pudo crear la regla de categorización.». La regla no se crea.
+
+**Postcondiciones:** La nueva regla figura en el listado y se utiliza para sugerir la categoría al registrar movimientos. Si el caso de uso no se completa, el listado no cambia.
+
+---
+
+**ID y Nombre:** CUN17 Modificar regla de categorización  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor modificar el nombre, la categoría, las palabras clave o los comercios asociados de una regla existente.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de reglas de categorización. El actor tiene al menos una regla registrada.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El actor necesita ajustar una regla para que las sugerencias de categoría sean más precisas.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Reglas de categorización» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas del actor.
+3. El actor selecciona la regla a modificar.
+4. El sistema muestra en la sección «Datos de la regla» el nombre, la categoría y las palabras clave de la regla seleccionada, y marca los comercios asociados.
+5. El actor modifica los datos que desea cambiar.
+6. El actor presiona el botón «Actualizar regla».
+7. El sistema aplica los cambios, limpia los campos de la sección «Datos de la regla» y actualiza el listado con los datos modificados.
+8. El sistema muestra el mensaje «Regla de categorización actualizada con éxito.».
+
+**Flujos Alternativos:**
+6a. Si no hay una regla seleccionada, el sistema muestra el mensaje «Debe seleccionar una regla de la lista.». No se realizan cambios.
+6b. Si no hay una categoría seleccionada, el sistema muestra el mensaje «Debe seleccionar una categoría.». No se realizan cambios.
+7a. Si el nombre de la regla está vacío, el sistema muestra el mensaje «El nombre de la regla no puede estar vacío.». No se realizan cambios.
+7b. Si las palabras clave están vacías, el sistema muestra el mensaje «Debe especificar al menos una palabra clave válida.». No se realizan cambios.
+7c. Si ocurre un error al actualizar la regla, el sistema muestra el mensaje «No se pudo actualizar la regla de categorización.». La regla conserva sus datos anteriores.
+
+**Postcondiciones:** La regla figura en el listado con los datos modificados y se utiliza con ellos para sugerir categorías. Si el caso de uso no se completa, la regla conserva sus datos anteriores.
+
+---
+
+**ID y Nombre:** CUN18 Baja de regla de categorización  
+**Estado:** Implementado  
+**Descripcion:** Permite al actor eliminar una regla de categorización que ya no necesita.  
+**Actor Principal:** Usuario, Operador o Administrador  
+**Actor Secundario:** -  
+**Precondiciones:** El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de reglas de categorización. El actor tiene al menos una regla registrada.  
+**Puntos de Extension:** No aplica.  
+**Condicion:** El actor desea que el sistema deje de sugerir categorías a partir de una regla.  
+
+**Escenario Principal:**
+1. El actor selecciona la opción «Reglas de categorización» del menú «Finanzas».
+2. El sistema presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas del actor.
+3. El actor selecciona la regla a eliminar.
+4. El sistema muestra los datos de la regla seleccionada en la sección «Datos de la regla».
+5. El actor presiona el botón «Eliminar regla».
+6. El sistema solicita confirmación con el título «Confirmar eliminación» y el mensaje «Se eliminará la regla de categorización» seguido del nombre de la regla entre comillas simples y la pregunta «¿Desea continuar?».
+7. El actor confirma la eliminación.
+8. El sistema elimina la regla, limpia los campos de la sección «Datos de la regla» y actualiza el listado, que ya no incluye la regla eliminada.
+9. El sistema muestra el mensaje «Regla de categorización eliminada con éxito.».
+
+**Flujos Alternativos:**
+5a. Si no hay una regla seleccionada, el sistema muestra el mensaje «Debe seleccionar una regla de la lista.». No se realizan cambios.
+7a. Si el actor no confirma la eliminación, el caso de uso finaliza sin cambios.
+8a. Si ocurre un error al eliminar la regla, el sistema muestra el mensaje «No se pudo eliminar la regla de categorización.». La regla permanece en el listado.
+
+**Postcondiciones:** La regla eliminada no figura en el listado y deja de utilizarse para sugerir categorías. Si el caso de uso no se completa, la regla permanece sin cambios.

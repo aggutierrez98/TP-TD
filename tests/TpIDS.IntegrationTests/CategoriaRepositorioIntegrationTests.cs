@@ -33,7 +33,7 @@ namespace TpIDS.IntegrationTests
                 Assert.IsNotNull(obtenida.Usuario);
                 Assert.AreEqual(usuarioId, obtenida.Usuario.Id);
 
-                System.Collections.Generic.List<BE.Categoria> visibles = repositorio.ObtenerVisiblesParaUsuario(usuarioId);
+                System.Collections.Generic.List<BE.Categoria> visibles = repositorio.ObtenerVisiblesParaUsuario(new BE.Usuario { Id = usuarioId });
                 Assert.IsTrue(visibles.Any(item => item.Id == id));
 
                 accesoDatos.RollbackTransactionScope();
@@ -53,7 +53,7 @@ namespace TpIDS.IntegrationTests
                 int idPropia = repositorio.InsertarYObtenerId(new BE.Categoria { Nombre = "CategoriaTestUsuarioA", Usuario = new BE.Usuario { Id = usuarioId } });
                 int idAjena = repositorio.InsertarYObtenerId(new BE.Categoria { Nombre = "CategoriaTestUsuarioB", Usuario = new BE.Usuario { Id = otroUsuarioId } });
 
-                System.Collections.Generic.List<BE.Categoria> visibles = repositorio.ObtenerVisiblesParaUsuario(usuarioId);
+                System.Collections.Generic.List<BE.Categoria> visibles = repositorio.ObtenerVisiblesParaUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(visibles.Any(item => item.Id == idPropia));
                 Assert.IsTrue(visibles.Any(item => item.Usuario == null), "Debe incluir las categorias globales sembradas.");
@@ -92,7 +92,7 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.Categoria { Nombre = "CategoriaTestAEliminar", Usuario = new BE.Usuario { Id = usuarioId } });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.Categoria { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
@@ -111,11 +111,12 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
 
                 Assert.IsTrue(repositorio.ExisteNombreEnScope("Alimentacion", null, null), "Categoria global sembrada por script_bd.sql.");
-                Assert.IsFalse(repositorio.ExisteNombreEnScope("Alimentacion", usuarioId, null), "El scope personal no debe ver el nombre global como propio.");
+                BE.Usuario usuario = new BE.Usuario { Id = usuarioId };
+                Assert.IsFalse(repositorio.ExisteNombreEnScope("Alimentacion", usuario, null), "El scope personal no debe ver el nombre global como propio.");
 
                 int id = repositorio.InsertarYObtenerId(new BE.Categoria { Nombre = "CategoriaTestDuplicado", Usuario = new BE.Usuario { Id = usuarioId } });
-                Assert.IsTrue(repositorio.ExisteNombreEnScope("CategoriaTestDuplicado", usuarioId, null));
-                Assert.IsFalse(repositorio.ExisteNombreEnScope("CategoriaTestDuplicado", usuarioId, id), "Excluyendo su propio Id no debe considerarse duplicado.");
+                Assert.IsTrue(repositorio.ExisteNombreEnScope("CategoriaTestDuplicado", usuario, null));
+                Assert.IsFalse(repositorio.ExisteNombreEnScope("CategoriaTestDuplicado", usuario, new BE.Categoria { Id = id }), "Excluyendo su propio Id no debe considerarse duplicado.");
 
                 accesoDatos.RollbackTransactionScope();
             }

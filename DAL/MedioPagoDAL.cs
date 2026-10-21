@@ -137,7 +137,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(MedioPago medioPago, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM MedioPago
@@ -150,7 +150,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, medioPago.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

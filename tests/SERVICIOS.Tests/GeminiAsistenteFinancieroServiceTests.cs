@@ -18,8 +18,8 @@ namespace SERVICIOS.Tests
         {
             HandlerFuncion handler = new HandlerFuncion();
             GeminiAsistenteFinancieroService servicio = new GeminiAsistenteFinancieroService(new AgenteAhorro(), new AgenteInversiones(), new AgenteFinanzasGenerales(), handler, clave => "test");
-            HerramientaAsistente herramienta = new HerramientaAsistente("recomendar_compras", "Extrae la lista", "{\"type\":\"OBJECT\",\"properties\":{\"nombreLista\":{\"type\":\"STRING\"}}}");
-            LlamadaHerramientaAsistente llamada = await servicio.ObtenerLlamadaHerramientaAsync(Solicitud(CategoriaConsulta.Compras), herramienta, CancellationToken.None);
+            IHerramientaAsistente herramienta = new HerramientaAsistente("recomendar_compras", "Extrae la lista", "{\"type\":\"OBJECT\",\"properties\":{\"nombreLista\":{\"type\":\"STRING\"}}}");
+            ILlamadaHerramientaAsistente llamada = await servicio.ObtenerLlamadaHerramientaAsync(Solicitud(CategoriaConsulta.Compras), herramienta, CancellationToken.None);
             Assert.IsNotNull(llamada);
             Assert.AreEqual("recomendar_compras", llamada.Nombre);
             Assert.Contains("Semanal", llamada.ArgumentosJson);
@@ -36,7 +36,7 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public void ArmarRequestBody_RedaccionCompras_IncluyeResumenSinHerramientas()
         {
-            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.Compras, "Donde compro?", null, new ContextoAsistente("{\"Items\":[]}", null));
+            ISolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.Compras, "Donde compro?", null, new ContextoAsistente("{\"Items\":[]}", null));
             using (JsonDocument json = JsonDocument.Parse(new AgenteAhorro().ArmarRequestBody(solicitud)))
             {
                 Assert.IsFalse(json.RootElement.TryGetProperty("tools", out _));
@@ -81,7 +81,7 @@ namespace SERVICIOS.Tests
         public async Task ObtenerRespuestaAsync_FinanzasGenerales_DelegaEnAgenteGeneralConLaSolicitudCompleta()
         {
             ServicioConFakes fakes = new ServicioConFakes();
-            SolicitudAsistente solicitud = Solicitud(CategoriaConsulta.FinanzasGenerales);
+            ISolicitudAsistente solicitud = Solicitud(CategoriaConsulta.FinanzasGenerales);
 
             string respuesta = await fakes.Servicio.ObtenerRespuestaAsync(solicitud);
 
@@ -106,7 +106,7 @@ namespace SERVICIOS.Tests
         public async Task ObtenerRespuestaAsync_PreguntaVacia_LanzaExcepcionNegocio()
         {
             ServicioConFakes fakes = new ServicioConFakes();
-            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "  ", null, null);
+            ISolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "  ", null, null);
 
             await Assert.ThrowsExactlyAsync<ExcepcionNegocio>(() => fakes.Servicio.ObtenerRespuestaAsync(solicitud));
         }
@@ -147,7 +147,7 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public void ArmarInstrucciones_ConDatosDeContexto_LosIncluyeDelimitadosComoDatos()
         {
-            ContextoAsistente contexto = new ContextoAsistente("{\"saldo\":1000}", null);
+            IContextoAsistente contexto = new ContextoAsistente("{\"saldo\":1000}", null);
 
             string instrucciones = new AgenteFinanzasGenerales().ArmarInstrucciones(contexto);
 
@@ -167,11 +167,11 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public void ArmarRequestBody_ConHistorial_IncluyeTurnosPreviosComoUserYModelYSystemInstruction()
         {
-            List<IntercambioChatbot> historial = new List<IntercambioChatbot>
+            List<IIntercambioChatbot> historial = new List<IIntercambioChatbot>
             {
                 new IntercambioChatbot { Pregunta = "Hola", Respuesta = "Hola, como puedo ayudarte?" }
             };
-            SolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "Y ahora?", historial, null);
+            ISolicitudAsistente solicitud = new SolicitudAsistente(CategoriaConsulta.FinanzasGenerales, "Y ahora?", historial, null);
 
             string json = new AgenteFinanzasGenerales().ArmarRequestBody(solicitud);
             using (JsonDocument request = JsonDocument.Parse(json))
@@ -186,9 +186,9 @@ namespace SERVICIOS.Tests
             }
         }
 
-        private static SolicitudAsistente Solicitud(CategoriaConsulta categoria)
+        private static ISolicitudAsistente Solicitud(CategoriaConsulta categoria)
         {
-            return new SolicitudAsistente(categoria, "Pregunta", new List<IntercambioChatbot>(), ContextoAsistente.Vacio);
+            return new SolicitudAsistente(categoria, "Pregunta", new List<IIntercambioChatbot>(), ContextoAsistente.Vacio);
         }
 
         private sealed class ServicioConFakes
@@ -230,9 +230,9 @@ namespace SERVICIOS.Tests
 
             internal bool FueLlamado { get; private set; }
 
-            internal SolicitudAsistente UltimaSolicitud { get; private set; }
+            internal ISolicitudAsistente UltimaSolicitud { get; private set; }
 
-            internal override Task<string> ResponderAsync(SolicitudAsistente solicitud)
+            internal override Task<string> ResponderAsync(ISolicitudAsistente solicitud)
             {
                 FueLlamado = true;
                 UltimaSolicitud = solicitud;

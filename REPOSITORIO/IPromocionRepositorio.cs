@@ -13,8 +13,8 @@ namespace REPOSITORIO
 
         bool Actualizar(Promocion promocion);
 
-        bool Eliminar(int id);
+        bool Eliminar(Promocion promocion);
 
-        bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias);
+        bool ReemplazarDiasDePromocion(Promocion promocion, List<DiaSemana> dias);
     }
 }

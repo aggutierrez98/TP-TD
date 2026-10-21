@@ -8,6 +8,6 @@ namespace ABSTRACCIONES
     // del llamador lanza OperationCanceledException. No reintenta.
     public interface IProveedorTasasCambio
     {
-        Task<TasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken);
+        Task<ITasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken);
     }
 }

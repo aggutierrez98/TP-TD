@@ -28,7 +28,7 @@ namespace DAL
                 {
                     embeddings.Add(new ProductoEmbedding
                     {
-                        ProductoId = (int)row["ProductoId"],
+                        Producto = new Producto { Id = (int)row["ProductoId"] },
                         Modelo = row["Modelo"].ToString(),
                         TextoFuente = row["TextoFuente"].ToString(),
                         Vector = ABytesAVector((byte[])row["Vector"]),
@@ -65,7 +65,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, embedding.ProductoId),
+                    accesoDatos.CreateParameter("@ProductoId", SqlDbType.Int, embedding.Producto.Id),
                     accesoDatos.CreateParameter("@Modelo", SqlDbType.VarChar, embedding.Modelo),
                     accesoDatos.CreateParameter("@TextoFuente", SqlDbType.VarChar, embedding.TextoFuente),
                     accesoDatos.CreateParameter("@Vector", SqlDbType.VarBinary, AVectorABytes(embedding.Vector)),

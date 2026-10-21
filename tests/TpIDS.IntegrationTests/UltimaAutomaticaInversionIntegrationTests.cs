@@ -28,7 +28,7 @@ namespace TpIDS.IntegrationTests
                 acceso.BeginTransactionScope();
                 int usuarioId = Usuario(acceso, "user");
 
-                Assert.IsNull(new NotificacionRepositorio(acceso).ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId));
+                Assert.IsNull(new NotificacionRepositorio(acceso).ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -45,7 +45,7 @@ namespace TpIDS.IntegrationTests
                 Insertar(acceso, usuarioId, Fecha.AddDays(14), Fecha.AddDays(14).Date);
                 Insertar(acceso, usuarioId, Fecha.AddDays(7), Fecha.AddDays(7).Date);
 
-                DateTime? ultima = repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId);
+                DateTime? ultima = repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(ultima.HasValue);
                 Assert.AreEqual(Utc(Fecha.AddDays(14)), ultima.Value);
@@ -65,10 +65,10 @@ namespace TpIDS.IntegrationTests
                 int admin = Usuario(acceso, "admin");
                 Insertar(acceso, user, Fecha, Fecha.Date);
 
-                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(admin));
+                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = admin }));
                 Insertar(acceso, admin, Fecha.AddDays(3), Fecha.AddDays(3).Date);
-                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(user));
-                Assert.AreEqual(Utc(Fecha.AddDays(3)), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(admin));
+                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = user }));
+                Assert.AreEqual(Utc(Fecha.AddDays(3)), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = admin }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -101,7 +101,7 @@ namespace TpIDS.IntegrationTests
                     Usuario = new BE.Usuario { Id = usuarioId }, Mensaje = "manual", Fecha = fechaFutura
                 });
 
-                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId));
+                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -116,9 +116,9 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = Usuario(acceso, "user");
                 int id = Insertar(acceso, usuarioId, Fecha, Fecha.Date);
 
-                Assert.IsTrue(repositorio.MarcarPersonalLeida(id, usuarioId));
+                Assert.IsTrue(repositorio.MarcarPersonalLeida(new Notificacion { Id = id }, new BE.Usuario { Id = usuarioId }));
 
-                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId));
+                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -135,10 +135,10 @@ namespace TpIDS.IntegrationTests
                 int anterior = Insertar(acceso, usuarioId, Fecha, Fecha.Date);
                 int ultima = Insertar(acceso, usuarioId, Fecha.AddDays(7), Fecha.AddDays(7).Date);
 
-                Assert.IsTrue(recordatorios.Eliminar(ultima));
-                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId));
-                Assert.IsTrue(recordatorios.Eliminar(anterior));
-                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(usuarioId));
+                Assert.IsTrue(recordatorios.Eliminar(recordatorios.ObtenerPorId(ultima)));
+                Assert.AreEqual(Utc(Fecha), repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId }));
+                Assert.IsTrue(recordatorios.Eliminar(recordatorios.ObtenerPorId(anterior)));
+                Assert.IsNull(repositorio.ObtenerFechaUltimaAutomaticaInversionUtc(new BE.Usuario { Id = usuarioId }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -151,8 +151,8 @@ namespace TpIDS.IntegrationTests
                 acceso.BeginTransactionScope();
                 var repositorio = new NotificacionRepositorio(acceso);
 
-                Assert.IsTrue(repositorio.BloquearUsuarioParaEntrega(Usuario(acceso, "user")));
-                Assert.IsFalse(repositorio.BloquearUsuarioParaEntrega(2000000000));
+                Assert.IsTrue(repositorio.BloquearUsuarioParaEntrega(new UsuarioDAL().ObtenerPorUsername("user", acceso)));
+                Assert.IsFalse(repositorio.BloquearUsuarioParaEntrega(new BE.Usuario { Id = 2000000000 }));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -170,16 +170,16 @@ namespace TpIDS.IntegrationTests
 
             using (var primera = new UnidadDeTrabajoFactory().Crear())
             {
-                Assert.IsTrue(primera.Notificaciones.BloquearUsuarioParaEntrega(user));
+                Assert.IsTrue(primera.Notificaciones.BloquearUsuarioParaEntrega(new BE.Usuario { Id = user }));
                 var mismoUsuario = Task.Run(() =>
                 {
                     using (var segunda = new UnidadDeTrabajoFactory().Crear())
-                        return segunda.Notificaciones.BloquearUsuarioParaEntrega(user);
+                        return segunda.Notificaciones.BloquearUsuarioParaEntrega(new BE.Usuario { Id = user });
                 });
                 var otroUsuario = Task.Run(() =>
                 {
                     using (var tercera = new UnidadDeTrabajoFactory().Crear())
-                        return tercera.Notificaciones.BloquearUsuarioParaEntrega(admin);
+                        return tercera.Notificaciones.BloquearUsuarioParaEntrega(new BE.Usuario { Id = admin });
                 });
 
                 Assert.IsTrue(await Esperar(otroUsuario));

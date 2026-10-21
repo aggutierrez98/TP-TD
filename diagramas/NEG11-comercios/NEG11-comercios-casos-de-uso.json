@@ -1,0 +1,106 @@
+{
+  "requisito": "NEG11-comercios",
+  "titulo": "Comercios",
+  "subtitulo": "Especificaciones de casos de uso",
+  "casos_de_uso": [
+    {
+      "id_nombre": "CUN48 Consultar comercios",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador consultar los comercios registrados y visualizar los datos de un comercio seleccionado.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la gestión de comercios.",
+      "puntos_extension": "Extiende hacia CUN52 Consultar productos y precios de un comercio mediante la acción «Ver detalle».",
+      "condicion": "El actor desea consultar los comercios registrados en el sistema.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Comercios» del menú «Operador».",
+        "2. El sistema presenta la pantalla «Gestión de Comercios» con el listado de comercios ordenado por nombre, indicando para cada uno su nombre, rubro y dirección, y con la sección «Rubros de comercio».",
+        "3. El actor selecciona un comercio del listado.",
+        "4. El sistema carga los datos del comercio seleccionado en el formulario: nombre, rubro, dirección, localidad, provincia y coordenadas (o la leyenda «Sin ubicar» si el comercio no tiene ubicación)."
+      ],
+      "flujos_alternativos": [
+        "2a. Si no hay comercios registrados, el sistema presenta el listado vacío. El caso de uso finaliza sin selección de comercio.",
+        "2b. Si ocurre un error al cargar el listado, el sistema muestra un mensaje de error. El caso de uso finaliza sin completar la consulta.",
+        "3a. Si el actor solo necesita consultar el listado, omite la selección de un comercio. El caso de uso finaliza con el listado disponible."
+      ],
+      "postcondiciones": "El actor dispone del listado de comercios y, si seleccionó uno, de sus datos completos. La consulta no modifica los comercios."
+    },
+    {
+      "id_nombre": "CUN49 Alta de comercio",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador registrar un nuevo comercio indicando su nombre, rubro, domicilio y, opcionalmente, su ubicación en el mapa.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la gestión de comercios y la pantalla «Gestión de Comercios» está abierta. Existe al menos un rubro de comercio registrado.",
+      "puntos_extension": "Incluye, de forma opcional, la selección de la ubicación del comercio en el mapa (flujo alternativo 4a).",
+      "condicion": "El actor desea incorporar un nuevo comercio al sistema.",
+      "escenario_principal": [
+        "1. El actor ingresa el nombre del comercio en el campo «Nombre».",
+        "2. El actor selecciona un rubro en el campo «Rubro».",
+        "3. El actor ingresa, de forma opcional, la dirección, la localidad y la provincia en los campos «Dirección», «Localidad» y «Provincia».",
+        "4. El actor selecciona la acción «Agregar».",
+        "5. El sistema registra el comercio, limpia el formulario, actualiza el listado seleccionando el comercio recién creado y muestra el mensaje «Comercio creado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "4a. Si el actor desea indicar la ubicación del comercio, antes de seleccionar «Agregar» selecciona la acción «Ubicar en el mapa». El sistema abre la ventana modal «Seleccionar ubicación en el mapa», con el campo de búsqueda «Dirección, comercio o lugar», la acción «Buscar», el mapa y las acciones «Aceptar» y «Cancelar». El actor busca un lugar y elige una de las coincidencias presentadas, o bien marca un punto con clic izquierdo sobre el mapa (el marcador puede arrastrarse para ajustarlo). Con la ubicación marcada, el actor selecciona «Aceptar»; el sistema cierra la ventana y muestra las coordenadas elegidas junto a «Coordenadas:». El caso de uso continúa en el paso 4.",
+        "4b. Si el actor selecciona «Cancelar» en la ventana de ubicación, el sistema cierra la ventana sin modificar las coordenadas y el caso de uso continúa en el paso 4.",
+        "4c. Si durante la búsqueda de ubicación no se encuentran coincidencias, el servicio demora demasiado, limita las búsquedas, no puede conectarse o responde de forma no válida, el sistema muestra en la ventana un mensaje informativo (por ejemplo, «No se encontraron coincidencias. Agregue ciudad o dirección para precisar.») y el actor puede marcar la ubicación directamente en el mapa. Si el actor no ha marcado ningún punto, la acción «Aceptar» permanece deshabilitada.",
+        "5a. Si el actor no seleccionó un rubro, el sistema muestra la advertencia «Debe seleccionar un rubro.». El comercio no se registra.",
+        "5b. Si el nombre está vacío o contiene solo espacios, el sistema muestra la advertencia «Debe indicar un nombre para el comercio.». El comercio no se registra.",
+        "5c. Si ocurre un error inesperado al registrar el comercio, el sistema muestra un mensaje de error. El comercio no se registra."
+      ],
+      "postcondiciones": "El comercio queda registrado y figura en el listado de comercios con los datos ingresados. Si el actor eligió una ubicación, el comercio queda ubicado en el mapa; en caso contrario queda sin ubicar."
+    },
+    {
+      "id_nombre": "CUN50 Modificar comercio",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador modificar los datos de un comercio registrado, incluyendo su rubro, domicilio y ubicación en el mapa.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la gestión de comercios y la pantalla «Gestión de Comercios» está abierta. Existe al menos un comercio registrado.",
+      "puntos_extension": "Incluye, de forma opcional, la modificación de la ubicación del comercio en el mapa (flujo alternativo 4a).",
+      "condicion": "El actor desea corregir o actualizar los datos de un comercio.",
+      "escenario_principal": [
+        "1. El actor selecciona un comercio del listado.",
+        "2. El sistema carga los datos del comercio en el formulario.",
+        "3. El actor modifica los datos que desea cambiar (nombre, rubro, dirección, localidad o provincia).",
+        "4. El actor selecciona la acción «Actualizar».",
+        "5. El sistema guarda los cambios, actualiza el listado manteniendo seleccionado el comercio y muestra el mensaje «Comercio actualizado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "4a. Si el actor desea cambiar la ubicación del comercio, antes de seleccionar «Actualizar» selecciona la acción «Ubicar en el mapa». El sistema abre la ventana modal «Seleccionar ubicación en el mapa»; el actor busca un lugar o marca un punto sobre el mapa y selecciona «Aceptar». El sistema cierra la ventana y muestra las nuevas coordenadas junto a «Coordenadas:». El caso de uso continúa en el paso 4. Si el actor selecciona «Cancelar», las coordenadas permanecen sin cambios. Las situaciones de error de la búsqueda de ubicación se resuelven como en el flujo 4c de CUN49.",
+        "4b. Si el actor no selecciona ningún comercio antes de «Actualizar», el sistema muestra la advertencia «Debe seleccionar un comercio.». No se modifica ningún dato.",
+        "5a. Si el actor no seleccionó un rubro, el sistema muestra la advertencia «Debe seleccionar un rubro.». El comercio no se modifica.",
+        "5b. Si el nombre está vacío o contiene solo espacios, el sistema muestra la advertencia «Debe indicar un nombre para el comercio.». El comercio no se modifica.",
+        "5c. Si el comercio ya no existe, el sistema muestra la advertencia «No se encontró el comercio indicado.». El comercio no se modifica.",
+        "5d. Si ocurre un error inesperado al guardar los cambios, el sistema muestra un mensaje de error. El comercio no se modifica."
+      ],
+      "postcondiciones": "El comercio queda con los datos y la ubicación modificados, y el listado refleja los cambios."
+    },
+    {
+      "id_nombre": "CUN51 Baja de comercio",
+      "estado": "Implementado",
+      "descripcion": "Permite al Operador o Administrador eliminar un comercio que no tiene información asociada.",
+      "actor_principal": "Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la gestión de comercios y la pantalla «Gestión de Comercios» está abierta. Existe al menos un comercio registrado. Para poder eliminarlo, el comercio no debe tener productos asignados, movimientos, promociones ni reglas de categorización asociados.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea eliminar un comercio que ya no corresponde mantener en el sistema.",
+      "escenario_principal": [
+        "1. El actor selecciona un comercio del listado.",
+        "2. El actor selecciona la acción «Eliminar».",
+        "3. El sistema solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se eliminará el comercio seleccionado. ¿Desea continuar?».",
+        "4. El actor confirma la eliminación.",
+        "5. El sistema elimina el comercio, limpia el formulario, actualiza el listado sin el comercio eliminado y muestra el mensaje «Comercio eliminado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "2a. Si el actor no seleccionó ningún comercio, el sistema muestra la advertencia «Debe seleccionar un comercio.». El caso de uso finaliza sin cambios.",
+        "4a. Si el actor no confirma la eliminación, el sistema cierra el diálogo y el comercio se mantiene sin cambios.",
+        "5a. Si el comercio tiene productos, movimientos, promociones o reglas de categorización asociados, el sistema muestra la advertencia «No se puede eliminar el comercio porque tiene productos, movimientos, promociones o reglas de categorización asociados.». El comercio no se elimina.",
+        "5b. Si el comercio ya no existe, el sistema muestra la advertencia «No se encontró el comercio indicado.». No se realiza ningún cambio.",
+        "5c. Si ocurre un error inesperado al eliminar el comercio, el sistema muestra un mensaje de error. El comercio no se elimina."
+      ],
+      "postcondiciones": "El comercio deja de figurar en el listado y ya no está disponible en el sistema."
+    }
+  ]
+}

@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class PromocionSegmentoDAL
     {
-        public List<string> ObtenerSegmentosPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<string> ObtenerSegmentosPorPromocion(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Segmento
@@ -22,7 +23,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -39,7 +40,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarSegmentosDePromocion(Promocion promocion, List<string> segmentos, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -48,7 +49,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"

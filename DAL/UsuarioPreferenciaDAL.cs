@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace DAL
 {
     public class UsuarioPreferenciaDAL
     {
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public UsuarioPreferencia ObtenerPorUsuario(IUsuarioAutenticado usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT UsuarioId, IdiomaId
@@ -21,7 +22,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -33,8 +34,8 @@ namespace DAL
                 DataRow row = dataTable.Rows[0];
                 return new UsuarioPreferencia
                 {
-                    UsuarioId = (int)row["UsuarioId"],
-                    IdiomaId = (int)row["IdiomaId"]
+                    Usuario = usuario,
+                    Idioma = new IdiomaDAL().ObtenerPorId((int)row["IdiomaId"], accesoDatos)
                 };
             }
             finally
@@ -48,10 +49,10 @@ namespace DAL
 
         public bool Guardar(UsuarioPreferencia preferencia, AccesoDatosSqlServer accesoDatos = null)
         {
-            return Guardar(preferencia == null ? 0 : preferencia.UsuarioId, preferencia == null ? (int?)null : preferencia.IdiomaId, accesoDatos);
+            return Guardar(preferencia?.Usuario, preferencia?.Idioma, accesoDatos);
         }
 
-        public bool Guardar(int usuarioId, int? idiomaId, AccesoDatosSqlServer accesoDatos = null)
+        public bool Guardar(IUsuarioAutenticado usuario, IIdioma idioma, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 IF @IdiomaId IS NULL
@@ -81,8 +82,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario?.Id ?? 0),
+                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, idioma?.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) >= 0;

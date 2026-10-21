@@ -31,16 +31,16 @@ namespace REPOSITORIO
             return cuenta;
         }
 
-        public List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId)
+        public List<CuentaFinanciera> ObtenerPorUsuario(Usuario usuario)
         {
-            List<CuentaFinanciera> cuentas = _cuentaFinancieraDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            List<CuentaFinanciera> cuentas = _cuentaFinancieraDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             cuentas.ForEach(Hidratar);
             return cuentas;
         }
 
-        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad)
         {
-            List<CuentaFinanciera> cuentas = _cuentaFinancieraDAL.ObtenerPorEntidadFinanciera(entidadFinancieraId, _accesoDatos);
+            List<CuentaFinanciera> cuentas = _cuentaFinancieraDAL.ObtenerPorEntidadFinanciera(entidad, _accesoDatos);
             cuentas.ForEach(Hidratar);
             return cuentas;
         }
@@ -60,9 +60,9 @@ namespace REPOSITORIO
 
             MedioPagoEntidadRepositorio medioPagoEntidadRepositorio = new MedioPagoEntidadRepositorio(_accesoDatos);
             cuenta.MediosPagoEntidad = new List<MedioPagoEntidad>();
-            foreach (int medioPagoEntidadId in _cuentaFinancieraMedioPagoEntidadDAL.ObtenerMedioPagoEntidadIdsPorCuenta(cuenta.Id, _accesoDatos))
+            foreach (MedioPagoEntidad referencia in _cuentaFinancieraMedioPagoEntidadDAL.ObtenerMediosPagoEntidadPorCuenta(cuenta, _accesoDatos))
             {
-                MedioPagoEntidad medioPagoEntidad = medioPagoEntidadRepositorio.ObtenerPorId(medioPagoEntidadId);
+                MedioPagoEntidad medioPagoEntidad = medioPagoEntidadRepositorio.ObtenerPorId(referencia.Id);
                 if (medioPagoEntidad != null)
                 {
                     cuenta.MediosPagoEntidad.Add(medioPagoEntidad);
@@ -80,19 +80,19 @@ namespace REPOSITORIO
             return _cuentaFinancieraDAL.Actualizar(cuenta, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(CuentaFinanciera cuenta)
         {
-            return _cuentaFinancieraDAL.Eliminar(id, _accesoDatos);
+            return _cuentaFinancieraDAL.Eliminar(cuenta, _accesoDatos);
         }
 
-        public bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds)
+        public bool ReemplazarMediosPagoEntidadDeCuenta(CuentaFinanciera cuenta, IEnumerable<MedioPagoEntidad> medios)
         {
-            return _cuentaFinancieraMedioPagoEntidadDAL.ReemplazarMediosPagoEntidadDeCuenta(cuentaFinancieraId, medioPagoEntidadIds, _accesoDatos);
+            return _cuentaFinancieraMedioPagoEntidadDAL.ReemplazarMediosPagoEntidadDeCuenta(cuenta, medios, _accesoDatos);
         }
 
-        public int ContarPorMedioPagoEntidad(int medioPagoEntidadId)
+        public int ContarPorMedioPagoEntidad(MedioPagoEntidad medio)
         {
-            return _cuentaFinancieraMedioPagoEntidadDAL.ContarPorMedioPagoEntidad(medioPagoEntidadId, _accesoDatos);
+            return _cuentaFinancieraMedioPagoEntidadDAL.ContarPorMedioPagoEntidad(medio, _accesoDatos);
         }
     }
 }

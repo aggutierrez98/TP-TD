@@ -103,7 +103,7 @@ namespace TpIDS
 
         private void btnGuardarConfiguracion_Click(object sender, EventArgs e)
         {
-            int? usuarioId = _sesion.GetUsuarioActualId();
+            int? usuarioId = _sesion.GetUsuarioActual()?.Id;
             if (!usuarioId.HasValue)
             {
                 UiDialogHelper.MostrarError("FormUserSettings.Error.NoActiveSession");
@@ -119,7 +119,7 @@ namespace TpIDS
 
             try
             {
-                bool guardado = idiomaBLL.GuardarPreferencia(usuarioId.Value, idioma.Id);
+                bool guardado = idiomaBLL.GuardarPreferencia(idioma);
                 if (guardado)
                 {
                     UiDialogHelper.MostrarInfo("FormUserSettings.Success.SettingsSaved");

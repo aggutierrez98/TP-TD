@@ -1,0 +1,64 @@
+@startuml
+' Fuente: diagramas/NEG08-monedas/NEG08-monedas-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN33 Consultar monedas — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionMonedas {
+    -CargarMonedas(monedaSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class MonedaBLL {
+    +ObtenerTodas(): List<Moneda>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IMonedaRepositorio {
+    +ObtenerTodas(): List<Moneda>
+  }
+  class MonedaRepositorio {
+    +ObtenerTodas(): List<Moneda>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IMonedaRepositorio -[hidden]right-> MonedaRepositorio
+package "DAL" as L_DAL {
+  class MonedaDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<Moneda>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Moneda {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+FormGestionMonedas ..> MonedaBLL : usa
+MonedaRepositorio ..> MonedaDAL : usa
+MonedaBLL ..> IMonedaRepositorio : usa
+MonedaRepositorio ..|> IMonedaRepositorio
+MonedaBLL ..> Moneda : datos
+' BLL/MonedaBLL.cs:25 MonedaBLL.ObtenerTodas
+' DAL/MonedaDAL.cs:49 MonedaDAL.ObtenerTodas
+' REPOSITORIO/IMonedaRepositorio.cs:10 IMonedaRepositorio.ObtenerTodas
+' REPOSITORIO/MonedaRepositorio.cs:28 MonedaRepositorio.ObtenerTodas
+' UI/FormGestionMonedas.cs:51 FormGestionMonedas.CargarMonedas
+@enduml

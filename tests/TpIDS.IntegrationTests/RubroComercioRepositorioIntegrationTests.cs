@@ -78,7 +78,7 @@ namespace TpIDS.IntegrationTests
                 RubroComercioRepositorio repositorio = new RubroComercioRepositorio(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.RubroComercio { Nombre = "RubroTestAEliminar" });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.RubroComercio { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

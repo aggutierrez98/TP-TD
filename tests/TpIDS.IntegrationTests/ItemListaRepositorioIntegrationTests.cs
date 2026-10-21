@@ -67,7 +67,7 @@ namespace TpIDS.IntegrationTests
                     Comprado = false
                 });
 
-                System.Collections.Generic.List<BE.ItemLista> propios = repositorio.ObtenerPorListaDeCompras(listaDeComprasId);
+                System.Collections.Generic.List<BE.ItemLista> propios = repositorio.ObtenerPorListaDeCompras(new ListaDeComprasRepositorio(accesoDatos).ObtenerPorId(listaDeComprasId));
 
                 Assert.IsTrue(propios.Any(item => item.Id == idPropio));
                 Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
@@ -129,7 +129,7 @@ namespace TpIDS.IntegrationTests
                     Comprado = false
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

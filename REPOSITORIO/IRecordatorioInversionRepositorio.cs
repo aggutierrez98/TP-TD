@@ -7,7 +7,7 @@ namespace REPOSITORIO
     {
         RecordatorioInversion ObtenerPorId(int id);
 
-        List<RecordatorioInversion> ObtenerPorUsuario(int usuarioId);
+        List<RecordatorioInversion> ObtenerPorUsuario(Usuario usuario);
 
         List<RecordatorioInversion> ObtenerTodas();
 
@@ -15,6 +15,6 @@ namespace REPOSITORIO
 
         bool Actualizar(RecordatorioInversion recordatorio);
 
-        bool Eliminar(int id);
+        bool Eliminar(RecordatorioInversion recordatorio);
     }
 }

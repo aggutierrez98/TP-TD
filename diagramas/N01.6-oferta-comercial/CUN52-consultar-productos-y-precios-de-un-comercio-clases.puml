@@ -1,0 +1,177 @@
+@startuml
+' Fuente: diagramas/NEG12-productos-de-comercio/NEG12-productos-de-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN52 Consultar productos y precios de un comercio — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormDetalleComercio {
+    -CargarProductos(productoSeleccionadoId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ComercioProductoBLL {
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+  }
+  class PromocionBLL {
+    +ObtenerPorComercio(recibido: Comercio): List<Promocion>
+  }
+  class AlcancePromocion {
+    +FiltrarPorComercio(promociones: IEnumerable<Promocion>, comercio: Comercio):\nList<Promocion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ComercioProductoBLL -[hidden]right-> PromocionBLL
+ComercioProductoBLL -[hidden]down-> AlcancePromocion
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IComercioProductoRepositorio {
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+  }
+  class ComercioProductoRepositorio {
+    +ObtenerPorComercio(comercio: Comercio): List<ComercioProducto>
+  }
+  class "ComercioRepositorio" as IComercioRepositorio <<IComercioRepositorio>> {
+    +ObtenerPorId(id: int): Comercio
+  }
+  class "PromocionRepositorio" as IPromocionRepositorio <<IPromocionRepositorio>> {
+    +ObtenerTodas(): List<Promocion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IComercioProductoRepositorio -[hidden]right-> ComercioProductoRepositorio
+IComercioProductoRepositorio -[hidden]down-> IComercioRepositorio
+IComercioRepositorio -[hidden]right-> IPromocionRepositorio
+package "DAL" as L_DAL {
+  class ComercioProductoDAL {
+    +ObtenerPorComercio(comercio: Comercio, accesoDatos: AccesoDatosSqlServer):\nList<ComercioProducto>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class CategoriaProducto {
+    +Id: int
+    +Nombre: string
+  }
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class ComercioProducto {
+    +Comercio: Comercio
+    +Producto: Producto
+    +Moneda: Moneda
+    +Precio: decimal
+  }
+  enum DiaSemana {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+  class EntidadFinanciera {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class MedioPago {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class Moneda {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  class Producto {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class Promocion {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProducto -[hidden]right-> Comercio
+CategoriaProducto -[hidden]down-> ComercioProducto
+ComercioProducto -[hidden]right-> DiaSemana
+ComercioProducto -[hidden]down-> EntidadFinanciera
+EntidadFinanciera -[hidden]right-> MedioPago
+EntidadFinanciera -[hidden]down-> Moneda
+Moneda -[hidden]right-> Producto
+Moneda -[hidden]down-> Promocion
+Promocion -[hidden]right-> RubroComercio
+ComercioProductoBLL ..> IComercioProductoRepositorio : usa
+ComercioProductoRepositorio ..|> IComercioProductoRepositorio
+FormDetalleComercio ..> ComercioProductoBLL : usa
+FormDetalleComercio ..> PromocionBLL : usa
+ComercioProductoRepositorio ..> ComercioProductoDAL : usa
+PromocionBLL ..> AlcancePromocion : usa
+PromocionBLL ..> IComercioRepositorio : usa
+PromocionBLL ..> IPromocionRepositorio : usa
+ComercioProductoBLL ..> ComercioProducto : datos
+Comercio --> RubroComercio : RubroComercio
+ComercioProducto --> Comercio : Comercio
+ComercioProducto --> Producto : Producto
+ComercioProducto --> Moneda : Moneda
+Producto --> CategoriaProducto : CategoriaProducto
+Promocion --> "*" DiaSemana : DiasSemana
+Promocion --> "*" Comercio : Comercios
+Promocion --> "*" RubroComercio : RubrosComercio
+Promocion --> "*" EntidadFinanciera : EntidadesFinancieras
+Promocion --> "*" MedioPago : MediosPago
+Promocion --> "*" Producto : ProductosIncluidos
+Promocion --> "*" Producto : ProductosExcluidos
+Promocion --> "*" CategoriaProducto : CategoriasIncluidas
+Promocion --> "*" CategoriaProducto : CategoriasExcluidas
+' BLL/AlcancePromocion.cs:23 AlcancePromocion.FiltrarPorComercio
+' BLL/ComercioProductoBLL.cs:33 ComercioProductoBLL.ObtenerPorComercio
+' BLL/PromocionBLL.cs:72 PromocionBLL.ObtenerPorComercio
+' DAL/ComercioProductoDAL.cs:21 ComercioProductoDAL.ObtenerPorComercio
+' REPOSITORIO/ComercioProductoRepositorio.cs:23 ComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioProductoRepositorio.cs:8 IComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionRepositorio.cs:10 IPromocionRepositorio.ObtenerTodas
+' UI/FormDetalleComercio.cs:77 FormDetalleComercio.CargarProductos
+@enduml

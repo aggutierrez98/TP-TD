@@ -1,0 +1,85 @@
+@startuml
+' Fuente: diagramas/NEG19-zonas-usuario/NEG19-zonas-usuario-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN78 Consultar mis zonas — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormMisZonas {
+    -CargarZonas(zonaSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ZonaUsuarioBLL {
+    +ObtenerMisZonas(): List<ZonaUsuario>
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ZonaUsuarioBLL -[hidden]right-> SesionUsuarioExtensiones
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IZonaUsuarioRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+  class ZonaUsuarioRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IZonaUsuarioRepositorio -[hidden]right-> ZonaUsuarioRepositorio
+package "DAL" as L_DAL {
+  class ZonaUsuarioDAL {
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos: AccesoDatosSqlServer):\nList<ZonaUsuario>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  class ZonaUsuario {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +Latitud: decimal
+    +Longitud: decimal
+    +RadioMetros: int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Usuario -[hidden]right-> ZonaUsuario
+FormMisZonas ..> ZonaUsuarioBLL : usa
+ZonaUsuarioRepositorio ..> ZonaUsuarioDAL : usa
+ZonaUsuarioBLL ..> IZonaUsuarioRepositorio : usa
+ZonaUsuarioBLL ..> SesionUsuarioExtensiones : usa
+ZonaUsuarioRepositorio ..|> IZonaUsuarioRepositorio
+ZonaUsuarioBLL ..> ZonaUsuario : datos
+ZonaUsuario --> Usuario : Usuario
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ZonaUsuarioBLL.cs:43 ZonaUsuarioBLL.ObtenerMisZonas
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' UI/FormMisZonas.cs:122 FormMisZonas.CargarZonas
+@enduml

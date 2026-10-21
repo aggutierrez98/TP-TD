@@ -1,6 +1,7 @@
 namespace REPOSITORIO
 {
     using DAL;
+    using SERVICIOS;
 
     public class TraduccionRepositorio : ITraduccionRepositorio
     {
@@ -16,19 +17,19 @@ namespace REPOSITORIO
             _idiomaRepositorio = new IdiomaRepositorio(accesoDatos);
         }
 
-        public int ObtenerPalabraIdPorKey(string key)
+        public Palabra ObtenerPalabraPorKey(string key)
         {
-            return _idiomaRepositorio.ObtenerPalabraIdPorKey(key);
+            return _idiomaRepositorio.ObtenerPalabraPorKey(key);
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
+        public bool GuardarTraduccion(Traduccion traduccion)
         {
-            return _idiomaRepositorio.GuardarTraduccion(idiomaId, palabraId, valor);
+            return _idiomaRepositorio.GuardarTraduccion(traduccion);
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(Traduccion traduccion)
         {
-            return _idiomaRepositorio.EliminarTraduccion(idiomaId, palabraId);
+            return _idiomaRepositorio.EliminarTraduccion(traduccion);
         }
     }
 }

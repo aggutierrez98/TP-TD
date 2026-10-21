@@ -88,7 +88,7 @@ namespace BLL.Tests
             PermisoFixture fixture = new PermisoFixture();
             PermisoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(1, new List<int> { 2 }));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, Permisos(2)));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -99,7 +99,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "admin" };
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.GuardarPermisosUsuario(1, null);
+            sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, null);
 
             Assert.AreEqual(0, fixture.Unidad.UsuarioPermisoRepo.LastPermisos.Count);
             Assert.AreEqual(1, fixture.UsuarioEstado.GuardarUsuarioId);
@@ -116,7 +116,7 @@ namespace BLL.Tests
             fixture.Sesion.IniciarSesion(new Usuario { Id = 1, Username = "admin" });
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.GuardarPermisosUsuario(1, new List<int> { 5 });
+            sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, Permisos(5));
 
             Assert.AreEqual(1, fixture.Autorizacion.ActualizarPermisosCallCount);
         }
@@ -130,7 +130,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
             PermisoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(1, new List<int>()));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, Permisos()));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -145,7 +145,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[2] = new List<int> { 5 };
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.GuardarPermisosUsuario(1, new List<int>());
+            sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, Permisos());
 
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -164,7 +164,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5, 10 };
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.GuardarPermisosUsuario(1, new List<int> { 10 });
+            sut.GuardarPermisosUsuario(new Usuario { Id = 1 }, Permisos(10));
 
             Assert.IsTrue(fixture.Unidad.SaveCalled);
         }
@@ -211,7 +211,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 5 };
             PermisoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ValidarPuedeEliminarUsuario(1, fixture.Unidad));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ValidarPuedeEliminarUsuario(new Usuario { Id = 1 }, fixture.Unidad));
         }
 
         [TestMethod]
@@ -225,7 +225,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[2] = new List<int> { 5 };
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.ValidarPuedeEliminarUsuario(1, fixture.Unidad);
+            sut.ValidarPuedeEliminarUsuario(new Usuario { Id = 1 }, fixture.Unidad);
         }
 
         [TestMethod]
@@ -235,7 +235,7 @@ namespace BLL.Tests
             fixture.Unidad.PermisoRepo.IdsPorNombre["basico"] = 7;
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.AsignarPerfilBasicoInterno(1, fixture.Unidad);
+            sut.AsignarPerfilBasicoInterno(new Usuario { Id = 1 }, fixture.Unidad);
 
             CollectionAssert.AreEqual(new List<int> { 7 }, fixture.Unidad.UsuarioPermisoRepo.LastPermisos);
         }
@@ -246,9 +246,39 @@ namespace BLL.Tests
             PermisoFixture fixture = new PermisoFixture();
             PermisoBLL sut = fixture.CreateSut();
 
-            sut.GuardarPermisosUsuarioInterno(1, new List<int> { 5, 5, 6 }, fixture.Unidad);
+            sut.GuardarPermisosUsuarioInterno(new Usuario { Id = 1 }, Permisos(5, 5, 6), fixture.Unidad);
 
             CollectionAssert.AreEqual(new List<int> { 5, 6 }, fixture.Unidad.UsuarioPermisoRepo.LastPermisos);
+        }
+
+        [TestMethod]
+        public void GuardarPermisosUsuario_UsuarioNulo_ThrowsExcepcionNegocio()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            PermisoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPermisosUsuario(null, Permisos(2)));
+            Assert.AreEqual("Error.Permission.UserNotFound", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void GuardarPermisosUsuario_UsuarioRecibidoAlterado_VersionaElPersistido()
+        {
+            PermisoFixture fixture = new PermisoFixture();
+            Usuario persistido = new Usuario { Id = 1, Username = "admin" };
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = persistido;
+            PermisoBLL sut = fixture.CreateSut();
+
+            sut.GuardarPermisosUsuario(new Usuario { Id = 1, Username = "alterado" }, Permisos(5));
+
+            Assert.AreSame(persistido, fixture.UsuarioEstado.GuardarUsuario);
+            CollectionAssert.AreEqual(new List<int> { 5 }, fixture.Unidad.UsuarioPermisoRepo.LastPermisos);
+        }
+
+        private static List<IPermiso> Permisos(params int[] ids)
+        {
+            return ids.Select(id => (IPermiso)new PermisoSimple { Id = id }).ToList();
         }
 
         private static IPermiso Grupo(int id, string name)

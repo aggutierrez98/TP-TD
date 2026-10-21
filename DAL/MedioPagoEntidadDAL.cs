@@ -49,7 +49,7 @@ namespace DAL
             }
         }
 
-        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(int entidadFinancieraId, AccesoDatosSqlServer accesoDatos = null)
+        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, EntidadFinancieraId, MedioPagoId, Segmento
@@ -64,7 +64,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidadFinancieraId)
+                    accesoDatos.CreateParameter("@EntidadFinancieraId", SqlDbType.Int, entidad.Id)
                 };
 
                 return MapearTodos(accesoDatos.Read(query, parametros));
@@ -78,7 +78,7 @@ namespace DAL
             }
         }
 
-        public List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId, AccesoDatosSqlServer accesoDatos = null)
+        public List<MedioPagoEntidad> ObtenerPorMedioPago(MedioPago medioPago, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, EntidadFinancieraId, MedioPagoId, Segmento
@@ -93,7 +93,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@MedioPagoId", SqlDbType.Int, medioPagoId)
+                    accesoDatos.CreateParameter("@MedioPagoId", SqlDbType.Int, medioPago.Id)
                 };
 
                 return MapearTodos(accesoDatos.Read(query, parametros));
@@ -199,7 +199,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(MedioPagoEntidad medioPagoEntidad, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM MedioPagoEntidad
@@ -212,7 +212,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, medioPagoEntidad.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

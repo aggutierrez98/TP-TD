@@ -11,7 +11,7 @@ using ABSTRACCIONES;
 namespace SERVICIOS
 {
     // Motor generico de calculo de digitos verificadores.
-    // Usa reflexion para descubrir las propiedades marcadas con DigitoVerificadorAttribute,
+    // Usa reflexion para descubrir las propiedades marcadas con un atributo IDigitoVerificador,
     // por lo que es aplicable a cualquier entidad sin modificar el motor.
     public class IntegridadService : IIntegridadService
     {
@@ -21,7 +21,7 @@ namespace SERVICIOS
 
         /// <summary>
         /// Metodo para calcular el DVH de una entidad en base a sus propiedades verificables.
-        /// Usa las propiedades marcadas con DigitoVerificadorAttribute y una representacion canonica estable.
+        /// Usa las propiedades marcadas con IDigitoVerificador y una representacion canonica estable.
         /// </summary>
         /// <param name="entidad">La entidad sobre la que se calcula el digito verificador horizontal.</param>
         /// <returns>El DVH calculado.</returns>
@@ -115,7 +115,7 @@ namespace SERVICIOS
                 .Select(info => new
                 {
                     Info = info,
-                    Atributo = info.GetCustomAttribute<DigitoVerificadorAttribute>()
+                    Atributo = Attribute.GetCustomAttributes(info, true).OfType<IDigitoVerificador>().FirstOrDefault()
                 })
                 .Where(item => item.Atributo != null)
                 .OrderBy(item => item.Atributo.Orden)

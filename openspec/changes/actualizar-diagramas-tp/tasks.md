@@ -1,5 +1,30 @@
 # Tasks
 
+## 8. Clases integradas por negocio N01.1-N01.7 (correccion aprobada)
+
+- [x] 8.1 Integrar y contrastar clases, operaciones y relaciones de los CU asignados; crear siete fuentes `<proceso>-clases.puml` en sus carpetas N01.*, con paquetes y colores por capa. Firmas extraidas del arbol sintactico C# vigente; tipos y contratos deduplicados por nombre real, incluyendo colaboradores de las llamadas participantes.
+- [x] 8.2 Validar cobertura exacta de CU y clases participantes, firmas y relaciones contra el codigo; renderizar los siete SVG y revisar proporciones y legibilidad. Verificados: 82 CU sin omisiones ni solapamientos, 563 participaciones de tipos, 902 firmas y 1165 relaciones; tipos en su capa real, atributos/firmas y herencias/realizaciones contrastados con C#. Los siete SVG contienen todos sus tipos declarados, sin nodos implicitos ni errores de PlantUML; proporciones finales 1,569-2,305. Revision visual de los siete conjuntos de capas y detalle de N01.4.
+- [x] 8.3 Exportar exactamente siete PNG a 200 DPI en `diagramas/exportaciones/clases-negocio-png/` y verificar integridad, dimensiones y correspondencia con las fuentes. Exportados desde las siete fuentes con PlantUML a 200 DPI, con metadata pHYs de 200 DPI y metadata PlantUML conservada; siete archivos integros, entre 5827x3387 y 12158x5273 px (N01.4: 11239x6428), 20,57 MiB en total. Revision visual de las siete imagenes finales y detalle a escala de lectura de N01.4.
+- [x] 8.4 Compilar TpIDS.sln y registrar el resultado verificado de esta entrega. MSBuild Debug /t:Build /m: exit 0, 0 advertencias y 0 errores (14,40 s); validaciones automaticas incluidas.
+
+## 7. Diagramas por proceso de negocio CUN06-CUN87 (alcance aprobado)
+
+- [x] 7.1 Contrastar codigo y especificaciones y generar clases/secuencia para CUN06-09 y CUN11-22 en N01.1-operaciones-financieras.
+- [x] 7.2 Generar clases/secuencia para CUN10 y CUN72-75 en N01.2-evaluacion-financiera.
+- [x] 7.3 Generar clases/secuencia para CUN68-71 y CUN78-80 en N01.3-planificacion-compras.
+- [x] 7.4 Generar clases/secuencia para CUN76-77 y CUN87 en N01.4-orientacion-financiera.
+- [x] 7.5 Generar clases/secuencia para CUN23-43 en N01.5-identificacion-valoracion-financiera.
+- [x] 7.6 Generar clases/secuencia para CUN44-67 en N01.6-oferta-comercial.
+- [x] 7.7 Generar clases/secuencia para CUN81-86 en N01.7-comunicacion-usuarios.
+- [x] 7.8 Verificar los 164 diagramas: cobertura exacta CUN06-CUN87, balanceo de clases/operaciones contra codigo y escenarios; renderizar SVG y revisar dimensiones y legibilidad. Verificado: 164 PUML y 164 SVG, 1005 mensajes de operaciones y 1175 referencias a declaraciones; sin errores de PlantUML; muestras visuales CUN06/12/65/87 revisadas. Por pedido posterior del usuario se retiraron los 164 bloques legend y se regeneraron los SVG; las proporciones resultantes sin leyendas son 1.232-2.998.
+- [x] 7.9 Compilar TpIDS.sln y registrar los resultados verificados en el cierre de esta entrega. MSBuild Debug /t:Build /m: exit 0; guardias de arquitectura, Composition Root y contratos entre capas en verde.
+
+## 6. Especificaciones de negocio CUN01-CUN87 (alcance aprobado)
+
+- [ ] 6.1 Contrastar los 87 casos con pantallas y reglas vigentes y completar los JSON de los 22 grupos con el detalle de la muestra CUN01 aprobada; conservar identificadores y actores, expresar solo interacciones de caja negra y reflejar condiciones particulares de acceso.
+- [ ] 6.2 Generar un Word y su Markdown espejo por grupo con tp-use-case-spec, sin renumerar y reemplazando el subtitulo de muestra por el definitivo.
+- [ ] 6.3 Verificar cobertura exacta CUN01-CUN87, los 11 campos, pasos/alternativas, correspondencia JSON/Word/Markdown e integridad de los 22 Word; revisar presentacion visual si hay renderizador disponible e informar cualquier limitacion.
+
 ## 1. Modelo de datos (G08)
 
 - [ ] 1.1 Comparar `diagramas/G08-modelo-datos-integrado` contra la base real `TpCatedraIDS` (tablas, columnas, PK/FK, nulabilidad) con `sqlcmd` y corregir el DER, incluidos los cambios de `desacoplar-producto-de-comercio` y `gestion-promociones` del `design.md`; verificar regenerando el SVG sin errores de PlantUML
@@ -7,6 +32,8 @@
 - [ ] 1.3 Reflejar en G08 lo implementado por notificaciones-automaticas-diarias: columnas nuevas de `Notificacion` (`TipoAutomatico`, `FechaJornada`, `ClaveEjemplo`, `Mensaje` como NVARCHAR(MAX), `ItemListaId`/`PromocionId`/`FechaVencimiento` nulos solo para compras agregadas o `Demo.Compras`), sus indices unicos filtrados (`UX_Notificacion_Automatica`, `UX_Notificacion_ClaveEjemplo`) y las tablas `CorridaGeneracionNotificaciones` y `DetalleGeneracionNotificacion`. No existe tabla de antecedentes: el intervalo de inversiones se deriva de `Notificacion`. Contrastar con la base real con `sqlcmd` y regenerar los SVG.
 
 ## 2. Clases (G07) y dominio (G00)
+
+- [ ] 2.13 Reflejar contratos-por-entidades en G07: firmas por entidades, altas que devuelven entidades, referencias de BE en lugar de FKs y contratos por interfaces en ABSTRACCIONES con implementaciones en SERVICIOS; incluir PreguntaPerfilInversor y la continuacion de onboarding por Usuario. Contrastar todas las capas contra el codigo y regenerar SVG con tp-uml-y-casos-de-uso. Revisar G08 para conservar las FKs fisicas: esta migracion no modifica el esquema SQL.
 
 - [ ] 2.1 Comparar cada `.puml` de `diagramas/G07-clases-por-capa` contra las clases reales de su capa y sumar lo que falte (modulos de negocio, `ComercioProducto`, filtros de promociones, forms nuevos), incluyendo `gestion-categorias-producto`: `FormGestionCategoriasProducto`, retiro del ABM de categorias de `FormDetalleComercio` y validacion de nombre unico en `CategoriaProductoBLL`; este cambio no altera el DER G08. Sin anticipar nada que no exista; verificar regenerando los SVG
 - [ ] 2.2 Actualizar `diagramas/G00-descripcion-global-producto/G00-modelo-dominio.puml`: Comercio-Producto pasa a N:M con precio y moneda; verificar regenerando el SVG
@@ -25,10 +52,10 @@
 
 - [ ] 2.10 Incorporar recomendacion-inversiones-asistente en G07: `IProveedorMercadoData912`, `IProveedorArgentinaDatos`, `IProveedorCriptoYa`, `DatoMercado` y metadata `EsTicker` de `ReferenciaAsistente` (ABSTRACCIONES); `ProveedorMercadoData912`, `ProveedorArgentinaDatos`, `ProveedorCriptoYa`, `ClienteMercadoPublico` con cache por endpoint y relojes/timeout inyectables (SERVICIOS); `RecomendacionInversionesBLL`, `IRecomendacionInversionesBLL`, `ResumenInversiones`, `InstrumentoInversion`, `NivelInversion`, ruteo por `recomendar_inversion(porcentaje?)`, validacion y wiring de `CompositionRoot` (BLL). Contrastar con codigo y regenerar SVG. G08 no cambia: no hay tablas ni columnas nuevas.
 
-## 3. Secuencias generales
-
 - [ ] 2.11 Incorporar perfil-inversor-usuario contra su implementacion real. En G07: `PerfilInversor`, `RespuestaPerfilInversor` y `NivelRiesgoInversor` (BE), `CalculadorPerfilInversor`, `PerfilInversorBLL`, `ContinuacionPerfilInversor`, `UsuarioBLL.RegistrarParaOnboarding` y wiring de `CompositionRoot`, repositorio/contrato y exposicion en unidad de trabajo, `PerfilInversorDAL`, `FormPerfilInversor` y bloque de `FormConfiguracionUsuario`. En G08: `PerfilInversor` con FK/UNIQUE por UsuarioId y `PerfilInversorRespuesta` con PK compuesta/FK cascade, segun script y base reales. El seed Alto de `user` no es un valor por defecto del dominio. Contrastar con codigo/base y regenerar SVG sin anticipar las partes del asistente aun pendientes.
 - [ ] 2.12 Incorporar notificaciones-automaticas-diarias en G07 contra su implementacion real: `GeneracionNotificacionesBLL` y `ResultadoCorridaNotificaciones`, `GeneradorRecomendaciones` con `IGeneradorRecomendaciones`/`SolicitudGeneracion`/`ResultadoGeneracion` y `ExtractorPorcentajeInversion` con `ResultadoPorcentaje`/`EstadoPorcentaje` (internos de BLL; mostrarlos solo si el diagrama de capa admite internos), `AsistenteFinancieroBLL` delegando en el generador, `TipoNotificacionAutomatica`, `ResultadoGeneracionNotificacion`, `CorridaGeneracionNotificaciones` y `DetalleGeneracionNotificacion` (BE), los campos nuevos de `Notificacion`, `IGeneracionNotificacionesRepositorio`/`GeneracionNotificacionesRepositorio`/`GeneracionNotificacionesDAL`, `INotificacionRepositorio.ObtenerFechaUltimaAutomaticaInversionUtc`, su alta en `CompositionRoot` y el proyecto host `CRONS` (`Program`, `Despachador`, tarea `notificaciones`). Sin clases de antecedentes (no existen). Contrastar con el codigo y regenerar los SVG.
+
+## 3. Secuencias generales
 
 - [ ] 3.4 Coordinar con el usuario los artefactos A02 de exportar-movimientos-pdf: CU de buscar por descripcion, marcar resultados y exportar PDF (Guardar como, cancelacion y errores), su secuencia y reflejo en las especificaciones consolidadas. Contrastar con FormMovimientos, MovimientoBLL.ExportarPdf y ReporteTabularPdfService; generar los artefactos autorizados mediante tp-uml-y-casos-de-uso y validar PlantUML/CU.
 
@@ -46,11 +73,11 @@
 
 - [ ] 3.9 Acordar mediante tp-uml-y-casos-de-uso la secuencia de inversiones: clasificacion INVERSIONES, extraccion de porcentaje sin usuario ni porcentaje supuesto del historial, pregunta fija si falta o es invalido, saldo de tres meses calendario completos por Id de sesion capturado, nivel por reglas, consultas paralelas solo del nivel y cache, VCP a 30 dias, seleccion y degradacion, redaccion desde resumen cerrado, validacion de referencias (incluida inflacion y tickers), avisos traducidos y persistencia. Generar los artefactos autorizados y validar PlantUML/CU; G08 sin cambios.
 
-## 4. Documento de la catedra
-
 - [ ] 3.10 Acordar mediante tp-uml-y-casos-de-uso el CU de configurar/repetir perfil inversor y actualizar el recorrido de registro: cuestionario opcional posterior al alta, omision hacia login sin sesion, diez respuestas y resultado antes de guardar, continuacion opaca limitada, reemplazo atomico y cancelacion conservando el perfil anterior. Contrastar con `FormRegistro`, `FormPerfilInversor`, `FormConfiguracionUsuario` y BLL; generar solo los artefactos autorizados y validar PlantUML/CU.
 - [ ] 3.11 Acordar mediante tp-uml-y-casos-de-uso la secuencia del envio al asistente con perfil inversor (origen: perfil-inversor-usuario 6.4): lectura del perfil propio antes del porcentaje, invitacion fija sin perfil sin tools ni mercado, error tecnico distinto de ausencia, snapshot del perfil por envio, historial anterior excluido del contexto, riesgo efectivo = min(perfil, saldo) por codigo, familias elegibles, filtro de horizonte/liquidez verificable y validacion de salida. Contrastar con `AsistenteFinancieroBLL`, `RecomendacionInversionesBLL`, `ResumenInversiones` y `AgenteInversiones` implementados; validar PlantUML/SVG con la skill y respetar G07 (solo lo implementado).
 - [ ] 3.12 Acordar mediante tp-uml-y-casos-de-uso los artefactos de notificaciones-automaticas-diarias: secuencia de la corrida diaria (`CRONS.exe notificaciones` programado a las 07:00 -> `GeneracionNotificacionesBLL.EjecutarAsync` -> por usuario y tipo: compras, movimientos del dia anterior e inversiones cada siete dias derivados de `Notificacion` -> `GeneradorRecomendaciones` -> entrega unica por usuario, tipo y jornada -> `CorridaGeneracionNotificaciones`/`DetalleGeneracionNotificacion` con entregadas, omitidas y fallidas), y el impacto en el CU de Mis notificaciones (mensaje completo, ejemplos de laboratorio `Demo.*` rotulados como ejemplo). Contrastar con el codigo implementado, generar solo los artefactos autorizados y validar PlantUML y CU.
+
+## 4. Documento de la catedra
 
 - [ ] 4.3 Acordar y reflejar exportar-movimientos-pdf (A02) en el documento formal y las instrucciones D01/D02 aplicables, con el Word cerrado y consentimiento previo. Incorporar capturas y explicar seleccion del resultado vigente, filtros aplicados, PDF multipagina y Guardar como; verificar con el usuario.
 
@@ -59,9 +86,9 @@
 
 - [ ] 4.4 Acordar y reflejar actualizacion-automatica-tasas en el documento formal y las especificaciones consolidadas (actualizacion horaria, historial, proteccion manual y limite de requests), con el Word cerrado y consentimiento previo; verificar con el usuario.
 
-## 5. Cierre
-
 - [ ] 4.5 Acordar y reflejar perfil-inversor-usuario en el documento formal y manual/ayuda D01/D02: completar desde registro o Mi Configuracion, tres riesgos y explicaciones, ausencia de perfil, repeticion cancelada/guardada y perfil Alto de ejemplo de `user` desde el script. Verificar el comportamiento implementado antes de incorporar el flujo del asistente. Confirmar Word cerrado y consentimiento antes de editar el documento externo.
 - [ ] 4.6 Acordar y reflejar notificaciones-automaticas-diarias en el documento formal, las especificaciones consolidadas y el manual/ayuda D01/D02 (tarea programada diaria, tres tipos de aviso, siete dias entre inversiones, porcentaje opcional, ejemplos de demostracion para `user`), con el Word cerrado y consentimiento previo; verificar con el usuario.
+
+## 5. Cierre
 
 - [x] 5.1 Confirmar que `diagramas/TODO-actualizacion-diagramas.md` ya no existe y que ningun archivo del repo lo referencia (`grep -r TODO-actualizacion-diagramas`, salvo changes archivados)

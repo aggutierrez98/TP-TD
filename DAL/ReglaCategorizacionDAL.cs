@@ -48,7 +48,7 @@ namespace DAL
             }
         }
 
-        public List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ReglaCategorizacion> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, CategoriaId, Nombre, PalabrasClave
@@ -63,7 +63,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -148,7 +148,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(ReglaCategorizacion reglaCategorizacion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM ReglaCategorizacion
@@ -161,7 +161,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, reglaCategorizacion.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

@@ -32,13 +32,13 @@ namespace BLL
 
         // Devuelve la tasa a la actualizacion automatica. Si ya no era manual no hay nada
         // que escribir ni auditar: la operacion es idempotente.
-        public bool Liberar(int id)
+        public bool Liberar(TasaConversion recibida)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    TasaConversion tasa = unidad.TasasConversion.ObtenerPorId(id);
+                    TasaConversion tasa = recibida == null ? null : unidad.TasasConversion.ObtenerPorId(recibida.Id);
                     if (tasa == null)
                     {
                         throw new ExcepcionNegocio("Error.CurrencyManagement.TasaNotFound");
@@ -49,7 +49,7 @@ namespace BLL
                         return true;
                     }
 
-                    if (!unidad.TasasConversion.Liberar(id))
+                    if (!unidad.TasasConversion.Liberar(tasa))
                     {
                         throw new ExcepcionTecnica("Error.CurrencyManagement.TasaReleaseFailed");
                     }
@@ -78,34 +78,31 @@ namespace BLL
             return _tasaConversionRepositorio.ObtenerTodas();
         }
 
-        public TasaConversion Crear(int monedaBaseId, int monedaConversionId, decimal calculoConversion)
+        public TasaConversion Crear(TasaConversion tasa)
         {
-            ValidarMonedasDistintas(monedaBaseId, monedaConversionId);
-            ValidarCalculo(calculoConversion);
+            ValidarMonedasDistintas(tasa?.MonedaBase, tasa?.MonedaConversion);
+            ValidarCalculo(tasa?.CalculoConversion ?? 0m);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Moneda monedaBase = ObtenerMonedaBaseOLanzar(unidad, monedaBaseId);
-                    Moneda monedaConversion = ObtenerMonedaConversionOLanzar(unidad, monedaConversionId);
+                    Moneda monedaBase = ObtenerMonedaBaseOLanzar(unidad, tasa.MonedaBase);
+                    Moneda monedaConversion = ObtenerMonedaConversionOLanzar(unidad, tasa.MonedaConversion);
 
-                    ValidarParNoDuplicado(unidad, monedaBaseId, monedaConversionId, null);
+                    ValidarParNoDuplicado(unidad, monedaBase, monedaConversion, null);
 
-                    TasaConversion nuevaTasa = new TasaConversion
-                    {
-                        MonedaBase = monedaBase,
-                        MonedaConversion = monedaConversion,
-                        CalculoConversion = calculoConversion,
-                        FechaActualizacion = DateTime.Now
-                    };
-
-                    int id = unidad.TasasConversion.InsertarYObtenerId(nuevaTasa);
-                    nuevaTasa.Id = id;
+                    tasa.MonedaBase = monedaBase;
+                    tasa.MonedaConversion = monedaConversion;
+                    tasa.FechaActualizacion = DateTime.Now;
+                    tasa.EsManual = false;
+                    tasa.ProtegidaPorUsuario = null;
+                    tasa.FechaProteccion = null;
+                    tasa.Id = unidad.TasasConversion.InsertarYObtenerId(tasa);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormCurrencyManagement.Value.Activity.TasaCreation", "FormCurrencyManagement.Value.Info.TasaCreation", "TasaConversionBLL", unidad);
                     unidad.Save();
-                    return nuevaTasa;
+                    return tasa;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -118,37 +115,37 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, int monedaBaseId, int monedaConversionId, decimal calculoConversion)
+        public bool Actualizar(TasaConversion recibida)
         {
-            ValidarMonedasDistintas(monedaBaseId, monedaConversionId);
-            ValidarCalculo(calculoConversion);
+            ValidarMonedasDistintas(recibida?.MonedaBase, recibida?.MonedaConversion);
+            ValidarCalculo(recibida?.CalculoConversion ?? 0m);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    TasaConversion tasa = unidad.TasasConversion.ObtenerPorId(id);
+                    TasaConversion tasa = unidad.TasasConversion.ObtenerPorId(recibida.Id);
                     if (tasa == null)
                     {
                         throw new ExcepcionNegocio("Error.CurrencyManagement.TasaNotFound");
                     }
 
-                    Moneda monedaBase = ObtenerMonedaBaseOLanzar(unidad, monedaBaseId);
-                    Moneda monedaConversion = ObtenerMonedaConversionOLanzar(unidad, monedaConversionId);
+                    Moneda monedaBase = ObtenerMonedaBaseOLanzar(unidad, recibida.MonedaBase);
+                    Moneda monedaConversion = ObtenerMonedaConversionOLanzar(unidad, recibida.MonedaConversion);
 
-                    ValidarParNoDuplicado(unidad, monedaBaseId, monedaConversionId, id);
+                    ValidarParNoDuplicado(unidad, monedaBase, monedaConversion, tasa);
 
                     // Solo un cambio real fija la tasa a mano: guardar sin tocar nada no debe
                     // sacarla de la actualizacion automatica.
-                    bool huboCambio = tasa.CalculoConversion != calculoConversion
-                        || tasa.MonedaBase == null || tasa.MonedaBase.Id != monedaBaseId
-                        || tasa.MonedaConversion == null || tasa.MonedaConversion.Id != monedaConversionId;
+                    bool huboCambio = tasa.CalculoConversion != recibida.CalculoConversion
+                        || tasa.MonedaBase == null || tasa.MonedaBase.Id != monedaBase.Id
+                        || tasa.MonedaConversion == null || tasa.MonedaConversion.Id != monedaConversion.Id;
 
                     tasa.MonedaBase = monedaBase;
                     tasa.MonedaConversion = monedaConversion;
-                    tasa.CalculoConversion = calculoConversion;
+                    tasa.CalculoConversion = recibida.CalculoConversion;
                     tasa.FechaActualizacion = DateTime.Now;
 
                     bool actualizado = unidad.TasasConversion.Actualizar(tasa);
@@ -161,7 +158,7 @@ namespace BLL
 
                     if (huboCambio)
                     {
-                        if (!unidad.TasasConversion.MarcarManual(id, usuarioActualId))
+                        if (!unidad.TasasConversion.MarcarManual(tasa, usuarioActual))
                         {
                             throw new ExcepcionTecnica("Error.CurrencyManagement.TasaUpdateFailed");
                         }
@@ -187,19 +184,19 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(TasaConversion recibida)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    TasaConversion tasa = unidad.TasasConversion.ObtenerPorId(id);
+                    TasaConversion tasa = recibida == null ? null : unidad.TasasConversion.ObtenerPorId(recibida.Id);
                     if (tasa == null)
                     {
                         throw new ExcepcionNegocio("Error.CurrencyManagement.TasaNotFound");
                     }
 
-                    bool eliminado = unidad.TasasConversion.Eliminar(id);
+                    bool eliminado = unidad.TasasConversion.Eliminar(tasa);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.CurrencyManagement.TasaDeleteFailed");
@@ -224,9 +221,9 @@ namespace BLL
             }
         }
 
-        private static Moneda ObtenerMonedaBaseOLanzar(IUnidadDeTrabajo unidad, int monedaBaseId)
+        private static Moneda ObtenerMonedaBaseOLanzar(IUnidadDeTrabajo unidad, Moneda recibida)
         {
-            Moneda monedaBase = unidad.Monedas.ObtenerPorId(monedaBaseId);
+            Moneda monedaBase = recibida == null ? null : unidad.Monedas.ObtenerPorId(recibida.Id);
             if (monedaBase == null)
             {
                 throw new ExcepcionNegocio("Error.CurrencyManagement.MonedaBaseNotFound");
@@ -235,9 +232,9 @@ namespace BLL
             return monedaBase;
         }
 
-        private static Moneda ObtenerMonedaConversionOLanzar(IUnidadDeTrabajo unidad, int monedaConversionId)
+        private static Moneda ObtenerMonedaConversionOLanzar(IUnidadDeTrabajo unidad, Moneda recibida)
         {
-            Moneda monedaConversion = unidad.Monedas.ObtenerPorId(monedaConversionId);
+            Moneda monedaConversion = recibida == null ? null : unidad.Monedas.ObtenerPorId(recibida.Id);
             if (monedaConversion == null)
             {
                 throw new ExcepcionNegocio("Error.CurrencyManagement.MonedaConversionNotFound");
@@ -246,20 +243,19 @@ namespace BLL
             return monedaConversion;
         }
 
-        // excluirId: al actualizar, si el par no cambio, ObtenerPorParDeMonedas devuelve la
-        // propia fila (Id == excluirId) y no debe considerarse un duplicado.
-        private static void ValidarParNoDuplicado(IUnidadDeTrabajo unidad, int monedaBaseId, int monedaConversionId, int? excluirId)
+        // Al editar, la propia fila no es un par duplicado.
+        private static void ValidarParNoDuplicado(IUnidadDeTrabajo unidad, Moneda monedaBase, Moneda monedaConversion, TasaConversion excluida)
         {
-            TasaConversion existente = unidad.TasasConversion.ObtenerPorParDeMonedas(monedaBaseId, monedaConversionId);
-            if (existente != null && existente.Id != excluirId)
+            TasaConversion existente = unidad.TasasConversion.ObtenerPorParDeMonedas(monedaBase, monedaConversion);
+            if (existente != null && existente.Id != excluida?.Id)
             {
                 throw new ExcepcionNegocio("Error.CurrencyManagement.ParDuplicado");
             }
         }
 
-        private static void ValidarMonedasDistintas(int monedaBaseId, int monedaConversionId)
+        private static void ValidarMonedasDistintas(Moneda monedaBase, Moneda monedaConversion)
         {
-            if (monedaBaseId == monedaConversionId)
+            if (monedaBase != null && monedaConversion != null && monedaBase.Id == monedaConversion.Id)
             {
                 throw new ExcepcionNegocio("Error.CurrencyManagement.MonedasIguales");
             }

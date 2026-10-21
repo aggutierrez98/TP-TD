@@ -72,7 +72,7 @@ namespace TpIDS.IntegrationTests
                     Tipo = BE.TipoCuentaFinanciera.CajaAhorro
                 });
 
-                System.Collections.Generic.List<BE.CuentaFinanciera> propias = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.CuentaFinanciera> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propias.Any(item => item.Id == idPropia));
                 Assert.IsFalse(propias.Any(item => item.Id == idAjena));
@@ -94,7 +94,7 @@ namespace TpIDS.IntegrationTests
                 int idPropia = InsertarCuentaTest(repositorio, usuarioId, entidadFinancieraId, "CuentaTestEntidadA");
                 int idAjena = InsertarCuentaTest(repositorio, usuarioId, otraEntidadFinancieraId, "CuentaTestEntidadB");
 
-                System.Collections.Generic.List<BE.CuentaFinanciera> resultado = repositorio.ObtenerPorEntidadFinanciera(entidadFinancieraId);
+                System.Collections.Generic.List<BE.CuentaFinanciera> resultado = repositorio.ObtenerPorEntidadFinanciera(new BE.EntidadFinanciera { Id = entidadFinancieraId });
 
                 Assert.IsTrue(resultado.Any(item => item.Id == idPropia));
                 Assert.IsFalse(resultado.Any(item => item.Id == idAjena));
@@ -116,7 +116,7 @@ namespace TpIDS.IntegrationTests
                 int medioPagoEntidadId1 = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestCuentaMedios1");
                 int medioPagoEntidadId2 = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestCuentaMedios2");
 
-                bool reemplazado = repositorio.ReemplazarMediosPagoEntidadDeCuenta(id, new System.Collections.Generic.List<int> { medioPagoEntidadId1, medioPagoEntidadId2 });
+                bool reemplazado = repositorio.ReemplazarMediosPagoEntidadDeCuenta(repositorio.ObtenerPorId(id), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioPagoEntidadId1), new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioPagoEntidadId2) });
 
                 Assert.IsTrue(reemplazado);
                 BE.CuentaFinanciera releida = repositorio.ObtenerPorId(id);
@@ -141,8 +141,8 @@ namespace TpIDS.IntegrationTests
                 int medioPagoEntidadIdA = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestCuentaReemplazoA");
                 int medioPagoEntidadIdB = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestCuentaReemplazoB");
 
-                repositorio.ReemplazarMediosPagoEntidadDeCuenta(id, new System.Collections.Generic.List<int> { medioPagoEntidadIdA });
-                repositorio.ReemplazarMediosPagoEntidadDeCuenta(id, new System.Collections.Generic.List<int> { medioPagoEntidadIdB });
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(repositorio.ObtenerPorId(id), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioPagoEntidadIdA) });
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(repositorio.ObtenerPorId(id), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioPagoEntidadIdB) });
 
                 BE.CuentaFinanciera releida = repositorio.ObtenerPorId(id);
                 Assert.AreEqual(1, releida.MediosPagoEntidad.Count);
@@ -165,11 +165,11 @@ namespace TpIDS.IntegrationTests
                 int cuentaBId = InsertarCuentaTest(repositorio, usuarioId, entidadFinancieraId, "CuentaTestContarMedioB");
                 int medioContratadoId = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestContarMedioUsado");
                 int medioSinUsoId = InsertarMedioPagoEntidadTest(accesoDatos, entidadFinancieraId, "MarcaTestContarMedioLibre");
-                repositorio.ReemplazarMediosPagoEntidadDeCuenta(cuentaAId, new System.Collections.Generic.List<int> { medioContratadoId });
-                repositorio.ReemplazarMediosPagoEntidadDeCuenta(cuentaBId, new System.Collections.Generic.List<int> { medioContratadoId });
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(repositorio.ObtenerPorId(cuentaAId), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioContratadoId) });
+                repositorio.ReemplazarMediosPagoEntidadDeCuenta(repositorio.ObtenerPorId(cuentaBId), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioContratadoId) });
 
-                Assert.AreEqual(2, repositorio.ContarPorMedioPagoEntidad(medioContratadoId));
-                Assert.AreEqual(0, repositorio.ContarPorMedioPagoEntidad(medioSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorMedioPagoEntidad(new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioContratadoId)));
+                Assert.AreEqual(0, repositorio.ContarPorMedioPagoEntidad(new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioSinUsoId)));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -229,7 +229,7 @@ namespace TpIDS.IntegrationTests
                     Tipo = BE.TipoCuentaFinanciera.CajaAhorro
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

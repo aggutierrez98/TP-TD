@@ -1,0 +1,77 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN27 Asociar medio de pago a entidad financiera — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormDetalleEntidadFinanciera" as FormDetalleEntidadFinanciera
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+participant "MedioPagoRepositorio\n:IMedioPagoRepositorio" as IMedioPagoRepositorio
+participant "MedioPagoEntidadRepositorio\n:IMedioPagoEntidadRepositorio" as IMedioPagoEntidadRepositorio
+participant "MedioPagoEntidadDAL" as MedioPagoEntidadDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormDetalleEntidadFinanciera : El actor desea que una entidad financiera ofrezca un determinado medio de pago.
+Actor -> FormDetalleEntidadFinanciera : selecciona la opción «Entidades financieras» del menú «Operador».
+FormDetalleEntidadFinanciera --> Actor : presenta la pantalla «Gestión de entidades financieras» con el listado de entidades\nregistradas.
+Actor -> FormDetalleEntidadFinanciera : selecciona del listado la entidad a la que desea asociar el medio de pago.
+Actor -> FormDetalleEntidadFinanciera : presiona el botón «Ver detalle».
+FormDetalleEntidadFinanciera --> Actor : presenta la ventana «Detalle de la entidad financiera», con los medios de pago que la\nentidad ya ofrece y el selector «Medio de pago:», que lista los medios del catálogo por su\ntipo y marca.
+Actor -> FormDetalleEntidadFinanciera : selecciona un medio de pago en «Medio de pago:».
+Actor -> FormDetalleEntidadFinanciera : ingresa, si lo desea, un segmento en el campo «Segmento:».
+Actor -> FormDetalleEntidadFinanciera : presiona el botón «Agregar».
+FormDetalleEntidadFinanciera -> EntidadFinancieraBLL ++ : AgregarMedioPagoEntidad(medioPagoEntidad: MedioPagoEntidad)
+EntidadFinancieraBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> EntidadFinancieraBLL -- : IUnidadDeTrabajo
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL -> IMedioPagoRepositorio ++ : ObtenerPorId(id: int)
+IMedioPagoRepositorio --> EntidadFinancieraBLL -- : MedioPago
+EntidadFinancieraBLL -> IMedioPagoEntidadRepositorio ++ : ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera)
+IMedioPagoEntidadRepositorio -> MedioPagoEntidadDAL ++ : ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera,\naccesoDatos: AccesoDatosSqlServer)
+MedioPagoEntidadDAL --> IMedioPagoEntidadRepositorio -- : List<MedioPagoEntidad>
+IMedioPagoEntidadRepositorio --> EntidadFinancieraBLL -- : List<MedioPagoEntidad>
+EntidadFinancieraBLL -> IMedioPagoEntidadRepositorio ++ : InsertarYObtenerId(medioPagoEntidad: MedioPagoEntidad)
+IMedioPagoEntidadRepositorio -> MedioPagoEntidadDAL ++ : InsertarYObtenerId(medioPagoEntidad: MedioPagoEntidad,\naccesoDatos: AccesoDatosSqlServer)
+MedioPagoEntidadDAL --> IMedioPagoEntidadRepositorio -- : int
+IMedioPagoEntidadRepositorio --> EntidadFinancieraBLL -- : int
+EntidadFinancieraBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL --> FormDetalleEntidadFinanciera -- : MedioPagoEntidad
+group Refrescar listado tras la operacion exitosa
+FormDetalleEntidadFinanciera -> EntidadFinancieraBLL ++ : ObtenerMediosPagoEntidad(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL --> FormDetalleEntidadFinanciera -- : List<MedioPagoEntidad>
+end
+FormDetalleEntidadFinanciera --> Actor : asocia el medio de pago a la entidad, limpia el selector y el campo «Segmento:», agrega el\nmedio al listado de la entidad seleccionándolo e informa el resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/EntidadFinancieraBLL.cs:161 EntidadFinancieraBLL.AgregarMedioPagoEntidad
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' DAL/MedioPagoEntidadDAL.cs:141 MedioPagoEntidadDAL.InsertarYObtenerId
+' DAL/MedioPagoEntidadDAL.cs:52 MedioPagoEntidadDAL.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:10 IMedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:17 IMedioPagoEntidadRepositorio.InsertarYObtenerId
+' REPOSITORIO/IMedioPagoRepositorio.cs:8 IMedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:34 MedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:66 MedioPagoEntidadRepositorio.InsertarYObtenerId
+' UI/FormDetalleEntidadFinanciera.cs:128 FormDetalleEntidadFinanciera.btnAgregarMedioPagoEntidad_Click
+@enduml

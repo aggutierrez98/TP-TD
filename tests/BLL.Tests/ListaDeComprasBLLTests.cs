@@ -43,7 +43,7 @@ namespace BLL.Tests
             ListaDeComprasFixture fixture = new ListaDeComprasFixture(usuarioActualId: 1);
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(1, "   ", 2));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(new ItemLista { ListaDeCompras = new ListaDeCompras { Id = 1 }, Descripcion = "   ", Cantidad = 2 }));
         }
 
         [TestMethod]
@@ -52,7 +52,7 @@ namespace BLL.Tests
             ListaDeComprasFixture fixture = new ListaDeComprasFixture(usuarioActualId: 1);
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(1, "Leche", 0));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(new ItemLista { ListaDeCompras = new ListaDeCompras { Id = 1 }, Descripcion = "Leche", Cantidad = 0 }));
         }
 
         [TestMethod]
@@ -61,7 +61,7 @@ namespace BLL.Tests
             ListaDeComprasFixture fixture = new ListaDeComprasFixture(usuarioActualId: 1);
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(99, "Leche", 1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(new ItemLista { ListaDeCompras = new ListaDeCompras { Id = 99 }, Descripcion = "Leche", Cantidad = 1 }));
         }
 
         [TestMethod]
@@ -71,7 +71,7 @@ namespace BLL.Tests
             fixture.Unidad.ListaDeComprasRepo.Listas.Add(2, new ListaDeCompras { Id = 2, Usuario = new Usuario { Id = 99 } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(2, "Leche", 1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarItem(new ItemLista { ListaDeCompras = new ListaDeCompras { Id = 2, Usuario = new Usuario { Id = 1 } }, Descripcion = "Leche", Cantidad = 1 }));
         }
 
         [TestMethod]
@@ -81,7 +81,9 @@ namespace BLL.Tests
             fixture.Unidad.ListaDeComprasRepo.Listas.Add(3, new ListaDeCompras { Id = 3, Usuario = new Usuario { Id = 5 } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            ItemLista item = sut.AgregarItem(3, "  Leche descremada 1L  ", 2);
+            ItemLista recibido = new ItemLista { ListaDeCompras = new ListaDeCompras { Id = 3 }, Descripcion = "  Leche descremada 1L  ", Cantidad = 2 };
+            ItemLista item = sut.AgregarItem(recibido);
+            Assert.AreSame(recibido, item);
 
             ItemLista insertado = fixture.Unidad.ItemListaRepo.Items[item.Id];
             Assert.AreEqual("Leche descremada 1L", insertado.Descripcion);
@@ -98,7 +100,7 @@ namespace BLL.Tests
             ListaDeComprasFixture fixture = new ListaDeComprasFixture(usuarioActualId: 1);
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(1, -1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(new ItemLista { Id = 1 }, -1));
         }
 
         [TestMethod]
@@ -107,7 +109,7 @@ namespace BLL.Tests
             ListaDeComprasFixture fixture = new ListaDeComprasFixture(usuarioActualId: 1);
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(99, 3));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(new ItemLista { Id = 99 }, 3));
         }
 
         [TestMethod]
@@ -117,7 +119,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(4, new ItemLista { Id = 4, Descripcion = "Ajeno", Cantidad = 1, ListaDeCompras = new ListaDeCompras { Id = 10, Usuario = new Usuario { Id = 99 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(4, 3));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.ActualizarCantidad(new ItemLista { Id = 4, ListaDeCompras = new ListaDeCompras { Usuario = new Usuario { Id = 1 } } }, 3));
         }
 
         [TestMethod]
@@ -127,7 +129,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(6, new ItemLista { Id = 6, Descripcion = "Pan", Cantidad = 1, Comprado = false, ListaDeCompras = new ListaDeCompras { Id = 3, Usuario = new Usuario { Id = 5 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.ActualizarCantidad(6, 8);
+            bool resultado = sut.ActualizarCantidad(new ItemLista { Id = 6 }, 8);
 
             Assert.IsTrue(resultado);
             Assert.AreEqual(8, fixture.Unidad.ItemListaRepo.Items[6].Cantidad);
@@ -142,7 +144,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(7, new ItemLista { Id = 7, Descripcion = "Ajeno", Cantidad = 1, ListaDeCompras = new ListaDeCompras { Id = 10, Usuario = new Usuario { Id = 99 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.MarcarComprado(7, true));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.MarcarComprado(new ItemLista { Id = 7, ListaDeCompras = new ListaDeCompras { Usuario = new Usuario { Id = 1 } } }, true));
         }
 
         [TestMethod]
@@ -152,7 +154,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(8, new ItemLista { Id = 8, Descripcion = "Fideos", Cantidad = 1, Comprado = false, ListaDeCompras = new ListaDeCompras { Id = 3, Usuario = new Usuario { Id = 5 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.MarcarComprado(8, true);
+            bool resultado = sut.MarcarComprado(new ItemLista { Id = 8 }, true);
 
             Assert.IsTrue(resultado);
             Assert.IsTrue(fixture.Unidad.ItemListaRepo.Items[8].Comprado);
@@ -167,7 +169,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(9, new ItemLista { Id = 9, Descripcion = "Ajeno", Cantidad = 1, ListaDeCompras = new ListaDeCompras { Id = 10, Usuario = new Usuario { Id = 99 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.EliminarItem(9));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.EliminarItem(new ItemLista { Id = 9, ListaDeCompras = new ListaDeCompras { Usuario = new Usuario { Id = 1 } } }));
         }
 
         [TestMethod]
@@ -177,7 +179,7 @@ namespace BLL.Tests
             fixture.Unidad.ItemListaRepo.Items.Add(10, new ItemLista { Id = 10, Descripcion = "Yerba", Cantidad = 1, ListaDeCompras = new ListaDeCompras { Id = 3, Usuario = new Usuario { Id = 5 } } });
             ListaDeComprasBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.EliminarItem(10);
+            bool resultado = sut.EliminarItem(new ItemLista { Id = 10 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.ItemListaRepo.Items.ContainsKey(10));

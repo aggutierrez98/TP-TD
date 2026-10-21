@@ -5,16 +5,18 @@ namespace REPOSITORIO
 {
     public interface IComercioProductoRepositorio
     {
-        List<ComercioProducto> ObtenerPorComercio(int comercioId);
+        List<ComercioProducto> ObtenerPorComercio(Comercio comercio);
 
-        ComercioProducto ObtenerPorId(int comercioId, int productoId);
+        // La clave es el par (Comercio, Producto): no hay Id propio para ObtenerPorId.
+        ComercioProducto ObtenerPorComercioYProducto(Comercio comercio, Producto producto);
 
         bool Insertar(ComercioProducto comercioProducto);
 
-        bool ActualizarPrecio(int comercioId, int productoId, decimal precio);
+        // Solo persiste el Precio; Comercio y Producto identifican la fila.
+        bool ActualizarPrecio(ComercioProducto comercioProducto);
 
-        bool Eliminar(int comercioId, int productoId);
+        bool Eliminar(ComercioProducto comercioProducto);
 
-        int ContarPorProducto(int productoId);
+        int ContarPorProducto(Producto producto);
     }
 }

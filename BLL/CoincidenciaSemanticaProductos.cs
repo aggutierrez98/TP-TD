@@ -34,8 +34,8 @@ namespace BLL
             cancellationToken.ThrowIfCancellationRequested();
             List<Producto> catalogo = productos.OrderBy(producto => producto.Id).ToList();
             Dictionary<int, ProductoEmbedding> vigentes = _repositorio.ObtenerTodos()
-                .Where(vector => vector.Modelo == _servicio.Modelo && catalogo.Any(producto => producto.Id == vector.ProductoId && TextoFuente(producto) == vector.TextoFuente))
-                .ToDictionary(vector => vector.ProductoId);
+                .Where(vector => vector.Modelo == _servicio.Modelo && catalogo.Any(producto => producto.Id == vector.Producto.Id && TextoFuente(producto) == vector.TextoFuente))
+                .ToDictionary(vector => vector.Producto.Id);
             List<ItemLista> consultados = pendientes.Take(LimiteTextosPorConsulta).ToList();
             List<Producto> recalcular = catalogo.Where(producto => !vigentes.ContainsKey(producto.Id))
                 .Take(LimiteTextosPorConsulta - consultados.Count).ToList();
@@ -58,7 +58,7 @@ namespace BLL
                         Producto producto = recalcular[i];
                         ProductoEmbedding vector = new ProductoEmbedding
                         {
-                            ProductoId = producto.Id, Modelo = _servicio.Modelo, TextoFuente = TextoFuente(producto),
+                            Producto = producto, Modelo = _servicio.Modelo, TextoFuente = TextoFuente(producto),
                             Vector = vectores[consultados.Count + i], FechaCalculo = _ahora()
                         };
                         unidad.ProductoEmbeddings.Guardar(vector);

@@ -67,12 +67,12 @@ namespace TpIDS.IntegrationTests
                 int idCasa = repositorio.InsertarYObtenerId(CrearZona(usuarioId, "ZonaTestCasa", -34.5m, -58.5m, 500));
                 int idAjena = repositorio.InsertarYObtenerId(CrearZona(otroUsuarioId, "ZonaTestAjena", -34.7m, -58.3m, 800));
 
-                List<BE.ZonaUsuario> propias = repositorio.ObtenerPorUsuario(usuarioId)
+                List<BE.ZonaUsuario> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId })
                     .Where(item => item.Nombre.StartsWith("ZonaTest"))
                     .ToList();
 
                 CollectionAssert.AreEqual(new List<int> { idCasa, idTrabajo }, propias.Select(item => item.Id).ToList());
-                Assert.IsFalse(repositorio.ObtenerPorUsuario(usuarioId).Any(item => item.Id == idAjena));
+                Assert.IsFalse(repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId }).Any(item => item.Id == idAjena));
                 Assert.IsTrue(propias.All(item => item.Usuario.Id == usuarioId));
 
                 accesoDatos.RollbackTransactionScope();
@@ -89,11 +89,12 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = ObtenerUsuarioBasicoId(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(CrearZona(usuarioId, "ZonaTestBaja", -34.6m, -58.4m, 1000));
 
-                bool eliminada = repositorio.Eliminar(id);
+                BE.ZonaUsuario zona = repositorio.ObtenerPorId(id);
+                bool eliminada = repositorio.Eliminar(zona);
 
                 Assert.IsTrue(eliminada);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
-                Assert.IsFalse(repositorio.Eliminar(id));
+                Assert.IsFalse(repositorio.Eliminar(zona));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -132,7 +133,7 @@ namespace TpIDS.IntegrationTests
                 int idOtro = repositorio.InsertarYObtenerId(CrearZona(otroUsuarioId, "ZonaTestCompartida", -34.5m, -58.5m, 500));
 
                 Assert.IsTrue(idOtro > 0);
-                Assert.IsTrue(repositorio.ObtenerPorUsuario(otroUsuarioId).Any(item => item.Id == idOtro));
+                Assert.IsTrue(repositorio.ObtenerPorUsuario(new BE.Usuario { Id = otroUsuarioId }).Any(item => item.Id == idOtro));
 
                 accesoDatos.RollbackTransactionScope();
             }

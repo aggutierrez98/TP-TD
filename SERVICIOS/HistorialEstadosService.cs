@@ -9,8 +9,8 @@ namespace SERVICIOS
     {
         private static HistorialEstadosService _instancia;
 
-        private Func<int, IList<UsuarioHistorialSnapshot>> _obtenedorVersionesUsuario;
-        private Func<int, UsuarioHistorialSnapshot> _obtenedorVersionUsuario;
+        private Func<IUsuarioAutenticado, IList<UsuarioHistorialSnapshot>> _obtenedorVersionesUsuario;
+        private Func<IUsuarioSnapshot, UsuarioHistorialSnapshot> _obtenedorVersionUsuario;
 
         private HistorialEstadosService()
         {
@@ -38,8 +38,8 @@ namespace SERVICIOS
         /// <param name="obtenedorVersionesUsuario">La funcion que obtiene todas las versiones de un usuario.</param>
         /// <param name="obtenedorVersionUsuario">La funcion que obtiene una version puntual por identificador de historial.</param>
         public void Configurar(
-            Func<int, IList<UsuarioHistorialSnapshot>> obtenedorVersionesUsuario,
-            Func<int, UsuarioHistorialSnapshot> obtenedorVersionUsuario)
+            Func<IUsuarioAutenticado, IList<UsuarioHistorialSnapshot>> obtenedorVersionesUsuario,
+            Func<IUsuarioSnapshot, UsuarioHistorialSnapshot> obtenedorVersionUsuario)
         {
             _obtenedorVersionesUsuario = obtenedorVersionesUsuario;
             _obtenedorVersionUsuario = obtenedorVersionUsuario;
@@ -51,14 +51,14 @@ namespace SERVICIOS
         /// </summary>
         /// <param name="usuarioId">El identificador del usuario historizado.</param>
         /// <returns>La lista de snapshots historicos del usuario.</returns>
-        public IList<UsuarioHistorialSnapshot> ObtenerVersionesUsuario(int usuarioId)
+        public IList<UsuarioHistorialSnapshot> ObtenerVersionesUsuario(IUsuarioAutenticado usuario)
         {
             if (_obtenedorVersionesUsuario == null)
             {
                 return new List<UsuarioHistorialSnapshot>();
             }
 
-            return _obtenedorVersionesUsuario(usuarioId);
+            return _obtenedorVersionesUsuario(usuario);
         }
 
         /// <summary>
@@ -67,24 +67,24 @@ namespace SERVICIOS
         /// </summary>
         /// <param name="historialId">El identificador de la version historica.</param>
         /// <returns>El snapshot historico solicitado.</returns>
-        public UsuarioHistorialSnapshot ObtenerVersionUsuario(int historialId)
+        public UsuarioHistorialSnapshot ObtenerVersionUsuario(IUsuarioSnapshot snapshot)
         {
             if (_obtenedorVersionUsuario == null)
             {
                 return null;
             }
 
-            return _obtenedorVersionUsuario(historialId);
+            return _obtenedorVersionUsuario(snapshot);
         }
 
-        IList<IUsuarioSnapshot> IServicioHistorialEstados.ObtenerVersionesUsuario(int usuarioId)
+        IList<IUsuarioSnapshot> IServicioHistorialEstados.ObtenerVersionesUsuario(IUsuarioAutenticado usuario)
         {
-            return ObtenerVersionesUsuario(usuarioId).Cast<IUsuarioSnapshot>().ToList();
+            return ObtenerVersionesUsuario(usuario).Cast<IUsuarioSnapshot>().ToList();
         }
 
-        IUsuarioSnapshot IServicioHistorialEstados.ObtenerVersionUsuario(int historialId)
+        IUsuarioSnapshot IServicioHistorialEstados.ObtenerVersionUsuario(IUsuarioSnapshot snapshot)
         {
-            return ObtenerVersionUsuario(historialId);
+            return ObtenerVersionUsuario(snapshot);
         }
     }
 }

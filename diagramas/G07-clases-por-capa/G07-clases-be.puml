@@ -1,54 +1,509 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa BE
-
+title G07 - Diagrama de clases por capa - BE
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
+hide empty members
 
-package "ABSTRACCIONES" <<Frame>> {
-  interface IUsuarioAutenticado
-  interface IIntegrable
-  enum TipoMovimiento
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'BE/ChatbotFinanciero.cs
+  class "ChatbotFinanciero" as BE_ChatbotFinanciero {
+    ~Id : int
+    ~Nombre : string
+  }
+  'BE/ConsultaChatbot.cs
+  class "ConsultaChatbot" as BE_ConsultaChatbot {
+    ~Id : int
+    ~ChatbotFinanciero : ChatbotFinanciero
+    ~Usuario : Usuario
+    ~Pregunta : string
+    ~Respuesta : string
+    ~Fecha : DateTime
+    ~EsPregunta : bool
+  }
+  'BE/CorridaGeneracionNotificaciones.cs
+  class "CorridaGeneracionNotificaciones" as BE_CorridaGeneracionNotificaciones {
+    ~Id : int
+    ~InicioUtc : DateTime
+    ~FinUtc : DateTime?
+    ~Jornada : DateTime
+    ~Entregadas : int
+    ~Omitidas : int
+    ~Fallidas : int
+    ~Detalles : List<DetalleGeneracionNotificacion>
+  }
+  'BE/DetalleGeneracionNotificacion.cs
+  class "DetalleGeneracionNotificacion" as BE_DetalleGeneracionNotificacion {
+    ~Id : int
+    ~Corrida : CorridaGeneracionNotificaciones
+    ~Usuario : Usuario
+    ~Tipo : TipoNotificacionAutomatica
+    ~Jornada : DateTime
+    ~Resultado : ResultadoGeneracionNotificacion
+    ~Motivo : string
+    ~Notificacion : Notificacion
+    ~FechaUtc : DateTime
+  }
+  'BE/ProductoEmbedding.cs
+  class "ProductoEmbedding" as BE_ProductoEmbedding {
+    ~Producto : Producto
+    ~Modelo : string
+    ~TextoFuente : string
+    ~Vector : float[]
+    ~FechaCalculo : DateTime
+  }
+  'BE/ResultadoGeneracionNotificacion.cs
+  enum "ResultadoGeneracionNotificacion" as BE_ResultadoGeneracionNotificacion {
+    Entregada
+    Omitida
+    Fallida
+  }
+}
+package "Comercios y promociones" as P1 {
+  'BE/CategoriaProducto.cs
+  class "CategoriaProducto" as BE_CategoriaProducto {
+    ~Id : int
+    ~Nombre : string
+  }
+  'BE/Comercio.cs
+  class "Comercio" as BE_Comercio {
+    ~Id : int
+    ~RubroComercio : RubroComercio
+    ~Nombre : string
+    ~Direccion : string
+    ~Localidad : string
+    ~Provincia : string
+    ~Latitud : decimal?
+    ~Longitud : decimal?
+  }
+  'BE/ComercioProducto.cs
+  class "ComercioProducto" as BE_ComercioProducto {
+    ~Comercio : Comercio
+    ~Producto : Producto
+    ~Moneda : Moneda
+    ~Precio : decimal
+  }
+  'BE/Producto.cs
+  class "Producto" as BE_Producto {
+    ~Id : int
+    ~CategoriaProducto : CategoriaProducto
+    ~Nombre : string
+  }
+  'BE/Promocion.cs
+  class "Promocion" as BE_Promocion {
+    ~Id : int
+    ~Descripcion : string
+    ~Descuento : decimal
+    ~TopeDescuento : decimal?
+    ~VigenciaDesde : DateTime
+    ~VigenciaHasta : DateTime
+    ~DiasSemana : List<DiaSemana>
+    ~Comercios : List<Comercio>
+    ~RubrosComercio : List<RubroComercio>
+    ~EntidadesFinancieras : List<EntidadFinanciera>
+    ~MediosPago : List<MedioPago>
+    ~Segmentos : List<string>
+    ~ProductosIncluidos : List<Producto>
+    ~ProductosExcluidos : List<Producto>
+    ~CategoriasIncluidas : List<CategoriaProducto>
+    ~CategoriasExcluidas : List<CategoriaProducto>
+  }
+  'BE/RubroComercio.cs
+  class "RubroComercio" as BE_RubroComercio {
+    ~Id : int
+    ~Nombre : string
+  }
+}
+package "Finanzas personales" as P2 {
+  'BE/Categoria.cs
+  class "Categoria" as BE_Categoria {
+    ~Id : int
+    ~Nombre : string
+    ~Usuario : Usuario
+    ~EsGlobal : bool
+  }
+  'BE/CuentaFinanciera.cs
+  class "CuentaFinanciera" as BE_CuentaFinanciera {
+    ~Id : int
+    ~Usuario : Usuario
+    ~EntidadFinanciera : EntidadFinanciera
+    ~Alias : string
+    ~Tipo : TipoCuentaFinanciera
+    ~CredencialesCifradas : string
+    ~MediosPagoEntidad : List<MedioPagoEntidad>
+  }
+  'BE/Dashboard.cs
+  class "Dashboard" as BE_Dashboard {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Tarjetas : List<TarjetaDashboard>
+  }
+  'BE/EntidadFinanciera.cs
+  class "EntidadFinanciera" as BE_EntidadFinanciera {
+    ~Id : int
+    ~Nombre : string
+    ~MediosPagoEntidad : List<MedioPagoEntidad>
+  }
+  'BE/FiltroMovimiento.cs
+  class "FiltroMovimiento" as BE_FiltroMovimiento {
+    ~FechaDesde : DateTime?
+    ~FechaHasta : DateTime?
+    ~Categoria : Categoria
+    ~Tipo : TipoMovimiento?
+    ~Texto : string
+  }
+  'BE/ItemLista.cs
+  class "ItemLista" as BE_ItemLista {
+    ~Id : int
+    ~ListaDeCompras : ListaDeCompras
+    ~Descripcion : string
+    ~Cantidad : int
+    ~Comprado : bool
+  }
+  'BE/ListaDeCompras.cs
+  class "ListaDeCompras" as BE_ListaDeCompras {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Nombre : string
+    ~FechaCreacion : DateTime
+    ~ItemsLista : List<ItemLista>
+  }
+  'BE/MedioPago.cs
+  class "MedioPago" as BE_MedioPago {
+    ~Id : int
+    ~Tipo : TipoMedioPago
+    ~Marca : string
+  }
+  'BE/MedioPagoEntidad.cs
+  class "MedioPagoEntidad" as BE_MedioPagoEntidad {
+    ~Id : int
+    ~EntidadFinanciera : EntidadFinanciera
+    ~MedioPago : MedioPago
+    ~Segmento : string
+  }
+  'BE/Movimiento.cs
+  class "Movimiento" as BE_Movimiento {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Categoria : Categoria
+    ~Comercio : Comercio
+    ~Tipo : TipoMovimiento
+    ~Monto : decimal
+    ~Fecha : DateTime
+    ~Descripcion : string
+    ~FechaCreacion : DateTime
+  }
+  'BE/ReglaCategorizacion.cs
+  class "ReglaCategorizacion" as BE_ReglaCategorizacion {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Categoria : Categoria
+    ~Nombre : string
+    ~PalabrasClave : string
+  }
+  'BE/ReporteMovimientosPdf.cs
+  class "ReporteMovimientosPdf" as BE_ReporteMovimientosPdf {
+    ~ReporteMovimientosPdf(usuario : Usuario, titulo : string, encabezados : IEnumerable<string>, filas :\nIEnumerable<IEnumerable<string>>, filtros : IEnumerable<string>, logo : byte[], fechaGeneracion : DateTime,\netiquetaFechaGeneracion : string, etiquetaCantidad : string, formatoPagina : string, textoContinuacion :\nstring)
+    ~Usuario : Usuario
+    ~Titulo : string
+    ~Encabezados : IReadOnlyList<string>
+    ~Filas : IReadOnlyList<IReadOnlyList<string>>
+    ~Filtros : IReadOnlyList<string>
+    ~Logo : byte[]
+    ~FechaGeneracion : DateTime
+    ~EtiquetaFechaGeneracion : string
+    ~EtiquetaCantidad : string
+    ~FormatoPagina : string
+    ~TextoContinuacion : string
+  }
+  'BE/TarjetaDashboard.cs
+  class "TarjetaDashboard" as BE_TarjetaDashboard {
+    ~Id : int
+    ~Dashboard : Dashboard
+    ~Tipo : TipoTarjetaDashboard
+    ~Orden : int
+  }
+  'BE/TipoCuentaFinanciera.cs
+  enum "TipoCuentaFinanciera" as BE_TipoCuentaFinanciera {
+    BilleteraDigital
+    CuentaCorriente
+    CajaAhorro
+  }
+  'BE/TipoMedioPago.cs
+  enum "TipoMedioPago" as BE_TipoMedioPago {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+  'BE/TipoTarjetaDashboard.cs
+  enum "TipoTarjetaDashboard" as BE_TipoTarjetaDashboard {
+    GastosPorCategoria
+    IngresosPorCategoria
+    ComparativoMensual
+    EvolucionBalance
+    GastosPorComercio
+    GastoAcumuladoMensual
+  }
+}
+package "Infraestructura" as P3 {
+  'BE/DiaSemana.cs
+  enum "DiaSemana" as BE_DiaSemana {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+}
+package "Monedas y tasas" as P4 {
+  'BE/ActualizacionTasaDetalle.cs
+  class "ActualizacionTasaDetalle" as BE_ActualizacionTasaDetalle {
+    ~Id : int
+    ~Ejecucion : EjecucionActualizacionTasas
+    ~MonedaBase : Moneda
+    ~MonedaConversion : Moneda
+    ~ValorAnterior : decimal
+    ~ValorNuevo : decimal?
+    ~Estado : EstadoActualizacionTasa
+  }
+  'BE/EjecucionActualizacionTasas.cs
+  class "EjecucionActualizacionTasas" as BE_EjecucionActualizacionTasas {
+    ~Id : int
+    ~FechaInicio : DateTime
+    ~Origen : OrigenActualizacionTasas
+    ~Resultado : ResultadoActualizacionTasas
+    ~ConsumioRequest : bool
+    ~Mensaje : string
+    ~Detalles : List<ActualizacionTasaDetalle>
+  }
+  'BE/EstadoActualizacionTasa.cs
+  enum "EstadoActualizacionTasa" as BE_EstadoActualizacionTasa {
+    Actualizado
+    SaltadoManual
+    SaltadoSinDato
+  }
+  'BE/Moneda.cs
+  class "Moneda" as BE_Moneda {
+    ~Id : int
+    ~Codigo : string
+    ~Nombre : string
+  }
+  'BE/OrigenActualizacionTasas.cs
+  enum "OrigenActualizacionTasas" as BE_OrigenActualizacionTasas {
+    Programada
+    Manual
+  }
+  'BE/ResultadoActualizacionTasas.cs
+  enum "ResultadoActualizacionTasas" as BE_ResultadoActualizacionTasas {
+    Exitosa
+    Fallida
+    Omitida
+  }
+  'BE/ResultadoEjecucionActualizacionTasas.cs
+  class "ResultadoEjecucionActualizacionTasas" as BE_ResultadoEjecucionActualizacionTasas {
+    ~Ejecucion : EjecucionActualizacionTasas
+    ~ProximaConsultaPermitida : DateTime?
+  }
+  'BE/TasaConversion.cs
+  class "TasaConversion" as BE_TasaConversion {
+    ~Id : int
+    ~MonedaBase : Moneda
+    ~MonedaConversion : Moneda
+    ~CalculoConversion : decimal
+    ~FechaActualizacion : DateTime
+    ~EsManual : bool
+    ~ProtegidaPorUsuario : Usuario
+    ~FechaProteccion : DateTime?
+  }
+}
+package "Notificaciones" as P5 {
+  'BE/FiltroNotificacion.cs
+  class "FiltroNotificacion" as BE_FiltroNotificacion {
+    ~FechaDesde : DateTime?
+    ~FechaHasta : DateTime?
+  }
+  'BE/Notificacion.cs
+  class "Notificacion" as BE_Notificacion {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Mensaje : string
+    ~Fecha : DateTime
+    ~Leida : bool
+    ~TipoAutomatico : TipoNotificacionAutomatica?
+    ~FechaJornada : DateTime?
+    ~ClaveEjemplo : string
+  }
+  'BE/PaginaNotificaciones.cs
+  class "PaginaNotificaciones" as BE_PaginaNotificaciones {
+    ~TamanoPagina : int
+    ~Elementos : List<Notificacion>
+    ~Total : int
+    ~Pagina : int
+    ~TotalPaginas : int
+  }
+  'BE/RecordatorioCompra.cs
+  class "RecordatorioCompra" as BE_RecordatorioCompra {
+    ~ItemLista : ItemLista
+    ~Promocion : Promocion
+    ~FechaVencimiento : DateTime?
+  }
+  'BE/RecordatorioInversion.cs
+  class "RecordatorioInversion" as BE_RecordatorioInversion {
+  }
+  'BE/TipoNotificacionAutomatica.cs
+  enum "TipoNotificacionAutomatica" as BE_TipoNotificacionAutomatica {
+    Compras
+    Inversiones
+    Movimientos
+  }
+}
+package "Perfil inversor" as P6 {
+  'BE/PerfilInversor.cs
+  enum "NivelRiesgoInversor" as BE_NivelRiesgoInversor {
+    Bajo
+    Moderado
+    Alto
+  }
+  'BE/PerfilInversor.cs
+  class "PerfilInversor" as BE_PerfilInversor {
+    ~Id : int
+    ~Usuario : Usuario
+    ~VersionCuestionario : int
+    ~FechaEvaluacionUtc : DateTime
+    ~Capacidad : decimal
+    ~Tolerancia : decimal
+    ~Puntaje : decimal
+    ~NivelRiesgo : NivelRiesgoInversor
+    ~MotivosLimite : List<string>
+    ~Respuestas : List<RespuestaPerfilInversor>
+  }
+  'BE/PerfilInversor.cs
+  class "PreguntaPerfilInversor" as BE_PreguntaPerfilInversor {
+    ~PreguntaPerfilInversor(id : int)
+    ~Id : int
+  }
+  'BE/PerfilInversor.cs
+  class "RespuestaPerfilInversor" as BE_RespuestaPerfilInversor {
+    ~Pregunta : PreguntaPerfilInversor
+    ~OpcionId : string
+  }
+}
+package "Ubicacion y zonas" as P7 {
+  'BE/ZonaUsuario.cs
+  class "ZonaUsuario" as BE_ZonaUsuario {
+    ~Id : int
+    ~Usuario : Usuario
+    ~Nombre : string
+    ~Latitud : decimal
+    ~Longitud : decimal
+    ~RadioMetros : int
+  }
+}
+package "Usuarios y auditoria" as P8 {
+  'BE/DigitoVerificadorAttribute.cs
+  class "DigitoVerificadorAttribute" as BE_DigitoVerificadorAttribute {
+    ~DigitoVerificadorAttribute(orden : int)
+    ~Orden : int
+  }
+  'BE/Usuario.cs
+  class "Usuario" as BE_Usuario {
+    ~Id : int
+    ~Username : string
+    ~PasswordHash : string
+    ~Activo : bool
+    ~IntentosFallidos : int
+    ~Bloqueado : bool
+    ~BloqueadoHasta : DateTime?
+    ~DVH : string
+    ~Usuario()
+    ~Usuario(username : string)
+  }
 }
 
-package "BE (entidades de negocio)" {
-  class Usuario {
-    +Id : int  <<DigitoVerificador(1)>>
-    +Username : string  <<DigitoVerificador(2)>>
-    +PasswordHash : string  <<DigitoVerificador(3)>>
-    +Activo : bool  <<DigitoVerificador(4)>>
-    +IntentosFallidos : int  <<DigitoVerificador(5)>>
-    +Bloqueado : bool  <<DigitoVerificador(6)>>
-    +BloqueadoHasta : DateTime?  <<DigitoVerificador(7)>>
-    +DVH : string
-    +Usuario()
-    +Usuario(username : string)
-  }
+BE_ActualizacionTasaDetalle --> BE_EjecucionActualizacionTasas : Ejecucion
+BE_ActualizacionTasaDetalle --> BE_Moneda : MonedaBase
+BE_ActualizacionTasaDetalle --> BE_Moneda : MonedaConversion
+BE_Categoria --> BE_Usuario : Usuario
+BE_Comercio --> BE_RubroComercio : RubroComercio
+BE_ComercioProducto --> BE_Comercio : Comercio
+BE_ComercioProducto --> BE_Moneda : Moneda
+BE_ComercioProducto --> BE_Producto : Producto
+BE_ConsultaChatbot --> BE_ChatbotFinanciero : ChatbotFinanciero
+BE_ConsultaChatbot --> BE_Usuario : Usuario
+BE_CorridaGeneracionNotificaciones --> "*" BE_DetalleGeneracionNotificacion : Detalles
+BE_CuentaFinanciera --> "*" BE_MedioPagoEntidad : MediosPagoEntidad
+BE_CuentaFinanciera --> BE_EntidadFinanciera : EntidadFinanciera
+BE_CuentaFinanciera --> BE_Usuario : Usuario
+BE_Dashboard --> "*" BE_TarjetaDashboard : Tarjetas
+BE_Dashboard --> BE_Usuario : Usuario
+BE_DetalleGeneracionNotificacion --> BE_CorridaGeneracionNotificaciones : Corrida
+BE_DetalleGeneracionNotificacion --> BE_Notificacion : Notificacion
+BE_DetalleGeneracionNotificacion --> BE_Usuario : Usuario
+BE_EjecucionActualizacionTasas --> "*" BE_ActualizacionTasaDetalle : Detalles
+BE_EntidadFinanciera --> "*" BE_MedioPagoEntidad : MediosPagoEntidad
+BE_FiltroMovimiento --> BE_Categoria : Categoria
+BE_ItemLista --> "*" BE_ListaDeCompras : ListaDeCompras
+BE_ListaDeCompras --> "*" BE_ItemLista : ItemsLista
+BE_ListaDeCompras --> BE_Usuario : Usuario
+BE_MedioPagoEntidad --> BE_EntidadFinanciera : EntidadFinanciera
+BE_MedioPagoEntidad --> BE_MedioPago : MedioPago
+BE_Movimiento --> BE_Categoria : Categoria
+BE_Movimiento --> BE_Comercio : Comercio
+BE_Movimiento --> BE_Usuario : Usuario
+BE_Notificacion --> BE_Usuario : Usuario
+BE_PaginaNotificaciones --> "*" BE_Notificacion : Elementos
+BE_PerfilInversor --> "*" BE_RespuestaPerfilInversor : Respuestas
+BE_PerfilInversor --> BE_Usuario : Usuario
+BE_Producto --> BE_CategoriaProducto : CategoriaProducto
+BE_ProductoEmbedding --> BE_Producto : Producto
+BE_Promocion --> "*" BE_CategoriaProducto : CategoriasExcluidas
+BE_Promocion --> "*" BE_CategoriaProducto : CategoriasIncluidas
+BE_Promocion --> "*" BE_Comercio : Comercios
+BE_Promocion --> "*" BE_EntidadFinanciera : EntidadesFinancieras
+BE_Promocion --> "*" BE_MedioPago : MediosPago
+BE_Promocion --> "*" BE_Producto : ProductosExcluidos
+BE_Promocion --> "*" BE_Producto : ProductosIncluidos
+BE_Promocion --> "*" BE_RubroComercio : RubrosComercio
+BE_RecordatorioCompra --> "*" BE_ItemLista : ItemLista
+BE_RecordatorioCompra --> BE_Promocion : Promocion
+BE_RecordatorioCompra --|> BE_Notificacion
+BE_RecordatorioInversion --|> BE_Notificacion
+BE_ReglaCategorizacion --> BE_Categoria : Categoria
+BE_ReglaCategorizacion --> BE_Usuario : Usuario
+BE_ReporteMovimientosPdf --> BE_Usuario : Usuario
+BE_RespuestaPerfilInversor --> BE_PreguntaPerfilInversor : Pregunta
+BE_ResultadoEjecucionActualizacionTasas --> BE_EjecucionActualizacionTasas : Ejecucion
+BE_TarjetaDashboard --> BE_Dashboard : Dashboard
+BE_TasaConversion --> BE_Moneda : MonedaBase
+BE_TasaConversion --> BE_Moneda : MonedaConversion
+BE_TasaConversion --> BE_Usuario : ProtegidaPorUsuario
+BE_ZonaUsuario --> BE_Usuario : Usuario
 
-  class Categoria {
-    +Id : int
-    +Nombre : string
-    +UsuarioId : int?
-    +EsGlobal : bool  <<readonly>>
-  }
-
-  class Movimiento {
-    +Id : int
-    +UsuarioId : int
-    +CategoriaId : int
-    +Tipo : TipoMovimiento
-    +Monto : decimal
-    +Fecha : DateTime
-    +Descripcion : string
-    +FechaCreacion : DateTime
-  }
-}
-
-Usuario ..|> IUsuarioAutenticado
-Usuario ..|> IIntegrable
-Movimiento ..> TipoMovimiento
-
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
+P7 -[hidden]right-> P8
+P5 -[hidden]down-> P8
 @enduml

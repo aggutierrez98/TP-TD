@@ -1,0 +1,83 @@
+@startuml
+' Fuente: diagramas/NEG17-dashboard-balance/NEG17-dashboard-balance-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN74 Quitar tarjeta del dashboard — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormDashboardAnaliticas" as FormDashboardAnaliticas
+control "DashboardBLL" as DashboardBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "TarjetaDashboardRepositorio\n:ITarjetaDashboardRepositorio" as ITarjetaDashboardRepositorio
+participant "TarjetaDashboardDAL" as TarjetaDashboardDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+participant "DashboardRepositorio\n:IDashboardRepositorio" as IDashboardRepositorio
+note over FormDashboardAnaliticas : El actor desea dejar de ver un análisis en su dashboard.
+Actor -> FormDashboardAnaliticas : selecciona el botón «Quitar» de la tarjeta que desea retirar.
+FormDashboardAnaliticas -> DashboardBLL ++ : QuitarTarjeta(tarjeta: TarjetaDashboard)
+DashboardBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> DashboardBLL -- : Usuario
+DashboardBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> DashboardBLL -- : IUnidadDeTrabajo
+DashboardBLL -> ITarjetaDashboardRepositorio ++ : ObtenerPorId(id: int)
+ITarjetaDashboardRepositorio -> TarjetaDashboardDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+TarjetaDashboardDAL --> ITarjetaDashboardRepositorio -- : TarjetaDashboard
+ITarjetaDashboardRepositorio --> DashboardBLL -- : TarjetaDashboard
+DashboardBLL -> ITarjetaDashboardRepositorio ++ : Eliminar(tarjeta: TarjetaDashboard)
+ITarjetaDashboardRepositorio -> TarjetaDashboardDAL ++ : Eliminar(tarjeta: TarjetaDashboard, accesoDatos:\nAccesoDatosSqlServer)
+TarjetaDashboardDAL --> ITarjetaDashboardRepositorio -- : bool
+ITarjetaDashboardRepositorio --> DashboardBLL -- : bool
+DashboardBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> DashboardBLL -- : void
+DashboardBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> DashboardBLL -- : void
+DashboardBLL --> FormDashboardAnaliticas -- : bool
+group Refrescar listado tras la operacion exitosa
+FormDashboardAnaliticas -> DashboardBLL ++ : ObtenerOCrearDashboardActual()
+DashboardBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> DashboardBLL -- : Usuario
+DashboardBLL -> IDashboardRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IDashboardRepositorio --> DashboardBLL -- : Dashboard
+alt Ya existe para el usuario
+note over DashboardBLL : Reutilizar la entidad persistida; no insertar otra.
+else No existe
+DashboardBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> DashboardBLL -- : IUnidadDeTrabajo
+DashboardBLL -> IDashboardRepositorio ++ : InsertarYObtenerId(dashboard: Dashboard)
+IDashboardRepositorio --> DashboardBLL -- : int
+DashboardBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> DashboardBLL -- : void
+DashboardBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> DashboardBLL -- : void
+end
+DashboardBLL --> FormDashboardAnaliticas -- : Dashboard
+end
+FormDashboardAnaliticas --> Actor : vuelve a presentar el dashboard sin la tarjeta retirada y deja disponible nuevamente ese\ntipo de tarjeta para ser agregado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DashboardBLL.cs:124 DashboardBLL.QuitarTarjeta
+' BLL/DashboardBLL.cs:35 DashboardBLL.ObtenerOCrearDashboardActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/TarjetaDashboardDAL.cs:148 TarjetaDashboardDAL.Eliminar
+' DAL/TarjetaDashboardDAL.cs:22 TarjetaDashboardDAL.ObtenerPorId
+' REPOSITORIO/IDashboardRepositorio.cs:11 IDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:9 IDashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:16 ITarjetaDashboardRepositorio.Eliminar
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:8 ITarjetaDashboardRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:23 TarjetaDashboardRepositorio.ObtenerPorId
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:57 TarjetaDashboardRepositorio.Eliminar
+' UI/FormDashboardAnaliticas.cs:228 FormDashboardAnaliticas.QuitarTarjeta
+@enduml

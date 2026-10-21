@@ -31,16 +31,16 @@ namespace REPOSITORIO
             return medioPagoEntidad;
         }
 
-        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad)
         {
-            List<MedioPagoEntidad> mediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorEntidadFinanciera(entidadFinancieraId, _accesoDatos);
+            List<MedioPagoEntidad> mediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorEntidadFinanciera(entidad, _accesoDatos);
             mediosPagoEntidad.ForEach(Hidratar);
             return mediosPagoEntidad;
         }
 
-        public List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId)
+        public List<MedioPagoEntidad> ObtenerPorMedioPago(MedioPago medioPago)
         {
-            List<MedioPagoEntidad> mediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorMedioPago(medioPagoId, _accesoDatos);
+            List<MedioPagoEntidad> mediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorMedioPago(medioPago, _accesoDatos);
             mediosPagoEntidad.ForEach(Hidratar);
             return mediosPagoEntidad;
         }
@@ -73,9 +73,9 @@ namespace REPOSITORIO
             return _medioPagoEntidadDAL.Actualizar(medioPagoEntidad, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(MedioPagoEntidad medioPagoEntidad)
         {
-            return _medioPagoEntidadDAL.Eliminar(id, _accesoDatos);
+            return _medioPagoEntidadDAL.Eliminar(medioPagoEntidad, _accesoDatos);
         }
     }
 }

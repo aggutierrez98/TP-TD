@@ -12,6 +12,9 @@ Los diagramas del TP (`diagramas/`) y el Word de la catedra quedaron atrasados r
 - Se decide con el usuario si T02, T04, T05 y T06 llevan secuencia general.
 - Se sincroniza el Word de la catedra: imagenes regeneradas y numeracion nueva.
 - Se elimina `diagramas/TODO-actualizacion-diagramas.md`.
+- Se documentan los 87 casos de uso de negocio aprobados por el usuario (CUN01-CUN87), con un Word por cada uno de los 22 grupos y fuentes JSON/Markdown regenerables, siguiendo la muestra CUN01 aprobada.
+- La entrega inicial elaboro 164 diagramas de negocio: una secuencia y un diagrama de clases por CUN06-CUN87, agrupados en siete carpetas por proceso N01.1-N01.7, con sus SVG y balanceo contra codigo y especificaciones existentes.
+- Por correccion posterior aprobada por el usuario, la entrega de clases de negocio pasa a siete diagramas integrados, uno por N01.1-N01.7, con las capas diferenciadas y cobertura de todos los CU asignados a cada proceso. Se generan fuentes PlantUML, SVG y siete PNG de alta resolucion juntos en `diagramas/exportaciones/clases-negocio-png/`.
 
 ## Capabilities
 
@@ -24,5 +27,6 @@ Los diagramas del TP (`diagramas/`) y el Word de la catedra quedaron atrasados r
 ## Impact
 
 - `diagramas/G00-*`, `G07-*`, `G08-*` y, segun la decision del usuario, `T02`, `T04`, `T05`, `T06`.
+- Siete carpetas `diagramas/N01.*` con los pares de diagramas CUN06-CUN87 y sus SVG.
 - Documento externo `C:\Users\agust\Desktop\Trabajo Final TD Gutierrez.docx` (fuera del repo).
 - Sin cambios de codigo.

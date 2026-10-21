@@ -1,0 +1,98 @@
+@startuml
+' Fuente: diagramas/NEG19-zonas-usuario/NEG19-zonas-usuario-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN79 Alta de zona de usuario — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMisZonas" as FormMisZonas
+boundary "CoordinadorBusquedaUbicacion" as CoordinadorBusquedaUbicacion
+boundary "ResultadoCoordinado" as ResultadoCoordinado
+participant "IBusquedaUbicacionesService" as IBusquedaUbicacionesService
+control "ZonaUsuarioBLL" as ZonaUsuarioBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ZonaUsuarioRepositorio\n:IZonaUsuarioRepositorio" as IZonaUsuarioRepositorio
+participant "ZonaUsuarioDAL" as ZonaUsuarioDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormMisZonas : El actor desea registrar una zona habitual, para recibir recomendaciones de\ncompra según su cercanía.
+Actor -> FormMisZonas : ingresa en el campo «Dirección» de la sección «Nueva zona» una dirección, comercio o lugar\ny selecciona el botón «Buscar» (o presiona Enter).
+FormMisZonas -> CoordinadorBusquedaUbicacion ++ : BuscarAsync(consulta: IConsultaUbicacion)
+opt _detenido || EnCurso || _servicio == null
+CoordinadorBusquedaUbicacion -> ResultadoCoordinado ++ : De(tipo: TipoResultadoBusqueda)
+ResultadoCoordinado --> CoordinadorBusquedaUbicacion -- : ResultadoCoordinado
+end
+CoordinadorBusquedaUbicacion -> IBusquedaUbicacionesService ++ : BuscarAsync(consulta: IConsultaUbicacion, cancellationToken:\nCancellationToken)
+IBusquedaUbicacionesService --> CoordinadorBusquedaUbicacion -- : Task<IReadOnlyList<IResultadoBusquedaUbicacion>>
+opt version != _version
+CoordinadorBusquedaUbicacion -> ResultadoCoordinado ++ : De(tipo: TipoResultadoBusqueda)
+ResultadoCoordinado --> CoordinadorBusquedaUbicacion -- : ResultadoCoordinado
+end
+CoordinadorBusquedaUbicacion -> ResultadoCoordinado ++ : De(tipo: TipoResultadoBusqueda)
+ResultadoCoordinado --> CoordinadorBusquedaUbicacion -- : ResultadoCoordinado
+CoordinadorBusquedaUbicacion -> ResultadoCoordinado ++ : ConCoincidencias(coincidencias:\nIReadOnlyList<IResultadoBusquedaUbicacion>)
+ResultadoCoordinado --> CoordinadorBusquedaUbicacion -- : ResultadoCoordinado
+CoordinadorBusquedaUbicacion --> FormMisZonas -- : Task<ResultadoCoordinado>
+FormMisZonas --> Actor : consulta el servicio de búsqueda de ubicaciones y muestra el estado «Buscando...». Al\nrecibir la respuesta, presenta la lista de coincidencias (hasta cinco) y el mensaje con la\ncantidad de coincidencias encontradas.
+Actor -> FormMisZonas : elige una coincidencia de la lista.
+FormMisZonas --> Actor : centra el mapa en la ubicación elegida, dibuja el punto provisorio con el círculo del\nradio indicado, muestra sus coordenadas en el campo «Punto» e informa el resultado.
+Actor -> FormMisZonas : ingresa el «Nombre» de la zona y, si lo desea, modifica el «Radio (m)», cuyo valor inicial\nes 1000.
+Actor -> FormMisZonas : selecciona el botón «Agregar».
+FormMisZonas -> ZonaUsuarioBLL ++ : Crear(nombre: string, latitud: decimal?, longitud: decimal?,\nradioMetros: int)
+ZonaUsuarioBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ZonaUsuarioBLL -- : Usuario
+ZonaUsuarioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ZonaUsuarioBLL -- : IUnidadDeTrabajo
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : List<ZonaUsuario>
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : List<ZonaUsuario>
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : InsertarYObtenerId(zona: ZonaUsuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : InsertarYObtenerId(zona: ZonaUsuario, accesoDatos:\nAccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : int
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : int
+ZonaUsuarioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ZonaUsuarioBLL -- : void
+ZonaUsuarioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ZonaUsuarioBLL -- : void
+ZonaUsuarioBLL --> FormMisZonas -- : ZonaUsuario
+group Refrescar listado tras la operacion exitosa
+FormMisZonas -> ZonaUsuarioBLL ++ : ObtenerMisZonas()
+ZonaUsuarioBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ZonaUsuarioBLL -- : Usuario
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : List<ZonaUsuario>
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : List<ZonaUsuario>
+ZonaUsuarioBLL --> FormMisZonas -- : List<ZonaUsuario>
+end
+FormMisZonas --> Actor : registra la zona, limpia los campos de la sección «Nueva zona», agrega la zona al listado\nseleccionándola, centra el mapa en ella e informa el resultado.
+' ABSTRACCIONES/IBusquedaUbicacionesService.cs:13 IBusquedaUbicacionesService.BuscarAsync
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ZonaUsuarioBLL.cs:43 ZonaUsuarioBLL.ObtenerMisZonas
+' BLL/ZonaUsuarioBLL.cs:49 ZonaUsuarioBLL.Crear
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' DAL/ZonaUsuarioDAL.cs:88 ZonaUsuarioDAL.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:12 IZonaUsuarioRepositorio.InsertarYObtenerId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:35 ZonaUsuarioRepositorio.InsertarYObtenerId
+' UI/CoordinadorBusquedaUbicacion.cs:41 ResultadoCoordinado.De
+' UI/CoordinadorBusquedaUbicacion.cs:46 ResultadoCoordinado.ConCoincidencias
+' UI/CoordinadorBusquedaUbicacion.cs:78 CoordinadorBusquedaUbicacion.BuscarAsync
+' UI/FormMisZonas.cs:298 FormMisZonas.btnAgregarZona_Click
+@enduml

@@ -1,0 +1,53 @@
+@startuml
+' Fuente: diagramas/NEG02-movimientos/NEG02-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN06 Consultar movimientos — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMovimientos" as FormMovimientos
+control "MovimientoBLL" as MovimientoBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+participant "MovimientoDAL" as MovimientoDAL
+note over FormMovimientos : El actor desea consultar sus movimientos registrados.
+Actor -> FormMovimientos : selecciona la opción «Movimientos» del menú «Finanzas». La pantalla también se presenta al\niniciar sesión cuando el actor cuenta con autorización para acceder a ella.
+FormMovimientos -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : List<Movimiento>
+IMovimientoRepositorio --> MovimientoBLL -- : List<Movimiento>
+MovimientoBLL --> FormMovimientos -- : List<Movimiento>
+FormMovimientos --> Actor : presenta la pantalla «Gestión de movimientos» con la sección «Filtros» y el listado de\nmovimientos del actor
+Actor -> FormMovimientos : define uno o más criterios de búsqueda: marca «Desde:» y/o «Hasta:» e indica las fechas,\nelige una «Categoría:», elige un «Tipo:» (Ingreso o Egreso) o ingresa un texto en\n«Descripción:».
+Actor -> FormMovimientos : presiona el botón «Buscar» o presiona la tecla Enter en el campo «Descripción:».
+FormMovimientos -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : List<Movimiento>
+IMovimientoRepositorio --> MovimientoBLL -- : List<Movimiento>
+MovimientoBLL --> FormMovimientos -- : List<Movimiento>
+FormMovimientos --> Actor : actualiza el listado con los movimientos del actor que cumplen todos los criterios\nindicados.
+Actor -> FormMovimientos : selecciona un movimiento del listado.
+FormMovimientos --> Actor : muestra en la sección «Movimiento» la categoría, el tipo, el monto, la fecha, la\ndescripción y el comercio del movimiento seleccionado.
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' UI/FormMovimientos.cs:119 FormMovimientos.RefrescarDatos
+@enduml

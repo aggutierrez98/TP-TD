@@ -11,7 +11,7 @@ namespace DAL
 {
     public sealed class PerfilInversorDAL
     {
-        public PerfilInversor ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer acceso = null)
+        public PerfilInversor ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer acceso = null)
         {
             bool propio = acceso == null;
             acceso = acceso ?? new AccesoDatosSqlServer();
@@ -24,18 +24,18 @@ namespace DAL
                     SELECT p.*, r.PreguntaId, r.OpcionId FROM PerfilInversor p
                     JOIN PerfilInversorRespuesta r ON r.PerfilInversorId=p.Id
                     WHERE p.UsuarioId=@UsuarioId ORDER BY r.PreguntaId;",
-                    new List<SqlParameter> { acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                    new List<SqlParameter> { acceso.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) });
                 if (tabla.Rows.Count == 0) return null;
                 DataRow fila = tabla.Rows[0];
                 return new PerfilInversor
                 {
-                    Id = (int)fila["Id"], UsuarioId = usuarioId, VersionCuestionario = (int)fila["VersionCuestionario"],
+                    Id = (int)fila["Id"], Usuario = usuario, VersionCuestionario = (int)fila["VersionCuestionario"],
                     FechaEvaluacionUtc = DateTime.SpecifyKind((DateTime)fila["FechaEvaluacionUtc"], DateTimeKind.Utc),
                     Capacidad = (decimal)fila["Capacidad"], Tolerancia = (decimal)fila["Tolerancia"], Puntaje = (decimal)fila["Puntaje"],
                     NivelRiesgo = (NivelRiesgoInversor)(int)fila["NivelRiesgo"],
                     MotivosLimite = JsonSerializer.Deserialize<List<string>>(fila["MotivosLimite"].ToString()),
                     Respuestas = tabla.Rows.Cast<DataRow>().Select(r => new RespuestaPerfilInversor
-                        { PreguntaId = (int)r["PreguntaId"], OpcionId = r["OpcionId"].ToString() }).ToList()
+                        { Pregunta = new PreguntaPerfilInversor((int)r["PreguntaId"]), OpcionId = r["OpcionId"].ToString() }).ToList()
                 };
             }
             finally { if (propio) acceso.Dispose(); }
@@ -49,7 +49,7 @@ namespace DAL
             {
                 var parametros = new List<SqlParameter>
                 {
-                    acceso.CreateParameter("@UsuarioId", SqlDbType.Int, perfil.UsuarioId),
+                    acceso.CreateParameter("@UsuarioId", SqlDbType.Int, perfil.Usuario.Id),
                     acceso.CreateParameter("@Version", SqlDbType.Int, perfil.VersionCuestionario),
                     acceso.CreateParameter("@Fecha", SqlDbType.DateTime2, perfil.FechaEvaluacionUtc),
                     acceso.CreateParameter("@Capacidad", SqlDbType.Decimal, perfil.Capacidad),
@@ -74,7 +74,7 @@ namespace DAL
                 for (int i = 0; i < perfil.Respuestas.Count; i++)
                 {
                     sql.Append("INSERT INTO PerfilInversorRespuesta (PerfilInversorId,PreguntaId,OpcionId) VALUES (@PerfilId,@Q").Append(i).Append(",@O").Append(i).Append(");");
-                    parametros.Add(acceso.CreateParameter("@Q" + i, SqlDbType.Int, perfil.Respuestas[i].PreguntaId));
+                    parametros.Add(acceso.CreateParameter("@Q" + i, SqlDbType.Int, perfil.Respuestas[i].Pregunta.Id));
                     parametros.Add(acceso.CreateParameter("@O" + i, SqlDbType.Char, perfil.Respuestas[i].OpcionId));
                 }
                 acceso.Write(sql.ToString(), parametros);

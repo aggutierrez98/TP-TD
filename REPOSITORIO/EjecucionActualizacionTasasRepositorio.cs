@@ -36,9 +36,9 @@ namespace REPOSITORIO
             return _ejecucionDAL.ObtenerRecientes(cantidad, _accesoDatos);
         }
 
-        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(int ejecucionId)
+        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(EjecucionActualizacionTasas ejecucion)
         {
-            List<ActualizacionTasaDetalle> detalles = _ejecucionDAL.ObtenerDetallePorEjecucion(ejecucionId, _accesoDatos);
+            List<ActualizacionTasaDetalle> detalles = _ejecucionDAL.ObtenerDetallePorEjecucion(ejecucion, _accesoDatos);
             MonedaRepositorio monedaRepositorio = new MonedaRepositorio(_accesoDatos);
             foreach (ActualizacionTasaDetalle detalle in detalles)
             {

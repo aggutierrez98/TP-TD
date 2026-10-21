@@ -21,7 +21,7 @@ namespace SERVICIOS
         internal const string EndpointBase = "https://generativelanguage.googleapis.com/v1beta/models/";
         internal const string ModeloPorDefecto = "gemini-3.1-flash-lite";
 
-        internal static async Task<string> ObtenerRespuestaAsync(string promptSistema, string pregunta, IEnumerable<IntercambioChatbot> historial, string apiKey, string modelo)
+        internal static async Task<string> ObtenerRespuestaAsync(string promptSistema, string pregunta, IEnumerable<IIntercambioChatbot> historial, string apiKey, string modelo)
         {
             try
             {
@@ -82,7 +82,7 @@ namespace SERVICIOS
 
         // Historial como contents con roles user/model (coherencia multi-turno), seguido
         // de la pregunta actual.
-        internal static string ArmarRequestBody(string promptSistema, string pregunta, IEnumerable<IntercambioChatbot> historial)
+        internal static string ArmarRequestBody(string promptSistema, string pregunta, IEnumerable<IIntercambioChatbot> historial)
         {
             return ArmarRequestBody(promptSistema, pregunta, historial, null);
         }
@@ -90,13 +90,13 @@ namespace SERVICIOS
         // Con opciones agrega generationConfig.temperature y, si hay funciones declaradas,
         // tools[].functionDeclarations y toolConfig.functionCallingConfig (mode ANY +
         // allowedFunctionNames). Nombres de campos segun la referencia REST de generateContent.
-        internal static string ArmarRequestBody(string promptSistema, string pregunta, IEnumerable<IntercambioChatbot> historial, OpcionesGeneracionGemini opciones)
+        internal static string ArmarRequestBody(string promptSistema, string pregunta, IEnumerable<IIntercambioChatbot> historial, OpcionesGeneracionGemini opciones)
         {
             List<object> contents = new List<object>();
 
             if (historial != null)
             {
-                foreach (IntercambioChatbot intercambio in historial)
+                foreach (IIntercambioChatbot intercambio in historial)
                 {
                     if (!string.IsNullOrWhiteSpace(intercambio.Pregunta))
                     {
@@ -181,7 +181,7 @@ namespace SERVICIOS
         internal static async Task<IReadOnlyList<LlamadaFuncionGemini>> ObtenerLlamadasFuncionAsync(
             string promptSistema,
             string pregunta,
-            IEnumerable<IntercambioChatbot> historial,
+            IEnumerable<IIntercambioChatbot> historial,
             OpcionesGeneracionGemini opciones,
             string apiKey,
             string modelo,

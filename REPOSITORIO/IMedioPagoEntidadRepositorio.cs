@@ -7,9 +7,9 @@ namespace REPOSITORIO
     {
         MedioPagoEntidad ObtenerPorId(int id);
 
-        List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(int entidadFinancieraId);
+        List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad);
 
-        List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId);
+        List<MedioPagoEntidad> ObtenerPorMedioPago(MedioPago medioPago);
 
         // Segmentos ya cargados (sin repetir ni nulos): catalogo del filtro de segmentos de promociones.
         List<string> ObtenerSegmentosDistintos();
@@ -18,6 +18,6 @@ namespace REPOSITORIO
 
         bool Actualizar(MedioPagoEntidad medioPagoEntidad);
 
-        bool Eliminar(int id);
+        bool Eliminar(MedioPagoEntidad medioPagoEntidad);
     }
 }

@@ -1,0 +1,965 @@
+@startuml N01.1-operaciones-financieras-clases
+title N01.1 · Registrar y mantener el registro de las operaciones financieras\npersonales\nDiagrama de clases por proceso de negocio
+caption CUN06, CUN07, CUN08, CUN09, CUN11, CUN12, CUN13, CUN14, CUN15, CUN16, CUN17, CUN18, CUN19, CUN20, CUN21, CUN22
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class FilaCategoria #DBEAFE {
+    +Categoria: Categoria
+    +Nombre: string
+    +Scope: string
+    +EsPropia: bool
+  }
+  class FilaMovimiento #DBEAFE {
+    +Id: int
+    +Fecha: DateTime
+    +Tipo: string
+    +Categoria: string
+    +Comercio: string
+    +ComercioId: int?
+    +Monto: decimal
+    +Descripcion: string
+    +Movimiento: Movimiento
+  }
+  class FilaRegla #DBEAFE {
+    +Regla: ReglaCategorizacion
+    +Nombre: string
+    +CategoriaId: int
+    +Categoria: string
+    +PalabrasClave: string
+    +Comercios: string
+    +ComerciosAsociados: List<Comercio>
+  }
+  class FormGestionCategorias #DBEAFE {
+    -CargarCategorias(categoriaSeleccionadaId: int?): void
+    -btnActualizarCategoria_Click(sender: object, e: EventArgs): void
+    -btnAgregarCategoria_Click(sender: object, e: EventArgs): void
+    -btnEliminarCategoria_Click(sender: object, e: EventArgs): void
+  }
+  class FormGestionCuentasFinancieras #DBEAFE {
+    -CargarCuentas(cuentaSeleccionadaId: int?): void
+    -btnActualizarCuenta_Click(sender: object, e: EventArgs): void
+    -btnAgregarCuenta_Click(sender: object, e: EventArgs): void
+    -btnEliminarCuenta_Click(sender: object, e: EventArgs): void
+  }
+  class FormMovimientos #DBEAFE {
+    -RefrescarDatos(): void
+    -btnActualizarMovimiento_Click(sender: object, e: EventArgs): void
+    -btnAgregarMovimiento_Click(sender: object, e: EventArgs): void
+    -btnEliminarMovimiento_Click(sender: object, e: EventArgs): void
+  }
+  class FormReglasCategorizacion #DBEAFE {
+    -CargarReglas(reglaSeleccionadaId: int?): void
+    -btnActualizarRegla_Click(sender: object, e: EventArgs): void
+    -btnAgregarRegla_Click(sender: object, e: EventArgs): void
+    -btnEliminarRegla_Click(sender: object, e: EventArgs): void
+  }
+  class OpcionMedioPagoEntidad #DBEAFE {
+    +MedioPagoEntidad: MedioPagoEntidad
+  }
+  class UiDialogHelper #DBEAFE {
+    +Confirmar(messageKey: string): DialogResult
+    +Confirmar(messageKey: string, titleKey: string, icon:\nMessageBoxIcon): DialogResult
+    +MostrarError(messageKey: string): void
+    +MostrarInfo(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+    +Traducir(key: string): string
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  FilaCategoria -[hidden]right-> FilaMovimiento
+  FilaMovimiento -[hidden]right-> FilaRegla
+  FilaRegla -[hidden]right-> FormGestionCategorias
+  FormGestionCategorias -[hidden]right-> FormGestionCuentasFinancieras
+  FormGestionCuentasFinancieras -[hidden]right-> FormMovimientos
+  FormMovimientos -[hidden]right-> FormReglasCategorizacion
+  FormReglasCategorizacion -[hidden]right-> OpcionMedioPagoEntidad
+  OpcionMedioPagoEntidad -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class BitacoraBLL #DCFCE7 {
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class CandidatoRegla #DCFCE7 {
+    +Regla: ReglaCategorizacion
+    +MatchCount: int
+    +CoberturaTexto: int
+    +TieneMatchComercio: bool
+  }
+  class CategoriaBLL #DCFCE7 {
+    +Actualizar(categoria: Categoria): bool
+    +Crear(categoria: Categoria): Categoria
+    +Eliminar(categoria: Categoria): bool
+    +ObtenerVisiblesParaUsuarioActual(): List<Categoria>
+  }
+  class ComercioBLL #DCFCE7 {
+    +ObtenerTodos(): List<Comercio>
+  }
+  class CuentaFinancieraBLL #DCFCE7 {
+    +Actualizar(cuenta: CuentaFinanciera): CuentaFinanciera
+    +Crear(cuenta: CuentaFinanciera): CuentaFinanciera
+    +Eliminar(cuenta: CuentaFinanciera): bool
+    +ObtenerMisCuentas(): List<CuentaFinanciera>
+  }
+  class EntidadFinancieraBLL #DCFCE7 {
+    +ObtenerMediosPagoEntidad(entidad: EntidadFinanciera):\nList<MedioPagoEntidad>
+  }
+  class EscaneoBorradorResultado #DCFCE7 {
+    +Borrador: Movimiento
+    +TextoCrudo: string
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  class MovimientoBLL #DCFCE7 {
+    +Actualizar(movimiento: Movimiento): bool
+    +Crear(movimiento: Movimiento): Movimiento
+    +Eliminar(movimiento: Movimiento): bool
+    +EscanearBorradorAsync(imagenBytes: byte[]):\nTask<EscaneoBorradorResultado>
+    +ObtenerParaUsuarioActual(filtro: FiltroMovimiento): List<Movimiento>
+  }
+  class ReglaCategorizacionBLL #DCFCE7 {
+    +Actualizar(regla: ReglaCategorizacion, comercios:\nIEnumerable<Comercio>): bool
+    +Crear(regla: ReglaCategorizacion, comercios: IEnumerable<Comercio>):\nReglaCategorizacion
+    +Eliminar(regla: ReglaCategorizacion): bool
+    +ObtenerComerciosPorRegla(regla: ReglaCategorizacion): List<Comercio>
+    +ObtenerParaUsuarioActual(): List<ReglaCategorizacion>
+    +SugerirCategoria(descripcion: string, comercio: Comercio): Categoria
+  }
+  class SesionUsuarioExtensiones #DCFCE7 {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  BitacoraBLL -[hidden]right-> CandidatoRegla
+  CandidatoRegla -[hidden]right-> CategoriaBLL
+  CategoriaBLL -[hidden]right-> ComercioBLL
+  ComercioBLL -[hidden]right-> CuentaFinancieraBLL
+  CuentaFinancieraBLL -[hidden]right-> EntidadFinancieraBLL
+  EntidadFinancieraBLL -[hidden]right-> EscaneoBorradorResultado
+  EscaneoBorradorResultado -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> MovimientoBLL
+  MovimientoBLL -[hidden]right-> ReglaCategorizacionBLL
+  ReglaCategorizacionBLL -[hidden]right-> SesionUsuarioExtensiones
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  class CategoriaRepositorio #FEF3C7 {
+    +Actualizar(categoria: Categoria): bool
+    +Eliminar(categoria: Categoria): bool
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida:\nCategoria): bool
+    +InsertarYObtenerId(categoria: Categoria): int
+    +ObtenerPorId(id: int): Categoria
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  class ComercioReglaCategorizacionRepositorio #FEF3C7 {
+    +ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion): List<Comercio>
+    +ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion, comercios: IEnumerable<Comercio>): bool
+  }
+  class ComercioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Comercio
+    +ObtenerTodos(): List<Comercio>
+  }
+  class CuentaFinancieraRepositorio #FEF3C7 {
+    +Actualizar(cuenta: CuentaFinanciera): bool
+    +Eliminar(cuenta: CuentaFinanciera): bool
+    +InsertarYObtenerId(cuenta: CuentaFinanciera): int
+    +ObtenerPorId(id: int): CuentaFinanciera
+    +ObtenerPorUsuario(usuario: Usuario): List<CuentaFinanciera>
+    +ReemplazarMediosPagoEntidadDeCuenta(cuenta: CuentaFinanciera, medios:\nIEnumerable<MedioPagoEntidad>): bool
+  }
+  class EntidadFinancieraRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  interface ICategoriaRepositorio #FEF3C7 {
+    +Actualizar(categoria: Categoria): bool
+    +Eliminar(categoria: Categoria): bool
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida:\nCategoria): bool
+    +InsertarYObtenerId(categoria: Categoria): int
+    +ObtenerPorId(id: int): Categoria
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  interface IComercioReglaCategorizacionRepositorio #FEF3C7 {
+    +ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion): List<Comercio>
+    +ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion, comercios: IEnumerable<Comercio>): bool
+  }
+  interface IComercioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Comercio
+    +ObtenerTodos(): List<Comercio>
+  }
+  interface ICuentaFinancieraRepositorio #FEF3C7 {
+    +Actualizar(cuenta: CuentaFinanciera): bool
+    +Eliminar(cuenta: CuentaFinanciera): bool
+    +InsertarYObtenerId(cuenta: CuentaFinanciera): int
+    +ObtenerPorId(id: int): CuentaFinanciera
+    +ObtenerPorUsuario(usuario: Usuario): List<CuentaFinanciera>
+    +ReemplazarMediosPagoEntidadDeCuenta(cuenta: CuentaFinanciera, medios:\nIEnumerable<MedioPagoEntidad>): bool
+  }
+  interface IEntidadFinancieraRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  interface IMedioPagoEntidadRepositorio #FEF3C7 {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera):\nList<MedioPagoEntidad>
+  }
+  interface IMovimientoRepositorio #FEF3C7 {
+    +Actualizar(movimiento: Movimiento): bool
+    +Eliminar(movimiento: Movimiento): bool
+    +InsertarYObtenerId(movimiento: Movimiento): int
+    +ObtenerPorId(id: int): Movimiento
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento):\nList<Movimiento>
+  }
+  interface IReglaCategorizacionRepositorio #FEF3C7 {
+    +Actualizar(reglaCategorizacion: ReglaCategorizacion): bool
+    +Eliminar(reglaCategorizacion: ReglaCategorizacion): bool
+    +InsertarYObtenerId(reglaCategorizacion: ReglaCategorizacion): int
+    +ObtenerPorId(id: int): ReglaCategorizacion
+    +ObtenerPorUsuario(usuario: Usuario): List<ReglaCategorizacion>
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +Categorias: ICategoriaRepositorio
+    +ComercioReglaCategorizacion: IComercioReglaCategorizacionRepositorio
+    +CuentasFinancieras: ICuentaFinancieraRepositorio
+    +EntidadesFinancieras: IEntidadFinancieraRepositorio
+    +MediosPagoEntidad: IMedioPagoEntidadRepositorio
+    +Movimientos: IMovimientoRepositorio
+    +ReglasCategorizacion: IReglaCategorizacionRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class MedioPagoEntidadRepositorio #FEF3C7 {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera):\nList<MedioPagoEntidad>
+  }
+  class MovimientoRepositorio #FEF3C7 {
+    +Actualizar(movimiento: Movimiento): bool
+    +Eliminar(movimiento: Movimiento): bool
+    +InsertarYObtenerId(movimiento: Movimiento): int
+    +ObtenerPorId(id: int): Movimiento
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento):\nList<Movimiento>
+  }
+  class ReglaCategorizacionRepositorio #FEF3C7 {
+    +Actualizar(reglaCategorizacion: ReglaCategorizacion): bool
+    +Eliminar(reglaCategorizacion: ReglaCategorizacion): bool
+    +InsertarYObtenerId(reglaCategorizacion: ReglaCategorizacion): int
+    +ObtenerPorId(id: int): ReglaCategorizacion
+    +ObtenerPorUsuario(usuario: Usuario): List<ReglaCategorizacion>
+  }
+  class RubroComercioRepositorio #FEF3C7 {
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  class UsuarioRepositorio #FEF3C7 {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaRepositorio -[hidden]right-> ComercioReglaCategorizacionRepositorio
+  ComercioReglaCategorizacionRepositorio -[hidden]right-> ComercioRepositorio
+  ComercioRepositorio -[hidden]right-> CuentaFinancieraRepositorio
+  CuentaFinancieraRepositorio -[hidden]right-> EntidadFinancieraRepositorio
+  EntidadFinancieraRepositorio -[hidden]right-> ICategoriaRepositorio
+  ICategoriaRepositorio -[hidden]right-> IComercioReglaCategorizacionRepositorio
+  IComercioReglaCategorizacionRepositorio -[hidden]right-> IComercioRepositorio
+  IComercioRepositorio -[hidden]right-> ICuentaFinancieraRepositorio
+  ICuentaFinancieraRepositorio -[hidden]right-> IEntidadFinancieraRepositorio
+  IEntidadFinancieraRepositorio -[hidden]right-> IMedioPagoEntidadRepositorio
+  IMedioPagoEntidadRepositorio -[hidden]right-> IMovimientoRepositorio
+  CategoriaRepositorio -[hidden]down-> IReglaCategorizacionRepositorio
+  IReglaCategorizacionRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> MedioPagoEntidadRepositorio
+  MedioPagoEntidadRepositorio -[hidden]right-> MovimientoRepositorio
+  MovimientoRepositorio -[hidden]right-> ReglaCategorizacionRepositorio
+  ReglaCategorizacionRepositorio -[hidden]right-> RubroComercioRepositorio
+  RubroComercioRepositorio -[hidden]right-> UnidadDeTrabajoFactory
+  UnidadDeTrabajoFactory -[hidden]right-> UnidadDeTrabajoSqlServer
+  UnidadDeTrabajoSqlServer -[hidden]right-> UsuarioRepositorio
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class CategoriaDAL #FFEDD5 {
+    +Actualizar(categoria: Categoria, accesoDatos: AccesoDatosSqlServer):\nbool
+    +Eliminar(categoria: Categoria, accesoDatos: AccesoDatosSqlServer):\nbool
+    +ExisteNombreEnScope(nombre: string, usuario: Usuario, excluida:\nCategoria, accesoDatos: AccesoDatosSqlServer): bool
+    +InsertarYObtenerId(categoria: Categoria, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Categoria
+    +ObtenerVisiblesParaUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<Categoria>
+  }
+  class ComercioDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Comercio
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Comercio>
+  }
+  class ComercioReglaCategorizacionDAL #FFEDD5 {
+    +ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion, accesoDatos: AccesoDatosSqlServer):\nList<Comercio>
+    +ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion, comercios: IEnumerable<Comercio>, accesoDatos:\nAccesoDatosSqlServer): bool
+  }
+  class CuentaFinancieraDAL #FFEDD5 {
+    +Actualizar(cuenta: CuentaFinanciera, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(cuenta: CuentaFinanciera, accesoDatos:\nAccesoDatosSqlServer): bool
+    +InsertarYObtenerId(cuenta: CuentaFinanciera, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nCuentaFinanciera
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<CuentaFinanciera>
+  }
+  class CuentaFinancieraMedioPagoEntidadDAL #FFEDD5 {
+    +ObtenerMediosPagoEntidadPorCuenta(cuenta: CuentaFinanciera,\naccesoDatos: AccesoDatosSqlServer): List<MedioPagoEntidad>
+    +ReemplazarMediosPagoEntidadDeCuenta(cuenta: CuentaFinanciera, medios:\nIEnumerable<MedioPagoEntidad>, accesoDatos: AccesoDatosSqlServer):\nbool
+  }
+  class EntidadFinancieraDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nEntidadFinanciera
+  }
+  class MedioPagoDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): MedioPago
+  }
+  class MedioPagoEntidadDAL #FFEDD5 {
+    +ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera, accesoDatos:\nAccesoDatosSqlServer): List<MedioPagoEntidad>
+  }
+  class MovimientoDAL #FFEDD5 {
+    +Actualizar(movimiento: Movimiento, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(movimiento: Movimiento, accesoDatos: AccesoDatosSqlServer):\nbool
+    +InsertarYObtenerId(movimiento: Movimiento, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Movimiento
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer): List<Movimiento>
+  }
+  class ReglaCategorizacionDAL #FFEDD5 {
+    +Actualizar(reglaCategorizacion: ReglaCategorizacion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(reglaCategorizacion: ReglaCategorizacion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +InsertarYObtenerId(reglaCategorizacion: ReglaCategorizacion,\naccesoDatos: AccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nReglaCategorizacion
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ReglaCategorizacion>
+  }
+  class RubroComercioDAL #FFEDD5 {
+  }
+  class UsuarioDAL #FFEDD5 {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> CategoriaDAL
+  CategoriaDAL -[hidden]right-> ComercioDAL
+  ComercioDAL -[hidden]right-> ComercioReglaCategorizacionDAL
+  ComercioReglaCategorizacionDAL -[hidden]right-> CuentaFinancieraDAL
+  CuentaFinancieraDAL -[hidden]right-> CuentaFinancieraMedioPagoEntidadDAL
+  CuentaFinancieraMedioPagoEntidadDAL -[hidden]right-> EntidadFinancieraDAL
+  EntidadFinancieraDAL -[hidden]right-> MedioPagoDAL
+  MedioPagoDAL -[hidden]right-> MedioPagoEntidadDAL
+  MedioPagoEntidadDAL -[hidden]right-> MovimientoDAL
+  MovimientoDAL -[hidden]right-> ReglaCategorizacionDAL
+  ReglaCategorizacionDAL -[hidden]right-> RubroComercioDAL
+  AccesoDatosSqlServer -[hidden]down-> UsuarioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class Categoria #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Comercio #F3E8FF {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class CuentaFinanciera #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +EntidadFinanciera: EntidadFinanciera
+    +Alias: string
+    +Tipo: TipoCuentaFinanciera
+    +CredencialesCifradas: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class EntidadFinanciera #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class FiltroMovimiento #F3E8FF {
+    +FechaDesde: DateTime?
+    +FechaHasta: DateTime?
+    +Categoria: Categoria
+    +Tipo: TipoMovimiento?
+    +Texto: string
+  }
+  class MedioPago #F3E8FF {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad #F3E8FF {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+  class Movimiento #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Categoria: Categoria
+    +Comercio: Comercio
+    +Tipo: TipoMovimiento
+    +Monto: decimal
+    +Fecha: DateTime
+    +Descripcion: string
+    +FechaCreacion: DateTime
+  }
+  class ReglaCategorizacion #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Categoria: Categoria
+    +Nombre: string
+    +PalabrasClave: string
+  }
+  class RubroComercio #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  enum TipoCuentaFinanciera #F3E8FF {
+    BilleteraDigital
+    CuentaCorriente
+    CajaAhorro
+  }
+  enum TipoMedioPago #F3E8FF {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+  class Usuario #F3E8FF {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  Categoria -[hidden]right-> Comercio
+  Comercio -[hidden]right-> CuentaFinanciera
+  CuentaFinanciera -[hidden]right-> EntidadFinanciera
+  EntidadFinanciera -[hidden]right-> FiltroMovimiento
+  FiltroMovimiento -[hidden]right-> MedioPago
+  MedioPago -[hidden]right-> MedioPagoEntidad
+  MedioPagoEntidad -[hidden]right-> Movimiento
+  Movimiento -[hidden]right-> ReglaCategorizacion
+  ReglaCategorizacion -[hidden]right-> RubroComercio
+  RubroComercio -[hidden]right-> TipoCuentaFinanciera
+  TipoCuentaFinanciera -[hidden]right-> TipoMedioPago
+  Categoria -[hidden]down-> Usuario
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class GeminiEscaneoTicketService #CFFAFE {
+    +EscanearTicketAsync(imagenBytes: byte[]): Task<ITicketEscaneado>
+  }
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class Sesion #CFFAFE {
+    +GetUsuarioActual(): IUsuarioAutenticado
+    +HaySesionActiva(): bool
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  GeminiEscaneoTicketService -[hidden]right-> IdiomaService
+  IdiomaService -[hidden]right-> Sesion
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  interface IEscaneoTicketService #F1F5F9 {
+    +EscanearTicketAsync(imagenBytes: byte[]): Task<ITicketEscaneado>
+  }
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface ISesion #F1F5F9 {
+    +GetUsuarioActual(): IUsuarioAutenticado
+    +HaySesionActiva(): bool
+  }
+  interface ITicketEscaneado #F1F5F9 {
+    +Monto: decimal?
+    +Fecha: DateTime?
+    +Descripcion: string
+    +TextoCrudo: string
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  interface IUsuarioAutenticado #F1F5F9 {
+    +Id: int
+    +Username: string
+  }
+  enum TipoMovimiento #F1F5F9 {
+    Ingreso
+    Egreso
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IEscaneoTicketService -[hidden]right-> IIdioma
+  IIdioma -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> ISesion
+  ISesion -[hidden]right-> ITicketEscaneado
+  ITicketEscaneado -[hidden]right-> ITraduccion
+  ITraduccion -[hidden]right-> IUsuarioAutenticado
+  IUsuarioAutenticado -[hidden]right-> TipoMovimiento
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+FilaCategoria -[hidden]down-> BitacoraBLL
+BitacoraBLL -[hidden]down-> CategoriaRepositorio
+IReglaCategorizacionRepositorio -[hidden]down-> AccesoDatosSqlServer
+UsuarioDAL -[hidden]down-> Categoria
+Usuario -[hidden]down-> GeminiEscaneoTicketService
+GeminiEscaneoTicketService -[hidden]down-> IEscaneoTicketService
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+CandidatoRegla -[norank]-> ReglaCategorizacion : Regla
+Categoria -[norank]-> Usuario : Usuario
+CategoriaBLL .[norank].> Categoria
+CategoriaBLL .[norank].> IBitacoraBLL
+CategoriaBLL .[norank].> ICategoriaRepositorio
+CategoriaBLL .[norank].> ISesion
+CategoriaBLL .[norank].> IUnidadDeTrabajo
+CategoriaBLL .[norank].> IUnidadDeTrabajoFactory
+CategoriaBLL .[norank].> SesionUsuarioExtensiones
+CategoriaDAL .[norank].> AccesoDatosSqlServer
+CategoriaRepositorio .[norank].> AccesoDatosSqlServer
+CategoriaRepositorio .[norank].> CategoriaDAL
+CategoriaRepositorio .[norank].> UsuarioRepositorio
+CategoriaRepositorio .[norank].|> ICategoriaRepositorio
+Comercio -[norank]-> RubroComercio : RubroComercio
+ComercioBLL .[norank].> IBitacoraBLL
+ComercioBLL .[norank].> IComercioRepositorio
+ComercioBLL .[norank].> IUnidadDeTrabajoFactory
+ComercioDAL .[norank].> AccesoDatosSqlServer
+ComercioReglaCategorizacionDAL .[norank].> AccesoDatosSqlServer
+ComercioReglaCategorizacionRepositorio .[norank].> AccesoDatosSqlServer
+ComercioReglaCategorizacionRepositorio .[norank].> ComercioReglaCategorizacionDAL
+ComercioReglaCategorizacionRepositorio .[norank].> ComercioRepositorio
+ComercioReglaCategorizacionRepositorio .[norank].|> IComercioReglaCategorizacionRepositorio
+ComercioRepositorio .[norank].> AccesoDatosSqlServer
+ComercioRepositorio .[norank].> ComercioDAL
+ComercioRepositorio .[norank].> RubroComercioRepositorio
+ComercioRepositorio .[norank].|> IComercioRepositorio
+CuentaFinanciera -[norank]-> EntidadFinanciera : EntidadFinanciera
+CuentaFinanciera -[norank]-> MedioPagoEntidad : MediosPagoEntidad
+CuentaFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+CuentaFinanciera -[norank]-> TipoCuentaFinanciera : Tipo
+CuentaFinanciera -[norank]-> Usuario : Usuario
+CuentaFinancieraBLL .[norank].> CuentaFinanciera
+CuentaFinancieraBLL .[norank].> IBitacoraBLL
+CuentaFinancieraBLL .[norank].> ICuentaFinancieraRepositorio
+CuentaFinancieraBLL .[norank].> IEntidadFinancieraRepositorio
+CuentaFinancieraBLL .[norank].> IMedioPagoEntidadRepositorio
+CuentaFinancieraBLL .[norank].> ISesion
+CuentaFinancieraBLL .[norank].> IUnidadDeTrabajo
+CuentaFinancieraBLL .[norank].> IUnidadDeTrabajoFactory
+CuentaFinancieraBLL .[norank].> SesionUsuarioExtensiones
+CuentaFinancieraDAL .[norank].> AccesoDatosSqlServer
+CuentaFinancieraMedioPagoEntidadDAL .[norank].> AccesoDatosSqlServer
+CuentaFinancieraRepositorio .[norank].> AccesoDatosSqlServer
+CuentaFinancieraRepositorio .[norank].> CuentaFinancieraDAL
+CuentaFinancieraRepositorio .[norank].> CuentaFinancieraMedioPagoEntidadDAL
+CuentaFinancieraRepositorio .[norank].> EntidadFinancieraDAL
+CuentaFinancieraRepositorio .[norank].> MedioPagoEntidadRepositorio
+CuentaFinancieraRepositorio .[norank].> UsuarioRepositorio
+CuentaFinancieraRepositorio .[norank].|> ICuentaFinancieraRepositorio
+EntidadFinanciera -[norank]-> MedioPagoEntidad : MediosPagoEntidad
+EntidadFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+EntidadFinancieraBLL .[norank].> IBitacoraBLL
+EntidadFinancieraBLL .[norank].> IEntidadFinancieraRepositorio
+EntidadFinancieraBLL .[norank].> IUnidadDeTrabajoFactory
+EntidadFinancieraDAL .[norank].> AccesoDatosSqlServer
+EntidadFinancieraRepositorio .[norank].> AccesoDatosSqlServer
+EntidadFinancieraRepositorio .[norank].> EntidadFinancieraDAL
+EntidadFinancieraRepositorio .[norank].> MedioPagoDAL
+EntidadFinancieraRepositorio .[norank].> MedioPagoEntidadDAL
+EntidadFinancieraRepositorio .[norank].|> IEntidadFinancieraRepositorio
+EscaneoBorradorResultado -[norank]-> Movimiento : Borrador
+FilaCategoria -[norank]-> Categoria : Categoria
+FilaMovimiento -[norank]-> Movimiento : Movimiento
+FilaRegla -[norank]-> "*" Comercio : ComerciosAsociados
+FilaRegla -[norank]-> ReglaCategorizacion : Regla
+FiltroMovimiento -[norank]-> Categoria : Categoria
+FiltroMovimiento -[norank]-> TipoMovimiento : Tipo
+FormGestionCategorias .[norank].> Categoria
+FormGestionCategorias .[norank].> CategoriaBLL
+FormGestionCategorias .[norank].> FilaCategoria
+FormGestionCategorias .[norank].> ISesion
+FormGestionCategorias .[norank].> UiDialogHelper
+FormGestionCategorias .[norank].> UiExceptionHandler
+FormGestionCuentasFinancieras .[norank].> CuentaFinanciera
+FormGestionCuentasFinancieras .[norank].> CuentaFinancieraBLL
+FormGestionCuentasFinancieras .[norank].> EntidadFinancieraBLL
+FormGestionCuentasFinancieras .[norank].> OpcionMedioPagoEntidad
+FormGestionCuentasFinancieras .[norank].> UiDialogHelper
+FormGestionCuentasFinancieras .[norank].> UiExceptionHandler
+FormMovimientos .[norank].> CategoriaBLL
+FormMovimientos .[norank].> ComercioBLL
+FormMovimientos .[norank].> FilaMovimiento
+FormMovimientos .[norank].> FiltroMovimiento
+FormMovimientos .[norank].> ISesion
+FormMovimientos .[norank].> Movimiento
+FormMovimientos .[norank].> MovimientoBLL
+FormMovimientos .[norank].> ReglaCategorizacionBLL
+FormMovimientos .[norank].> UiDialogHelper
+FormMovimientos .[norank].> UiExceptionHandler
+FormMovimientos .[norank].> Usuario
+FormReglasCategorizacion .[norank].> CategoriaBLL
+FormReglasCategorizacion .[norank].> ComercioBLL
+FormReglasCategorizacion .[norank].> FilaRegla
+FormReglasCategorizacion .[norank].> ReglaCategorizacion
+FormReglasCategorizacion .[norank].> ReglaCategorizacionBLL
+FormReglasCategorizacion .[norank].> UiDialogHelper
+FormReglasCategorizacion .[norank].> UiExceptionHandler
+GeminiEscaneoTicketService .[norank].|> IEscaneoTicketService
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> ICategoriaRepositorio : Categorias
+IUnidadDeTrabajo -[norank]-> IComercioReglaCategorizacionRepositorio : ComercioReglaCategorizacion
+IUnidadDeTrabajo -[norank]-> ICuentaFinancieraRepositorio : CuentasFinancieras
+IUnidadDeTrabajo -[norank]-> IEntidadFinancieraRepositorio : EntidadesFinancieras
+IUnidadDeTrabajo -[norank]-> IMedioPagoEntidadRepositorio : MediosPagoEntidad
+IUnidadDeTrabajo -[norank]-> IMovimientoRepositorio : Movimientos
+IUnidadDeTrabajo -[norank]-> IReglaCategorizacionRepositorio : ReglasCategorizacion
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+MedioPago -[norank]-> TipoMedioPago : Tipo
+MedioPagoDAL .[norank].> AccesoDatosSqlServer
+MedioPagoEntidad -[norank]-> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad -[norank]-> MedioPago : MedioPago
+MedioPagoEntidadDAL .[norank].> AccesoDatosSqlServer
+MedioPagoEntidadRepositorio .[norank].> AccesoDatosSqlServer
+MedioPagoEntidadRepositorio .[norank].> EntidadFinancieraDAL
+MedioPagoEntidadRepositorio .[norank].> MedioPagoDAL
+MedioPagoEntidadRepositorio .[norank].> MedioPagoEntidadDAL
+MedioPagoEntidadRepositorio .[norank].|> IMedioPagoEntidadRepositorio
+Movimiento -[norank]-> Categoria : Categoria
+Movimiento -[norank]-> Comercio : Comercio
+Movimiento -[norank]-> TipoMovimiento : Tipo
+Movimiento -[norank]-> Usuario : Usuario
+MovimientoBLL .[norank].> EscaneoBorradorResultado
+MovimientoBLL .[norank].> IBitacoraBLL
+MovimientoBLL .[norank].> ICategoriaRepositorio
+MovimientoBLL .[norank].> IComercioRepositorio
+MovimientoBLL .[norank].> IEscaneoTicketService
+MovimientoBLL .[norank].> IMovimientoRepositorio
+MovimientoBLL .[norank].> ISesion
+MovimientoBLL .[norank].> IUnidadDeTrabajo
+MovimientoBLL .[norank].> IUnidadDeTrabajoFactory
+MovimientoBLL .[norank].> Movimiento
+MovimientoBLL .[norank].> SesionUsuarioExtensiones
+MovimientoDAL .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> CategoriaRepositorio
+MovimientoRepositorio .[norank].> ComercioRepositorio
+MovimientoRepositorio .[norank].> MovimientoDAL
+MovimientoRepositorio .[norank].> UsuarioRepositorio
+MovimientoRepositorio .[norank].|> IMovimientoRepositorio
+OpcionMedioPagoEntidad -[norank]-> MedioPagoEntidad : MedioPagoEntidad
+ReglaCategorizacion -[norank]-> Categoria : Categoria
+ReglaCategorizacion -[norank]-> Usuario : Usuario
+ReglaCategorizacionBLL .[norank].> CandidatoRegla
+ReglaCategorizacionBLL .[norank].> IBitacoraBLL
+ReglaCategorizacionBLL .[norank].> ICategoriaRepositorio
+ReglaCategorizacionBLL .[norank].> IComercioReglaCategorizacionRepositorio
+ReglaCategorizacionBLL .[norank].> IComercioRepositorio
+ReglaCategorizacionBLL .[norank].> IReglaCategorizacionRepositorio
+ReglaCategorizacionBLL .[norank].> ISesion
+ReglaCategorizacionBLL .[norank].> IUnidadDeTrabajo
+ReglaCategorizacionBLL .[norank].> IUnidadDeTrabajoFactory
+ReglaCategorizacionBLL .[norank].> ReglaCategorizacion
+ReglaCategorizacionBLL .[norank].> SesionUsuarioExtensiones
+ReglaCategorizacionDAL .[norank].> AccesoDatosSqlServer
+ReglaCategorizacionRepositorio .[norank].> AccesoDatosSqlServer
+ReglaCategorizacionRepositorio .[norank].> CategoriaRepositorio
+ReglaCategorizacionRepositorio .[norank].> ReglaCategorizacionDAL
+ReglaCategorizacionRepositorio .[norank].> UsuarioRepositorio
+ReglaCategorizacionRepositorio .[norank].|> IReglaCategorizacionRepositorio
+RubroComercioDAL .[norank].> AccesoDatosSqlServer
+RubroComercioRepositorio .[norank].> AccesoDatosSqlServer
+RubroComercioRepositorio .[norank].> RubroComercioDAL
+Sesion .[norank].> IUsuarioAutenticado
+Sesion .[norank].|> ISesion
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> ICategoriaRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IComercioReglaCategorizacionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IComercioRepositorio
+UnidadDeTrabajoSqlServer .[norank].> ICuentaFinancieraRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IEntidadFinancieraRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMedioPagoEntidadRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMovimientoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IReglaCategorizacionRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+Usuario .[norank].|> IUsuarioAutenticado
+UsuarioDAL .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> UsuarioDAL
+' Trazabilidad de cobertura: CUN06, CUN07, CUN08, CUN09, CUN11, CUN12, CUN13, CUN14, CUN15, CUN16, CUN17, CUN18, CUN19, CUN20, CUN21, CUN22
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: BLL/ReglaCategorizacionBLL.cs :: CandidatoRegla
+' Participante: BE/Categoria.cs :: Categoria
+' Participante: BLL/CategoriaBLL.cs :: CategoriaBLL
+' Participante: DAL/CategoriaDAL.cs :: CategoriaDAL
+' Participante: REPOSITORIO/CategoriaRepositorio.cs :: CategoriaRepositorio
+' Participante: BE/Comercio.cs :: Comercio
+' Participante: BLL/ComercioBLL.cs :: ComercioBLL
+' Participante: DAL/ComercioDAL.cs :: ComercioDAL
+' Participante: DAL/ComercioReglaCategorizacionDAL.cs :: ComercioReglaCategorizacionDAL
+' Participante: REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs :: ComercioReglaCategorizacionRepositorio
+' Participante: REPOSITORIO/ComercioRepositorio.cs :: ComercioRepositorio
+' Participante: BE/CuentaFinanciera.cs :: CuentaFinanciera
+' Participante: BLL/CuentaFinancieraBLL.cs :: CuentaFinancieraBLL
+' Participante: DAL/CuentaFinancieraDAL.cs :: CuentaFinancieraDAL
+' Participante: DAL/CuentaFinancieraMedioPagoEntidadDAL.cs :: CuentaFinancieraMedioPagoEntidadDAL
+' Participante: REPOSITORIO/CuentaFinancieraRepositorio.cs :: CuentaFinancieraRepositorio
+' Participante: BE/EntidadFinanciera.cs :: EntidadFinanciera
+' Participante: BLL/EntidadFinancieraBLL.cs :: EntidadFinancieraBLL
+' Participante: DAL/EntidadFinancieraDAL.cs :: EntidadFinancieraDAL
+' Participante: REPOSITORIO/EntidadFinancieraRepositorio.cs :: EntidadFinancieraRepositorio
+' Participante: BLL/MovimientoBLL.cs :: EscaneoBorradorResultado
+' Participante: UI/FormGestionCategorias.cs :: FilaCategoria
+' Participante: UI/FormBalanceGeneral.cs :: FilaMovimiento
+' Participante: UI/FormReglasCategorizacion.cs :: FilaRegla
+' Participante: BE/FiltroMovimiento.cs :: FiltroMovimiento
+' Participante: UI/FormGestionCategorias.cs :: FormGestionCategorias
+' Participante: UI/FormGestionCuentasFinancieras.cs :: FormGestionCuentasFinancieras
+' Participante: UI/FormMovimientos.cs :: FormMovimientos
+' Participante: UI/FormReglasCategorizacion.cs :: FormReglasCategorizacion
+' Participante: SERVICIOS/GeminiEscaneoTicketService.cs :: GeminiEscaneoTicketService
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: REPOSITORIO/ICategoriaRepositorio.cs :: ICategoriaRepositorio
+' Participante: REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs :: IComercioReglaCategorizacionRepositorio
+' Participante: REPOSITORIO/IComercioRepositorio.cs :: IComercioRepositorio
+' Participante: REPOSITORIO/ICuentaFinancieraRepositorio.cs :: ICuentaFinancieraRepositorio
+' Participante: REPOSITORIO/IEntidadFinancieraRepositorio.cs :: IEntidadFinancieraRepositorio
+' Participante: ABSTRACCIONES/IEscaneoTicketService.cs :: IEscaneoTicketService
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: REPOSITORIO/IMedioPagoEntidadRepositorio.cs :: IMedioPagoEntidadRepositorio
+' Participante: REPOSITORIO/IMovimientoRepositorio.cs :: IMovimientoRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: REPOSITORIO/IReglaCategorizacionRepositorio.cs :: IReglaCategorizacionRepositorio
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: ABSTRACCIONES/ITicketEscaneado.cs :: ITicketEscaneado
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: ABSTRACCIONES/IUsuarioAutenticado.cs :: IUsuarioAutenticado
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: BE/MedioPago.cs :: MedioPago
+' Participante: DAL/MedioPagoDAL.cs :: MedioPagoDAL
+' Participante: BE/MedioPagoEntidad.cs :: MedioPagoEntidad
+' Participante: DAL/MedioPagoEntidadDAL.cs :: MedioPagoEntidadDAL
+' Participante: REPOSITORIO/MedioPagoEntidadRepositorio.cs :: MedioPagoEntidadRepositorio
+' Participante: BE/Movimiento.cs :: Movimiento
+' Participante: BLL/MovimientoBLL.cs :: MovimientoBLL
+' Participante: DAL/MovimientoDAL.cs :: MovimientoDAL
+' Participante: REPOSITORIO/MovimientoRepositorio.cs :: MovimientoRepositorio
+' Participante: UI/FormGestionCuentasFinancieras.cs :: OpcionMedioPagoEntidad
+' Participante: BE/ReglaCategorizacion.cs :: ReglaCategorizacion
+' Participante: BLL/ReglaCategorizacionBLL.cs :: ReglaCategorizacionBLL
+' Participante: DAL/ReglaCategorizacionDAL.cs :: ReglaCategorizacionDAL
+' Participante: REPOSITORIO/ReglaCategorizacionRepositorio.cs :: ReglaCategorizacionRepositorio
+' Participante: BE/RubroComercio.cs :: RubroComercio
+' Participante: DAL/RubroComercioDAL.cs :: RubroComercioDAL
+' Participante: REPOSITORIO/RubroComercioRepositorio.cs :: RubroComercioRepositorio
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BLL/SesionUsuarioExtensiones.cs :: SesionUsuarioExtensiones
+' Participante: BE/TipoCuentaFinanciera.cs :: TipoCuentaFinanciera
+' Participante: BE/TipoMedioPago.cs :: TipoMedioPago
+' Participante: ABSTRACCIONES/TipoMovimiento.cs :: TipoMovimiento
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' Participante: BE/Usuario.cs :: Usuario
+' Participante: DAL/UsuarioDAL.cs :: UsuarioDAL
+' Participante: REPOSITORIO/UsuarioRepositorio.cs :: UsuarioRepositorio
+' ABSTRACCIONES/IEscaneoTicketService.cs:10 IEscaneoTicketService.EscanearTicketAsync
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' ABSTRACCIONES/ISesion.cs:9 ISesion.GetUsuarioActual
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/CategoriaBLL.cs:114 CategoriaBLL.Eliminar
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/CategoriaBLL.cs:34 CategoriaBLL.Crear
+' BLL/CategoriaBLL.cs:70 CategoriaBLL.Actualizar
+' BLL/ComercioBLL.cs:27 ComercioBLL.ObtenerTodos
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/CuentaFinancieraBLL.cs:127 CuentaFinancieraBLL.Eliminar
+' BLL/CuentaFinancieraBLL.cs:34 CuentaFinancieraBLL.ObtenerMisCuentas
+' BLL/CuentaFinancieraBLL.cs:40 CuentaFinancieraBLL.Crear
+' BLL/CuentaFinancieraBLL.cs:82 CuentaFinancieraBLL.Actualizar
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/MovimientoBLL.cs:169 MovimientoBLL.EscanearBorradorAsync
+' BLL/MovimientoBLL.cs:209 MovimientoBLL.Crear
+' BLL/MovimientoBLL.cs:243 MovimientoBLL.Actualizar
+' BLL/MovimientoBLL.cs:289 MovimientoBLL.Eliminar
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/ReglaCategorizacionBLL.cs:101 ReglaCategorizacionBLL.Actualizar
+' BLL/ReglaCategorizacionBLL.cs:152 ReglaCategorizacionBLL.Eliminar
+' BLL/ReglaCategorizacionBLL.cs:196 ReglaCategorizacionBLL.SugerirCategoria
+' BLL/ReglaCategorizacionBLL.cs:42 ReglaCategorizacionBLL.ObtenerParaUsuarioActual
+' BLL/ReglaCategorizacionBLL.cs:47 ReglaCategorizacionBLL.ObtenerComerciosPorRegla
+' BLL/ReglaCategorizacionBLL.cs:54 ReglaCategorizacionBLL.Crear
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CategoriaDAL.cs:114 CategoriaDAL.Actualizar
+' DAL/CategoriaDAL.cs:143 CategoriaDAL.Eliminar
+' DAL/CategoriaDAL.cs:171 CategoriaDAL.ExisteNombreEnScope
+' DAL/CategoriaDAL.cs:20 CategoriaDAL.ObtenerPorId
+' DAL/CategoriaDAL.cs:49 CategoriaDAL.ObtenerVisiblesParaUsuario
+' DAL/CategoriaDAL.cs:85 CategoriaDAL.InsertarYObtenerId
+' DAL/ComercioDAL.cs:25 ComercioDAL.ObtenerPorId
+' DAL/ComercioDAL.cs:90 ComercioDAL.ObtenerTodos
+' DAL/ComercioReglaCategorizacionDAL.cs:12 ComercioReglaCategorizacionDAL.ObtenerComerciosPorReglaCategorizacion
+' DAL/ComercioReglaCategorizacionDAL.cs:44 ComercioReglaCategorizacionDAL.ReemplazarComerciosDeReglaCategorizacion
+' DAL/CuentaFinancieraDAL.cs:125 CuentaFinancieraDAL.InsertarYObtenerId
+' DAL/CuentaFinancieraDAL.cs:157 CuentaFinancieraDAL.Actualizar
+' DAL/CuentaFinancieraDAL.cs:192 CuentaFinancieraDAL.Eliminar
+' DAL/CuentaFinancieraDAL.cs:24 CuentaFinancieraDAL.ObtenerPorId
+' DAL/CuentaFinancieraDAL.cs:53 CuentaFinancieraDAL.ObtenerPorUsuario
+' DAL/CuentaFinancieraMedioPagoEntidadDAL.cs:11 CuentaFinancieraMedioPagoEntidadDAL.ObtenerMediosPagoEntidadPorCuenta
+' DAL/CuentaFinancieraMedioPagoEntidadDAL.cs:43 CuentaFinancieraMedioPagoEntidadDAL.ReemplazarMediosPagoEntidadDeCuenta
+' DAL/EntidadFinancieraDAL.cs:19 EntidadFinancieraDAL.ObtenerPorId
+' DAL/MedioPagoDAL.cs:21 MedioPagoDAL.ObtenerPorId
+' DAL/MedioPagoEntidadDAL.cs:52 MedioPagoEntidadDAL.ObtenerPorEntidadFinanciera
+' DAL/MovimientoDAL.cs:31 MovimientoDAL.ObtenerPorId
+' DAL/MovimientoDAL.cs:326 MovimientoDAL.InsertarYObtenerId
+' DAL/MovimientoDAL.cs:360 MovimientoDAL.Actualizar
+' DAL/MovimientoDAL.cs:399 MovimientoDAL.Eliminar
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' DAL/ReglaCategorizacionDAL.cs:118 ReglaCategorizacionDAL.Actualizar
+' DAL/ReglaCategorizacionDAL.cs:151 ReglaCategorizacionDAL.Eliminar
+' DAL/ReglaCategorizacionDAL.cs:22 ReglaCategorizacionDAL.ObtenerPorId
+' DAL/ReglaCategorizacionDAL.cs:51 ReglaCategorizacionDAL.ObtenerPorUsuario
+' DAL/ReglaCategorizacionDAL.cs:87 ReglaCategorizacionDAL.InsertarYObtenerId
+' REPOSITORIO/CategoriaRepositorio.cs:23 CategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/CategoriaRepositorio.cs:30 CategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/CategoriaRepositorio.cs:47 CategoriaRepositorio.InsertarYObtenerId
+' REPOSITORIO/CategoriaRepositorio.cs:52 CategoriaRepositorio.Actualizar
+' REPOSITORIO/CategoriaRepositorio.cs:57 CategoriaRepositorio.Eliminar
+' REPOSITORIO/CategoriaRepositorio.cs:62 CategoriaRepositorio.ExisteNombreEnScope
+' REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs:24 ComercioReglaCategorizacionRepositorio.ObtenerComerciosPorReglaCategorizacion
+' REPOSITORIO/ComercioReglaCategorizacionRepositorio.cs:31 ComercioReglaCategorizacionRepositorio.ReemplazarComerciosDeReglaCategorizacion
+' REPOSITORIO/ComercioRepositorio.cs:23 ComercioRepositorio.ObtenerPorId
+' REPOSITORIO/ComercioRepositorio.cs:37 ComercioRepositorio.ObtenerTodos
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:27 CuentaFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:34 CuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:73 CuentaFinancieraRepositorio.InsertarYObtenerId
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:78 CuentaFinancieraRepositorio.Actualizar
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:83 CuentaFinancieraRepositorio.Eliminar
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:88 CuentaFinancieraRepositorio.ReemplazarMediosPagoEntidadDeCuenta
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:27 EntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:12 ICategoriaRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICategoriaRepositorio.cs:14 ICategoriaRepositorio.Actualizar
+' REPOSITORIO/ICategoriaRepositorio.cs:16 ICategoriaRepositorio.Eliminar
+' REPOSITORIO/ICategoriaRepositorio.cs:19 ICategoriaRepositorio.ExisteNombreEnScope
+' REPOSITORIO/ICategoriaRepositorio.cs:8 ICategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:10 IComercioReglaCategorizacionRepositorio.ReemplazarComerciosDeReglaCategorizacion
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:8 IComercioReglaCategorizacionRepositorio.ObtenerComerciosPorReglaCategorizacion
+' REPOSITORIO/IComercioRepositorio.cs:12 IComercioRepositorio.ObtenerTodos
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:10 ICuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:14 ICuentaFinancieraRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:16 ICuentaFinancieraRepositorio.Actualizar
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:18 ICuentaFinancieraRepositorio.Eliminar
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:20 ICuentaFinancieraRepositorio.ReemplazarMediosPagoEntidadDeCuenta
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:8 ICuentaFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:10 IMedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IMovimientoRepositorio.cs:11 IMovimientoRepositorio.ObtenerPorId
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:25 IMovimientoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IMovimientoRepositorio.cs:27 IMovimientoRepositorio.Actualizar
+' REPOSITORIO/IMovimientoRepositorio.cs:29 IMovimientoRepositorio.Eliminar
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:10 IReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:12 IReglaCategorizacionRepositorio.InsertarYObtenerId
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:14 IReglaCategorizacionRepositorio.Actualizar
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:16 IReglaCategorizacionRepositorio.Eliminar
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:8 IReglaCategorizacionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:34 MedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/MovimientoRepositorio.cs:26 MovimientoRepositorio.ObtenerPorId
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:80 MovimientoRepositorio.InsertarYObtenerId
+' REPOSITORIO/MovimientoRepositorio.cs:85 MovimientoRepositorio.Actualizar
+' REPOSITORIO/MovimientoRepositorio.cs:90 MovimientoRepositorio.Eliminar
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:23 ReglaCategorizacionRepositorio.ObtenerPorId
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:30 ReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:48 ReglaCategorizacionRepositorio.InsertarYObtenerId
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:53 ReglaCategorizacionRepositorio.Actualizar
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:58 ReglaCategorizacionRepositorio.Eliminar
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' SERVICIOS/GeminiEscaneoTicketService.cs:30 GeminiEscaneoTicketService.EscanearTicketAsync
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' SERVICIOS/Sesion.cs:54 Sesion.GetUsuarioActual
+' SERVICIOS/Sesion.cs:89 Sesion.HaySesionActiva
+' UI/FormGestionCategorias.cs:165 FormGestionCategorias.CargarCategorias
+' UI/FormGestionCategorias.cs:42 FormGestionCategorias.btnAgregarCategoria_Click
+' UI/FormGestionCategorias.cs:57 FormGestionCategorias.btnActualizarCategoria_Click
+' UI/FormGestionCategorias.cs:86 FormGestionCategorias.btnEliminarCategoria_Click
+' UI/FormGestionCuentasFinancieras.cs:114 FormGestionCuentasFinancieras.CargarCuentas
+' UI/FormGestionCuentasFinancieras.cs:287 FormGestionCuentasFinancieras.btnAgregarCuenta_Click
+' UI/FormGestionCuentasFinancieras.cs:318 FormGestionCuentasFinancieras.btnActualizarCuenta_Click
+' UI/FormGestionCuentasFinancieras.cs:354 FormGestionCuentasFinancieras.btnEliminarCuenta_Click
+' UI/FormMovimientos.cs:119 FormMovimientos.RefrescarDatos
+' UI/FormMovimientos.cs:313 FormMovimientos.btnAgregarMovimiento_Click
+' UI/FormMovimientos.cs:416 FormMovimientos.btnActualizarMovimiento_Click
+' UI/FormMovimientos.cs:452 FormMovimientos.btnEliminarMovimiento_Click
+' UI/FormReglasCategorizacion.cs:132 FormReglasCategorizacion.btnAgregarRegla_Click
+' UI/FormReglasCategorizacion.cs:158 FormReglasCategorizacion.btnActualizarRegla_Click
+' UI/FormReglasCategorizacion.cs:192 FormReglasCategorizacion.btnEliminarRegla_Click
+' UI/FormReglasCategorizacion.cs:68 FormReglasCategorizacion.CargarReglas
+' UI/UiDialogHelper.cs:10 UiDialogHelper.MostrarInfo
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:40 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:45 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:54 UiDialogHelper.Traducir
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

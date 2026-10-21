@@ -32,7 +32,7 @@ namespace TpIDS.IntegrationTests
 
                 int id = repositorio.InsertarYObtenerId(Nueva(usuarioId, mensaje));
 
-                Notificacion leida = repositorio.ObtenerPersonal(id, usuarioId);
+                Notificacion leida = repositorio.ObtenerPersonal(new Notificacion { Id = id }, new Usuario { Id = usuarioId });
                 Assert.AreEqual(mensaje, leida.Mensaje);
                 Assert.Contains("\r\n", leida.Mensaje);
                 Assert.Contains("Ωß—ñ", leida.Mensaje);
@@ -73,7 +73,7 @@ namespace TpIDS.IntegrationTests
 
                 Assert.IsTrue(repositorio.Actualizar(new Notificacion { Id = id, Usuario = new BE.Usuario { Id = usuarioId }, Mensaje = mensaje, Fecha = Jornada, Leida = false }));
 
-                Assert.AreEqual(mensaje, repositorio.ObtenerPersonal(id, usuarioId).Mensaje);
+                Assert.AreEqual(mensaje, repositorio.ObtenerPersonal(new Notificacion { Id = id }, new Usuario { Id = usuarioId }).Mensaje);
                 acceso.RollbackTransactionScope();
             }
         }
@@ -92,15 +92,15 @@ namespace TpIDS.IntegrationTests
                     new RecordatorioInversion { Usuario = new BE.Usuario { Id = usuarioId }, Mensaje = "inv", Fecha = Jornada, TipoAutomatico = TipoNotificacionAutomatica.Inversiones, FechaJornada = Jornada });
                 int compras = new RecordatorioCompraRepositorio(acceso).InsertarYObtenerId(CompraAgregada(usuarioId, Jornada));
 
-                Notificacion m = notificaciones.ObtenerPersonal(movimientos, usuarioId);
+                Notificacion m = notificaciones.ObtenerPersonal(new Notificacion { Id = movimientos }, new Usuario { Id = usuarioId });
                 Assert.AreEqual(TipoNotificacionAutomatica.Movimientos, m.TipoAutomatico);
                 Assert.AreEqual(Jornada, m.FechaJornada);
                 Assert.IsNull(m.ClaveEjemplo);
-                Notificacion i = notificaciones.ObtenerPersonal(inversiones, usuarioId);
+                Notificacion i = notificaciones.ObtenerPersonal(new Notificacion { Id = inversiones }, new Usuario { Id = usuarioId });
                 Assert.IsInstanceOfType<RecordatorioInversion>(i);
                 Assert.AreEqual(TipoNotificacionAutomatica.Inversiones, i.TipoAutomatico);
                 Assert.AreEqual(Jornada, i.FechaJornada);
-                Notificacion c = notificaciones.ObtenerPersonal(compras, usuarioId);
+                Notificacion c = notificaciones.ObtenerPersonal(new Notificacion { Id = compras }, new Usuario { Id = usuarioId });
                 Assert.AreEqual(TipoNotificacionAutomatica.Compras, c.TipoAutomatico);
                 Assert.AreEqual(Jornada, c.FechaJornada);
                 acceso.RollbackTransactionScope();
@@ -122,9 +122,9 @@ namespace TpIDS.IntegrationTests
                 Assert.IsNull(porRepositorio.ItemLista);
                 Assert.IsNull(porRepositorio.Promocion);
                 Assert.IsNull(porRepositorio.FechaVencimiento);
-                Assert.AreEqual(1, repositorio.ObtenerPorUsuario(usuarioId).Count(r => r.Id == id));
+                Assert.AreEqual(1, repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId }).Count(r => r.Id == id));
                 Assert.AreEqual(1, repositorio.ObtenerTodas().Count(r => r.Id == id));
-                RecordatorioCompra personal = (RecordatorioCompra)new NotificacionRepositorio(acceso).ObtenerPersonal(id, usuarioId);
+                RecordatorioCompra personal = (RecordatorioCompra)new NotificacionRepositorio(acceso).ObtenerPersonal(new Notificacion { Id = id }, new Usuario { Id = usuarioId });
                 Assert.IsNull(personal.ItemLista);
                 Assert.IsNull(personal.Promocion);
                 Assert.IsNull(personal.FechaVencimiento);
@@ -421,9 +421,9 @@ namespace TpIDS.IntegrationTests
                 int admin = Usuario(acceso, "admin");
                 int ajena = repositorio.InsertarYObtenerId(Nueva(admin, ConstruirMensajeLargo()));
 
-                Assert.IsNull(repositorio.ObtenerPersonal(ajena, user));
-                Assert.IsFalse(repositorio.MarcarPersonalLeida(ajena, user));
-                Assert.IsFalse(repositorio.ObtenerPaginaPersonal(user, null, 1).Elementos.Any(n => n.Id == ajena));
+                Assert.IsNull(repositorio.ObtenerPersonal(new Notificacion { Id = ajena }, new Usuario { Id = user }));
+                Assert.IsFalse(repositorio.MarcarPersonalLeida(new Notificacion { Id = ajena }, new Usuario { Id = user }));
+                Assert.IsFalse(repositorio.ObtenerPaginaPersonal(new Usuario { Id = user }, null, 1).Elementos.Any(n => n.Id == ajena));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -436,28 +436,31 @@ namespace TpIDS.IntegrationTests
                 acceso.BeginTransactionScope();
                 var repositorio = new NotificacionRepositorio(acceso);
                 int usuarioId = Usuario(acceso, "user");
-                int basal = repositorio.ContarNoLeidas(usuarioId);
+                var destinatario = new UsuarioRepositorio(acceso).ObtenerPorId(usuarioId);
+                int basal = repositorio.ContarNoLeidas(destinatario);
                 var ids = Enumerable.Range(0, 11).Select(i => repositorio.InsertarYObtenerId(new Notificacion
                 {
                     Usuario = new BE.Usuario { Id = usuarioId }, Mensaje = ConstruirMensajeLargo() + i, Fecha = new DateTime(2030, 1, 1).AddMinutes(i), Leida = false
                 })).ToList();
                 int agregada = new RecordatorioCompraRepositorio(acceso).InsertarYObtenerId(CompraAgregada(usuarioId, Jornada));
 
-                Assert.AreEqual(basal + 12, repositorio.ContarNoLeidas(usuarioId));
-                PaginaNotificaciones primera = repositorio.ObtenerPaginaPersonal(usuarioId, new FiltroNotificacion { FechaDesde = new DateTime(2030, 1, 1) }, 1);
-                PaginaNotificaciones segunda = repositorio.ObtenerPaginaPersonal(usuarioId, new FiltroNotificacion { FechaDesde = new DateTime(2030, 1, 1) }, 2);
+                Assert.AreEqual(basal + 12, repositorio.ContarNoLeidas(destinatario));
+                PaginaNotificaciones primera = repositorio.ObtenerPaginaPersonal(destinatario, new FiltroNotificacion { FechaDesde = new DateTime(2030, 1, 1) }, 1);
+                PaginaNotificaciones segunda = repositorio.ObtenerPaginaPersonal(destinatario, new FiltroNotificacion { FechaDesde = new DateTime(2030, 1, 1) }, 2);
                 Assert.AreEqual(11, primera.Total);
                 Assert.AreEqual(10, primera.Elementos.Count);
                 Assert.AreEqual(1, segunda.Elementos.Count);
                 Assert.AreEqual(ConstruirMensajeLargo() + "10", primera.Elementos[0].Mensaje);
-                PaginaNotificaciones conAgregada = repositorio.ObtenerPaginaPersonal(usuarioId, new FiltroNotificacion { FechaDesde = Jornada, FechaHasta = Jornada }, 1);
+                PaginaNotificaciones conAgregada = repositorio.ObtenerPaginaPersonal(destinatario, new FiltroNotificacion { FechaDesde = Jornada, FechaHasta = Jornada }, 1);
                 Assert.IsInstanceOfType<RecordatorioCompra>(conAgregada.Elementos.Single(n => n.Id == agregada));
                 Assert.IsNull(((RecordatorioCompra)conAgregada.Elementos.Single(n => n.Id == agregada)).FechaVencimiento);
-                Assert.IsTrue(repositorio.MarcarPersonalLeida(ids[0], usuarioId));
-                Assert.IsTrue(repositorio.MarcarPersonalLeida(agregada, usuarioId));
-                Assert.IsTrue(repositorio.ObtenerPersonal(ids[0], usuarioId).Leida);
-                Assert.IsTrue(repositorio.ObtenerPersonal(agregada, usuarioId).Leida);
-                Assert.AreEqual(basal + 10, repositorio.ContarNoLeidas(usuarioId));
+                var original = new Notificacion { Id = ids[0] };
+                var nueva = new Notificacion { Id = agregada };
+                Assert.IsTrue(repositorio.MarcarPersonalLeida(original, destinatario));
+                Assert.IsTrue(repositorio.MarcarPersonalLeida(nueva, destinatario));
+                Assert.IsTrue(repositorio.ObtenerPersonal(original, destinatario).Leida);
+                Assert.IsTrue(repositorio.ObtenerPersonal(nueva, destinatario).Leida);
+                Assert.AreEqual(basal + 10, repositorio.ContarNoLeidas(destinatario));
                 acceso.RollbackTransactionScope();
             }
         }

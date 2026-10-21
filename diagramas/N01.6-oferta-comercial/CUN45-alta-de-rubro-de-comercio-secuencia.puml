@@ -1,0 +1,63 @@
+@startuml
+' Fuente: diagramas/NEG10-rubros-comercio/NEG10-rubros-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN45 Alta de rubro de comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionComercios" as FormGestionComercios
+control "RubroComercioBLL" as RubroComercioBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "RubroComercioRepositorio\n:IRubroComercioRepositorio" as IRubroComercioRepositorio
+participant "RubroComercioDAL" as RubroComercioDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionComercios : El actor desea incorporar un rubro que aún no figura para clasificar comercios.
+Actor -> FormGestionComercios : selecciona la opción «Comercios» del menú «Operador».
+FormGestionComercios --> Actor : presenta la pantalla «Gestion de Comercios» con la sección «Rubros de comercio» y su\nlistado de rubros.
+Actor -> FormGestionComercios : ingresa el nombre del nuevo rubro en el campo «Nombre:» de la sección «Rubros de\ncomercio».
+Actor -> FormGestionComercios : presiona el botón «Agregar» de la sección «Rubros de comercio».
+FormGestionComercios -> RubroComercioBLL ++ : Crear(rubro: RubroComercio)
+RubroComercioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> RubroComercioBLL -- : IUnidadDeTrabajo
+RubroComercioBLL -> IRubroComercioRepositorio ++ : InsertarYObtenerId(rubro: RubroComercio)
+IRubroComercioRepositorio -> RubroComercioDAL ++ : InsertarYObtenerId(rubro: RubroComercio, accesoDatos:\nAccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : int
+IRubroComercioRepositorio --> RubroComercioBLL -- : int
+RubroComercioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> RubroComercioBLL -- : void
+RubroComercioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> RubroComercioBLL -- : void
+RubroComercioBLL --> FormGestionComercios -- : RubroComercio
+group Refrescar listado tras la operacion exitosa
+FormGestionComercios -> RubroComercioBLL ++ : ObtenerTodas()
+RubroComercioBLL -> IRubroComercioRepositorio ++ : ObtenerTodas()
+IRubroComercioRepositorio -> RubroComercioDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : List<RubroComercio>
+IRubroComercioRepositorio --> RubroComercioBLL -- : List<RubroComercio>
+RubroComercioBLL --> FormGestionComercios -- : List<RubroComercio>
+end
+FormGestionComercios --> Actor : registra el rubro, vacía el campo «Nombre:», actualiza el listado con el nuevo rubro\nseleccionado, incorpora el rubro al selector «Rubro:» de la sección de comercios e informa\nel resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' BLL/RubroComercioBLL.cs:33 RubroComercioBLL.Crear
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' DAL/RubroComercioDAL.cs:78 RubroComercioDAL.InsertarYObtenerId
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:12 IRubroComercioRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:33 RubroComercioRepositorio.InsertarYObtenerId
+' UI/FormGestionComercios.cs:312 FormGestionComercios.btnAgregarRubro_Click
+@enduml

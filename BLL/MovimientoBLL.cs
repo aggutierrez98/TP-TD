@@ -51,8 +51,7 @@ namespace BLL
 
         public byte[] ExportarPdf(ReporteMovimientosPdf reporte)
         {
-            int? usuarioActualId = _sesion.GetUsuarioActualId();
-            if (reporte == null || !usuarioActualId.HasValue || reporte.UsuarioId != usuarioActualId.Value)
+            if (reporte == null || !_sesion.HaySesionActiva() || reporte.Usuario == null || reporte.Usuario.Id != _sesion.ObtenerUsuarioActual().Id)
             {
                 throw new ExcepcionNegocio("Error.Movement.ExportUserMismatch");
             }
@@ -77,23 +76,21 @@ namespace BLL
             }
         }
 
-        public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
+        public List<Movimiento> ObtenerParaUsuarioActual(FiltroMovimiento filtro)
         {
-            return _movimientoRepositorio.ObtenerPorUsuario(usuarioId, filtro);
+            return _movimientoRepositorio.ObtenerPorUsuario(_sesion.ObtenerUsuarioActual(), filtro);
         }
 
         public List<TotalPorCategoria> ObtenerTotalesPorCategoria(TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            return _movimientoRepositorio.ObtenerTotalesPorCategoria(usuarioActualId, tipo, desde, hasta);
+            return _movimientoRepositorio.ObtenerTotalesPorCategoria(_sesion.ObtenerUsuarioActual(), tipo, desde, hasta);
         }
 
         // Egresos del rango por comercio: los de mayor gasto (hasta "cantidad") ordenados de mayor a menor;
         // lo gastado sin comercio asociado se informa aparte y no es un comercio mas.
         public GastoPorComercio ObtenerGastoPorComercio(DateTime desde, DateTime hasta, int cantidad)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            List<TotalPorComercio> totales = _movimientoRepositorio.ObtenerTotalesPorComercio(usuarioActualId, TipoMovimiento.Egreso, desde, hasta);
+            List<TotalPorComercio> totales = _movimientoRepositorio.ObtenerTotalesPorComercio(_sesion.ObtenerUsuarioActual(), TipoMovimiento.Egreso, desde, hasta);
 
             return new GastoPorComercio
             {
@@ -110,14 +107,14 @@ namespace BLL
         // comparacion al mismo dia. Los dias sin egresos repiten el acumulado del dia anterior.
         public GastoAcumuladoMensual ObtenerGastoAcumuladoMensual(DateTime hoy)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
             DateTime fecha = hoy.Date;
             DateTime inicioMesActual = new DateTime(fecha.Year, fecha.Month, 1);
             DateTime inicioMesAnterior = inicioMesActual.AddMonths(-1);
             int diasMesAnterior = DateTime.DaysInMonth(inicioMesAnterior.Year, inicioMesAnterior.Month);
 
             Dictionary<DateTime, decimal> totalPorDia = _movimientoRepositorio
-                .ObtenerTotalesPorDia(usuarioActualId, TipoMovimiento.Egreso, inicioMesAnterior, fecha)
+                .ObtenerTotalesPorDia(usuarioActual, TipoMovimiento.Egreso, inicioMesAnterior, fecha)
                 .GroupBy(item => item.Fecha.Date)
                 .ToDictionary(grupo => grupo.Key, grupo => grupo.Sum(item => item.Total));
 
@@ -158,14 +155,12 @@ namespace BLL
 
         public List<TotalPorMes> ObtenerTotalesPorMes(DateTime desde, DateTime hasta)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            return _movimientoRepositorio.ObtenerTotalesPorMes(usuarioActualId, desde, hasta);
+            return _movimientoRepositorio.ObtenerTotalesPorMes(_sesion.ObtenerUsuarioActual(), desde, hasta);
         }
 
         public ResumenMovimientos ObtenerResumenBalance(DateTime desde, DateTime hasta)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            return _movimientoRepositorio.ObtenerResumen(usuarioActualId, desde, hasta);
+            return _movimientoRepositorio.ObtenerResumen(_sesion.ObtenerUsuarioActual(), desde, hasta);
         }
 
         // Arma un Movimiento "borrador" a partir de una imagen de ticket escaneada.
@@ -173,15 +168,15 @@ namespace BLL
         // alta normal (Crear). Categoria queda null a proposito, la elige el usuario.
         public async Task<EscaneoBorradorResultado> EscanearBorradorAsync(byte[] imagenBytes)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             try
             {
-                TicketEscaneado resultado = await _escaneoTicketService.EscanearTicketAsync(imagenBytes).ConfigureAwait(false);
+                ITicketEscaneado resultado = await _escaneoTicketService.EscanearTicketAsync(imagenBytes).ConfigureAwait(false);
 
                 Movimiento borrador = new Movimiento
                 {
-                    Usuario = new Usuario { Id = usuarioActualId },
+                    Usuario = usuarioActual,
                     Categoria = null,
                     Tipo = TipoMovimiento.Egreso,
                     Monto = resultado.Monto ?? 0m,
@@ -209,32 +204,28 @@ namespace BLL
             }
         }
 
-        public int Crear(int categoriaId, TipoMovimiento tipo, decimal monto, DateTime fecha, string descripcion, int? comercioId = null)
+        // Devuelve la misma instancia recibida, con Id, Usuario (el de sesion) y la
+        // categoria/comercio persistidos cargados.
+        public Movimiento Crear(Movimiento movimiento)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            ValidarMonto(monto);
-            ValidarCategoriaVisible(categoriaId, usuarioActualId);
-            ValidarComercio(comercioId);
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
+            ValidarMonto(movimiento?.Monto ?? 0m);
+            Categoria categoria = ValidarCategoriaVisible(movimiento.Categoria, usuarioActual);
+            Comercio comercio = ValidarComercio(movimiento.Comercio);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Movimiento nuevoMovimiento = new Movimiento
-                    {
-                        Usuario = new Usuario { Id = usuarioActualId },
-                        Categoria = new Categoria { Id = categoriaId },
-                        Comercio = comercioId.HasValue ? new Comercio { Id = comercioId.Value } : null,
-                        Tipo = tipo,
-                        Monto = monto,
-                        Fecha = fecha,
-                        Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim()
-                    };
+                    movimiento.Usuario = usuarioActual;
+                    movimiento.Categoria = categoria;
+                    movimiento.Comercio = comercio;
+                    movimiento.Descripcion = NormalizarDescripcion(movimiento.Descripcion);
 
-                    int id = unidad.Movimientos.InsertarYObtenerId(nuevoMovimiento);
+                    movimiento.Id = unidad.Movimientos.InsertarYObtenerId(movimiento);
                     _bitacoraBLL.RegistrarOperacionInterno("FormMovements.Value.Activity.MovementCreation", "FormMovements.Value.Info.MovementCreation", "MovimientoBLL", unidad);
                     unidad.Save();
-                    return id;
+                    return movimiento;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -247,28 +238,30 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, int categoriaId, TipoMovimiento tipo, decimal monto, DateTime fecha, string descripcion, int? comercioId = null)
+        // Recibe el movimiento con los valores nuevos. Valida la propiedad sobre el
+        // persistido (no confia en el Usuario recibido) y solo copia los campos editables.
+        public bool Actualizar(Movimiento movimiento)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            ValidarMonto(monto);
-            ValidarCategoriaVisible(categoriaId, usuarioActualId);
-            ValidarComercio(comercioId);
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
+            ValidarMonto(movimiento?.Monto ?? 0m);
+            Categoria categoria = ValidarCategoriaVisible(movimiento.Categoria, usuarioActual);
+            Comercio comercio = ValidarComercio(movimiento.Comercio);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Movimiento movimiento = unidad.Movimientos.ObtenerPorId(id);
-                    ValidarPropiedad(movimiento, usuarioActualId);
+                    Movimiento persistido = unidad.Movimientos.ObtenerPorId(movimiento.Id);
+                    ValidarPropiedad(persistido, usuarioActual);
 
-                    movimiento.Categoria = new Categoria { Id = categoriaId };
-                    movimiento.Comercio = comercioId.HasValue ? new Comercio { Id = comercioId.Value } : null;
-                    movimiento.Tipo = tipo;
-                    movimiento.Monto = monto;
-                    movimiento.Fecha = fecha;
-                    movimiento.Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim();
+                    persistido.Categoria = categoria;
+                    persistido.Comercio = comercio;
+                    persistido.Tipo = movimiento.Tipo;
+                    persistido.Monto = movimiento.Monto;
+                    persistido.Fecha = movimiento.Fecha;
+                    persistido.Descripcion = NormalizarDescripcion(movimiento.Descripcion);
 
-                    bool actualizado = unidad.Movimientos.Actualizar(movimiento);
+                    bool actualizado = unidad.Movimientos.Actualizar(persistido);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.Movement.UpdateFailed");
@@ -293,18 +286,18 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Movimiento movimiento)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Movimiento movimiento = unidad.Movimientos.ObtenerPorId(id);
-                    ValidarPropiedad(movimiento, usuarioActualId);
+                    Movimiento persistido = movimiento == null ? null : unidad.Movimientos.ObtenerPorId(movimiento.Id);
+                    ValidarPropiedad(persistido, usuarioActual);
 
-                    bool eliminado = unidad.Movimientos.Eliminar(id);
+                    bool eliminado = unidad.Movimientos.Eliminar(persistido);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.Movement.DeleteFailed");
@@ -329,6 +322,11 @@ namespace BLL
             }
         }
 
+        private static string NormalizarDescripcion(string descripcion)
+        {
+            return string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim();
+        }
+
         private static void ValidarMonto(decimal monto)
         {
             if (monto <= 0)
@@ -338,47 +336,52 @@ namespace BLL
         }
 
         // La categoria debe existir y ser visible para el usuario actual
-        // (global o propia); nunca la de otro usuario.
-        private void ValidarCategoriaVisible(int categoriaId, int usuarioActualId)
+        // (global o propia); nunca la de otro usuario. Devuelve la persistida.
+        private Categoria ValidarCategoriaVisible(Categoria recibida, Usuario usuarioActual)
         {
-            Categoria categoria = _categoriaRepositorio.ObtenerPorId(categoriaId);
+            Categoria categoria = recibida == null ? null : _categoriaRepositorio.ObtenerPorId(recibida.Id);
             if (categoria == null)
             {
                 throw new ExcepcionNegocio("Error.Movement.CategoryNotFound");
             }
 
-            if (categoria.Usuario != null && categoria.Usuario.Id != usuarioActualId)
+            if (categoria.Usuario != null && categoria.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Movement.CategoryNotAllowed");
             }
+
+            return categoria;
         }
 
         // Un movimiento solo puede ser editado/eliminado por su dueno.
-        private static void ValidarPropiedad(Movimiento movimiento, int usuarioActualId)
+        private static void ValidarPropiedad(Movimiento movimiento, Usuario usuarioActual)
         {
             if (movimiento == null)
             {
                 throw new ExcepcionNegocio("Error.Movement.NotFound");
             }
 
-            if (movimiento.Usuario.Id != usuarioActualId)
+            if (movimiento.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Movement.NotOwned");
             }
         }
 
-        private void ValidarComercio(int? comercioId)
+        // El comercio es opcional; si viene, debe existir. Devuelve el persistido.
+        private Comercio ValidarComercio(Comercio recibido)
         {
-            if (!comercioId.HasValue)
+            if (recibido == null)
             {
-                return;
+                return null;
             }
 
-            Comercio comercio = _comercioRepositorio.ObtenerPorId(comercioId.Value);
+            Comercio comercio = _comercioRepositorio.ObtenerPorId(recibido.Id);
             if (comercio == null)
             {
                 throw new ExcepcionNegocio("Error.Movement.CommerceNotFound");
             }
+
+            return comercio;
         }
     }
 }

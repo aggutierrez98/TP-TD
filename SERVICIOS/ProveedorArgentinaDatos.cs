@@ -21,7 +21,7 @@ namespace SERVICIOS
             _ahora = ahora;
         }
 
-        public Task<IReadOnlyList<DatoMercado>> ObtenerFondosAsync(string tipo, DateTime? fecha, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerFondosAsync(string tipo, DateTime? fecha, CancellationToken cancellationToken)
         {
             if (tipo != "mercadoDinero" && tipo != "rentaFija" && tipo != "rentaVariable") throw new ArgumentException("Tipo de fondo no admitido.", nameof(tipo));
             return _cliente.ObtenerAsync(Base + "fci/" + tipo + "/" + (fecha.HasValue ? fecha.Value.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture) : "ultimo"), raiz =>
@@ -39,7 +39,7 @@ namespace SERVICIOS
             }, cancellationToken);
         }
 
-        public Task<IReadOnlyList<DatoMercado>> ObtenerPlazosFijosAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerPlazosFijosAsync(CancellationToken cancellationToken)
         {
             return _cliente.ObtenerAsync(Base + "tasas/plazoFijo", raiz =>
             {
@@ -55,7 +55,7 @@ namespace SERVICIOS
             }, cancellationToken);
         }
 
-        public Task<IReadOnlyList<DatoMercado>> ObtenerCuentasRemuneradasAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerCuentasRemuneradasAsync(CancellationToken cancellationToken)
         {
             return _cliente.ObtenerAsync(Base + "rendimientos", raiz =>
             {
@@ -76,7 +76,7 @@ namespace SERVICIOS
             }, cancellationToken);
         }
 
-        public Task<IReadOnlyList<DatoMercado>> ObtenerInflacionAsync(CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerInflacionAsync(CancellationToken cancellationToken)
         {
             return _cliente.ObtenerAsync(Base + "indices/inflacion", raiz =>
             {

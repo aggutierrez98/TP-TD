@@ -18,16 +18,18 @@ namespace TpIDS
             Load += FormGestionMonedas_Load;
         }
 
-        // View-models planos para bindear las grillas.
+        // View-models planos para bindear las grillas. Las grillas no autogeneran
+        // columnas, asi que Moneda (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaMoneda
         {
-            public int Id { get; set; }
+            public Moneda Moneda { get; set; }
             public string Codigo { get; set; }
             public string Nombre { get; set; }
         }
 
         private sealed class FilaTasa
         {
+            public TasaConversion Tasa { get; set; }
             public int Id { get; set; }
             public int MonedaBaseId { get; set; }
             public int MonedaConversionId { get; set; }
@@ -59,7 +61,7 @@ namespace TpIDS
 
                 if (monedaSeleccionadaId.HasValue)
                 {
-                    SeleccionarFila<FilaMoneda>(dgvMonedas, fila => fila.Id == monedaSeleccionadaId.Value);
+                    SeleccionarFila<FilaMoneda>(dgvMonedas, fila => fila.Moneda.Id == monedaSeleccionadaId.Value);
                 }
                 else
                 {
@@ -88,14 +90,14 @@ namespace TpIDS
 
         private static FilaMoneda ProyectarFilaMoneda(Moneda moneda)
         {
-            return new FilaMoneda { Id = moneda.Id, Codigo = moneda.Codigo, Nombre = moneda.Nombre };
+            return new FilaMoneda { Moneda = moneda, Codigo = moneda.Codigo, Nombre = moneda.Nombre };
         }
 
         private void btnAgregarMoneda_Click(object sender, EventArgs e)
         {
             try
             {
-                Moneda creada = monedaBLL.Crear(txtbCodigoMoneda.Text, txtbNombreMoneda.Text);
+                Moneda creada = monedaBLL.Crear(new Moneda { Codigo = txtbCodigoMoneda.Text, Nombre = txtbNombreMoneda.Text });
                 LimpiarFormularioMoneda();
                 CargarMonedas(creada.Id);
                 CargarTasas(null);
@@ -117,11 +119,13 @@ namespace TpIDS
 
             try
             {
-                bool actualizada = monedaBLL.Actualizar(fila.Id, txtbCodigoMoneda.Text, txtbNombreMoneda.Text);
+                fila.Moneda.Codigo = txtbCodigoMoneda.Text;
+                fila.Moneda.Nombre = txtbNombreMoneda.Text;
+                bool actualizada = monedaBLL.Actualizar(fila.Moneda);
                 if (actualizada)
                 {
                     LimpiarFormularioMoneda();
-                    CargarMonedas(fila.Id);
+                    CargarMonedas(fila.Moneda.Id);
                     CargarTasas(null);
                     UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.MonedaUpdated");
                 }
@@ -153,7 +157,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminada = monedaBLL.Eliminar(fila.Id);
+                bool eliminada = monedaBLL.Eliminar(fila.Moneda);
                 if (eliminada)
                 {
                     LimpiarFormularioMoneda();
@@ -215,6 +219,7 @@ namespace TpIDS
         {
             return new FilaTasa
             {
+                Tasa = tasa,
                 Id = tasa.Id,
                 MonedaBaseId = tasa.MonedaBase?.Id ?? 0,
                 MonedaConversionId = tasa.MonedaConversion?.Id ?? 0,
@@ -242,7 +247,7 @@ namespace TpIDS
 
             try
             {
-                TasaConversion creada = tasaConversionBLL.Crear(monedaBase.Id, monedaConversion.Id, nudCalculo.Value);
+                TasaConversion creada = tasaConversionBLL.Crear(new TasaConversion { MonedaBase = monedaBase, MonedaConversion = monedaConversion, CalculoConversion = nudCalculo.Value });
                 LimpiarFormularioTasa();
                 CargarTasas(creada.Id);
                 UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.TasaCreated");
@@ -275,7 +280,10 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = tasaConversionBLL.Actualizar(fila.Id, monedaBase.Id, monedaConversion.Id, nudCalculo.Value);
+                fila.Tasa.MonedaBase = monedaBase;
+                fila.Tasa.MonedaConversion = monedaConversion;
+                fila.Tasa.CalculoConversion = nudCalculo.Value;
+                bool actualizado = tasaConversionBLL.Actualizar(fila.Tasa);
                 if (actualizado)
                 {
                     CargarTasas(fila.Id);
@@ -303,7 +311,7 @@ namespace TpIDS
 
             try
             {
-                if (tasaConversionBLL.Liberar(fila.Id))
+                if (tasaConversionBLL.Liberar(fila.Tasa))
                 {
                     CargarTasas(fila.Id);
                     UiDialogHelper.MostrarInfo("FormCurrencyManagement.Success.TasaReleased");
@@ -340,7 +348,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = tasaConversionBLL.Eliminar(fila.Id);
+                bool eliminado = tasaConversionBLL.Eliminar(fila.Tasa);
                 if (eliminado)
                 {
                     LimpiarFormularioTasa();

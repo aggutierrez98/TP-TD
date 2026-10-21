@@ -1,16 +1,17 @@
 using System;
+using BE;
 
 namespace BLL
 {
     public sealed class ContinuacionPerfilInversor
     {
-        internal int UsuarioId { get; }
+        internal Usuario Usuario { get; }
         internal DateTime CreadaUtc { get; }
         internal readonly object Sincronizacion = new object();
         internal bool Finalizada;
-        internal ContinuacionPerfilInversor(int usuarioId, DateTime creadaUtc)
+        internal ContinuacionPerfilInversor(Usuario usuario, DateTime creadaUtc)
         {
-            UsuarioId = usuarioId;
+            Usuario = usuario;
             CreadaUtc = creadaUtc;
         }
     }

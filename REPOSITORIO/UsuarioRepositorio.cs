@@ -41,14 +41,14 @@ namespace REPOSITORIO
             return _usuarioDAL.Actualizar(usuario, _accesoDatos);
         }
 
-        public bool ActualizarDVH(int id, string dvh)
+        public bool ActualizarDVH(Usuario usuario, string dvh)
         {
-            return _usuarioDAL.ActualizarDVH(id, dvh, _accesoDatos);
+            return _usuarioDAL.ActualizarDVH(usuario, dvh, _accesoDatos);
         }
 
-        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
+        public bool ActualizarEstadoBloqueo(Usuario usuario, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
         {
-            return _usuarioDAL.ActualizarEstadoBloqueo(id, intentosFallidos, bloqueado, bloqueadoHasta, dvh, _accesoDatos);
+            return _usuarioDAL.ActualizarEstadoBloqueo(usuario, intentosFallidos, bloqueado, bloqueadoHasta, dvh, _accesoDatos);
         }
 
         public bool GuardarEstadoCompleto(Usuario usuario)
@@ -56,9 +56,9 @@ namespace REPOSITORIO
             return _usuarioDAL.GuardarEstadoCompleto(usuario, _accesoDatos);
         }
 
-        public bool EliminarFisicamente(int id)
+        public bool EliminarFisicamente(Usuario usuario)
         {
-            return _usuarioDAL.EliminarFisicamente(id, _accesoDatos);
+            return _usuarioDAL.EliminarFisicamente(usuario, _accesoDatos);
         }
 
         public List<Usuario> ObtenerTodos()
@@ -66,9 +66,9 @@ namespace REPOSITORIO
             return _usuarioDAL.ObtenerTodos(_accesoDatos);
         }
 
-        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad)
+        public List<Usuario> ObtenerActivosDespuesDe(Usuario ultimo, int cantidad)
         {
-            return _usuarioDAL.ObtenerIdsActivosDespuesDe(ultimoId, cantidad, _accesoDatos);
+            return _usuarioDAL.ObtenerActivosDespuesDe(ultimo, cantidad, _accesoDatos);
         }
     }
 }

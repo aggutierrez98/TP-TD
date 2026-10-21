@@ -17,7 +17,7 @@ namespace SERVICIOS
             _cliente = new ClienteMercadoPublico(handler, timeout, ahora, TimeSpan.FromMinutes(15));
             _ahora = ahora;
         }
-        public Task<IReadOnlyList<DatoMercado>> ObtenerCotizacionesAsync(bool cedears, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerCotizacionesAsync(bool cedears, CancellationToken cancellationToken)
         {
             return _cliente.ObtenerAsync("https://data912.com/live/" + (cedears ? "arg_cedears" : "arg_stocks"), raiz =>
             {

@@ -1,0 +1,47 @@
+@startuml
+' Fuente: diagramas/NEG18-perfil-inversor/NEG18-perfil-inversor-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN76 Consultar mi perfil inversor — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario recién registrado o autenticado" as Actor
+boundary "FormConfiguracionUsuario" as FormConfiguracionUsuario
+control "PerfilInversorBLL" as PerfilInversorBLL
+participant "Sesion\n:ISesion" as ISesion
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "PerfilInversorRepositorio\n:IPerfilInversorRepositorio" as IPerfilInversorRepositorio
+participant "PerfilInversorDAL" as PerfilInversorDAL
+note over FormConfiguracionUsuario : El actor desea saber si tiene un perfil inversor registrado y cuál es su nivel\nde riesgo.
+Actor -> FormConfiguracionUsuario : selecciona la opción «Mi configuración» del menú «Mi usuario».
+FormConfiguracionUsuario -> PerfilInversorBLL ++ : ObtenerMiPerfil()
+PerfilInversorBLL -> ISesion ++ : HaySesionActiva()
+ISesion --> PerfilInversorBLL -- : bool
+PerfilInversorBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> PerfilInversorBLL -- : Usuario
+PerfilInversorBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> PerfilInversorBLL -- : Usuario
+PerfilInversorBLL -> IPerfilInversorRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IPerfilInversorRepositorio -> PerfilInversorDAL ++ : ObtenerPorUsuario(usuario: Usuario, acceso:\nAccesoDatosSqlServer)
+PerfilInversorDAL --> IPerfilInversorRepositorio -- : PerfilInversor
+IPerfilInversorRepositorio --> PerfilInversorBLL -- : PerfilInversor
+PerfilInversorBLL --> FormConfiguracionUsuario -- : PerfilInversor
+FormConfiguracionUsuario --> Actor : presenta la pantalla «Configuración del usuario» y consulta el perfil inversor del actor.
+FormConfiguracionUsuario --> Actor : muestra el nivel de riesgo del perfil en la etiqueta «Perfil inversor» («Riesgo bajo»,\n«Riesgo moderado» o «Riesgo alto»), la fecha de la última evaluación («Última\nactualización») y habilita el botón «Volver a hacer el…
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/PerfilInversorBLL.cs:40 PerfilInversorBLL.ObtenerMiPerfil
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/PerfilInversorDAL.cs:14 PerfilInversorDAL.ObtenerPorUsuario
+' REPOSITORIO/IPerfilInversorRepositorio.cs:7 IPerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/PerfilInversorRepositorio.cs:12 PerfilInversorRepositorio.ObtenerPorUsuario
+' UI/FormConfiguracionUsuario.cs:67 FormConfiguracionUsuario.CargarPerfilAsync
+@enduml

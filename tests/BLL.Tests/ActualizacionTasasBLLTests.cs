@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using BE;
 using BLL.Tests.TestDoubles;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -206,7 +207,7 @@ namespace BLL.Tests
             Assert.AreEqual(ResultadoActualizacionTasas.Exitosa, guardada.Resultado);
             Assert.IsTrue(guardada.ConsumioRequest);
             ActualizacionTasaDetalle detalle = fixture.EjecucionRepo.Detalles.Single();
-            Assert.AreEqual(guardada.Id, detalle.EjecucionId);
+            Assert.AreSame(guardada, detalle.Ejecucion);
             Assert.AreEqual(10m, detalle.ValorAnterior);
             Assert.AreEqual(1500m, detalle.ValorNuevo);
             Assert.AreEqual(EstadoActualizacionTasa.Actualizado, detalle.Estado);
@@ -477,10 +478,10 @@ namespace BLL.Tests
             fixture.EjecucionRepo.InsertarDetalleYObtenerId(Detalle(1, EstadoActualizacionTasa.SaltadoManual));
             fixture.EjecucionRepo.InsertarDetalleYObtenerId(Detalle(2, EstadoActualizacionTasa.Actualizado));
 
-            List<ActualizacionTasaDetalle> detalle = fixture.CreateSut().ObtenerDetalleDeEjecucion(1);
+            List<ActualizacionTasaDetalle> detalle = fixture.CreateSut().ObtenerDetalleDeEjecucion(new EjecucionActualizacionTasas { Id = 1 });
 
             Assert.AreEqual(2, detalle.Count);
-            Assert.IsTrue(detalle.All(d => d.EjecucionId == 1));
+            Assert.IsTrue(detalle.All(d => d.Ejecucion.Id == 1));
         }
 
         [TestMethod]
@@ -515,7 +516,7 @@ namespace BLL.Tests
 
         private static ActualizacionTasaDetalle Detalle(int ejecucionId, EstadoActualizacionTasa estado)
         {
-            return new ActualizacionTasaDetalle { EjecucionId = ejecucionId, ValorAnterior = 1m, ValorNuevo = 2m, Estado = estado };
+            return new ActualizacionTasaDetalle { Ejecucion = new EjecucionActualizacionTasas { Id = ejecucionId }, ValorAnterior = 1m, ValorNuevo = 2m, Estado = estado };
         }
 
         private static KeyValuePair<string, decimal> R(string codigo, decimal valor)
@@ -569,7 +570,7 @@ namespace BLL.Tests
                 });
             }
 
-            public TasasCambioObtenidas Respuesta(params KeyValuePair<string, decimal>[] tasas)
+            public ITasasCambioObtenidas Respuesta(params KeyValuePair<string, decimal>[] tasas)
             {
                 Dictionary<string, decimal> diccionario = tasas.ToDictionary(t => t.Key, t => t.Value);
                 return new TasasCambioObtenidas("USD", Ahora, diccionario);
@@ -590,7 +591,7 @@ namespace BLL.Tests
 
         private sealed class FakeProveedorTasasCambio : IProveedorTasasCambio
         {
-            public TasasCambioObtenidas Resultado { get; set; }
+            public ITasasCambioObtenidas Resultado { get; set; }
 
             public Exception Excepcion { get; set; }
 
@@ -598,7 +599,7 @@ namespace BLL.Tests
 
             public CancellationToken UltimoToken { get; private set; }
 
-            public Task<TasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken)
+            public Task<ITasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken)
             {
                 Llamadas++;
                 UltimoToken = cancellationToken;

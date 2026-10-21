@@ -1,0 +1,105 @@
+@startuml
+' Fuente: diagramas/NEG07-medios-pago/NEG07-medios-pago-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN31 Modificar medio de pago — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionMediosPago {
+    -btnEditarMedioPago_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class MedioPagoBLL {
+    +Actualizar(medioPago: MedioPago): bool
+    +ObtenerTodos(): List<MedioPago>
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+MedioPagoBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IMedioPagoRepositorio {
+    +ObtenerPorId(id: int): MedioPago
+    +ObtenerTodos(): List<MedioPago>
+    +Actualizar(medioPago: MedioPago): bool
+  }
+  class MedioPagoRepositorio {
+    +ObtenerPorId(id: int): MedioPago
+    +ObtenerTodos(): List<MedioPago>
+    +Actualizar(medioPago: MedioPago): bool
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IMedioPagoRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> MedioPagoRepositorio
+MedioPagoRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class MedioPagoDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): MedioPago
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<MedioPago>
+    +Actualizar(medioPago: MedioPago, accesoDatos: AccesoDatosSqlServer): bool
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class MedioPago {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  enum TipoMedioPago {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+MedioPago -[hidden]right-> TipoMedioPago
+FormGestionMediosPago ..> MedioPagoBLL : usa
+MedioPagoRepositorio ..> MedioPagoDAL : usa
+MedioPagoBLL ..> IBitacoraBLL : usa
+MedioPagoBLL ..> IMedioPagoRepositorio : usa
+MedioPagoBLL ..> IUnidadDeTrabajo : usa
+MedioPagoBLL ..> IUnidadDeTrabajoFactory : usa
+MedioPagoRepositorio ..|> IMedioPagoRepositorio
+MedioPagoBLL ..> MedioPago : datos
+MedioPago --> TipoMedioPago : Tipo
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/MedioPagoBLL.cs:28 MedioPagoBLL.ObtenerTodos
+' BLL/MedioPagoBLL.cs:64 MedioPagoBLL.Actualizar
+' DAL/MedioPagoDAL.cs:109 MedioPagoDAL.Actualizar
+' DAL/MedioPagoDAL.cs:21 MedioPagoDAL.ObtenerPorId
+' DAL/MedioPagoDAL.cs:50 MedioPagoDAL.ObtenerTodos
+' REPOSITORIO/IMedioPagoRepositorio.cs:10 IMedioPagoRepositorio.ObtenerTodos
+' REPOSITORIO/IMedioPagoRepositorio.cs:14 IMedioPagoRepositorio.Actualizar
+' REPOSITORIO/IMedioPagoRepositorio.cs:8 IMedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoRepositorio.cs:24 MedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/MedioPagoRepositorio.cs:29 MedioPagoRepositorio.ObtenerTodos
+' REPOSITORIO/MedioPagoRepositorio.cs:39 MedioPagoRepositorio.Actualizar
+' UI/FormGestionMediosPago.cs:109 FormGestionMediosPago.btnEditarMedioPago_Click
+@enduml

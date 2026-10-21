@@ -33,7 +33,7 @@ namespace SERVICIOS
 
         // Prompt del especialista + reglas comunes y, si el BLL entrego datos, el bloque de
         // datos delimitado para que el modelo los trate como datos y no como instrucciones.
-        internal string ArmarInstrucciones(ContextoAsistente contexto)
+        internal string ArmarInstrucciones(IContextoAsistente contexto)
         {
             string instrucciones = PromptEspecialista + "\n\n" + ReglasDeAlcance;
 
@@ -47,12 +47,12 @@ namespace SERVICIOS
             return instrucciones;
         }
 
-        internal string ArmarRequestBody(SolicitudAsistente solicitud)
+        internal string ArmarRequestBody(ISolicitudAsistente solicitud)
         {
             return GeminiChatClient.ArmarRequestBody(ArmarInstrucciones(solicitud.Contexto), solicitud.Pregunta, solicitud.Historial);
         }
 
-        internal virtual async Task<string> ResponderAsync(SolicitudAsistente solicitud)
+        internal virtual async Task<string> ResponderAsync(ISolicitudAsistente solicitud)
         {
             string apiKey = ConfigurationManager.AppSettings["GeminiApiKey"];
             if (string.IsNullOrWhiteSpace(apiKey))

@@ -1,0 +1,81 @@
+@startuml
+' Fuente: diagramas/NEG19-zonas-usuario/NEG19-zonas-usuario-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN80 Baja de zona de usuario — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMisZonas" as FormMisZonas
+control "ZonaUsuarioBLL" as ZonaUsuarioBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ZonaUsuarioRepositorio\n:IZonaUsuarioRepositorio" as IZonaUsuarioRepositorio
+participant "ZonaUsuarioDAL" as ZonaUsuarioDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormMisZonas : El actor desea dejar de considerar una zona habitual.
+Actor -> FormMisZonas : selecciona una zona del listado.
+Actor -> FormMisZonas : selecciona el botón «Quitar seleccionada».
+FormMisZonas --> Actor : solicita confirmación con el diálogo «Quitar zona» y el mensaje «¿Desea quitar la zona\n'<nombre>'?».
+alt El actor confirma la operacion
+Actor -> FormMisZonas : confirma la baja.
+FormMisZonas -> ZonaUsuarioBLL ++ : Eliminar(recibida: ZonaUsuario)
+ZonaUsuarioBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ZonaUsuarioBLL -- : Usuario
+ZonaUsuarioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ZonaUsuarioBLL -- : IUnidadDeTrabajo
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : ObtenerPorId(id: int)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : ZonaUsuario
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : ZonaUsuario
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : Eliminar(zona: ZonaUsuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : Eliminar(zona: ZonaUsuario, accesoDatos: AccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : bool
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : bool
+ZonaUsuarioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ZonaUsuarioBLL -- : void
+ZonaUsuarioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ZonaUsuarioBLL -- : void
+ZonaUsuarioBLL --> FormMisZonas -- : bool
+group Refrescar listado tras la operacion exitosa
+FormMisZonas -> ZonaUsuarioBLL ++ : ObtenerMisZonas()
+ZonaUsuarioBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ZonaUsuarioBLL -- : Usuario
+ZonaUsuarioBLL -> IZonaUsuarioRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IZonaUsuarioRepositorio -> ZonaUsuarioDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ZonaUsuarioDAL --> IZonaUsuarioRepositorio -- : List<ZonaUsuario>
+IZonaUsuarioRepositorio --> ZonaUsuarioBLL -- : List<ZonaUsuario>
+ZonaUsuarioBLL --> FormMisZonas -- : List<ZonaUsuario>
+end
+FormMisZonas --> Actor : quita la zona, actualiza el listado y el mapa sin la zona e informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormMisZonas : Cancelar la operacion
+FormMisZonas --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ZonaUsuarioBLL.cs:43 ZonaUsuarioBLL.ObtenerMisZonas
+' BLL/ZonaUsuarioBLL.cs:97 ZonaUsuarioBLL.Eliminar
+' DAL/ZonaUsuarioDAL.cs:120 ZonaUsuarioDAL.Eliminar
+' DAL/ZonaUsuarioDAL.cs:23 ZonaUsuarioDAL.ObtenerPorId
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:14 IZonaUsuarioRepositorio.Eliminar
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:8 IZonaUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:25 ZonaUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:40 ZonaUsuarioRepositorio.Eliminar
+' UI/FormMisZonas.cs:317 FormMisZonas.btnQuitarZona_Click
+@enduml

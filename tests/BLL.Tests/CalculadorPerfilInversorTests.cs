@@ -11,7 +11,7 @@ namespace BLL.Tests
     public sealed class CalculadorPerfilInversorTests
     {
         internal static RespuestaPerfilInversor[] Respuestas(string opciones) => opciones.Select((opcion, i) =>
-            new RespuestaPerfilInversor { PreguntaId = i + 1, OpcionId = opcion.ToString() }).ToArray();
+            new RespuestaPerfilInversor { Pregunta = new PreguntaPerfilInversor(i + 1), OpcionId = opcion.ToString() }).ToArray();
 
         [TestMethod]
         [DataRow("AAAAAAAAAA", 0, 0, 0, NivelRiesgoInversor.Bajo)]
@@ -68,7 +68,7 @@ namespace BLL.Tests
             Assert.ThrowsExactly<ExcepcionNegocio>(() => CalculadorPerfilInversor.Evaluar(1, Respuestas("CDCDCCDDDCC")));
             Assert.ThrowsExactly<ExcepcionNegocio>(() => CalculadorPerfilInversor.Evaluar(1, Respuestas("DDCDCCDDDC")));
             var duplicadas = Respuestas("CDCDCCDDDC");
-            duplicadas[9].PreguntaId = 1;
+            duplicadas[9].Pregunta = new PreguntaPerfilInversor(1);
             Assert.ThrowsExactly<ExcepcionNegocio>(() => CalculadorPerfilInversor.Evaluar(1, duplicadas));
             duplicadas[9] = null;
             Assert.ThrowsExactly<ExcepcionNegocio>(() => CalculadorPerfilInversor.Evaluar(1, duplicadas));

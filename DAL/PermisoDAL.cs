@@ -149,9 +149,9 @@ namespace DAL
             }
         }
 
-        public bool EliminarPermisos(List<int> idsPermiso, AccesoDatosSqlServer accesoDatos = null)
+        public bool EliminarPermisos(List<IPermiso> permisos, AccesoDatosSqlServer accesoDatos = null)
         {
-            if (idsPermiso == null || idsPermiso.Count == 0)
+            if (permisos == null || permisos.Count == 0)
             {
                 return true;
             }
@@ -162,7 +162,7 @@ namespace DAL
             try
             {
                 List<SqlParameter> parametros = new List<SqlParameter>();
-                string whereClause = CrearWhereIn(accesoDatos, "@Id", idsPermiso, parametros);
+                string whereClause = CrearWhereIn(accesoDatos, "@Id", permisos.Select(p => p.Id).ToList(), parametros);
                 string query = $@"
                     DELETE FROM UsuarioPermiso WHERE PermisoId IN ({whereClause});
                     DELETE FROM PermisoCompuesto WHERE PermisoPadreId IN ({whereClause}) OR PermisoHijoId IN ({whereClause});
@@ -179,10 +179,10 @@ namespace DAL
             }
         }
 
-        public int ObtenerIdPorNombre(string nombre, AccesoDatosSqlServer accesoDatos = null)
+        public IPermiso ObtenerPorNombre(string nombre, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
-                SELECT TOP 1 Id
+                SELECT TOP 1 Id, Nombre, EsGrupo
                 FROM Permiso
                 WHERE Nombre = @Nombre";
 
@@ -198,8 +198,8 @@ namespace DAL
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Count == 0
-                    ? 0
-                    : (int)dataTable.Rows[0]["Id"];
+                    ? null
+                    : MapNodo(dataTable.Rows[0]);
             }
             finally
             {

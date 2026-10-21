@@ -30,23 +30,24 @@ namespace BLL
             return _medioPagoRepositorio.ObtenerTodos();
         }
 
-        public MedioPago Crear(TipoMedioPago tipo, string marca)
+        // Devuelve la misma instancia recibida, con la marca normalizada y el Id cargado.
+        public MedioPago Crear(MedioPago medioPago)
         {
-            ValidarTipo(tipo);
-            string marcaNormalizada = NormalizarMarca(marca);
+            ValidarTipo(medioPago);
+            string marcaNormalizada = NormalizarMarca(medioPago.Marca);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ValidarNoDuplicado(unidad, 0, tipo, marcaNormalizada);
+                    ValidarNoDuplicado(unidad, null, medioPago.Tipo, marcaNormalizada);
 
-                    MedioPago nuevoMedioPago = new MedioPago { Tipo = tipo, Marca = marcaNormalizada };
-                    nuevoMedioPago.Id = unidad.MediosPago.InsertarYObtenerId(nuevoMedioPago);
+                    medioPago.Marca = marcaNormalizada;
+                    medioPago.Id = unidad.MediosPago.InsertarYObtenerId(medioPago);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormPaymentMethodManagement.Value.Activity.Creation", "FormPaymentMethodManagement.Value.Info.Creation", "MedioPagoBLL", unidad);
                     unidad.Save();
-                    return nuevoMedioPago;
+                    return medioPago;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -59,26 +60,27 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, TipoMedioPago tipo, string marca)
+        // Recibe el medio de pago con Tipo y Marca nuevos y los copia sobre el persistido.
+        public bool Actualizar(MedioPago medioPago)
         {
-            ValidarTipo(tipo);
-            string marcaNormalizada = NormalizarMarca(marca);
+            ValidarTipo(medioPago);
+            string marcaNormalizada = NormalizarMarca(medioPago.Marca);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    MedioPago medioPago = unidad.MediosPago.ObtenerPorId(id);
-                    if (medioPago == null)
+                    MedioPago persistido = unidad.MediosPago.ObtenerPorId(medioPago.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.PaymentMethodManagement.NotFound");
                     }
 
-                    ValidarNoDuplicado(unidad, id, tipo, marcaNormalizada);
+                    ValidarNoDuplicado(unidad, persistido, medioPago.Tipo, marcaNormalizada);
 
-                    medioPago.Tipo = tipo;
-                    medioPago.Marca = marcaNormalizada;
-                    if (!unidad.MediosPago.Actualizar(medioPago))
+                    persistido.Tipo = medioPago.Tipo;
+                    persistido.Marca = marcaNormalizada;
+                    if (!unidad.MediosPago.Actualizar(persistido))
                     {
                         throw new ExcepcionTecnica("Error.PaymentMethodManagement.UpdateFailed");
                     }
@@ -102,26 +104,26 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(MedioPago medioPago)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    MedioPago medioPago = unidad.MediosPago.ObtenerPorId(id);
-                    if (medioPago == null)
+                    MedioPago persistido = medioPago == null ? null : unidad.MediosPago.ObtenerPorId(medioPago.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.PaymentMethodManagement.NotFound");
                     }
 
                     // Validacion proactiva: el medio no se puede borrar si alguna entidad lo ofrece.
-                    if (unidad.MediosPagoEntidad.ObtenerPorMedioPago(id).Count > 0
-                        || unidad.PromocionMediosPago.ContarPorMedioPago(id) > 0)
+                    if (unidad.MediosPagoEntidad.ObtenerPorMedioPago(persistido).Count > 0
+                        || unidad.PromocionMediosPago.ContarPorMedioPago(persistido) > 0)
                     {
                         throw new ExcepcionNegocio("Error.PaymentMethodManagement.InUse");
                     }
 
-                    if (!unidad.MediosPago.Eliminar(id))
+                    if (!unidad.MediosPago.Eliminar(persistido))
                     {
                         throw new ExcepcionTecnica("Error.PaymentMethodManagement.DeleteFailed");
                     }
@@ -146,10 +148,12 @@ namespace BLL
         }
 
         // UQ_MedioPago_Tipo_Marca: se valida antes para devolver un error de negocio legible.
-        private static void ValidarNoDuplicado(IUnidadDeTrabajo unidad, int idActual, TipoMedioPago tipo, string marca)
+        // excluido null = alta (sin exclusion).
+        private static void ValidarNoDuplicado(IUnidadDeTrabajo unidad, MedioPago excluido, TipoMedioPago tipo, string marca)
         {
+            int idExcluido = excluido?.Id ?? 0;
             bool duplicado = unidad.MediosPago.ObtenerTodos().Any(item =>
-                item.Id != idActual
+                item.Id != idExcluido
                 && item.Tipo == tipo
                 && string.Equals(item.Marca, marca, StringComparison.OrdinalIgnoreCase));
 
@@ -159,9 +163,10 @@ namespace BLL
             }
         }
 
-        private static void ValidarTipo(TipoMedioPago tipo)
+        // Sin entidad no hay Tipo valido: mismo error que un Tipo fuera del enum.
+        private static void ValidarTipo(MedioPago medioPago)
         {
-            if (!Enum.IsDefined(typeof(TipoMedioPago), tipo))
+            if (medioPago == null || !Enum.IsDefined(typeof(TipoMedioPago), medioPago.Tipo))
             {
                 throw new ExcepcionNegocio("Error.PaymentMethodManagement.InvalidType");
             }

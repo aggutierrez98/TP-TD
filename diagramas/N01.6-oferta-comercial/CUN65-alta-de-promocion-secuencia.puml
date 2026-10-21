@@ -1,0 +1,136 @@
+@startuml
+' Fuente: diagramas/NEG15-promociones/NEG15-promociones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN65 Alta de promoción — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionPromociones" as FormGestionPromociones
+control "PromocionBLL" as PromocionBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "RubroComercioRepositorio\n:IRubroComercioRepositorio" as IRubroComercioRepositorio
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+participant "MedioPagoRepositorio\n:IMedioPagoRepositorio" as IMedioPagoRepositorio
+participant "ProductoRepositorio\n:IProductoRepositorio" as IProductoRepositorio
+participant "CategoriaProductoRepositorio\n:ICategoriaProductoRepositorio" as ICategoriaProductoRepositorio
+participant "PromocionRepositorio\n:IPromocionRepositorio" as IPromocionRepositorio
+participant "PromocionDAL" as PromocionDAL
+participant "PromocionDiaSemanaDAL" as PromocionDiaSemanaDAL
+participant "PromocionComercioRepositorio\n:IPromocionComercioRepositorio" as IPromocionComercioRepositorio
+participant "PromocionRubroComercioRepositorio\n:IPromocionRubroComercioRepositorio" as IPromocionRubroComercioRepositorio
+participant "PromocionEntidadFinancieraRepositorio\n:IPromocionEntidadFinancieraRepositorio" as IPromocionEntidadFinancieraRepositorio
+participant "PromocionMedioPagoRepositorio\n:IPromocionMedioPagoRepositorio" as IPromocionMedioPagoRepositorio
+participant "PromocionSegmentoRepositorio\n:IPromocionSegmentoRepositorio" as IPromocionSegmentoRepositorio
+participant "PromocionProductoRepositorio\n:IPromocionProductoRepositorio" as IPromocionProductoRepositorio
+participant "PromocionCategoriaProductoRepositorio\n:IPromocionCategoriaProductoRepositorio" as IPromocionCategoriaProductoRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+control "AlcancePromocion" as AlcancePromocion
+note over FormGestionPromociones : El actor desea incorporar una nueva promoción al sistema.
+Actor -> FormGestionPromociones : ingresa la descripción de la promoción en el campo «Descripción».
+Actor -> FormGestionPromociones : ingresa el porcentaje en el campo «Descuento (%)».
+Actor -> FormGestionPromociones : ingresa, de forma opcional, el monto máximo de descuento en el campo «Tope ($)».
+Actor -> FormGestionPromociones : indica las fechas «Vigencia desde» y «Vigencia hasta».
+Actor -> FormGestionPromociones : marca, de forma opcional, los días de la semana en que aplica la promoción (si no marca\nninguno, la promoción aplica todos los días).
+Actor -> FormGestionPromociones : marca, de forma opcional, las opciones de alcance en las listas «Comercios», «Rubros de\ncomercio», «Entidades financieras», «Medios de pago», «Segmentos», «Productos incluidos»,\n«Productos excluidos», «Categorías incluidas» y…
+Actor -> FormGestionPromociones : selecciona la acción «Agregar».
+FormGestionPromociones -> PromocionBLL ++ : Crear(datos: Promocion)
+PromocionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> PromocionBLL -- : IUnidadDeTrabajo
+PromocionBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio --> PromocionBLL -- : Comercio
+PromocionBLL -> IRubroComercioRepositorio ++ : ObtenerPorId(id: int)
+IRubroComercioRepositorio --> PromocionBLL -- : RubroComercio
+PromocionBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> PromocionBLL -- : EntidadFinanciera
+PromocionBLL -> IMedioPagoRepositorio ++ : ObtenerPorId(id: int)
+IMedioPagoRepositorio --> PromocionBLL -- : MedioPago
+PromocionBLL -> IProductoRepositorio ++ : ObtenerPorId(id: int)
+IProductoRepositorio --> PromocionBLL -- : Producto
+PromocionBLL -> ICategoriaProductoRepositorio ++ : ObtenerPorId(id: int)
+ICategoriaProductoRepositorio --> PromocionBLL -- : CategoriaProducto
+PromocionBLL -> IPromocionRepositorio ++ : InsertarYObtenerId(promocion: Promocion)
+IPromocionRepositorio -> PromocionDAL ++ : InsertarYObtenerId(promocion: Promocion, accesoDatos:\nAccesoDatosSqlServer)
+PromocionDAL --> IPromocionRepositorio -- : int
+IPromocionRepositorio --> PromocionBLL -- : int
+PromocionBLL -> IPromocionRepositorio ++ : ReemplazarDiasDePromocion(promocion: Promocion, dias:\nList<DiaSemana>)
+IPromocionRepositorio -> PromocionDiaSemanaDAL ++ : ReemplazarDiasDePromocion(promocion: Promocion, dias:\nList<DiaSemana>, accesoDatos: AccesoDatosSqlServer)
+PromocionDiaSemanaDAL --> IPromocionRepositorio -- : bool
+IPromocionRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionComercioRepositorio ++ : ReemplazarComerciosDePromocion(promocion: Promocion, comercios:\nList<Comercio>)
+IPromocionComercioRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionRubroComercioRepositorio ++ : ReemplazarRubrosComercioDePromocion(promocion: Promocion,\nrubrosComercio: List<RubroComercio>)
+IPromocionRubroComercioRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionEntidadFinancieraRepositorio ++ : ReemplazarEntidadesFinancierasDePromocion(promocion: Promocion,\nentidadesFinancieras: List<EntidadFinanciera>)
+IPromocionEntidadFinancieraRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionMedioPagoRepositorio ++ : ReemplazarMediosPagoDePromocion(promocion: Promocion,\nmediosPago: List<MedioPago>)
+IPromocionMedioPagoRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionSegmentoRepositorio ++ : ReemplazarSegmentosDePromocion(promocion: Promocion, segmentos:\nList<string>)
+IPromocionSegmentoRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionProductoRepositorio ++ : ReemplazarProductosDePromocion(promocion: Promocion, incluidos:\nList<Producto>, excluidos: List<Producto>)
+IPromocionProductoRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IPromocionCategoriaProductoRepositorio ++ : ReemplazarCategoriasProductoDePromocion(promocion: Promocion,\nincluidos: List<CategoriaProducto>, excluidos:\nList<CategoriaProducto>)
+IPromocionCategoriaProductoRepositorio --> PromocionBLL -- : bool
+PromocionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> PromocionBLL -- : void
+PromocionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> PromocionBLL -- : void
+PromocionBLL --> FormGestionPromociones -- : Promocion
+group Refrescar listado tras la operacion exitosa
+FormGestionPromociones -> PromocionBLL ++ : Buscar(texto: string, recibido: Comercio)
+opt recibido != null
+PromocionBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio --> PromocionBLL -- : Comercio
+end
+PromocionBLL -> IPromocionRepositorio ++ : ObtenerTodas()
+IPromocionRepositorio -> PromocionDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+PromocionDAL --> IPromocionRepositorio -- : List<Promocion>
+IPromocionRepositorio --> PromocionBLL -- : List<Promocion>
+opt comercio != null
+PromocionBLL -> AlcancePromocion ++ : FiltrarPorComercio(promociones: IEnumerable<Promocion>,\ncomercio: Comercio)
+AlcancePromocion --> PromocionBLL -- : List<Promocion>
+end
+PromocionBLL --> FormGestionPromociones -- : List<Promocion>
+end
+FormGestionPromociones --> Actor : registra la promoción, limpia el editor, actualiza el listado seleccionando la promoción\nrecién creada e informa el resultado.
+' BLL/AlcancePromocion.cs:23 AlcancePromocion.FiltrarPorComercio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/PromocionBLL.cs:42 PromocionBLL.Buscar
+' BLL/PromocionBLL.cs:94 PromocionBLL.Crear
+' DAL/PromocionDAL.cs:52 PromocionDAL.ObtenerTodas
+' DAL/PromocionDAL.cs:82 PromocionDAL.InsertarYObtenerId
+' DAL/PromocionDiaSemanaDAL.cs:46 PromocionDiaSemanaDAL.ReemplazarDiasDePromocion
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:8 ICategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoRepositorio.cs:8 IMedioPagoRepositorio.ObtenerPorId
+' REPOSITORIO/IProductoRepositorio.cs:8 IProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs:10 IPromocionCategoriaProductoRepositorio.ReemplazarCategoriasProductoDePromocion
+' REPOSITORIO/IPromocionComercioRepositorio.cs:12 IPromocionComercioRepositorio.ReemplazarComerciosDePromocion
+' REPOSITORIO/IPromocionEntidadFinancieraRepositorio.cs:10 IPromocionEntidadFinancieraRepositorio.ReemplazarEntidadesFinancierasDePromocion
+' REPOSITORIO/IPromocionMedioPagoRepositorio.cs:10 IPromocionMedioPagoRepositorio.ReemplazarMediosPagoDePromocion
+' REPOSITORIO/IPromocionProductoRepositorio.cs:10 IPromocionProductoRepositorio.ReemplazarProductosDePromocion
+' REPOSITORIO/IPromocionRepositorio.cs:10 IPromocionRepositorio.ObtenerTodas
+' REPOSITORIO/IPromocionRepositorio.cs:12 IPromocionRepositorio.InsertarYObtenerId
+' REPOSITORIO/IPromocionRepositorio.cs:18 IPromocionRepositorio.ReemplazarDiasDePromocion
+' REPOSITORIO/IPromocionRubroComercioRepositorio.cs:10 IPromocionRubroComercioRepositorio.ReemplazarRubrosComercioDePromocion
+' REPOSITORIO/IPromocionSegmentoRepositorio.cs:10 IPromocionSegmentoRepositorio.ReemplazarSegmentosDePromocion
+' REPOSITORIO/IRubroComercioRepositorio.cs:8 IRubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/PromocionRepositorio.cs:34 PromocionRepositorio.ObtenerTodas
+' REPOSITORIO/PromocionRepositorio.cs:62 PromocionRepositorio.InsertarYObtenerId
+' REPOSITORIO/PromocionRepositorio.cs:77 PromocionRepositorio.ReemplazarDiasDePromocion
+' UI/FormGestionPromociones.cs:582 FormGestionPromociones.btnAgregarPromocion_Click
+@enduml

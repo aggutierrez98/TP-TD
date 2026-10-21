@@ -63,7 +63,7 @@ namespace TpIDS.IntegrationTests
                     FechaCreacion = new System.DateTime(2026, 1, 2)
                 });
 
-                System.Collections.Generic.List<BE.ListaDeCompras> propias = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.ListaDeCompras> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propias.Any(item => item.Id == idPropia));
                 Assert.IsFalse(propias.Any(item => item.Id == idAjena));
@@ -115,7 +115,7 @@ namespace TpIDS.IntegrationTests
                     FechaCreacion = new System.DateTime(2026, 1, 4)
                 });
 
-                bool eliminada = repositorio.Eliminar(id);
+                bool eliminada = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminada);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

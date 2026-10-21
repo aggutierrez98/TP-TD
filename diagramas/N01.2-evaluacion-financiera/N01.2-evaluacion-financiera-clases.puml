@@ -1,0 +1,645 @@
+@startuml N01.2-evaluacion-financiera-clases
+title N01.2 · Evaluar la situación financiera personal\nDiagrama de clases por proceso de negocio
+caption CUN10, CUN72, CUN73, CUN74, CUN75
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class ArchivoPdf #DBEAFE {
+    +Guardar(destino: string, contenido: byte[]): void
+  }
+  class ContenidoTarjeta #DBEAFE {
+    +Resumen: string
+    +Grafico: Control
+  }
+  class FormBalanceGeneral #DBEAFE {
+    -ActualizarResumen(desde: DateTime, hasta: DateTime): void
+  }
+  class FormDashboardAnaliticas #DBEAFE {
+    -CargarDashboard(): void
+    -QuitarTarjeta(tarjeta: TarjetaDashboard): void
+    -btnAgregarTarjeta_Click(sender: object, e: EventArgs): void
+  }
+  class FormMovimientos #DBEAFE {
+    -btnExportarMovimientosPdf_Click(sender: object, e: EventArgs): void
+  }
+  class FormSeleccionarTarjetaDashboard #DBEAFE {
+    +TipoSeleccionado: TipoTarjetaDashboard?
+  }
+  class UiDialogHelper #DBEAFE {
+    +MostrarError(messageKey: string): void
+    +MostrarInfo(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+    +Traducir(key: string): string
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  ArchivoPdf -[hidden]right-> ContenidoTarjeta
+  ContenidoTarjeta -[hidden]right-> FormBalanceGeneral
+  FormBalanceGeneral -[hidden]right-> FormDashboardAnaliticas
+  FormDashboardAnaliticas -[hidden]right-> FormMovimientos
+  FormMovimientos -[hidden]right-> FormSeleccionarTarjetaDashboard
+  FormSeleccionarTarjetaDashboard -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class BitacoraBLL #DCFCE7 {
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class CategoriaBLL #DCFCE7 {
+    +ObtenerVisiblesParaUsuarioActual(): List<Categoria>
+  }
+  class DashboardBLL #DCFCE7 {
+    +AgregarTarjeta(tipo: TipoTarjetaDashboard): TarjetaDashboard
+    +ObtenerOCrearDashboardActual(): Dashboard
+    +ObtenerTiposDisponibles(): IReadOnlyList<TipoTarjetaDashboard>
+    +QuitarTarjeta(tarjeta: TarjetaDashboard): bool
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  class MovimientoBLL #DCFCE7 {
+    +ExportarPdf(reporte: ReporteMovimientosPdf): byte[]
+    +ObtenerGastoAcumuladoMensual(hoy: DateTime): GastoAcumuladoMensual
+    +ObtenerGastoPorComercio(desde: DateTime, hasta: DateTime, cantidad:\nint): GastoPorComercio
+    +ObtenerParaUsuarioActual(filtro: FiltroMovimiento): List<Movimiento>
+    +ObtenerResumenBalance(desde: DateTime, hasta: DateTime):\nResumenMovimientos
+    +ObtenerTotalesPorCategoria(tipo: TipoMovimiento, desde: DateTime,\nhasta: DateTime): List<TotalPorCategoria>
+    +ObtenerTotalesPorMes(desde: DateTime, hasta: DateTime):\nList<TotalPorMes>
+  }
+  class SesionUsuarioExtensiones #DCFCE7 {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  BitacoraBLL -[hidden]right-> CategoriaBLL
+  CategoriaBLL -[hidden]right-> DashboardBLL
+  DashboardBLL -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> MovimientoBLL
+  MovimientoBLL -[hidden]right-> SesionUsuarioExtensiones
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  class CategoriaRepositorio #FEF3C7 {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  class DashboardRepositorio #FEF3C7 {
+    +InsertarYObtenerId(dashboard: Dashboard): int
+    +ObtenerPorUsuario(usuario: Usuario): Dashboard
+  }
+  interface ICategoriaRepositorio #FEF3C7 {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario): List<Categoria>
+  }
+  interface IDashboardRepositorio #FEF3C7 {
+    +InsertarYObtenerId(dashboard: Dashboard): int
+    +ObtenerPorUsuario(usuario: Usuario): Dashboard
+  }
+  interface IMovimientoRepositorio #FEF3C7 {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento):\nList<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime):\nResumenMovimientos
+    +ObtenerTotalesPorCategoria(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime): List<TotalPorCategoria>
+    +ObtenerTotalesPorComercio(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime): List<TotalPorComercio>
+    +ObtenerTotalesPorDia(usuario: Usuario, tipo: TipoMovimiento, desde:\nDateTime, hasta: DateTime): List<TotalPorDia>
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime): List<TotalPorMes>
+  }
+  interface ITarjetaDashboardRepositorio #FEF3C7 {
+    +Eliminar(tarjeta: TarjetaDashboard): bool
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard): int
+    +ObtenerPorId(id: int): TarjetaDashboard
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +Dashboards: IDashboardRepositorio
+    +TarjetasDashboard: ITarjetaDashboardRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class MovimientoRepositorio #FEF3C7 {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento):\nList<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime):\nResumenMovimientos
+    +ObtenerTotalesPorCategoria(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime): List<TotalPorCategoria>
+    +ObtenerTotalesPorComercio(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime): List<TotalPorComercio>
+    +ObtenerTotalesPorDia(usuario: Usuario, tipo: TipoMovimiento, desde:\nDateTime, hasta: DateTime): List<TotalPorDia>
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime): List<TotalPorMes>
+  }
+  class TarjetaDashboardRepositorio #FEF3C7 {
+    +Eliminar(tarjeta: TarjetaDashboard): bool
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard): int
+    +ObtenerPorId(id: int): TarjetaDashboard
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  class UsuarioRepositorio #FEF3C7 {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaRepositorio -[hidden]right-> DashboardRepositorio
+  DashboardRepositorio -[hidden]right-> ICategoriaRepositorio
+  ICategoriaRepositorio -[hidden]right-> IDashboardRepositorio
+  IDashboardRepositorio -[hidden]right-> IMovimientoRepositorio
+  IMovimientoRepositorio -[hidden]right-> ITarjetaDashboardRepositorio
+  ITarjetaDashboardRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> MovimientoRepositorio
+  MovimientoRepositorio -[hidden]right-> TarjetaDashboardRepositorio
+  CategoriaRepositorio -[hidden]down-> UnidadDeTrabajoFactory
+  UnidadDeTrabajoFactory -[hidden]right-> UnidadDeTrabajoSqlServer
+  UnidadDeTrabajoSqlServer -[hidden]right-> UsuarioRepositorio
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class CategoriaDAL #FFEDD5 {
+    +ObtenerVisiblesParaUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<Categoria>
+  }
+  class DashboardDAL #FFEDD5 {
+    +InsertarYObtenerId(dashboard: Dashboard, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): Dashboard
+  }
+  class MovimientoDAL #FFEDD5 {
+    +ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer): List<Movimiento>
+    +ObtenerResumen(usuario: Usuario, desde: DateTime, hasta: DateTime,\naccesoDatos: AccesoDatosSqlServer): ResumenMovimientos
+    +ObtenerTotalesPorCategoria(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime, accesoDatos: AccesoDatosSqlServer):\nList<TotalPorCategoria>
+    +ObtenerTotalesPorComercio(usuario: Usuario, tipo: TipoMovimiento,\ndesde: DateTime, hasta: DateTime, accesoDatos: AccesoDatosSqlServer):\nList<TotalPorComercio>
+    +ObtenerTotalesPorDia(usuario: Usuario, tipo: TipoMovimiento, desde:\nDateTime, hasta: DateTime, accesoDatos: AccesoDatosSqlServer):\nList<TotalPorDia>
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime, accesoDatos: AccesoDatosSqlServer): List<TotalPorMes>
+  }
+  class TarjetaDashboardDAL #FFEDD5 {
+    +Eliminar(tarjeta: TarjetaDashboard, accesoDatos:\nAccesoDatosSqlServer): bool
+    +InsertarYObtenerId(tarjeta: TarjetaDashboard, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorDashboard(dashboard: Dashboard, accesoDatos:\nAccesoDatosSqlServer): List<TarjetaDashboard>
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nTarjetaDashboard
+  }
+  class UsuarioDAL #FFEDD5 {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> CategoriaDAL
+  CategoriaDAL -[hidden]right-> DashboardDAL
+  DashboardDAL -[hidden]right-> MovimientoDAL
+  MovimientoDAL -[hidden]right-> TarjetaDashboardDAL
+  TarjetaDashboardDAL -[hidden]right-> UsuarioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class Categoria #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +Usuario: Usuario
+    +EsGlobal: bool
+  }
+  class Comercio #F3E8FF {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class Dashboard #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Tarjetas: List<TarjetaDashboard>
+  }
+  class FiltroMovimiento #F3E8FF {
+    +FechaDesde: DateTime?
+    +FechaHasta: DateTime?
+    +Categoria: Categoria
+    +Tipo: TipoMovimiento?
+    +Texto: string
+  }
+  class Movimiento #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Categoria: Categoria
+    +Comercio: Comercio
+    +Tipo: TipoMovimiento
+    +Monto: decimal
+    +Fecha: DateTime
+    +Descripcion: string
+    +FechaCreacion: DateTime
+  }
+  class ReporteMovimientosPdf #F3E8FF {
+    +Usuario: Usuario
+    +Titulo: string
+    +Encabezados: IReadOnlyList<string>
+    +Filas: IReadOnlyList<IReadOnlyList<string>>
+    +Filtros: IReadOnlyList<string>
+    +Logo: byte[]
+    +FechaGeneracion: DateTime
+    +EtiquetaFechaGeneracion: string
+    +EtiquetaCantidad: string
+    +FormatoPagina: string
+    +TextoContinuacion: string
+  }
+  class RubroComercio #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class TarjetaDashboard #F3E8FF {
+    +Id: int
+    +Dashboard: Dashboard
+    +Tipo: TipoTarjetaDashboard
+    +Orden: int
+  }
+  enum TipoTarjetaDashboard #F3E8FF {
+    GastosPorCategoria
+    IngresosPorCategoria
+    ComparativoMensual
+    EvolucionBalance
+    GastosPorComercio
+    GastoAcumuladoMensual
+  }
+  class Usuario #F3E8FF {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  Categoria -[hidden]right-> Comercio
+  Comercio -[hidden]right-> Dashboard
+  Dashboard -[hidden]right-> FiltroMovimiento
+  FiltroMovimiento -[hidden]right-> Movimiento
+  Movimiento -[hidden]right-> ReporteMovimientosPdf
+  ReporteMovimientosPdf -[hidden]right-> RubroComercio
+  RubroComercio -[hidden]right-> TarjetaDashboard
+  TarjetaDashboard -[hidden]right-> TipoTarjetaDashboard
+  TipoTarjetaDashboard -[hidden]right-> Usuario
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class GastoAcumuladoMensual #CFFAFE {
+    +MesActual: List<decimal>
+    +MesAnterior: List<decimal>
+    +AcumuladoActual: decimal
+    +AcumuladoAnteriorAlMismoDia: decimal
+    +VariacionPorcentual: decimal?
+  }
+  class GastoPorComercio #CFFAFE {
+    +Comercios: List<TotalPorComercio>
+    +TotalSinComercio: decimal
+  }
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class ReporteTabularPdfService #CFFAFE {
+    +Generar(reporte: IReporteTabularPdf): byte[]
+  }
+  class ResumenMovimientos #CFFAFE {
+    +TotalIngresos: decimal
+    +TotalEgresos: decimal
+  }
+  class Sesion #CFFAFE {
+    +HaySesionActiva(): bool
+  }
+  class TotalPorCategoria #CFFAFE {
+    +CategoriaNombre: string
+    +Total: decimal
+  }
+  class TotalPorComercio #CFFAFE {
+    +ComercioNombre: string
+    +Total: decimal
+  }
+  class TotalPorDia #CFFAFE {
+    +Fecha: DateTime
+    +Total: decimal
+  }
+  class TotalPorMes #CFFAFE {
+    +Anio: int
+    +Mes: int
+    +TotalIngresos: decimal
+    +TotalEgresos: decimal
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  GastoAcumuladoMensual -[hidden]right-> GastoPorComercio
+  GastoPorComercio -[hidden]right-> IdiomaService
+  IdiomaService -[hidden]right-> ReporteTabularPdfService
+  ReporteTabularPdfService -[hidden]right-> ResumenMovimientos
+  ResumenMovimientos -[hidden]right-> Sesion
+  Sesion -[hidden]right-> TotalPorCategoria
+  TotalPorCategoria -[hidden]right-> TotalPorComercio
+  TotalPorComercio -[hidden]right-> TotalPorDia
+  TotalPorDia -[hidden]right-> TotalPorMes
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface IReporteTabularPdf #F1F5F9 {
+    +Titulo: string
+    +Encabezados: IReadOnlyList<string>
+    +Filas: IReadOnlyList<IReadOnlyList<string>>
+    +Filtros: IReadOnlyList<string>
+    +Logo: byte[]
+    +FechaGeneracion: DateTime
+    +EtiquetaFechaGeneracion: string
+    +EtiquetaCantidad: string
+    +FormatoPagina: string
+    +TextoContinuacion: string
+  }
+  interface IReporteTabularPdfService #F1F5F9 {
+    +Generar(reporte: IReporteTabularPdf): byte[]
+  }
+  interface ISesion #F1F5F9 {
+    +HaySesionActiva(): bool
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  enum TipoMovimiento #F1F5F9 {
+    Ingreso
+    Egreso
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IIdioma -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> IReporteTabularPdf
+  IReporteTabularPdf -[hidden]right-> IReporteTabularPdfService
+  IReporteTabularPdfService -[hidden]right-> ISesion
+  ISesion -[hidden]right-> ITraduccion
+  ITraduccion -[hidden]right-> TipoMovimiento
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+ArchivoPdf -[hidden]down-> BitacoraBLL
+BitacoraBLL -[hidden]down-> CategoriaRepositorio
+UnidadDeTrabajoFactory -[hidden]down-> AccesoDatosSqlServer
+AccesoDatosSqlServer -[hidden]down-> Categoria
+Categoria -[hidden]down-> GastoAcumuladoMensual
+GastoAcumuladoMensual -[hidden]down-> IIdioma
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+Categoria -[norank]-> Usuario : Usuario
+CategoriaBLL .[norank].> IBitacoraBLL
+CategoriaBLL .[norank].> ICategoriaRepositorio
+CategoriaBLL .[norank].> ISesion
+CategoriaBLL .[norank].> IUnidadDeTrabajoFactory
+CategoriaBLL .[norank].> SesionUsuarioExtensiones
+CategoriaDAL .[norank].> AccesoDatosSqlServer
+CategoriaRepositorio .[norank].> AccesoDatosSqlServer
+CategoriaRepositorio .[norank].> CategoriaDAL
+CategoriaRepositorio .[norank].|> ICategoriaRepositorio
+Comercio -[norank]-> RubroComercio : RubroComercio
+Dashboard -[norank]-> TarjetaDashboard : Tarjetas
+Dashboard -[norank]-> "*" TarjetaDashboard : Tarjetas
+Dashboard -[norank]-> Usuario : Usuario
+DashboardBLL .[norank].> Dashboard
+DashboardBLL .[norank].> IBitacoraBLL
+DashboardBLL .[norank].> IDashboardRepositorio
+DashboardBLL .[norank].> ISesion
+DashboardBLL .[norank].> ITarjetaDashboardRepositorio
+DashboardBLL .[norank].> IUnidadDeTrabajo
+DashboardBLL .[norank].> IUnidadDeTrabajoFactory
+DashboardBLL .[norank].> SesionUsuarioExtensiones
+DashboardBLL .[norank].> TarjetaDashboard
+DashboardDAL .[norank].> AccesoDatosSqlServer
+DashboardRepositorio .[norank].> AccesoDatosSqlServer
+DashboardRepositorio .[norank].> DashboardDAL
+DashboardRepositorio .[norank].> TarjetaDashboardDAL
+DashboardRepositorio .[norank].> UsuarioRepositorio
+DashboardRepositorio .[norank].|> IDashboardRepositorio
+FiltroMovimiento -[norank]-> Categoria : Categoria
+FiltroMovimiento -[norank]-> TipoMovimiento : Tipo
+FormBalanceGeneral .[norank].> CategoriaBLL
+FormBalanceGeneral .[norank].> Movimiento
+FormBalanceGeneral .[norank].> MovimientoBLL
+FormDashboardAnaliticas .[norank].> ContenidoTarjeta
+FormDashboardAnaliticas .[norank].> DashboardBLL
+FormDashboardAnaliticas .[norank].> FormSeleccionarTarjetaDashboard
+FormDashboardAnaliticas .[norank].> MovimientoBLL
+FormDashboardAnaliticas .[norank].> UiDialogHelper
+FormDashboardAnaliticas .[norank].> UiExceptionHandler
+FormMovimientos .[norank].> ArchivoPdf
+FormMovimientos .[norank].> CategoriaBLL
+FormMovimientos .[norank].> FiltroMovimiento
+FormMovimientos .[norank].> ISesion
+FormMovimientos .[norank].> Movimiento
+FormMovimientos .[norank].> MovimientoBLL
+FormMovimientos .[norank].> ReporteMovimientosPdf
+FormMovimientos .[norank].> UiDialogHelper
+FormMovimientos .[norank].> UiExceptionHandler
+FormMovimientos .[norank].> Usuario
+FormSeleccionarTarjetaDashboard -[norank]-> TipoTarjetaDashboard : TipoSeleccionado
+FormSeleccionarTarjetaDashboard .[norank].> DashboardBLL
+GastoPorComercio -[norank]-> "*" TotalPorComercio : Comercios
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> IDashboardRepositorio : Dashboards
+IUnidadDeTrabajo -[norank]-> ITarjetaDashboardRepositorio : TarjetasDashboard
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+Movimiento -[norank]-> Categoria : Categoria
+Movimiento -[norank]-> Comercio : Comercio
+Movimiento -[norank]-> TipoMovimiento : Tipo
+Movimiento -[norank]-> Usuario : Usuario
+MovimientoBLL .[norank].> GastoAcumuladoMensual
+MovimientoBLL .[norank].> GastoPorComercio
+MovimientoBLL .[norank].> IBitacoraBLL
+MovimientoBLL .[norank].> ICategoriaRepositorio
+MovimientoBLL .[norank].> IMovimientoRepositorio
+MovimientoBLL .[norank].> IReporteTabularPdfService
+MovimientoBLL .[norank].> ISesion
+MovimientoBLL .[norank].> IUnidadDeTrabajoFactory
+MovimientoBLL .[norank].> ReporteMovimientosPdf
+MovimientoBLL .[norank].> ResumenMovimientos
+MovimientoBLL .[norank].> SesionUsuarioExtensiones
+MovimientoDAL .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> MovimientoDAL
+MovimientoRepositorio .[norank].|> IMovimientoRepositorio
+ReporteMovimientosPdf -[norank]-> Usuario : Usuario
+ReporteMovimientosPdf .[norank].|> IReporteTabularPdf
+ReporteTabularPdfService .[norank].|> IReporteTabularPdfService
+Sesion .[norank].|> ISesion
+TarjetaDashboard -[norank]-> Dashboard : Dashboard
+TarjetaDashboard -[norank]-> TipoTarjetaDashboard : Tipo
+TarjetaDashboardDAL .[norank].> AccesoDatosSqlServer
+TarjetaDashboardRepositorio .[norank].> AccesoDatosSqlServer
+TarjetaDashboardRepositorio .[norank].> DashboardRepositorio
+TarjetaDashboardRepositorio .[norank].> TarjetaDashboardDAL
+TarjetaDashboardRepositorio .[norank].|> ITarjetaDashboardRepositorio
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> ICategoriaRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IDashboardRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMovimientoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> ITarjetaDashboardRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+UsuarioDAL .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> UsuarioDAL
+' Trazabilidad de cobertura: CUN10, CUN72, CUN73, CUN74, CUN75
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: UI/ArchivoPdf.cs :: ArchivoPdf
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: BE/Categoria.cs :: Categoria
+' Participante: BLL/CategoriaBLL.cs :: CategoriaBLL
+' Participante: DAL/CategoriaDAL.cs :: CategoriaDAL
+' Participante: REPOSITORIO/CategoriaRepositorio.cs :: CategoriaRepositorio
+' Participante: BE/Comercio.cs :: Comercio
+' Participante: UI/FormDashboardAnaliticas.cs :: ContenidoTarjeta
+' Participante: BE/Dashboard.cs :: Dashboard
+' Participante: BLL/DashboardBLL.cs :: DashboardBLL
+' Participante: DAL/DashboardDAL.cs :: DashboardDAL
+' Participante: REPOSITORIO/DashboardRepositorio.cs :: DashboardRepositorio
+' Participante: BE/FiltroMovimiento.cs :: FiltroMovimiento
+' Participante: UI/FormBalanceGeneral.cs :: FormBalanceGeneral
+' Participante: UI/FormDashboardAnaliticas.cs :: FormDashboardAnaliticas
+' Participante: UI/FormMovimientos.cs :: FormMovimientos
+' Participante: UI/FormSeleccionarTarjetaDashboard.cs :: FormSeleccionarTarjetaDashboard
+' Participante: SERVICIOS/GastoAcumuladoMensual.cs :: GastoAcumuladoMensual
+' Participante: SERVICIOS/GastoPorComercio.cs :: GastoPorComercio
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: REPOSITORIO/ICategoriaRepositorio.cs :: ICategoriaRepositorio
+' Participante: REPOSITORIO/IDashboardRepositorio.cs :: IDashboardRepositorio
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: REPOSITORIO/IMovimientoRepositorio.cs :: IMovimientoRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: ABSTRACCIONES/IReporteTabularPdfService.cs :: IReporteTabularPdf
+' Participante: ABSTRACCIONES/IReporteTabularPdfService.cs :: IReporteTabularPdfService
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: REPOSITORIO/ITarjetaDashboardRepositorio.cs :: ITarjetaDashboardRepositorio
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: BE/Movimiento.cs :: Movimiento
+' Participante: BLL/MovimientoBLL.cs :: MovimientoBLL
+' Participante: DAL/MovimientoDAL.cs :: MovimientoDAL
+' Participante: REPOSITORIO/MovimientoRepositorio.cs :: MovimientoRepositorio
+' Participante: BE/ReporteMovimientosPdf.cs :: ReporteMovimientosPdf
+' Participante: SERVICIOS/ReporteTabularPdfService.cs :: ReporteTabularPdfService
+' Participante: SERVICIOS/ResumenMovimientos.cs :: ResumenMovimientos
+' Participante: BE/RubroComercio.cs :: RubroComercio
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BLL/SesionUsuarioExtensiones.cs :: SesionUsuarioExtensiones
+' Participante: BE/TarjetaDashboard.cs :: TarjetaDashboard
+' Participante: DAL/TarjetaDashboardDAL.cs :: TarjetaDashboardDAL
+' Participante: REPOSITORIO/TarjetaDashboardRepositorio.cs :: TarjetaDashboardRepositorio
+' Participante: ABSTRACCIONES/TipoMovimiento.cs :: TipoMovimiento
+' Participante: BE/TipoTarjetaDashboard.cs :: TipoTarjetaDashboard
+' Participante: SERVICIOS/TotalPorCategoria.cs :: TotalPorCategoria
+' Participante: SERVICIOS/TotalPorComercio.cs :: TotalPorComercio
+' Participante: SERVICIOS/TotalPorDia.cs :: TotalPorDia
+' Participante: SERVICIOS/TotalPorMes.cs :: TotalPorMes
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' Participante: BE/Usuario.cs :: Usuario
+' Participante: DAL/UsuarioDAL.cs :: UsuarioDAL
+' Participante: REPOSITORIO/UsuarioRepositorio.cs :: UsuarioRepositorio
+' ABSTRACCIONES/IReporteTabularPdfService.cs:22 IReporteTabularPdfService.Generar
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/CategoriaBLL.cs:28 CategoriaBLL.ObtenerVisiblesParaUsuarioActual
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DashboardBLL.cs:124 DashboardBLL.QuitarTarjeta
+' BLL/DashboardBLL.cs:166 DashboardBLL.ObtenerTiposDisponibles
+' BLL/DashboardBLL.cs:35 DashboardBLL.ObtenerOCrearDashboardActual
+' BLL/DashboardBLL.cs:78 DashboardBLL.AgregarTarjeta
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/MovimientoBLL.cs:108 MovimientoBLL.ObtenerGastoAcumuladoMensual
+' BLL/MovimientoBLL.cs:156 MovimientoBLL.ObtenerTotalesPorMes
+' BLL/MovimientoBLL.cs:161 MovimientoBLL.ObtenerResumenBalance
+' BLL/MovimientoBLL.cs:52 MovimientoBLL.ExportarPdf
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/MovimientoBLL.cs:84 MovimientoBLL.ObtenerTotalesPorCategoria
+' BLL/MovimientoBLL.cs:91 MovimientoBLL.ObtenerGastoPorComercio
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CategoriaDAL.cs:49 CategoriaDAL.ObtenerVisiblesParaUsuario
+' DAL/DashboardDAL.cs:48 DashboardDAL.ObtenerPorUsuario
+' DAL/DashboardDAL.cs:77 DashboardDAL.InsertarYObtenerId
+' DAL/MovimientoDAL.cs:109 MovimientoDAL.ObtenerTotalesPorCategoria
+' DAL/MovimientoDAL.cs:153 MovimientoDAL.ObtenerTotalesPorComercio
+' DAL/MovimientoDAL.cs:196 MovimientoDAL.ObtenerTotalesPorDia
+' DAL/MovimientoDAL.cs:239 MovimientoDAL.ObtenerTotalesPorMes
+' DAL/MovimientoDAL.cs:284 MovimientoDAL.ObtenerResumen
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' DAL/TarjetaDashboardDAL.cs:148 TarjetaDashboardDAL.Eliminar
+' DAL/TarjetaDashboardDAL.cs:22 TarjetaDashboardDAL.ObtenerPorId
+' DAL/TarjetaDashboardDAL.cs:51 TarjetaDashboardDAL.ObtenerPorDashboard
+' DAL/TarjetaDashboardDAL.cs:87 TarjetaDashboardDAL.InsertarYObtenerId
+' REPOSITORIO/CategoriaRepositorio.cs:30 CategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/DashboardRepositorio.cs:32 DashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/DashboardRepositorio.cs:57 DashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICategoriaRepositorio.cs:10 ICategoriaRepositorio.ObtenerVisiblesParaUsuario
+' REPOSITORIO/IDashboardRepositorio.cs:11 IDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/IDashboardRepositorio.cs:9 IDashboardRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:15 IMovimientoRepositorio.ObtenerTotalesPorCategoria
+' REPOSITORIO/IMovimientoRepositorio.cs:17 IMovimientoRepositorio.ObtenerTotalesPorComercio
+' REPOSITORIO/IMovimientoRepositorio.cs:19 IMovimientoRepositorio.ObtenerTotalesPorDia
+' REPOSITORIO/IMovimientoRepositorio.cs:21 IMovimientoRepositorio.ObtenerTotalesPorMes
+' REPOSITORIO/IMovimientoRepositorio.cs:23 IMovimientoRepositorio.ObtenerResumen
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:12 ITarjetaDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:16 ITarjetaDashboardRepositorio.Eliminar
+' REPOSITORIO/ITarjetaDashboardRepositorio.cs:8 ITarjetaDashboardRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:40 MovimientoRepositorio.ObtenerTotalesPorCategoria
+' REPOSITORIO/MovimientoRepositorio.cs:45 MovimientoRepositorio.ObtenerTotalesPorComercio
+' REPOSITORIO/MovimientoRepositorio.cs:50 MovimientoRepositorio.ObtenerTotalesPorDia
+' REPOSITORIO/MovimientoRepositorio.cs:55 MovimientoRepositorio.ObtenerTotalesPorMes
+' REPOSITORIO/MovimientoRepositorio.cs:60 MovimientoRepositorio.ObtenerResumen
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:23 TarjetaDashboardRepositorio.ObtenerPorId
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:47 TarjetaDashboardRepositorio.InsertarYObtenerId
+' REPOSITORIO/TarjetaDashboardRepositorio.cs:57 TarjetaDashboardRepositorio.Eliminar
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' SERVICIOS/ReporteTabularPdfService.cs:16 ReporteTabularPdfService.Generar
+' SERVICIOS/Sesion.cs:89 Sesion.HaySesionActiva
+' UI/ArchivoPdf.cs:8 ArchivoPdf.Guardar
+' UI/FormBalanceGeneral.cs:117 FormBalanceGeneral.ActualizarResumen
+' UI/FormDashboardAnaliticas.cs:228 FormDashboardAnaliticas.QuitarTarjeta
+' UI/FormDashboardAnaliticas.cs:241 FormDashboardAnaliticas.btnAgregarTarjeta_Click
+' UI/FormDashboardAnaliticas.cs:85 FormDashboardAnaliticas.CargarDashboard
+' UI/FormMovimientos.cs:264 FormMovimientos.btnExportarMovimientosPdf_Click
+' UI/UiDialogHelper.cs:10 UiDialogHelper.MostrarInfo
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:54 UiDialogHelper.Traducir
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

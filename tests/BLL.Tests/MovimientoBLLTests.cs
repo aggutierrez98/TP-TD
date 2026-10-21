@@ -20,7 +20,7 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, TipoMovimiento.Ingreso, 0m, new DateTime(2026, 8, 1), "x"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nuevo(1, TipoMovimiento.Ingreso, 0m, new DateTime(2026, 8, 1), "x")));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -30,7 +30,7 @@ namespace BLL.Tests
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(99, TipoMovimiento.Ingreso, 100m, new DateTime(2026, 8, 1), null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nuevo(99, TipoMovimiento.Ingreso, 100m, new DateTime(2026, 8, 1), null)));
         }
 
         [TestMethod]
@@ -40,7 +40,7 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(5, new Categoria { Id = 5, Nombre = "Ajena", Usuario = new Usuario { Id = 99 } });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(5, TipoMovimiento.Ingreso, 100m, new DateTime(2026, 8, 1), null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nuevo(5, TipoMovimiento.Ingreso, 100m, new DateTime(2026, 8, 1), null)));
         }
 
         [TestMethod]
@@ -50,9 +50,9 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             MovimientoBLL sut = fixture.CreateSut();
 
-            int id = sut.Crear(1, TipoMovimiento.Egreso, 250.50m, new DateTime(2026, 8, 15), "Compra");
+            Movimiento creado = sut.Crear(Nuevo(1, TipoMovimiento.Egreso, 250.50m, new DateTime(2026, 8, 15), "Compra"));
 
-            Movimiento insertado = fixture.Unidad.MovimientoRepo.Movimientos[id];
+            Movimiento insertado = fixture.Unidad.MovimientoRepo.Movimientos[creado.Id];
             Assert.AreEqual(7, insertado.Usuario.Id);
             Assert.AreEqual(1, insertado.Categoria.Id);
             Assert.AreEqual(TipoMovimiento.Egreso, insertado.Tipo);
@@ -70,9 +70,9 @@ namespace BLL.Tests
             fixture.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, Nombre = "Coto" });
             MovimientoBLL sut = fixture.CreateSut();
 
-            int id = sut.Crear(1, TipoMovimiento.Egreso, 500m, new DateTime(2026, 8, 15), "Super", comercioId: 10);
+            Movimiento creado = sut.Crear(Nuevo(1, TipoMovimiento.Egreso, 500m, new DateTime(2026, 8, 15), "Super", comercioId: 10));
 
-            Movimiento insertado = fixture.Unidad.MovimientoRepo.Movimientos[id];
+            Movimiento insertado = fixture.Unidad.MovimientoRepo.Movimientos[creado.Id];
             Assert.IsNotNull(insertado.Comercio);
             Assert.AreEqual(10, insertado.Comercio.Id);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
@@ -85,7 +85,7 @@ namespace BLL.Tests
             fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(1, TipoMovimiento.Egreso, 500m, new DateTime(2026, 8, 15), "Super", comercioId: 99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Nuevo(1, TipoMovimiento.Egreso, 500m, new DateTime(2026, 8, 15), "Super", comercioId: 99)));
         }
 
         [TestMethod]
@@ -96,7 +96,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(3, 1, TipoMovimiento.Ingreso, 20m, new DateTime(2026, 8, 2), null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Editado(3, 1, TipoMovimiento.Ingreso, 20m, new DateTime(2026, 8, 2), null)));
         }
 
         [TestMethod]
@@ -107,7 +107,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado");
+            bool resultado = sut.Actualizar(Editado(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado"));
 
             Assert.IsTrue(resultado);
             Movimiento actualizado = fixture.Unidad.MovimientoRepo.Movimientos[3];
@@ -127,7 +127,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado", comercioId: 20);
+            bool resultado = sut.Actualizar(Editado(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado", comercioId: 20));
 
             Assert.IsTrue(resultado);
             Movimiento actualizado = fixture.Unidad.MovimientoRepo.Movimientos[3];
@@ -144,7 +144,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado", comercioId: 99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Editado(3, 1, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "Editado", comercioId: 99)));
         }
 
         [TestMethod]
@@ -154,7 +154,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(3));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Movimiento { Id = 3 }));
         }
 
         [TestMethod]
@@ -164,7 +164,7 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(3);
+            bool resultado = sut.Eliminar(new Movimiento { Id = 3 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.MovimientoRepo.Movimientos.ContainsKey(3));
@@ -240,13 +240,13 @@ namespace BLL.Tests
         }
 
         [TestMethod]
-        public void ObtenerPorUsuario_DelegaAlRepositorio()
+        public void ObtenerParaUsuarioActual_DelegaAlRepositorioConElUsuarioDeSesion()
         {
             MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 5);
             fixture.MovimientoRepo.Movimientos.Add(1, new Movimiento { Id = 1, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
             MovimientoBLL sut = fixture.CreateSut();
 
-            System.Collections.Generic.List<Movimiento> resultado = sut.ObtenerPorUsuario(5, null);
+            System.Collections.Generic.List<Movimiento> resultado = sut.ObtenerParaUsuarioActual(null);
 
             Assert.AreEqual(1, resultado.Count);
         }
@@ -262,7 +262,7 @@ namespace BLL.Tests
             List<TotalPorCategoria> resultado = sut.ObtenerTotalesPorCategoria(TipoMovimiento.Egreso, new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
             Assert.AreSame(esperado, resultado);
-            Assert.AreEqual(5, fixture.MovimientoRepo.LastObtenerTotalesPorCategoriaArgs.Item1);
+            Assert.AreEqual(5, fixture.MovimientoRepo.LastObtenerTotalesPorCategoriaArgs.Item1.Id);
             Assert.AreEqual(TipoMovimiento.Egreso, fixture.MovimientoRepo.LastObtenerTotalesPorCategoriaArgs.Item2);
             Assert.AreEqual(new DateTime(2026, 8, 1), fixture.MovimientoRepo.LastObtenerTotalesPorCategoriaArgs.Item3);
             Assert.AreEqual(new DateTime(2026, 8, 31), fixture.MovimientoRepo.LastObtenerTotalesPorCategoriaArgs.Item4);
@@ -279,7 +279,7 @@ namespace BLL.Tests
             List<TotalPorMes> resultado = sut.ObtenerTotalesPorMes(new DateTime(2026, 8, 1), new DateTime(2026, 9, 30));
 
             Assert.AreSame(esperado, resultado);
-            Assert.AreEqual(9, fixture.MovimientoRepo.LastObtenerTotalesPorMesArgs.Item1);
+            Assert.AreEqual(9, fixture.MovimientoRepo.LastObtenerTotalesPorMesArgs.Item1.Id);
             Assert.AreEqual(new DateTime(2026, 8, 1), fixture.MovimientoRepo.LastObtenerTotalesPorMesArgs.Item2);
             Assert.AreEqual(new DateTime(2026, 9, 30), fixture.MovimientoRepo.LastObtenerTotalesPorMesArgs.Item3);
         }
@@ -295,7 +295,7 @@ namespace BLL.Tests
             ResumenMovimientos resultado = sut.ObtenerResumenBalance(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
 
             Assert.AreSame(esperado, resultado);
-            Assert.AreEqual(11, fixture.MovimientoRepo.LastObtenerResumenArgs.Item1);
+            Assert.AreEqual(11, fixture.MovimientoRepo.LastObtenerResumenArgs.Item1.Id);
             Assert.AreEqual(new DateTime(2026, 8, 1), fixture.MovimientoRepo.LastObtenerResumenArgs.Item2);
             Assert.AreEqual(new DateTime(2026, 8, 31), fixture.MovimientoRepo.LastObtenerResumenArgs.Item3);
         }
@@ -308,7 +308,7 @@ namespace BLL.Tests
 
             sut.ObtenerGastoPorComercio(new DateTime(2026, 10, 1), new DateTime(2026, 10, 31), 8);
 
-            Assert.AreEqual(6, fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item1);
+            Assert.AreEqual(6, fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item1.Id);
             Assert.AreEqual(TipoMovimiento.Egreso, fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item2);
             Assert.AreEqual(new DateTime(2026, 10, 1), fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item3);
             Assert.AreEqual(new DateTime(2026, 10, 31), fixture.MovimientoRepo.LastObtenerTotalesPorComercioArgs.Item4);
@@ -363,7 +363,7 @@ namespace BLL.Tests
 
             fixture.CreateSut().ObtenerGastoAcumuladoMensual(new DateTime(2026, 10, 10));
 
-            Assert.AreEqual(3, fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item1);
+            Assert.AreEqual(3, fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item1.Id);
             Assert.AreEqual(TipoMovimiento.Egreso, fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item2);
             Assert.AreEqual(new DateTime(2026, 9, 1), fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item3);
             Assert.AreEqual(new DateTime(2026, 10, 10), fixture.MovimientoRepo.LastObtenerTotalesPorDiaArgs.Item4);
@@ -501,9 +501,114 @@ namespace BLL.Tests
             Assert.AreEqual("Segundo", reporte.Filas[0][5]);
         }
 
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConIdYUsuarioDeSesion()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 7);
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            MovimientoBLL sut = fixture.CreateSut();
+            Movimiento movimiento = Nuevo(1, TipoMovimiento.Egreso, 10m, new DateTime(2026, 8, 15), "Compra");
+
+            Movimiento creado = sut.Crear(movimiento);
+
+            Assert.AreSame(movimiento, creado);
+            Assert.IsTrue(creado.Id > 0);
+            Assert.AreSame(fixture.UsuarioActual, creado.Usuario);
+        }
+
+        [TestMethod]
+        public void Crear_MovimientoNulo_ThrowsExcepcionNegocioAmountMustBePositive()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            MovimientoBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+            Assert.AreEqual("Error.Movement.AmountMustBePositive", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_UsuarioAdulteradoEnLaEntidadRecibida_ValidaPropiedadContraLaPersistida()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.CategoriaRepo.Categorias.Add(1, new Categoria { Id = 1, Nombre = "Global", Usuario = null });
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            MovimientoBLL sut = fixture.CreateSut();
+            Movimiento adulterado = Editado(3, 1, TipoMovimiento.Egreso, 20m, new DateTime(2026, 8, 2), null);
+            adulterado.Usuario = fixture.UsuarioActual;
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(adulterado));
+
+            Assert.AreEqual("Error.Movement.NotOwned", ex.Message);
+            Assert.AreEqual(10m, fixture.Unidad.MovimientoRepo.Movimientos[3].Monto);
+            Assert.IsNull(fixture.Unidad.MovimientoRepo.LastUpdated);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaSoloLosCamposEditablesSobreElPersistido()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 5);
+            fixture.CategoriaRepo.Categorias.Add(2, new Categoria { Id = 2, Nombre = "Global", Usuario = null });
+            fixture.ComercioRepo.Comercios.Add(20, new Comercio { Id = 20, Nombre = "Dia" });
+            DateTime fechaCreacion = new DateTime(2026, 7, 1);
+            Movimiento persistido = new Movimiento { Id = 3, Usuario = new Usuario { Id = 5 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1), FechaCreacion = fechaCreacion };
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, persistido);
+            MovimientoBLL sut = fixture.CreateSut();
+            Movimiento recibido = Editado(3, 2, TipoMovimiento.Egreso, 999m, new DateTime(2026, 8, 20), "  Editado  ", comercioId: 20);
+            recibido.Usuario = new Usuario { Id = 99 };
+            recibido.FechaCreacion = new DateTime(2000, 1, 1);
+
+            sut.Actualizar(recibido);
+
+            Assert.AreSame(persistido, fixture.Unidad.MovimientoRepo.LastUpdated);
+            Assert.AreEqual(2, persistido.Categoria.Id);
+            Assert.AreEqual(20, persistido.Comercio.Id);
+            Assert.AreEqual(TipoMovimiento.Egreso, persistido.Tipo);
+            Assert.AreEqual(999m, persistido.Monto);
+            Assert.AreEqual(new DateTime(2026, 8, 20), persistido.Fecha);
+            Assert.AreEqual("Editado", persistido.Descripcion);
+            Assert.AreEqual(5, persistido.Usuario.Id);
+            Assert.AreEqual(fechaCreacion, persistido.FechaCreacion);
+        }
+
+        [TestMethod]
+        public void Eliminar_UsuarioAdulteradoEnLaEntidadRecibida_ValidaPropiedadContraLaPersistida()
+        {
+            MovimientoFixture fixture = new MovimientoFixture(usuarioActualId: 1);
+            fixture.Unidad.MovimientoRepo.Movimientos.Add(3, new Movimiento { Id = 3, Usuario = new Usuario { Id = 99 }, Categoria = new Categoria { Id = 1 }, Tipo = TipoMovimiento.Ingreso, Monto = 10m, Fecha = new DateTime(2026, 8, 1) });
+            MovimientoBLL sut = fixture.CreateSut();
+            Movimiento adulterado = new Movimiento { Id = 3, Usuario = fixture.UsuarioActual };
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(adulterado));
+
+            Assert.AreEqual("Error.Movement.NotOwned", ex.Message);
+            Assert.IsTrue(fixture.Unidad.MovimientoRepo.Movimientos.ContainsKey(3));
+            Assert.IsNull(fixture.Unidad.MovimientoRepo.LastDeleted);
+        }
+
+        private static Movimiento Nuevo(int categoriaId, TipoMovimiento tipo, decimal monto, DateTime fecha, string descripcion, int? comercioId = null)
+        {
+            return new Movimiento
+            {
+                Categoria = new Categoria { Id = categoriaId },
+                Comercio = comercioId.HasValue ? new Comercio { Id = comercioId.Value } : null,
+                Tipo = tipo,
+                Monto = monto,
+                Fecha = fecha,
+                Descripcion = descripcion
+            };
+        }
+
+        private static Movimiento Editado(int id, int categoriaId, TipoMovimiento tipo, decimal monto, DateTime fecha, string descripcion, int? comercioId = null)
+        {
+            Movimiento movimiento = Nuevo(categoriaId, tipo, monto, fecha, descripcion, comercioId);
+            movimiento.Id = id;
+            return movimiento;
+        }
+
         private static ReporteMovimientosPdf CrearReporte(int usuarioId, string[][] filas)
         {
-            return new ReporteMovimientosPdf(usuarioId, "Movimientos",
+            return new ReporteMovimientosPdf(new Usuario { Id = usuarioId }, "Movimientos",
                 new[] { "Fecha", "Tipo", "Categoria", "Comercio", "Monto", "Descripcion" },
                 filas, new[] { "Descripcion: compra" }, null, new DateTime(2026, 10, 14),
                 "Generado", "Movimientos", "Pagina {0} de {1}", "Continuacion");
@@ -527,12 +632,14 @@ namespace BLL.Tests
             public readonly FakeReportePdf Pdf = new FakeReportePdf();
             public readonly FakeUnidadDeTrabajo Unidad;
             public readonly FakeUnidadDeTrabajoFactory UnidadFactory;
+            public readonly Usuario UsuarioActual;
 
             public MovimientoFixture(int usuarioActualId)
             {
                 Unidad = new FakeUnidadDeTrabajo { MovimientoRepo = MovimientoRepo, CategoriaRepo = CategoriaRepo, ComercioRepo = ComercioRepo };
                 UnidadFactory = new FakeUnidadDeTrabajoFactory(Unidad);
-                Sesion.IniciarSesion(new Usuario { Id = usuarioActualId, Username = "test" });
+                UsuarioActual = new Usuario { Id = usuarioActualId, Username = "test" };
+                Sesion.IniciarSesion(UsuarioActual);
             }
 
             public MovimientoBLL CreateSut()

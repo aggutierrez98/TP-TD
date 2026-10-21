@@ -1,0 +1,119 @@
+@startuml
+' Fuente: diagramas/NEG10-rubros-comercio/NEG10-rubros-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN47 Baja de rubro de comercio — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionComercios {
+    -btnEliminarRubro_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class RubroComercioBLL {
+    +Eliminar(rubro: RubroComercio): bool
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+RubroComercioBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IRubroComercioRepositorio {
+    +ObtenerPorId(id: int): RubroComercio
+    +Eliminar(rubro: RubroComercio): bool
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  class RubroComercioRepositorio {
+    +ObtenerPorId(id: int): RubroComercio
+    +Eliminar(rubro: RubroComercio): bool
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  class "ComercioRepositorio" as IComercioRepositorio <<IComercioRepositorio>> {
+    +ObtenerPorRubro(rubro: RubroComercio): List<Comercio>
+  }
+  class "PromocionRubroComercioRepositorio" as IPromocionRubroComercioRepositorio <<IPromocionRubroComercioRepositorio>> {
+    +ContarPorRubroComercio(rubroComercio: RubroComercio): int
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IRubroComercioRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> RubroComercioRepositorio
+RubroComercioRepositorio -[hidden]right-> IComercioRepositorio
+RubroComercioRepositorio -[hidden]down-> IPromocionRubroComercioRepositorio
+IPromocionRubroComercioRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class RubroComercioDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): RubroComercio
+    +Eliminar(rubro: RubroComercio, accesoDatos: AccesoDatosSqlServer): bool
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<RubroComercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+Comercio -[hidden]right-> RubroComercio
+FormGestionComercios ..> RubroComercioBLL : usa
+RubroComercioRepositorio ..> RubroComercioDAL : usa
+RubroComercioBLL ..> IBitacoraBLL : usa
+RubroComercioBLL ..> IComercioRepositorio : usa
+RubroComercioBLL ..> IPromocionRubroComercioRepositorio : usa
+RubroComercioBLL ..> IRubroComercioRepositorio : usa
+RubroComercioBLL ..> IUnidadDeTrabajo : usa
+RubroComercioBLL ..> IUnidadDeTrabajoFactory : usa
+RubroComercioRepositorio ..|> IRubroComercioRepositorio
+RubroComercioBLL ..> RubroComercio : datos
+Comercio --> RubroComercio : RubroComercio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/RubroComercioBLL.cs:100 RubroComercioBLL.Eliminar
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' DAL/RubroComercioDAL.cs:135 RubroComercioDAL.Eliminar
+' DAL/RubroComercioDAL.cs:19 RubroComercioDAL.ObtenerPorId
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' REPOSITORIO/IComercioRepositorio.cs:10 IComercioRepositorio.ObtenerPorRubro
+' REPOSITORIO/IPromocionRubroComercioRepositorio.cs:12 IPromocionRubroComercioRepositorio.ContarPorRubroComercio
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:16 IRubroComercioRepositorio.Eliminar
+' REPOSITORIO/IRubroComercioRepositorio.cs:8 IRubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/RubroComercioRepositorio.cs:23 RubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:43 RubroComercioRepositorio.Eliminar
+' UI/FormGestionComercios.cs:357 FormGestionComercios.btnEliminarRubro_Click
+@enduml

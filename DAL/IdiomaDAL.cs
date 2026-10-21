@@ -22,7 +22,7 @@ namespace DAL
             });
         }
 
-        public Idioma ObtenerIdiomaCompleto(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
+        public Idioma ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT i.Id, i.Nombre, i.[Default], p.Id AS PalabraId, p.[Key], t.Valor
@@ -36,7 +36,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, id)
                 };
 
                 DataTable dataTable = contexto.Read(query, parametros);
@@ -75,8 +75,7 @@ namespace DAL
 
                     idioma.Traducciones.Add(new Traduccion
                     {
-                        IdiomaId = idioma.Id,
-                        PalabraId = Convert.ToInt32(row["PalabraId"]),
+                        Idioma = idioma,
                         Valor = row["Valor"].ToString(),
                         Palabra = new Palabra
                         {
@@ -103,7 +102,7 @@ namespace DAL
                 }
 
                 int idiomaId = Convert.ToInt32(dataTable.Rows[0]["Id"]);
-                return ObtenerIdiomaCompleto(idiomaId, contexto);
+                return ObtenerPorId(idiomaId, contexto);
             });
         }
 
@@ -142,7 +141,7 @@ namespace DAL
             });
         }
 
-        public bool EliminarIdioma(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
+        public bool EliminarIdioma(Idioma idioma, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM UsuarioPreferencias WHERE IdiomaId = @IdiomaId;
@@ -153,14 +152,14 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idioma.Id)
                 };
 
                 return contexto.Write(query, parametros) > 0;
             });
         }
 
-        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId, AccesoDatosSqlServer accesoDatos = null)
+        public bool ConsolidarIdioma(Idioma origen, Idioma destino, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE UsuarioPreferencias
@@ -187,17 +186,17 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaOrigenId", SqlDbType.Int, idiomaOrigenId),
-                    contexto.CreateParameter("@IdiomaDestinoId", SqlDbType.Int, idiomaDestinoId)
+                    contexto.CreateParameter("@IdiomaOrigenId", SqlDbType.Int, origen.Id),
+                    contexto.CreateParameter("@IdiomaDestinoId", SqlDbType.Int, destino.Id)
                 };
 
                 return contexto.Write(query, parametros) >= 0;
             });
         }
 
-        public int ObtenerPalabraIdPorKey(string key, AccesoDatosSqlServer accesoDatos = null)
+        public Palabra ObtenerPalabraPorKey(string key, AccesoDatosSqlServer accesoDatos = null)
         {
-            const string query = "SELECT Id FROM Palabra WHERE [Key] = @Key";
+            const string query = "SELECT Id, [Key] FROM Palabra WHERE [Key] = @Key";
 
             return Ejecutar(accesoDatos, contexto =>
             {
@@ -207,11 +206,11 @@ namespace DAL
                 };
 
                 DataTable dataTable = contexto.Read(query, parametros);
-                return dataTable.Rows.Count == 0 ? 0 : Convert.ToInt32(dataTable.Rows[0]["Id"]);
+                return dataTable.Rows.Count == 0 ? null : new Palabra { Id = Convert.ToInt32(dataTable.Rows[0]["Id"]), Key = dataTable.Rows[0]["Key"].ToString() };
             });
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor, AccesoDatosSqlServer accesoDatos = null)
+        public bool GuardarTraduccion(Traduccion traduccion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 IF EXISTS (
@@ -235,16 +234,16 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
-                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, palabraId),
-                    contexto.CreateParameter("@Valor", SqlDbType.VarChar, valor)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, traduccion.Idioma.Id),
+                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, traduccion.Palabra.Id),
+                    contexto.CreateParameter("@Valor", SqlDbType.VarChar, traduccion.Valor)
                 };
 
                 return contexto.Write(query, parametros) > 0;
             });
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId, AccesoDatosSqlServer accesoDatos = null)
+        public bool EliminarTraduccion(Traduccion traduccion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Traduccion
@@ -255,15 +254,15 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId),
-                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, palabraId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, traduccion.Idioma.Id),
+                    contexto.CreateParameter("@PalabraId", SqlDbType.Int, traduccion.Palabra.Id)
                 };
 
                 return contexto.Write(query, parametros) > 0;
             });
         }
 
-        public bool SwitchearIdiomaDefault(int idiomaId, AccesoDatosSqlServer accesoDatos = null)
+        public bool SwitchearIdiomaDefault(Idioma idioma, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE Idioma
@@ -277,7 +276,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idiomaId)
+                    contexto.CreateParameter("@IdiomaId", SqlDbType.Int, idioma.Id)
                 };
 
                 return contexto.Write(query, parametros) > 0;

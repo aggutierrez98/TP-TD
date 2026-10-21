@@ -15,19 +15,19 @@ namespace SERVICIOS.Tests
     [TestClass]
     public sealed class NominatimBusquedaUbicacionesXmlTests
     {
-        private static Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarConRespuestaAsync(HttpResponseMessage respuesta)
+        private static Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarConRespuestaAsync(HttpResponseMessage respuesta)
         {
             ManejadorHttpFalso manejador = new ManejadorHttpFalso(() => respuesta);
             NominatimBusquedaUbicacionesService servicio = BusquedaUbicacionesPruebas.Crear(manejador);
             return servicio.BuscarAsync(new ConsultaUbicacion("Obelisco", "es", null), CancellationToken.None);
         }
 
-        private static Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarConXmlAsync(string xml)
+        private static Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarConXmlAsync(string xml)
         {
             return BuscarConRespuestaAsync(BusquedaUbicacionesPruebas.RespuestaXml(xml));
         }
 
-        private static async Task AssertRespuestaInvalidaAsync(Func<Task<IReadOnlyList<ResultadoBusquedaUbicacion>>> accion)
+        private static async Task AssertRespuestaInvalidaAsync(Func<Task<IReadOnlyList<IResultadoBusquedaUbicacion>>> accion)
         {
             BusquedaUbicacionException ex = await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => accion());
             Assert.AreEqual(EstadoBusquedaUbicacion.RespuestaInvalida, ex.Estado);
@@ -39,10 +39,10 @@ namespace SERVICIOS.Tests
             string xml = BusquedaUbicacionesPruebas.Resultados(
                 BusquedaUbicacionesPruebas.Place("Café Tortoni, Avenida de Mayo 829, Buenos Aires", "-34.6091", "-58.3797", "-34.6092,-34.6090,-58.3798,-58.3796", "cafe", "amenity"));
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
             Assert.AreEqual(1, resultados.Count);
-            ResultadoBusquedaUbicacion r = resultados[0];
+            IResultadoBusquedaUbicacion r = resultados[0];
             Assert.AreEqual("Café Tortoni, Avenida de Mayo 829, Buenos Aires", r.Descripcion);
             Assert.AreEqual(-34.6091, r.Latitud, 1e-9);
             Assert.AreEqual(-58.3797, r.Longitud, 1e-9);
@@ -62,7 +62,7 @@ namespace SERVICIOS.Tests
                 BusquedaUbicacionesPruebas.Place("Dos", "2", "2"),
                 BusquedaUbicacionesPruebas.Place("Tres", "3", "3"));
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
             CollectionAssert.AreEqual(new[] { "Uno", "Dos", "Tres" }, new List<string>(resultados.Select(x => x.Descripcion)).ToArray());
         }
@@ -76,7 +76,7 @@ namespace SERVICIOS.Tests
                 places.Add(BusquedaUbicacionesPruebas.Place("Lugar " + i, i.ToString(CultureInfo.InvariantCulture), "10"));
             }
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(places.ToArray()));
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(places.ToArray()));
 
             Assert.AreEqual(5, resultados.Count);
         }
@@ -84,7 +84,7 @@ namespace SERVICIOS.Tests
         [TestMethod]
         public async Task BuscarAsync_RaizValidaSinCoincidencias_DevuelveListaVacia()
         {
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.XmlVacio);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.XmlVacio);
 
             Assert.AreEqual(0, resultados.Count);
         }
@@ -144,7 +144,7 @@ namespace SERVICIOS.Tests
             byte[] cuerpo = Relleno(NominatimBusquedaUbicacionesService.MaximoBytesRespuesta);
             HttpResponseMessage respuesta = new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new ContenidoSinLongitud(cuerpo) };
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConRespuestaAsync(respuesta);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConRespuestaAsync(respuesta);
 
             Assert.AreEqual(1, resultados.Count);
         }
@@ -168,7 +168,7 @@ namespace SERVICIOS.Tests
 
             await AssertRespuestaInvalidaAsync(() => BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(invalido)));
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(invalido, valido));
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(invalido, valido));
             Assert.AreEqual(1, resultados.Count);
             Assert.AreEqual("Valido", resultados[0].Descripcion);
         }
@@ -179,7 +179,7 @@ namespace SERVICIOS.Tests
             string sinNombre = ConstruirPlaceCrudo("   ", "-34.6", "-58.3");
             string valido = BusquedaUbicacionesPruebas.Place("Valido", "-34.6", "-58.4");
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(sinNombre, valido));
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(BusquedaUbicacionesPruebas.Resultados(sinNombre, valido));
 
             Assert.AreEqual(1, resultados.Count);
             Assert.AreEqual("Valido", resultados[0].Descripcion);
@@ -199,7 +199,7 @@ namespace SERVICIOS.Tests
         {
             string xml = BusquedaUbicacionesPruebas.Resultados(BusquedaUbicacionesPruebas.Place("Lugar", "-34.6", "-58.35", boundingBox));
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
             Assert.AreEqual(1, resultados.Count);
             Assert.IsNull(resultados[0].Limites);
@@ -212,7 +212,7 @@ namespace SERVICIOS.Tests
         {
             string xml = "<searchresults><place lat=\"1\" lon=\"2\" display_name=\"X\" class=\"tourism\"/></searchresults>";
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
             Assert.AreEqual("tourism", resultados[0].Tipo);
         }
@@ -222,7 +222,7 @@ namespace SERVICIOS.Tests
         {
             string xml = "<searchresults><place lat=\"1\" lon=\"2\" display_name=\"X\"/></searchresults>";
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
             Assert.IsNull(resultados[0].Tipo);
         }
@@ -237,7 +237,7 @@ namespace SERVICIOS.Tests
                 string xml = BusquedaUbicacionesPruebas.Resultados(
                     BusquedaUbicacionesPruebas.Place("Lugar", "-34.6037", "-58.3816", "-34.7,-34.5,-58.5,-58.3"));
 
-                IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
+                IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await BuscarConXmlAsync(xml);
 
                 Assert.AreEqual(-34.6037, resultados[0].Latitud, 1e-9);
                 Assert.AreEqual(-58.3816, resultados[0].Longitud, 1e-9);

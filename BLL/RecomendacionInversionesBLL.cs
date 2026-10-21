@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using REPOSITORIO;
 using BE;
 
@@ -12,30 +13,32 @@ namespace BLL
     internal sealed class RecomendacionInversionesBLL : IRecomendacionInversionesBLL
     {
         private readonly IMovimientoRepositorio _movimientos;
+        private readonly IUsuarioRepositorio _usuarios;
         private readonly Func<DateTime> _ahora;
         private readonly IProveedorArgentinaDatos _argentina;
         private readonly IProveedorMercadoData912 _data912;
         private readonly IProveedorCriptoYa _cripto;
 
-        internal RecomendacionInversionesBLL(IMovimientoRepositorio movimientos, Func<DateTime> ahora, IProveedorArgentinaDatos argentina = null, IProveedorMercadoData912 data912 = null, IProveedorCriptoYa cripto = null)
+        internal RecomendacionInversionesBLL(IMovimientoRepositorio movimientos, IUsuarioRepositorio usuarios, Func<DateTime> ahora, IProveedorArgentinaDatos argentina = null, IProveedorMercadoData912 data912 = null, IProveedorCriptoYa cripto = null)
         {
             _movimientos = movimientos;
+            _usuarios = usuarios;
             _ahora = ahora;
             _argentina = argentina;
             _data912 = data912;
             _cripto = cripto;
         }
 
-        public async Task<ResumenInversiones> CalcularAsync(int usuarioActualId, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil = null)
+        public async Task<ResumenInversiones> CalcularAsync(Usuario usuario, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil = null)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            if (perfil == null || perfil.UsuarioId != usuarioActualId || perfil.VersionCuestionario != CalculadorPerfilInversor.Version
+            if (perfil == null || perfil.Usuario?.Id != usuario.Id || perfil.VersionCuestionario != CalculadorPerfilInversor.Version
                 || !Enum.IsDefined(typeof(NivelRiesgoInversor), perfil.NivelRiesgo))
                 throw new SERVICIOS.ExcepcionNegocio("Assistant.Investment.ProfileRequired");
             CalculadorPerfilInversor.Evaluar(perfil.VersionCuestionario, perfil.Respuestas);
-            ResumenInversiones resumen = CalcularSaldo(usuarioActualId, porcentaje);
-            string horizonte = perfil.Respuestas.Single(r => r.PreguntaId == 2).OpcionId;
-            string liquidez = perfil.Respuestas.Single(r => r.PreguntaId == 3).OpcionId;
+            ResumenInversiones resumen = CalcularSaldo(usuario, porcentaje);
+            string horizonte = perfil.Respuestas.Single(r => r.Pregunta.Id == 2).OpcionId;
+            string liquidez = perfil.Respuestas.Single(r => r.Pregunta.Id == 3).OpcionId;
             resumen.Perfil = perfil.NivelRiesgo;
             resumen.FechaPerfilUtc = perfil.FechaEvaluacionUtc;
             resumen.VersionPerfil = perfil.VersionCuestionario;
@@ -92,13 +95,13 @@ namespace BLL
             return resumen;
         }
 
-        private async Task<LoteInversion> ConsultarAsync(string fuente, Func<Task<IReadOnlyList<DatoMercado>>> consultar, Func<IEnumerable<DatoMercado>, IEnumerable<DatoMercado>> seleccionar, CancellationToken ct, ResumenInversiones resumen = null)
+        private async Task<LoteInversion> ConsultarAsync(string fuente, Func<Task<IReadOnlyList<IDatoMercado>>> consultar, Func<IEnumerable<IDatoMercado>, IEnumerable<IDatoMercado>> seleccionar, CancellationToken ct, ResumenInversiones resumen = null)
         {
             var lote = new LoteInversion();
             try
             {
                 ct.ThrowIfCancellationRequested();
-                IReadOnlyList<DatoMercado> datos = await consultar().ConfigureAwait(false);
+                IReadOnlyList<IDatoMercado> datos = await consultar().ConfigureAwait(false);
                 lote.Conocidos.AddRange(datos);
                 var vigentes = datos.Where(d => d.Fecha.Date <= _ahora().Date && d.Fecha.Date >= _ahora().Date.AddDays(d.Tipo == "Inflacion" ? -62 : -7)).ToList();
                 if (resumen != null)
@@ -128,7 +131,7 @@ namespace BLL
             if (historicos.Any(h => h == null)) lote.Faltantes.Add("ArgentinaDatos historico FCI " + tipo);
             foreach (InstrumentoInversion fondo in lote.Elegidos)
             {
-                DatoMercado previo = historicos.Where(h => h != null).SelectMany(h => h)
+                IDatoMercado previo = historicos.Where(h => h != null).SelectMany(h => h)
                     .FirstOrDefault(p => p.Nombre == fondo.Dato.Nombre && p.Fecha.Date == fondo.Dato.Fecha.Date.AddDays(-30) && p.Vcp > 0);
                 if (previo != null) fondo.Rendimiento30Dias = (fondo.Dato.Vcp / previo.Vcp - 1m) * 100m;
             }
@@ -139,13 +142,13 @@ namespace BLL
 
         private sealed class LoteInversion
         {
-            internal List<DatoMercado> Conocidos = new List<DatoMercado>();
+            internal List<IDatoMercado> Conocidos = new List<IDatoMercado>();
             internal List<InstrumentoInversion> Elegidos = new List<InstrumentoInversion>();
             internal List<string> Faltantes = new List<string>();
             internal List<string> Incompatibles = new List<string>();
         }
 
-        private bool Compatible(DatoMercado dato, ResumenInversiones resumen)
+        private bool Compatible(IDatoMercado dato, ResumenInversiones resumen)
         {
             if (string.IsNullOrWhiteSpace(dato.FuenteCondiciones) || !dato.MesesInmovilizacion.HasValue
                 || !dato.DiasHabilesDisponibilidad.HasValue || dato.RequierePreaviso != false || dato.RequierePermanencia != false)
@@ -168,13 +171,15 @@ namespace BLL
 
         // El porcentaje es opcional: null conserva saldo, nivel y seleccion sin porcentaje ni
         // monto. Si viene, debe estar entre 0 (excluido) y 100; el monto es un calculo aparte.
-        public ResumenInversiones CalcularSaldo(int usuarioActualId, decimal? porcentaje)
+        public ResumenInversiones CalcularSaldo(Usuario usuario, decimal? porcentaje)
         {
             if (porcentaje.HasValue && (porcentaje.Value <= 0 || porcentaje.Value > 100)) throw new ArgumentOutOfRangeException(nameof(porcentaje));
             DateTime actual = _ahora();
             DateTime finExclusivo = new DateTime(actual.Year, actual.Month, 1);
             DateTime desde = finExclusivo.AddMonths(-3);
-            var meses = _movimientos.ObtenerTotalesPorMes(usuarioActualId, desde, finExclusivo.AddDays(-1))
+            // Un usuario inexistente no tiene movimientos: saldo cero, como si la consulta no devolviera meses.
+            Usuario persistido = _usuarios.ObtenerPorId(usuario.Id);
+            var meses = (persistido == null ? new List<TotalPorMes>() : _movimientos.ObtenerTotalesPorMes(persistido, desde, finExclusivo.AddDays(-1)))
                 .Where(m => new DateTime(m.Anio, m.Mes, 1) >= desde && new DateTime(m.Anio, m.Mes, 1) < finExclusivo).ToList();
             decimal ingresos = meses.Sum(m => m.TotalIngresos) / 3m;
             decimal gastos = meses.Sum(m => m.TotalEgresos) / 3m;

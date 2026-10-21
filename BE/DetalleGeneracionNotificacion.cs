@@ -8,9 +8,9 @@ namespace BE
     {
         public int Id { get; set; }
 
-        public int CorridaId { get; set; }
+        public CorridaGeneracionNotificaciones Corrida { get; set; }
 
-        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
 
         public TipoNotificacionAutomatica Tipo { get; set; }
 
@@ -20,7 +20,7 @@ namespace BE
 
         public string Motivo { get; set; }
 
-        public int? NotificacionId { get; set; }
+        public Notificacion Notificacion { get; set; }
 
         public DateTime FechaUtc { get; set; }
     }

@@ -18,13 +18,14 @@ namespace BLL.Tests
             var f = new Fixture();
             f.Sesion.CerrarSesion();
             var sut = f.Crear();
-            var continuacion = new ContinuacionPerfilInversor(19, f.Fecha);
+            var continuacion = new ContinuacionPerfilInversor(new Usuario { Id = 19 }, f.Fecha);
             f.Unidad.ThrowOnSave = true;
             Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.GuardarPostRegistro(continuacion, 1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC")));
             Assert.IsFalse(continuacion.Finalizada);
             f.Unidad.ThrowOnSave = false;
             var perfil = sut.GuardarPostRegistro(continuacion, 1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC"));
-            Assert.AreEqual(19, perfil.UsuarioId);
+            Assert.AreEqual(19, perfil.Usuario.Id);
+            Assert.AreSame(continuacion.Usuario, perfil.Usuario);
             Assert.IsTrue(continuacion.Finalizada);
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPostRegistro(continuacion, 1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC")));
             Assert.IsFalse(f.Sesion.HaySesionActiva());
@@ -37,7 +38,7 @@ namespace BLL.Tests
         public void GuardarPostRegistro_VencimientoTreintaMinutos_NoAceptaContinuacionVencida(int minutos, bool valida)
         {
             var f = new Fixture();
-            var continuacion = new ContinuacionPerfilInversor(19, f.Fecha);
+            var continuacion = new ContinuacionPerfilInversor(new Usuario { Id = 19 }, f.Fecha);
             f.Fecha = f.Fecha.AddMinutes(minutos);
             if (valida) Assert.IsNotNull(f.Crear().GuardarPostRegistro(continuacion, 1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC")));
             else
@@ -52,7 +53,7 @@ namespace BLL.Tests
         {
             var f = new Fixture();
             var sut = f.Crear();
-            var continuacion = new ContinuacionPerfilInversor(19, f.Fecha);
+            var continuacion = new ContinuacionPerfilInversor(new Usuario { Id = 19 }, f.Fecha);
             Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.GuardarPostRegistro(continuacion, 2, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC")));
             Assert.IsFalse(continuacion.Finalizada);
             sut.CancelarPostRegistro(continuacion);
@@ -67,7 +68,7 @@ namespace BLL.Tests
         {
             var f = new Fixture();
             var sut = f.Crear();
-            var continuacion = new ContinuacionPerfilInversor(19, f.Fecha);
+            var continuacion = new ContinuacionPerfilInversor(new Usuario { Id = 19 }, f.Fecha);
             var intentos = Enumerable.Range(0, 8).Select(_ => Task.Run(() =>
             {
                 try { sut.GuardarPostRegistro(continuacion, 1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC")); return true; }
@@ -84,7 +85,8 @@ namespace BLL.Tests
             var sut = f.Crear();
             var respuestas = CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC");
             var guardado = sut.GuardarMiPerfil(1, respuestas);
-            Assert.AreEqual(7, guardado.UsuarioId);
+            Assert.AreEqual(7, guardado.Usuario.Id);
+            Assert.AreSame(f.Sesion.GetUsuarioActual(), guardado.Usuario);
             Assert.AreEqual(100m, guardado.Puntaje);
             Assert.AreEqual(NivelRiesgoInversor.Alto, guardado.NivelRiesgo);
             Assert.AreEqual(f.Fecha, guardado.FechaEvaluacionUtc);
@@ -145,6 +147,24 @@ namespace BLL.Tests
         }
 
         [TestMethod]
+        public void ObtenerPreguntas_CuestionarioDeDiezPreguntas_InformaOpcionesDeCadaUna()
+        {
+            var sut = new Fixture().Crear();
+            var preguntas = sut.ObtenerPreguntas();
+            CollectionAssert.AreEqual(Enumerable.Range(1, 10).ToArray(), preguntas.Select(p => p.Id).ToArray());
+            CollectionAssert.AreEqual(new[] { 3, 4, 3, 4, 3, 3, 4, 4, 4, 3 }, preguntas.Select(sut.ObtenerCantidadOpciones).ToArray());
+        }
+
+        [TestMethod]
+        public void ObtenerCantidadOpciones_PreguntaNulaOFueraDelCuestionario_Rechaza()
+        {
+            var sut = new Fixture().Crear();
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => sut.ObtenerCantidadOpciones(null));
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => sut.ObtenerCantidadOpciones(new PreguntaPerfilInversor(0)));
+            Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => sut.ObtenerCantidadOpciones(new PreguntaPerfilInversor(11)));
+        }
+
+        [TestMethod]
         public void ObtenerMiPerfil_ErrorLectura_NoConfundeConAusencia()
         {
             var f = new Fixture();
@@ -174,11 +194,11 @@ namespace BLL.Tests
             internal PerfilInversor Ultimo;
             internal int? PropietarioConsultado;
             internal bool Fallar;
-            public PerfilInversor ObtenerPorUsuario(int usuarioId)
+            public PerfilInversor ObtenerPorUsuario(Usuario usuario)
             {
                 if (Fallar) throw new InvalidOperationException("lectura");
-                PropietarioConsultado = usuarioId;
-                return Ultimo?.UsuarioId == usuarioId ? Ultimo : null;
+                PropietarioConsultado = usuario.Id;
+                return Ultimo?.Usuario?.Id == usuario.Id ? Ultimo : null;
             }
             public void Guardar(PerfilInversor perfil)
             {

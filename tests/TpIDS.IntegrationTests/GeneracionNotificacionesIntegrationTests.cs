@@ -48,21 +48,21 @@ namespace TpIDS.IntegrationTests
 
         private sealed class InversionesComodo : IRecomendacionInversionesBLL
         {
-            public System.Threading.Tasks.Task<ResumenInversiones> CalcularAsync(int usuarioActualId, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil)
+            public System.Threading.Tasks.Task<ResumenInversiones> CalcularAsync(Usuario usuario, decimal? porcentaje, CancellationToken cancellationToken, PerfilInversor perfil)
             {
                 throw new InvalidOperationException();
             }
 
-            public ResumenInversiones CalcularSaldo(int usuarioActualId, decimal? porcentaje) => new ResumenInversiones { Nivel = NivelInversion.Comodo };
+            public ResumenInversiones CalcularSaldo(Usuario usuario, decimal? porcentaje) => new ResumenInversiones { Nivel = NivelInversion.Comodo };
         }
 
         private sealed class IdiomaFijo : IIdiomaBLL
         {
-            public void AplicarIdiomaSesionUsuario(int usuarioId)
+            public void AplicarIdiomaSesionUsuario(Usuario usuario)
             {
             }
 
-            public Idioma ObtenerIdiomaParaUsuario(int usuarioId)
+            public Idioma ObtenerIdiomaParaUsuario(Usuario usuario)
             {
                 return new Idioma
                 {
@@ -167,8 +167,8 @@ namespace TpIDS.IntegrationTests
         private static PerfilInversor CrearPerfil(int usuarioId, string opciones)
         {
             PerfilInversor perfil = CalculadorPerfilInversor.Evaluar(1, opciones.Select((o, i) =>
-                new RespuestaPerfilInversor { PreguntaId = i + 1, OpcionId = o.ToString() }));
-            perfil.UsuarioId = usuarioId;
+                new RespuestaPerfilInversor { Pregunta = new PreguntaPerfilInversor(i + 1), OpcionId = o.ToString() }));
+            perfil.Usuario = new Usuario { Id = usuarioId };
             perfil.FechaEvaluacionUtc = DateTime.UtcNow;
             return perfil;
         }
@@ -263,7 +263,7 @@ namespace TpIDS.IntegrationTests
                     generador.Responder = s =>
                     {
                         // Ambos lotes terminan de calcular las compras del mismo usuario antes de que alguno entregue.
-                        if (s.UsuarioId == e.UsuarioId && s.Categoria == CategoriaConsulta.Compras)
+                        if (s.Usuario.Id == e.UsuarioId && s.Categoria == CategoriaConsulta.Compras)
                         {
                             if (!ambosCalcularon.SignalAndWait(TimeSpan.FromSeconds(15))) sincronizados = false;
                         }
@@ -297,7 +297,7 @@ namespace TpIDS.IntegrationTests
                 GeneradorFijo generador = new GeneradorFijo();
                 generador.Responder = s =>
                 {
-                    if (s.UsuarioId == e.UsuarioId) e.Sql("UPDATE Usuarios SET Activo = 0 WHERE Id = @U");
+                    if (s.Usuario.Id == e.UsuarioId) e.Sql("UPDATE Usuarios SET Activo = 0 WHERE Id = @U");
                     return ResultadoGeneracion.Valida("Compra");
                 };
 
@@ -327,7 +327,7 @@ namespace TpIDS.IntegrationTests
 
                 Assert.AreEqual(0, e.Notificaciones("Inversiones").Rows.Count);
                 Assert.AreEqual("PerfilCambiado", e.Detalles("Inversiones").Rows.Cast<DataRow>().Single()["Motivo"]);
-                Assert.IsNull(new NotificacionRepositorio().ObtenerFechaUltimaAutomaticaInversionUtc(e.UsuarioId));
+                Assert.IsNull(new NotificacionRepositorio().ObtenerFechaUltimaAutomaticaInversionUtc(new Usuario { Id = e.UsuarioId }));
             }
         }
 
@@ -342,7 +342,7 @@ namespace TpIDS.IntegrationTests
                 {
                     // Quita el registro de la corrida mientras se calcula: el detalle de la entrega ya no tiene a quien
                     // referenciar y la transaccion falla despues de insertar el aviso.
-                    if (s.Categoria == CategoriaConsulta.Inversiones && s.UsuarioId == e.UsuarioId)
+                    if (s.Categoria == CategoriaConsulta.Inversiones && s.Usuario.Id == e.UsuarioId)
                     {
                         e.Sql("DELETE FROM DetalleGeneracionNotificacion WHERE CorridaId IN (SELECT Id FROM CorridaGeneracionNotificaciones WHERE Jornada = '2099-06-04'); "
                             + "DELETE FROM CorridaGeneracionNotificaciones WHERE Jornada = '2099-06-04'");
@@ -355,7 +355,7 @@ namespace TpIDS.IntegrationTests
 
                 Assert.AreEqual("Error.Notifications.Generation.RunFailed", ex.Message);
                 Assert.AreEqual(0, e.Notificaciones("Inversiones").Rows.Count, "El aviso insertado en la transaccion fallida no queda.");
-                Assert.IsNull(new NotificacionRepositorio().ObtenerFechaUltimaAutomaticaInversionUtc(e.UsuarioId), "El intervalo no se ocupa.");
+                Assert.IsNull(new NotificacionRepositorio().ObtenerFechaUltimaAutomaticaInversionUtc(new Usuario { Id = e.UsuarioId }), "El intervalo no se ocupa.");
             }
         }
 
@@ -377,7 +377,7 @@ namespace TpIDS.IntegrationTests
                 Assert.AreEqual(1, e.Notificaciones("Movimientos").Rows.Count);
                 using (AccesoDatosSqlServer acceso = new AccesoDatosSqlServer())
                 {
-                    DataTable corrida = acceso.Read("SELECT * FROM CorridaGeneracionNotificaciones WHERE Id = @I", new List<SqlParameter> { acceso.CreateParameter("@I", SqlDbType.Int, r.CorridaId) });
+                    DataTable corrida = acceso.Read("SELECT * FROM CorridaGeneracionNotificaciones WHERE Id = @I", new List<SqlParameter> { acceso.CreateParameter("@I", SqlDbType.Int, r.Corrida.Id) });
                     Assert.AreEqual(r.Fallidas, (int)corrida.Rows[0]["Fallidas"]);
                     Assert.AreNotEqual(DBNull.Value, corrida.Rows[0]["FinUtc"]);
                 }

@@ -40,9 +40,9 @@ namespace REPOSITORIO
             return _monedaDAL.Actualizar(moneda, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Moneda moneda)
         {
-            return _monedaDAL.Eliminar(id, _accesoDatos);
+            return _monedaDAL.Eliminar(moneda, _accesoDatos);
         }
     }
 }

@@ -9,15 +9,13 @@ namespace BLL
     // los filtros con valores se combinan con Y y las opciones de un mismo filtro con O.
     internal static class AlcancePromocion
     {
-        // Comercios y rubros se combinan con Y. Es la regla compartida por el buscador de
-        // Gestion de Promociones y por las promociones que muestra el detalle del comercio.
         public static bool AplicaAComercio(Promocion promocion, Comercio comercio)
         {
             int comercioId = comercio == null ? 0 : comercio.Id;
             int rubroId = comercio == null || comercio.RubroComercio == null ? 0 : comercio.RubroComercio.Id;
 
-            return CumpleFiltro(promocion.ComercioIds, comercioId)
-                && CumpleFiltro(promocion.RubroComercioIds, rubroId);
+            return CumpleFiltro(promocion.Comercios.Select(item => item.Id), comercioId)
+                && CumpleFiltro(promocion.RubrosComercio.Select(item => item.Id), rubroId);
         }
 
         public static List<Promocion> FiltrarPorComercio(IEnumerable<Promocion> promociones, Comercio comercio)
@@ -25,29 +23,25 @@ namespace BLL
             return promociones.Where(promocion => AplicaAComercio(promocion, comercio)).ToList();
         }
 
-        // Entidad, medio de pago y segmento son filtros independientes: un pago sin entidad
-        // (por ejemplo dinero en cuenta) solo cumple si la promocion no filtra por entidad.
-        public static bool AplicaAPago(Promocion promocion, int? entidadFinancieraId, int? medioPagoId, string segmento)
+        public static bool AplicaAPago(Promocion promocion, EntidadFinanciera entidadFinanciera, MedioPago medioPago, string segmento)
         {
-            return CumpleFiltro(promocion.EntidadFinancieraIds, entidadFinancieraId)
-                && CumpleFiltro(promocion.MedioPagoIds, medioPagoId)
+            return CumpleFiltro(promocion.EntidadesFinancieras.Select(item => item.Id), entidadFinanciera?.Id)
+                && CumpleFiltro(promocion.MediosPago.Select(item => item.Id), medioPago?.Id)
                 && CumpleSegmento(promocion.Segmentos, segmento);
         }
 
-        // Con inclusiones solo participa un producto que coincida con algun producto o categoria
-        // incluidos; despues, cualquier coincidencia con una exclusion lo deja afuera.
-        public static bool AplicaAProducto(Promocion promocion, int productoId, int categoriaProductoId)
+        public static bool AplicaAProducto(Promocion promocion, Producto producto)
         {
-            bool hayInclusiones = promocion.ProductoIncluidoIds.Count > 0 || promocion.CategoriaIncluidaIds.Count > 0;
+            bool hayInclusiones = promocion.ProductosIncluidos.Count > 0 || promocion.CategoriasIncluidas.Count > 0;
             if (hayInclusiones
-                && !promocion.ProductoIncluidoIds.Contains(productoId)
-                && !promocion.CategoriaIncluidaIds.Contains(categoriaProductoId))
+                && !promocion.ProductosIncluidos.Any(item => item.Id == producto?.Id)
+                && !promocion.CategoriasIncluidas.Any(item => item.Id == producto?.CategoriaProducto?.Id))
             {
                 return false;
             }
 
-            return !promocion.ProductoExcluidoIds.Contains(productoId)
-                && !promocion.CategoriaExcluidaIds.Contains(categoriaProductoId);
+            return !promocion.ProductosExcluidos.Any(item => item.Id == producto?.Id)
+                && !promocion.CategoriasExcluidas.Any(item => item.Id == producto?.CategoriaProducto?.Id);
         }
 
         // Vigencia con ambos extremos inclusivos (por dia) y, si hay dias cargados, solo esos dias.
@@ -62,9 +56,9 @@ namespace BLL
             return promocion.DiasSemana.Count == 0 || promocion.DiasSemana.Contains(ADiaSemana(dia.DayOfWeek));
         }
 
-        private static bool CumpleFiltro(List<int> filtro, int? valor)
+        private static bool CumpleFiltro(IEnumerable<int> filtro, int? valor)
         {
-            return filtro.Count == 0 || (valor.HasValue && filtro.Contains(valor.Value));
+            return !filtro.Any() || (valor.HasValue && filtro.Contains(valor.Value));
         }
 
         private static bool CumpleSegmento(List<string> filtro, string segmento)

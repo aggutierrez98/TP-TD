@@ -1,0 +1,72 @@
+@startuml
+' Fuente: diagramas/NEG10-rubros-comercio/NEG10-rubros-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN46 Modificar rubro de comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionComercios" as FormGestionComercios
+control "RubroComercioBLL" as RubroComercioBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "RubroComercioRepositorio\n:IRubroComercioRepositorio" as IRubroComercioRepositorio
+participant "RubroComercioDAL" as RubroComercioDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionComercios : El actor desea corregir o actualizar el nombre de un rubro.
+Actor -> FormGestionComercios : selecciona la opción «Comercios» del menú «Operador».
+FormGestionComercios --> Actor : presenta la pantalla «Gestion de Comercios» con la sección «Rubros de comercio» y su\nlistado de rubros.
+Actor -> FormGestionComercios : selecciona del listado el rubro a modificar.
+FormGestionComercios --> Actor : muestra el nombre del rubro en el campo «Nombre:» de la sección «Rubros de comercio».
+Actor -> FormGestionComercios : modifica el nombre.
+Actor -> FormGestionComercios : presiona el botón «Actualizar» de la sección «Rubros de comercio».
+FormGestionComercios -> RubroComercioBLL ++ : Actualizar(rubro: RubroComercio)
+RubroComercioBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> RubroComercioBLL -- : IUnidadDeTrabajo
+RubroComercioBLL -> IRubroComercioRepositorio ++ : ObtenerPorId(id: int)
+IRubroComercioRepositorio -> RubroComercioDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : RubroComercio
+IRubroComercioRepositorio --> RubroComercioBLL -- : RubroComercio
+RubroComercioBLL -> IRubroComercioRepositorio ++ : Actualizar(rubro: RubroComercio)
+IRubroComercioRepositorio -> RubroComercioDAL ++ : Actualizar(rubro: RubroComercio, accesoDatos:\nAccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : bool
+IRubroComercioRepositorio --> RubroComercioBLL -- : bool
+RubroComercioBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> RubroComercioBLL -- : void
+RubroComercioBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> RubroComercioBLL -- : void
+RubroComercioBLL --> FormGestionComercios -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionComercios -> RubroComercioBLL ++ : ObtenerTodas()
+RubroComercioBLL -> IRubroComercioRepositorio ++ : ObtenerTodas()
+IRubroComercioRepositorio -> RubroComercioDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+RubroComercioDAL --> IRubroComercioRepositorio -- : List<RubroComercio>
+IRubroComercioRepositorio --> RubroComercioBLL -- : List<RubroComercio>
+RubroComercioBLL --> FormGestionComercios -- : List<RubroComercio>
+end
+FormGestionComercios --> Actor : guarda el nuevo nombre, actualiza el listado manteniendo seleccionado el rubro, actualiza\nel selector «Rubro:» y el rubro mostrado en el listado de comercios, e informa el\nresultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' BLL/RubroComercioBLL.cs:60 RubroComercioBLL.Actualizar
+' DAL/RubroComercioDAL.cs:106 RubroComercioDAL.Actualizar
+' DAL/RubroComercioDAL.cs:19 RubroComercioDAL.ObtenerPorId
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:14 IRubroComercioRepositorio.Actualizar
+' REPOSITORIO/IRubroComercioRepositorio.cs:8 IRubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/RubroComercioRepositorio.cs:23 RubroComercioRepositorio.ObtenerPorId
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:38 RubroComercioRepositorio.Actualizar
+' UI/FormGestionComercios.cs:328 FormGestionComercios.btnActualizarRubro_Click
+@enduml

@@ -7,7 +7,7 @@ namespace REPOSITORIO
     {
         List<Idioma> ObtenerIdiomas();
 
-        Idioma ObtenerIdiomaCompleto(int idiomaId);
+        Idioma ObtenerPorId(int id);
 
         Idioma ObtenerIdiomaDefault();
 
@@ -15,16 +15,16 @@ namespace REPOSITORIO
 
         bool ActualizarIdioma(Idioma idioma);
 
-        bool EliminarIdioma(int idiomaId);
+        bool EliminarIdioma(Idioma idioma);
 
-        bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId);
+        bool ConsolidarIdioma(Idioma origen, Idioma destino);
 
-        int ObtenerPalabraIdPorKey(string key);
+        Palabra ObtenerPalabraPorKey(string key);
 
-        bool GuardarTraduccion(int idiomaId, int palabraId, string valor);
+        bool GuardarTraduccion(Traduccion traduccion);
 
-        bool EliminarTraduccion(int idiomaId, int palabraId);
+        bool EliminarTraduccion(Traduccion traduccion);
 
-        bool SwitchearIdiomaDefault(int idiomaId);
+        bool SwitchearIdiomaDefault(Idioma idioma);
     }
 }

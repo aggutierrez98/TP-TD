@@ -29,9 +29,9 @@ namespace REPOSITORIO
             return dashboard;
         }
 
-        public Dashboard ObtenerPorUsuario(int usuarioId)
+        public Dashboard ObtenerPorUsuario(Usuario usuario)
         {
-            Dashboard dashboard = _dashboardDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            Dashboard dashboard = _dashboardDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             Hidratar(dashboard);
             return dashboard;
         }
@@ -47,7 +47,7 @@ namespace REPOSITORIO
 
             // Se leen las tarjetas directo del DAL (no via TarjetaDashboardRepositorio) para no
             // reingresar en su Hidratar y volver a pedir este mismo Dashboard al infinito.
-            dashboard.Tarjetas = _tarjetaDashboardDAL.ObtenerPorDashboard(dashboard.Id, _accesoDatos);
+            dashboard.Tarjetas = _tarjetaDashboardDAL.ObtenerPorDashboard(dashboard, _accesoDatos);
             foreach (TarjetaDashboard tarjeta in dashboard.Tarjetas)
             {
                 tarjeta.Dashboard = dashboard;
@@ -59,9 +59,9 @@ namespace REPOSITORIO
             return _dashboardDAL.InsertarYObtenerId(dashboard, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Dashboard dashboard)
         {
-            return _dashboardDAL.Eliminar(id, _accesoDatos);
+            return _dashboardDAL.Eliminar(dashboard, _accesoDatos);
         }
     }
 }

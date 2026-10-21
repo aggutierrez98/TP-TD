@@ -7,7 +7,7 @@ namespace REPOSITORIO
     {
         Comercio ObtenerPorId(int id);
 
-        List<Comercio> ObtenerPorRubro(int rubroComercioId);
+        List<Comercio> ObtenerPorRubro(RubroComercio rubro);
 
         List<Comercio> ObtenerTodos();
 
@@ -15,6 +15,6 @@ namespace REPOSITORIO
 
         bool Actualizar(Comercio comercio);
 
-        bool Eliminar(int id);
+        bool Eliminar(Comercio comercio);
     }
 }

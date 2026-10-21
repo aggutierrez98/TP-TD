@@ -1,0 +1,179 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN43 Actualizar tasas desde el proveedor externo — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormActualizacionTasas {
+    -btnActualizarAhoraTasas_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ActualizacionTasasBLL {
+    +EjecutarAsync(origen: OrigenActualizacionTasas, cancellationToken:\nCancellationToken): Task<ResultadoEjecucionActualizacionTasas>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IEjecucionActualizacionTasasRepositorio {
+    +ObtenerUltimaExitosaConBloqueo(): EjecucionActualizacionTasas
+    +InsertarYObtenerId(ejecucion: EjecucionActualizacionTasas): int
+    +InsertarDetalleYObtenerId(detalle: ActualizacionTasaDetalle): int
+  }
+  class EjecucionActualizacionTasasRepositorio {
+    +ObtenerUltimaExitosaConBloqueo(): EjecucionActualizacionTasas
+    +InsertarYObtenerId(ejecucion: EjecucionActualizacionTasas): int
+    +InsertarDetalleYObtenerId(detalle: ActualizacionTasaDetalle): int
+  }
+  class "TasaConversionRepositorio" as ITasaConversionRepositorio <<ITasaConversionRepositorio>> {
+    +ObtenerTodas(): List<TasaConversion>
+    +ActualizarValorAutomatico(tasa: TasaConversion, calculoConversion: decimal): bool
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IEjecucionActualizacionTasasRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> EjecucionActualizacionTasasRepositorio
+EjecucionActualizacionTasasRepositorio -[hidden]right-> ITasaConversionRepositorio
+EjecucionActualizacionTasasRepositorio -[hidden]down-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class EjecucionActualizacionTasasDAL {
+    +ObtenerUltimaExitosa(conBloqueo: bool, accesoDatos: AccesoDatosSqlServer):\nEjecucionActualizacionTasas
+    +InsertarYObtenerId(ejecucion: EjecucionActualizacionTasas, accesoDatos:\nAccesoDatosSqlServer): int
+    +InsertarDetalleYObtenerId(detalle: ActualizacionTasaDetalle, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "SERVICIOS" as L_SERVICIOS {
+  class "OpenExchangeRatesProveedor" as IProveedorTasasCambio <<IProveedorTasasCambio>> {
+    +ObtenerTasasAsync(cancellationToken: CancellationToken): Task<ITasasCambioObtenidas>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class ActualizacionTasaDetalle {
+    +Id: int
+    +Ejecucion: EjecucionActualizacionTasas
+    +MonedaBase: Moneda
+    +MonedaConversion: Moneda
+    +ValorAnterior: decimal
+    +ValorNuevo: decimal?
+    +Estado: EstadoActualizacionTasa
+  }
+  class EjecucionActualizacionTasas {
+    +Id: int
+    +FechaInicio: DateTime
+    +Origen: OrigenActualizacionTasas
+    +Resultado: ResultadoActualizacionTasas
+    +ConsumioRequest: bool
+    +Mensaje: string
+    +Detalles: List<ActualizacionTasaDetalle>
+  }
+  enum EstadoActualizacionTasa {
+    Actualizado
+    SaltadoManual
+    SaltadoSinDato
+  }
+  class Moneda {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  enum OrigenActualizacionTasas {
+    Programada
+    Manual
+  }
+  enum ResultadoActualizacionTasas {
+    Exitosa
+    Fallida
+    Omitida
+  }
+  class ResultadoEjecucionActualizacionTasas {
+    +Ejecucion: EjecucionActualizacionTasas
+    +ProximaConsultaPermitida: DateTime?
+  }
+  class TasaConversion {
+    +Id: int
+    +MonedaBase: Moneda
+    +MonedaConversion: Moneda
+    +CalculoConversion: decimal
+    +FechaActualizacion: DateTime
+    +EsManual: bool
+    +ProtegidaPorUsuario: Usuario
+    +FechaProteccion: DateTime?
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ActualizacionTasaDetalle -[hidden]right-> EjecucionActualizacionTasas
+ActualizacionTasaDetalle -[hidden]down-> EstadoActualizacionTasa
+EstadoActualizacionTasa -[hidden]right-> Moneda
+EstadoActualizacionTasa -[hidden]down-> OrigenActualizacionTasas
+OrigenActualizacionTasas -[hidden]right-> ResultadoActualizacionTasas
+OrigenActualizacionTasas -[hidden]down-> ResultadoEjecucionActualizacionTasas
+ResultadoEjecucionActualizacionTasas -[hidden]right-> TasaConversion
+ResultadoEjecucionActualizacionTasas -[hidden]down-> Usuario
+ActualizacionTasasBLL ..> IEjecucionActualizacionTasasRepositorio : usa
+ActualizacionTasasBLL ..> IProveedorTasasCambio : usa
+ActualizacionTasasBLL ..> ITasaConversionRepositorio : usa
+ActualizacionTasasBLL ..> IUnidadDeTrabajo : usa
+ActualizacionTasasBLL ..> IUnidadDeTrabajoFactory : usa
+EjecucionActualizacionTasasRepositorio ..|> IEjecucionActualizacionTasasRepositorio
+FormActualizacionTasas ..> ActualizacionTasasBLL : usa
+EjecucionActualizacionTasasRepositorio ..> EjecucionActualizacionTasasDAL : usa
+ActualizacionTasasBLL ..> EjecucionActualizacionTasas : datos
+ActualizacionTasaDetalle --> EjecucionActualizacionTasas : Ejecucion
+ActualizacionTasaDetalle --> Moneda : MonedaBase
+ActualizacionTasaDetalle --> Moneda : MonedaConversion
+ActualizacionTasaDetalle --> EstadoActualizacionTasa : Estado
+EjecucionActualizacionTasas --> OrigenActualizacionTasas : Origen
+EjecucionActualizacionTasas --> ResultadoActualizacionTasas : Resultado
+EjecucionActualizacionTasas --> "*" ActualizacionTasaDetalle : Detalles
+ResultadoEjecucionActualizacionTasas --> EjecucionActualizacionTasas : Ejecucion
+TasaConversion --> Moneda : MonedaBase
+TasaConversion --> Moneda : MonedaConversion
+TasaConversion --> Usuario : ProtegidaPorUsuario
+' ABSTRACCIONES/IProveedorTasasCambio.cs:11 IProveedorTasasCambio.ObtenerTasasAsync
+' BLL/ActualizacionTasasBLL.cs:74 ActualizacionTasasBLL.EjecutarAsync
+' DAL/EjecucionActualizacionTasasDAL.cs:181 EjecucionActualizacionTasasDAL.ObtenerUltimaExitosa
+' DAL/EjecucionActualizacionTasasDAL.cs:43 EjecucionActualizacionTasasDAL.InsertarYObtenerId
+' DAL/EjecucionActualizacionTasasDAL.cs:75 EjecucionActualizacionTasasDAL.InsertarDetalleYObtenerId
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:24 EjecucionActualizacionTasasRepositorio.InsertarYObtenerId
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:29 EjecucionActualizacionTasasRepositorio.InsertarDetalleYObtenerId
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:57 EjecucionActualizacionTasasRepositorio.ObtenerUltimaExitosaConBloqueo
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:11 IEjecucionActualizacionTasasRepositorio.InsertarDetalleYObtenerId
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:19 IEjecucionActualizacionTasasRepositorio.ObtenerUltimaExitosaConBloqueo
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:9 IEjecucionActualizacionTasasRepositorio.InsertarYObtenerId
+' REPOSITORIO/ITasaConversionRepositorio.cs:10 ITasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/ITasaConversionRepositorio.cs:18 ITasaConversionRepositorio.ActualizarValorAutomatico
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormActualizacionTasas.cs:119 FormActualizacionTasas.btnActualizarAhoraTasas_Click
+@enduml

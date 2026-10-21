@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using ABSTRACCIONES;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IUsuarioPermisoRepositorio
     {
-        List<int> ObtenerPermisoIdsPorUsuario(int usuarioId);
+        List<IPermiso> ObtenerPermisosPorUsuario(Usuario usuario);
 
-        bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId);
+        bool ReemplazarPermisosUsuario(Usuario usuario, List<IPermiso> permisos);
     }
 }

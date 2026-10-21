@@ -28,7 +28,7 @@ namespace TpIDS.IntegrationTests
                 int compradoId = InsertarItem(accesoDatos, listaId, "ItemTestComprado", 1, true);
                 int ajenoId = InsertarItem(accesoDatos, listaAjenaId, "ItemTestAjeno", 1, false);
 
-                List<BE.ItemLista> items = repositorio.ObtenerItemsPendientesPorUsuario(usuarioId);
+                List<BE.ItemLista> items = repositorio.ObtenerItemsPendientesPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 BE.ItemLista pendiente = items.Single(item => item.Id == pendienteId);
                 Assert.AreEqual("ItemTestPendiente", pendiente.Descripcion);
@@ -123,14 +123,15 @@ namespace TpIDS.IntegrationTests
                 int categoriaId = InsertarCategoria(accesoDatos, "CatTestPromoFiltro");
                 int productoIncluidoId = InsertarProducto(accesoDatos, categoriaId, "ProductoTestPromoIncluido");
                 int productoExcluidoId = InsertarProducto(accesoDatos, categoriaId, "ProductoTestPromoExcluido");
-                new PromocionRepositorio(accesoDatos).ReemplazarDiasDePromocion(vigenteId, new List<BE.DiaSemana> { BE.DiaSemana.Jueves });
-                new PromocionComercioRepositorio(accesoDatos).ReemplazarComerciosDePromocion(vigenteId, new List<int> { comercioId });
-                new PromocionRubroComercioRepositorio(accesoDatos).ReemplazarRubrosComercioDePromocion(vigenteId, new List<int> { rubroId });
-                new PromocionEntidadFinancieraRepositorio(accesoDatos).ReemplazarEntidadesFinancierasDePromocion(vigenteId, new List<int> { entidadId });
-                new PromocionMedioPagoRepositorio(accesoDatos).ReemplazarMediosPagoDePromocion(vigenteId, new List<int> { medioId });
-                new PromocionSegmentoRepositorio(accesoDatos).ReemplazarSegmentosDePromocion(vigenteId, new List<string> { "SegmentoTest" });
-                new PromocionProductoRepositorio(accesoDatos).ReemplazarProductosDePromocion(vigenteId, new List<int> { productoIncluidoId }, new List<int> { productoExcluidoId });
-                new PromocionCategoriaProductoRepositorio(accesoDatos).ReemplazarCategoriasProductoDePromocion(vigenteId, new List<int> { categoriaId }, new List<int>());
+                BE.Promocion referencia = new BE.Promocion { Id = vigenteId };
+                new PromocionRepositorio(accesoDatos).ReemplazarDiasDePromocion(referencia, new List<BE.DiaSemana> { BE.DiaSemana.Jueves });
+                new PromocionComercioRepositorio(accesoDatos).ReemplazarComerciosDePromocion(referencia, new List<BE.Comercio> { new BE.Comercio { Id = comercioId } });
+                new PromocionRubroComercioRepositorio(accesoDatos).ReemplazarRubrosComercioDePromocion(referencia, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroId } });
+                new PromocionEntidadFinancieraRepositorio(accesoDatos).ReemplazarEntidadesFinancierasDePromocion(referencia, new List<BE.EntidadFinanciera> { new BE.EntidadFinanciera { Id = entidadId } });
+                new PromocionMedioPagoRepositorio(accesoDatos).ReemplazarMediosPagoDePromocion(referencia, new List<BE.MedioPago> { new BE.MedioPago { Id = medioId } });
+                new PromocionSegmentoRepositorio(accesoDatos).ReemplazarSegmentosDePromocion(referencia, new List<string> { "SegmentoTest" });
+                new PromocionProductoRepositorio(accesoDatos).ReemplazarProductosDePromocion(referencia, new List<BE.Producto> { new BE.Producto { Id = productoIncluidoId } }, new List<BE.Producto> { new BE.Producto { Id = productoExcluidoId } });
+                new PromocionCategoriaProductoRepositorio(accesoDatos).ReemplazarCategoriasProductoDePromocion(referencia, new List<BE.CategoriaProducto> { new BE.CategoriaProducto { Id = categoriaId } }, new List<BE.CategoriaProducto>());
 
                 List<BE.Promocion> promociones = repositorio.ObtenerPromocionesVigentesEntre(desde, hasta);
 
@@ -143,15 +144,15 @@ namespace TpIDS.IntegrationTests
                 Assert.AreEqual(20m, vigente.Descuento);
                 Assert.AreEqual(5000m, vigente.TopeDescuento);
                 CollectionAssert.AreEqual(new List<BE.DiaSemana> { BE.DiaSemana.Jueves }, vigente.DiasSemana);
-                CollectionAssert.AreEqual(new List<int> { comercioId }, vigente.ComercioIds);
-                CollectionAssert.AreEqual(new List<int> { rubroId }, vigente.RubroComercioIds);
-                CollectionAssert.AreEqual(new List<int> { entidadId }, vigente.EntidadFinancieraIds);
-                CollectionAssert.AreEqual(new List<int> { medioId }, vigente.MedioPagoIds);
+                CollectionAssert.AreEqual(new List<int> { comercioId }, vigente.Comercios.ConvertAll(item => item.Id));
+                CollectionAssert.AreEqual(new List<int> { rubroId }, vigente.RubrosComercio.ConvertAll(item => item.Id));
+                CollectionAssert.AreEqual(new List<int> { entidadId }, vigente.EntidadesFinancieras.ConvertAll(item => item.Id));
+                CollectionAssert.AreEqual(new List<int> { medioId }, vigente.MediosPago.ConvertAll(item => item.Id));
                 CollectionAssert.AreEqual(new List<string> { "SegmentoTest" }, vigente.Segmentos);
-                CollectionAssert.AreEqual(new List<int> { productoIncluidoId }, vigente.ProductoIncluidoIds);
-                CollectionAssert.AreEqual(new List<int> { productoExcluidoId }, vigente.ProductoExcluidoIds);
-                CollectionAssert.AreEqual(new List<int> { categoriaId }, vigente.CategoriaIncluidaIds);
-                Assert.AreEqual(0, vigente.CategoriaExcluidaIds.Count);
+                CollectionAssert.AreEqual(new List<int> { productoIncluidoId }, vigente.ProductosIncluidos.ConvertAll(item => item.Id));
+                CollectionAssert.AreEqual(new List<int> { productoExcluidoId }, vigente.ProductosExcluidos.ConvertAll(item => item.Id));
+                CollectionAssert.AreEqual(new List<int> { categoriaId }, vigente.CategoriasIncluidas.ConvertAll(item => item.Id));
+                Assert.AreEqual(0, vigente.CategoriasExcluidas.Count);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -178,10 +179,10 @@ namespace TpIDS.IntegrationTests
                 int cuentaId = InsertarCuenta(cuentas, usuarioId, entidadId, "CuentaTestRecomendacion", "credencial-secreta");
                 int cuentaSinMediosId = InsertarCuenta(cuentas, usuarioId, entidadId, "CuentaTestSinMedios", null);
                 int cuentaAjenaId = InsertarCuenta(cuentas, otroUsuarioId, entidadId, "CuentaTestAjena", null);
-                cuentas.ReemplazarMediosPagoEntidadDeCuenta(cuentaId, new List<int> { medioEntidadId });
-                cuentas.ReemplazarMediosPagoEntidadDeCuenta(cuentaAjenaId, new List<int> { medioEntidadId });
+                cuentas.ReemplazarMediosPagoEntidadDeCuenta(cuentas.ObtenerPorId(cuentaId), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioEntidadId) });
+                cuentas.ReemplazarMediosPagoEntidadDeCuenta(cuentas.ObtenerPorId(cuentaAjenaId), new[] { new MedioPagoEntidadRepositorio(accesoDatos).ObtenerPorId(medioEntidadId) });
 
-                List<BE.CuentaFinanciera> resultado = repositorio.ObtenerCuentasConMediosPorUsuario(usuarioId);
+                List<BE.CuentaFinanciera> resultado = repositorio.ObtenerCuentasConMediosPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 BE.CuentaFinanciera cuenta = resultado.Single(item => item.Id == cuentaId);
                 Assert.AreEqual("CuentaTestRecomendacion", cuenta.Alias);

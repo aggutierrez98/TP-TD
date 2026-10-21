@@ -14,17 +14,17 @@ namespace REPOSITORIO
 
         bool Actualizar(Usuario usuario);
 
-        bool ActualizarDVH(int id, string dvh);
+        bool ActualizarDVH(Usuario usuario, string dvh);
 
-        bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh);
+        bool ActualizarEstadoBloqueo(Usuario usuario, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh);
 
         bool GuardarEstadoCompleto(Usuario usuario);
 
-        bool EliminarFisicamente(int id);
+        bool EliminarFisicamente(Usuario usuario);
 
         List<Usuario> ObtenerTodos();
 
         // Pagina de Ids de cuentas activas con Id mayor a ultimoId, en orden ascendente (paginacion por clave).
-        List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad);
+        List<Usuario> ObtenerActivosDespuesDe(Usuario ultimo, int cantidad);
     }
 }

@@ -45,7 +45,7 @@ namespace DAL
             }
         }
 
-        public Dashboard ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public Dashboard ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId
@@ -59,7 +59,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -102,7 +102,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(Dashboard dashboard, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Dashboard
@@ -115,7 +115,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, dashboard.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

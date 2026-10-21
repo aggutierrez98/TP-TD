@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class PromocionRubroComercioDAL
     {
-        public List<int> ObtenerRubroComercioIdsPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<RubroComercio> ObtenerRubrosComercioPorPromocion(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT RubroComercioId
@@ -22,12 +23,12 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["RubroComercioId"])
+                    .Select(row => new RubroComercio { Id = (int)row["RubroComercioId"] })
                     .ToList();
             }
             finally
@@ -39,7 +40,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarRubrosComercioDePromocion(int promocionId, List<int> rubroComercioIds, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarRubrosComercioDePromocion(Promocion promocion, List<RubroComercio> rubrosComercio, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -48,20 +49,20 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"
                     DELETE FROM PromocionRubroComercio
                     WHERE PromocionId = @PromocionId;";
 
-                for (int i = 0; i < rubroComercioIds.Count; i++)
+                for (int i = 0; i < rubrosComercio.Count; i++)
                 {
                     query += string.Format(@"
                         INSERT INTO PromocionRubroComercio (PromocionId, RubroComercioId)
                         VALUES (@PromocionId, @RubroComercioId{0});", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@RubroComercioId" + i, SqlDbType.Int, rubroComercioIds[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@RubroComercioId" + i, SqlDbType.Int, rubrosComercio[i].Id));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
@@ -75,7 +76,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorRubroComercio(int rubroComercioId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorRubroComercio(RubroComercio rubroComercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -89,7 +90,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, rubroComercioId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, rubroComercio.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

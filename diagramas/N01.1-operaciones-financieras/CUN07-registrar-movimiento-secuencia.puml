@@ -1,0 +1,111 @@
+@startuml
+' Fuente: diagramas/NEG02-movimientos/NEG02-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN07 Registrar movimiento — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMovimientos" as FormMovimientos
+control "MovimientoBLL" as MovimientoBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "GeminiEscaneoTicketService\n:IEscaneoTicketService" as IEscaneoTicketService
+control "ReglaCategorizacionBLL" as ReglaCategorizacionBLL
+participant "Sesion\n:ISesion" as ISesion
+participant "ReglaCategorizacionRepositorio\n:IReglaCategorizacionRepositorio" as IReglaCategorizacionRepositorio
+participant "ComercioReglaCategorizacionRepositorio\n:IComercioReglaCategorizacionRepositorio" as IComercioReglaCategorizacionRepositorio
+participant "CategoriaRepositorio\n:ICategoriaRepositorio" as ICategoriaRepositorio
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "MovimientoRepositorio\n:IMovimientoRepositorio" as IMovimientoRepositorio
+participant "MovimientoDAL" as MovimientoDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormMovimientos : El actor desea dejar registrado un ingreso o un egreso.
+Actor -> FormMovimientos : selecciona la opción «Movimientos» del menú «Finanzas».
+FormMovimientos --> Actor : presenta la pantalla «Gestión de movimientos» con la sección «Movimiento»
+Actor -> FormMovimientos : selecciona la categoría y el tipo (Ingreso o Egreso), ingresa el monto y la fecha y, si lo\ndesea, ingresa una descripción y selecciona un comercio.
+opt Alternativa 3a: escanear ticket, revisar y corregir borrador
+FormMovimientos -> MovimientoBLL ++ : EscanearBorradorAsync(imagenBytes: byte[])
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IEscaneoTicketService ++ : EscanearTicketAsync(imagenBytes: byte[])
+IEscaneoTicketService --> MovimientoBLL -- : Task<ITicketEscaneado>
+MovimientoBLL --> FormMovimientos -- : Task<EscaneoBorradorResultado>
+end
+opt Alternativa 3b: sugerir categoria
+FormMovimientos -> ReglaCategorizacionBLL ++ : SugerirCategoria(descripcion: string, comercio: Comercio)
+ReglaCategorizacionBLL -> ISesion ++ : HaySesionActiva()
+ISesion --> ReglaCategorizacionBLL -- : bool
+ReglaCategorizacionBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ReglaCategorizacionBLL -- : Usuario
+ReglaCategorizacionBLL -> IReglaCategorizacionRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : List<ReglaCategorizacion>
+loop foreach (ReglaCategorizacion regla in reglas)
+ReglaCategorizacionBLL -> IComercioReglaCategorizacionRepositorio ++ : ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion)
+IComercioReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : List<Comercio>
+end
+ReglaCategorizacionBLL --> FormMovimientos -- : Categoria
+end
+Actor -> FormMovimientos : presiona el botón «Agregar».
+FormMovimientos --> Actor : registra el movimiento, limpia los campos de la sección «Movimiento» y actualiza el\nlistado, que incorpora el nuevo movimiento.
+FormMovimientos -> MovimientoBLL ++ : Crear(movimiento: Movimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> ICategoriaRepositorio ++ : ObtenerPorId(id: int)
+ICategoriaRepositorio --> MovimientoBLL -- : Categoria
+MovimientoBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio --> MovimientoBLL -- : Comercio
+MovimientoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> MovimientoBLL -- : IUnidadDeTrabajo
+MovimientoBLL -> IMovimientoRepositorio ++ : InsertarYObtenerId(movimiento: Movimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : InsertarYObtenerId(movimiento: Movimiento, accesoDatos:\nAccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : int
+IMovimientoRepositorio --> MovimientoBLL -- : int
+MovimientoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> MovimientoBLL -- : void
+MovimientoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> MovimientoBLL -- : void
+MovimientoBLL --> FormMovimientos -- : Movimiento
+group Refrescar listado tras la operacion exitosa
+FormMovimientos -> MovimientoBLL ++ : ObtenerParaUsuarioActual(filtro: FiltroMovimiento)
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IMovimientoRepositorio ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento)
+IMovimientoRepositorio -> MovimientoDAL ++ : ObtenerPorUsuario(usuario: Usuario, filtro: FiltroMovimiento,\naccesoDatos: AccesoDatosSqlServer)
+MovimientoDAL --> IMovimientoRepositorio -- : List<Movimiento>
+IMovimientoRepositorio --> MovimientoBLL -- : List<Movimiento>
+MovimientoBLL --> FormMovimientos -- : List<Movimiento>
+end
+FormMovimientos --> Actor : muestra el mensaje «Movimiento creado con éxito.».
+' ABSTRACCIONES/IEscaneoTicketService.cs:10 IEscaneoTicketService.EscanearTicketAsync
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/MovimientoBLL.cs:169 MovimientoBLL.EscanearBorradorAsync
+' BLL/MovimientoBLL.cs:209 MovimientoBLL.Crear
+' BLL/MovimientoBLL.cs:79 MovimientoBLL.ObtenerParaUsuarioActual
+' BLL/ReglaCategorizacionBLL.cs:196 ReglaCategorizacionBLL.SugerirCategoria
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/MovimientoDAL.cs:326 MovimientoDAL.InsertarYObtenerId
+' DAL/MovimientoDAL.cs:60 MovimientoDAL.ObtenerPorUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:8 ICategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:8 IComercioReglaCategorizacionRepositorio.ObtenerComerciosPorReglaCategorizacion
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IMovimientoRepositorio.cs:13 IMovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:25 IMovimientoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:10 IReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MovimientoRepositorio.cs:33 MovimientoRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:80 MovimientoRepositorio.InsertarYObtenerId
+' UI/FormMovimientos.cs:313 FormMovimientos.btnAgregarMovimiento_Click
+@enduml

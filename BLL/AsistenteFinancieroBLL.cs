@@ -38,7 +38,7 @@ namespace BLL
         private readonly IChatbotFinancieroRepositorio _chatbotFinancieroRepositorio;
         private readonly IAsistenteFinancieroService _asistenteFinancieroService;
         private readonly IClasificadorConsultas _clasificadorConsultas;
-        private readonly LimiteUsoAsistente _limiteUso;
+        private readonly ILimiteUsoAsistente _limiteUso;
         private readonly IUnidadDeTrabajoFactory _unidadDeTrabajoFactory;
         private readonly ISesion _sesion;
         private readonly IBitacoraBLL _bitacoraBLL;
@@ -59,7 +59,7 @@ namespace BLL
             IChatbotFinancieroRepositorio chatbotFinancieroRepositorio,
             IAsistenteFinancieroService asistenteFinancieroService,
             IClasificadorConsultas clasificadorConsultas,
-            LimiteUsoAsistente limiteUso,
+            ILimiteUsoAsistente limiteUso,
             IUnidadDeTrabajoFactory unidadDeTrabajoFactory,
             ISesion sesion,
             IBitacoraBLL bitacoraBLL,
@@ -84,9 +84,8 @@ namespace BLL
         // para poder mostrarlo tal cual en la UI y reusarlo como contexto conversacional.
         public IReadOnlyList<ConsultaChatbot> ObtenerHistorial()
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
             return _consultaChatbotRepositorio
-                .ObtenerPorUsuario(usuarioActualId)
+                .ObtenerPorUsuario(_sesion.ObtenerUsuarioActual())
                 .OrderBy(item => item.Fecha)
                 .ToList();
         }
@@ -94,20 +93,15 @@ namespace BLL
         public async Task<RespuestaAsistente> EnviarMensajeAsync(string pregunta)
         {
             string preguntaNormalizada = ValidarPregunta(pregunta);
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
-            // Los guardrails, la lectura del historial y el guardado incluyen trabajo
-            // sincrono (SQL, Bitacora, clasificacion). Un metodo async ejecuta todo lo previo
-            // al primer await en el hilo llamador (la UI). Task.Run fija la frontera: ese
-            // trabajo corre en un worker y las llamadas HTTP siguen esperandose con await,
-            // sin retener el worker durante la red. El usuario se toma antes, de la sesion.
-            return await Task.Run(() => ProcesarMensajeAsync(preguntaNormalizada, usuarioActualId)).ConfigureAwait(false);
+            // Se procesa el mensaje de forma asincrona
+            return await Task.Run(() => ProcesarMensajeAsync(preguntaNormalizada, usuarioActual)).ConfigureAwait(false);
         }
 
-        private async Task<RespuestaAsistente> ProcesarMensajeAsync(string preguntaNormalizada, int usuarioActualId)
+        private async Task<RespuestaAsistente> ProcesarMensajeAsync(string preguntaNormalizada, Usuario usuarioActual)
         {
-            // Cuenta toda pregunta que llega hasta aca, aunque despues la rechace el prefiltro.
-            if (!_limiteUso.IntentarConsumir(usuarioActualId))
+            if (!_limiteUso.IntentarConsumir(usuarioActual))
             {
                 return Rechazar(RechazoLimiteDeUso, MotivoLimiteDeUso);
             }
@@ -119,7 +113,7 @@ namespace BLL
 
             // Solo intercambios admitidos (los rechazos no se persisten), limitado a los ultimos.
             List<IntercambioChatbot> historial = _consultaChatbotRepositorio
-                .ObtenerPorUsuario(usuarioActualId)
+                .ObtenerPorUsuario(usuarioActual)
                 .OrderBy(item => item.Fecha)
                 .Select(item => new IntercambioChatbot { Pregunta = item.Pregunta, Respuesta = item.Respuesta })
                 .ToList();
@@ -145,7 +139,7 @@ namespace BLL
             SolicitudGeneracion solicitud = new SolicitudGeneracion
             {
                 Categoria = categoria.Value,
-                UsuarioId = usuarioActualId,
+                Usuario = usuarioActual,
                 Pregunta = preguntaNormalizada,
                 Historial = historial,
                 Idioma = _idioma.IdiomaActual
@@ -153,7 +147,7 @@ namespace BLL
             if (categoria.Value == CategoriaConsulta.Compras && _generador.ComprasDisponible)
             {
                 SolicitudAsistente extraccion = new SolicitudAsistente(categoria.Value, preguntaNormalizada, historial, ContextoAsistente.Vacio);
-                LlamadaHerramientaAsistente llamada = await _asistenteFinancieroService.ObtenerLlamadaHerramientaAsync(extraccion, RecomendarCompras, CancellationToken.None).ConfigureAwait(false);
+                ILlamadaHerramientaAsistente llamada = await _asistenteFinancieroService.ObtenerLlamadaHerramientaAsync(extraccion, RecomendarCompras, CancellationToken.None).ConfigureAwait(false);
                 solicitud.NombreLista = ExtraerNombreLista(llamada);
             }
             else if (categoria.Value == CategoriaConsulta.Inversiones && _generador.InversionesDisponible)
@@ -161,24 +155,24 @@ namespace BLL
                 PerfilInversor perfil;
                 try
                 {
-                    var persistido = _perfilesInversor?.ObtenerPorUsuario(usuarioActualId);
+                    var persistido = _perfilesInversor?.ObtenerPorUsuario(usuarioActual);
                     perfil = persistido == null ? null : new PerfilInversor
                     {
-                        UsuarioId = persistido.UsuarioId, VersionCuestionario = persistido.VersionCuestionario,
+                        Usuario = persistido.Usuario, VersionCuestionario = persistido.VersionCuestionario,
                         FechaEvaluacionUtc = persistido.FechaEvaluacionUtc, NivelRiesgo = persistido.NivelRiesgo,
-                        Respuestas = persistido.Respuestas.Select(r => new RespuestaPerfilInversor { PreguntaId = r.PreguntaId, OpcionId = r.OpcionId }).ToList()
+                        Respuestas = persistido.Respuestas.Select(r => new RespuestaPerfilInversor { Pregunta = r.Pregunta, OpcionId = r.OpcionId }).ToList()
                     };
                 }
                 catch (Exception ex) { throw new ExcepcionTecnica("Error.InvestorProfile.ReadFailed", ex); }
                 if (perfil == null)
-                    return Persistir(preguntaNormalizada, Traducir("Assistant.Investment.ProfileRequired"), usuarioActualId);
+                    return Persistir(preguntaNormalizada, Traducir("Assistant.Investment.ProfileRequired"), usuarioActual);
                 SolicitudAsistente extraccion = new SolicitudAsistente(categoria.Value, preguntaNormalizada, null, ContextoAsistente.Vacio);
-                LlamadaHerramientaAsistente llamada = await _asistenteFinancieroService.ObtenerLlamadaHerramientaAsync(extraccion, RecomendarInversion, CancellationToken.None).ConfigureAwait(false);
+                ILlamadaHerramientaAsistente llamada = await _asistenteFinancieroService.ObtenerLlamadaHerramientaAsync(extraccion, RecomendarInversion, CancellationToken.None).ConfigureAwait(false);
                 // Ausente: se recomienda sin porcentaje ni monto. Invalido: se pide correccion sin
                 // consultar fuentes. El error tecnico de lectura se propaga como excepcion.
                 ResultadoPorcentaje porcentaje = ExtractorPorcentajeInversion.Extraer(llamada, RecomendarInversion.Nombre);
                 if (porcentaje.Estado == EstadoPorcentaje.Invalido)
-                    return Persistir(preguntaNormalizada, Traducir("Assistant.Investment.InvalidPercentage") + Environment.NewLine + Traducir("Assistant.Investment.Disclaimer"), usuarioActualId);
+                    return Persistir(preguntaNormalizada, Traducir("Assistant.Investment.InvalidPercentage") + Environment.NewLine + Traducir("Assistant.Investment.Disclaimer"), usuarioActual);
                 solicitud.Perfil = perfil;
                 solicitud.Porcentaje = porcentaje.Valor;
             }
@@ -192,7 +186,7 @@ namespace BLL
                 return Rechazar(RechazoRespuestaNoConfiable, MotivoValidacionSalida);
             }
 
-            return Persistir(preguntaNormalizada, generado.Texto, usuarioActualId);
+            return Persistir(preguntaNormalizada, generado.Texto, usuarioActual);
         }
 
         private string Traducir(string clave) => _idioma.IdiomaActual?.ObtenerTraduccion(clave) ?? clave;
@@ -229,7 +223,7 @@ namespace BLL
             return RespuestaAsistente.Rechazada(claveRechazo);
         }
 
-        private RespuestaAsistente Persistir(string preguntaNormalizada, string respuesta, int usuarioActualId)
+        private RespuestaAsistente Persistir(string preguntaNormalizada, string respuesta, Usuario usuarioActual)
         {
             ChatbotFinanciero chatbot = _chatbotFinancieroRepositorio.ObtenerUnico();
             if (chatbot == null)
@@ -243,8 +237,8 @@ namespace BLL
                 {
                     ConsultaChatbot nuevaConsulta = new ConsultaChatbot
                     {
-                        ChatbotFinancieroId = chatbot.Id,
-                        UsuarioId = usuarioActualId,
+                        ChatbotFinanciero = chatbot,
+                        Usuario = usuarioActual,
                         Pregunta = preguntaNormalizada,
                         Respuesta = respuesta,
                         Fecha = DateTime.Now,
@@ -288,7 +282,7 @@ namespace BLL
             return normalizado;
         }
 
-        private static string ExtraerNombreLista(LlamadaHerramientaAsistente llamada)
+        private static string ExtraerNombreLista(ILlamadaHerramientaAsistente llamada)
         {
             if (llamada?.Nombre != RecomendarCompras.Nombre || string.IsNullOrWhiteSpace(llamada.ArgumentosJson)) return null;
             try

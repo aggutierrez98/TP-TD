@@ -1,0 +1,51 @@
+@startuml
+' Fuente: diagramas/NEG02-movimientos/NEG02-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN10 Exportar movimientos seleccionados a PDF — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMovimientos" as FormMovimientos
+control "MovimientoBLL" as MovimientoBLL
+participant "Sesion\n:ISesion" as ISesion
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "ReporteTabularPdfService\n:IReporteTabularPdfService" as IReporteTabularPdfService
+boundary "ArchivoPdf" as ArchivoPdf
+note over FormMovimientos : El actor necesita contar con un reporte en PDF de sus movimientos.
+Actor -> FormMovimientos : selecciona la opción «Movimientos» del menú «Finanzas».
+FormMovimientos --> Actor : presenta la pantalla «Gestión de movimientos» con el listado de movimientos, el contador\nde movimientos seleccionados y el botón «Exportar a PDF» deshabilitado.
+Actor -> FormMovimientos : define criterios de búsqueda si lo desea y presiona «Buscar».
+Actor -> FormMovimientos : marca la casilla de la columna «Exportar» de uno o más movimientos, o presiona\n«Seleccionar todos».
+FormMovimientos --> Actor : actualiza el contador con la cantidad de movimientos seleccionados sobre el total del\nlistado, por ejemplo «2 de 5 seleccionados», y habilita el botón «Exportar a PDF».
+Actor -> FormMovimientos : presiona el botón «Exportar a PDF».
+FormMovimientos --> Actor : presenta el diálogo «Guardar reporte de movimientos», con un nombre de archivo sugerido de\nla forma «FINAZAPP-movimientos-AAAAMMDD-HHMMSS.pdf».
+Actor -> FormMovimientos : elige la ubicación y el nombre del archivo y confirma.
+FormMovimientos --> Actor : deshabilita temporalmente la pantalla mientras genera el documento «Listado de\nmovimientos», que incluye los movimientos marcados y los criterios de búsqueda aplicados.
+FormMovimientos -> MovimientoBLL ++ : ExportarPdf(reporte: ReporteMovimientosPdf)
+MovimientoBLL -> ISesion ++ : HaySesionActiva()
+ISesion --> MovimientoBLL -- : bool
+MovimientoBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> MovimientoBLL -- : Usuario
+MovimientoBLL -> IReporteTabularPdfService ++ : Generar(reporte: IReporteTabularPdf)
+IReporteTabularPdfService --> MovimientoBLL -- : byte[]
+MovimientoBLL --> FormMovimientos -- : byte[]
+FormMovimientos -> ArchivoPdf ++ : Guardar(destino: string, contenido: byte[])
+ArchivoPdf --> FormMovimientos -- : void
+FormMovimientos --> Actor : guarda el archivo, habilita nuevamente la pantalla e informa el resultado.
+' ABSTRACCIONES/IReporteTabularPdfService.cs:22 IReporteTabularPdfService.Generar
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/MovimientoBLL.cs:52 MovimientoBLL.ExportarPdf
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' UI/ArchivoPdf.cs:8 ArchivoPdf.Guardar
+' UI/FormMovimientos.cs:264 FormMovimientos.btnExportarMovimientosPdf_Click
+@enduml

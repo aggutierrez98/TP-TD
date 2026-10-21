@@ -18,4 +18,11 @@
     Condition="'$(ArchitectureGuardEnabled)' == 'true' and Exists('$(MSBuildThisFileDirectory).agents\scripts\verify-composition-root.ps1')">
     <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory).agents\scripts\verify-composition-root.ps1&quot;" />
   </Target>
+
+  <Target
+    Name="VerifyContratosCapas"
+    BeforeTargets="BeforeBuild"
+    Condition="'$(ArchitectureGuardEnabled)' == 'true' and Exists('$(MSBuildThisFileDirectory).agents\scripts\verify-contratos-capas.ps1')">
+    <Exec Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory).agents\scripts\verify-contratos-capas.ps1&quot;" />
+  </Target>
 </Project>

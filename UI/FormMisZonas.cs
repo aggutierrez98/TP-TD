@@ -39,7 +39,7 @@ namespace TpIDS
         private readonly GMapOverlay _overlayPuntoNuevo = new GMapOverlay("puntoNuevaZona");
 
         private List<ZonaUsuario> _zonas = new List<ZonaUsuario>();
-        private IReadOnlyList<ResultadoBusquedaUbicacion> _coincidencias;
+        private IReadOnlyList<IResultadoBusquedaUbicacion> _coincidencias;
         private PointLatLng? _puntoNuevaZona;
         private bool _cargandoGrilla;
         private bool _cerrado;
@@ -335,7 +335,7 @@ namespace TpIDS
 
             try
             {
-                if (zonaUsuarioBLL.Eliminar(seleccionada.Id))
+                if (zonaUsuarioBLL.Eliminar(seleccionada))
                 {
                     CargarZonas(null);
                     UiDialogHelper.MostrarInfo("FormMyZones.Success.Deleted");
@@ -397,7 +397,7 @@ namespace TpIDS
                 return;
             }
 
-            ConsultaUbicacion consulta = new ConsultaUbicacion(texto, ObtenerCodigoIdioma(), ObtenerZonaVisible());
+            IConsultaUbicacion consulta = new ConsultaUbicacion(texto, ObtenerCodigoIdioma(), ObtenerZonaVisible());
             LimpiarCoincidencias();
             btnBuscarZona.Enabled = false;
             MostrarEstadoBusqueda("FormMapLocationPicker.SearchSearching", "Buscando...");
@@ -467,9 +467,9 @@ namespace TpIDS
             }
         }
 
-        private void MostrarCoincidencias(IReadOnlyList<ResultadoBusquedaUbicacion> coincidencias)
+        private void MostrarCoincidencias(IReadOnlyList<IResultadoBusquedaUbicacion> coincidencias)
         {
-            List<ResultadoBusquedaUbicacion> vigentes = coincidencias
+            List<IResultadoBusquedaUbicacion> vigentes = coincidencias
                 .Where(coincidencia => coincidencia != null)
                 .Take(MaximoCoincidencias)
                 .ToList();
@@ -477,7 +477,7 @@ namespace TpIDS
             _coincidencias = vigentes;
             cmbResultadosZona.BeginUpdate();
             cmbResultadosZona.Items.Clear();
-            foreach (ResultadoBusquedaUbicacion coincidencia in vigentes)
+            foreach (IResultadoBusquedaUbicacion coincidencia in vigentes)
             {
                 cmbResultadosZona.Items.Add(new ItemCoincidencia(coincidencia));
             }
@@ -510,7 +510,7 @@ namespace TpIDS
                 return;
             }
 
-            ResultadoBusquedaUbicacion elegida = _coincidencias[indice];
+            IResultadoBusquedaUbicacion elegida = _coincidencias[indice];
             PointLatLng punto = new PointLatLng(elegida.Latitud, elegida.Longitud);
             mapZonasUsuario.Position = punto;
             mapZonasUsuario.Zoom = ZoomZona;
@@ -580,7 +580,7 @@ namespace TpIDS
         }
 
         // La zona visible orienta la busqueda; no la restringe.
-        private LimitesGeograficos ObtenerZonaVisible()
+        private ILimitesGeograficos ObtenerZonaVisible()
         {
             try
             {
@@ -599,7 +599,7 @@ namespace TpIDS
         {
             private readonly string _texto;
 
-            public ItemCoincidencia(ResultadoBusquedaUbicacion coincidencia)
+            public ItemCoincidencia(IResultadoBusquedaUbicacion coincidencia)
             {
                 string descripcion = coincidencia.Descripcion ?? string.Empty;
                 _texto = string.IsNullOrWhiteSpace(coincidencia.Tipo) ? descripcion : descripcion + " (" + coincidencia.Tipo + ")";

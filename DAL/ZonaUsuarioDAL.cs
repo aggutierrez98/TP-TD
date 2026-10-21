@@ -49,7 +49,7 @@ namespace DAL
             }
         }
 
-        public List<ZonaUsuario> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<ZonaUsuario> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, Nombre, Latitud, Longitud, RadioMetros
@@ -64,7 +64,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -117,7 +117,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(ZonaUsuario zona, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM ZonaUsuario
@@ -130,7 +130,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, zona.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

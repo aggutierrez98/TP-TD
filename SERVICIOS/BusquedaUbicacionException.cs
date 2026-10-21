@@ -1,6 +1,7 @@
 using System;
+using ABSTRACCIONES;
 
-namespace ABSTRACCIONES
+namespace SERVICIOS
 {
     // Error tecnico de una busqueda de ubicaciones, tipado por estado para que
     // la UI lo traduzca sin interpretar mensajes. El mensaje no incluye el

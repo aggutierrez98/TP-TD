@@ -32,7 +32,7 @@ namespace BLL
     // una falla del propio servicio ya se propaga sin pasar por aca).
     internal static class ExtractorPorcentajeInversion
     {
-        internal static ResultadoPorcentaje Extraer(LlamadaHerramientaAsistente llamada, string nombreHerramienta)
+        internal static ResultadoPorcentaje Extraer(ILlamadaHerramientaAsistente llamada, string nombreHerramienta)
         {
             if (llamada == null || llamada.Nombre != nombreHerramienta || string.IsNullOrWhiteSpace(llamada.ArgumentosJson))
                 return ResultadoPorcentaje.Ausente;

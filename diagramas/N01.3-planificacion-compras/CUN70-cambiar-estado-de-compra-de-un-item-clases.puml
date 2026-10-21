@@ -1,0 +1,118 @@
+@startuml
+' Fuente: diagramas/NEG16-lista-compras/NEG16-lista-compras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN70 Cambiar estado de compra de un ítem — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormListaDeCompras {
+    -dgvItems_CellValueChanged(sender: object, e: DataGridViewCellEventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ListaDeComprasBLL {
+    +MarcarComprado(recibido: ItemLista, comprado: bool): bool
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ListaDeComprasBLL -[hidden]right-> SesionUsuarioExtensiones
+ListaDeComprasBLL -[hidden]down-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IItemListaRepositorio {
+    +ObtenerPorId(id: int): ItemLista
+    +Actualizar(itemLista: ItemLista): bool
+  }
+  class ItemListaRepositorio {
+    +ObtenerPorId(id: int): ItemLista
+    +Actualizar(itemLista: ItemLista): bool
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IItemListaRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> ItemListaRepositorio
+ItemListaRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class ItemListaDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): ItemLista
+    +Actualizar(itemLista: ItemLista, accesoDatos: AccesoDatosSqlServer): bool
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class ItemLista {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class ListaDeCompras {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +FechaCreacion: DateTime
+    +ItemsLista: List<ItemLista>
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ItemLista -[hidden]right-> ListaDeCompras
+ItemLista -[hidden]down-> Usuario
+FormListaDeCompras ..> ListaDeComprasBLL : usa
+ItemListaRepositorio ..> ItemListaDAL : usa
+ItemListaRepositorio ..|> IItemListaRepositorio
+ListaDeComprasBLL ..> IBitacoraBLL : usa
+ListaDeComprasBLL ..> IItemListaRepositorio : usa
+ListaDeComprasBLL ..> IUnidadDeTrabajo : usa
+ListaDeComprasBLL ..> IUnidadDeTrabajoFactory : usa
+ListaDeComprasBLL ..> SesionUsuarioExtensiones : usa
+ListaDeComprasBLL ..> ItemLista : datos
+ItemLista --> ListaDeCompras : ListaDeCompras
+ListaDeCompras --> Usuario : Usuario
+ListaDeCompras --> "*" ItemLista : ItemsLista
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ListaDeComprasBLL.cs:147 ListaDeComprasBLL.MarcarComprado
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ItemListaDAL.cs:118 ItemListaDAL.Actualizar
+' DAL/ItemListaDAL.cs:22 ItemListaDAL.ObtenerPorId
+' REPOSITORIO/IItemListaRepositorio.cs:14 IItemListaRepositorio.Actualizar
+' REPOSITORIO/IItemListaRepositorio.cs:8 IItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ItemListaRepositorio.cs:23 ItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/ItemListaRepositorio.cs:52 ItemListaRepositorio.Actualizar
+' UI/FormListaDeCompras.cs:135 FormListaDeCompras.dgvItems_CellValueChanged
+@enduml

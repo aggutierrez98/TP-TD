@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TpIDS;
 
@@ -13,12 +14,12 @@ namespace BLL.Tests
     [TestClass]
     public sealed class CoordinadorBusquedaUbicacionTests
     {
-        private static ConsultaUbicacion Consulta(string texto = "Obelisco")
+        private static IConsultaUbicacion Consulta(string texto = "Obelisco")
         {
             return new ConsultaUbicacion(texto, "es", null);
         }
 
-        private static ResultadoBusquedaUbicacion Lugar(string descripcion)
+        private static IResultadoBusquedaUbicacion Lugar(string descripcion)
         {
             return new ResultadoBusquedaUbicacion(descripcion, -34.6, -58.38, "attraction", null);
         }
@@ -103,7 +104,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task BuscarAsync_DobleEnvioEnCurso_NoIniciaOtraPeticion()
         {
-            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>() };
+            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>() };
             var coordinador = new CoordinadorBusquedaUbicacion(servicio);
 
             Task<ResultadoCoordinado> primera = coordinador.BuscarAsync(Consulta());
@@ -121,7 +122,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task Invalidar_ConsultaPendienteQueObservaElToken_CancelaYDescartaYLiberaBuscar()
         {
-            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>(), ObservaToken = true };
+            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>(), ObservaToken = true };
             var coordinador = new CoordinadorBusquedaUbicacion(servicio);
 
             Task<ResultadoCoordinado> pendiente = coordinador.BuscarAsync(Consulta());
@@ -135,9 +136,9 @@ namespace BLL.Tests
         [TestMethod]
         public async Task Invalidar_RespuestaTardiaQueIgnoraElToken_SeDescartaYNoPisaLaConsultaNueva()
         {
-            var primera = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>();
-            var segunda = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>();
-            var servicio = new ServicioFalso { Pendientes = new Queue<TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>>(new[] { primera, segunda }) };
+            var primera = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>();
+            var segunda = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>();
+            var servicio = new ServicioFalso { Pendientes = new Queue<TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>>(new[] { primera, segunda }) };
             var coordinador = new CoordinadorBusquedaUbicacion(servicio);
 
             Task<ResultadoCoordinado> viejaTarea = coordinador.BuscarAsync(Consulta("viejo"));
@@ -159,7 +160,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task Invalidar_ErrorTardioDeConsultaObsoleta_SeDescarta()
         {
-            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>() };
+            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>() };
             var coordinador = new CoordinadorBusquedaUbicacion(servicio);
 
             Task<ResultadoCoordinado> pendiente = coordinador.BuscarAsync(Consulta());
@@ -172,7 +173,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task Detener_ConsultaPendiente_DescartaLaRespuestaTardiaYRechazaNuevasConsultas()
         {
-            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>() };
+            var servicio = new ServicioFalso { Pendiente = new TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>() };
             var coordinador = new CoordinadorBusquedaUbicacion(servicio);
 
             Task<ResultadoCoordinado> pendiente = coordinador.BuscarAsync(Consulta());
@@ -208,28 +209,28 @@ namespace BLL.Tests
 
         private sealed class ServicioFalso : IBusquedaUbicacionesService
         {
-            public IReadOnlyList<ResultadoBusquedaUbicacion> Respuesta { get; set; }
+            public IReadOnlyList<IResultadoBusquedaUbicacion> Respuesta { get; set; }
 
             public Exception Error { get; set; }
 
             // Una sola respuesta manual, o una cola cuando se necesitan varias consultas controladas.
-            public TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>> Pendiente { get; set; }
+            public TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>> Pendiente { get; set; }
 
-            public Queue<TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>>> Pendientes { get; set; }
+            public Queue<TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>>> Pendientes { get; set; }
 
             // Si es true, cancelar el token completa la tarea como cancelada (transporte que lo observa).
             public bool ObservaToken { get; set; }
 
-            public List<ConsultaUbicacion> Llamadas { get; } = new List<ConsultaUbicacion>();
+            public List<IConsultaUbicacion> Llamadas { get; } = new List<IConsultaUbicacion>();
 
             public List<CancellationToken> Tokens { get; } = new List<CancellationToken>();
 
-            public Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarAsync(ConsultaUbicacion consulta, CancellationToken cancellationToken)
+            public Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarAsync(IConsultaUbicacion consulta, CancellationToken cancellationToken)
             {
                 Llamadas.Add(consulta);
                 Tokens.Add(cancellationToken);
 
-                TaskCompletionSource<IReadOnlyList<ResultadoBusquedaUbicacion>> manual = Pendientes != null ? Pendientes.Dequeue() : Pendiente;
+                TaskCompletionSource<IReadOnlyList<IResultadoBusquedaUbicacion>> manual = Pendientes != null ? Pendientes.Dequeue() : Pendiente;
                 if (manual != null)
                 {
                     if (ObservaToken)
@@ -242,7 +243,7 @@ namespace BLL.Tests
 
                 if (Error != null)
                 {
-                    return Task.FromException<IReadOnlyList<ResultadoBusquedaUbicacion>>(Error);
+                    return Task.FromException<IReadOnlyList<IResultadoBusquedaUbicacion>>(Error);
                 }
 
                 return Task.FromResult(Respuesta);

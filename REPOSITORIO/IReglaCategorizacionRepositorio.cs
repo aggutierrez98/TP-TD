@@ -7,12 +7,12 @@ namespace REPOSITORIO
     {
         ReglaCategorizacion ObtenerPorId(int id);
 
-        List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId);
+        List<ReglaCategorizacion> ObtenerPorUsuario(Usuario usuario);
 
         int InsertarYObtenerId(ReglaCategorizacion reglaCategorizacion);
 
         bool Actualizar(ReglaCategorizacion reglaCategorizacion);
 
-        bool Eliminar(int id);
+        bool Eliminar(ReglaCategorizacion reglaCategorizacion);
     }
 }

@@ -78,7 +78,7 @@ namespace TpIDS.IntegrationTests
                 CategoriaProductoRepositorio repositorio = new CategoriaProductoRepositorio(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.CategoriaProducto { Nombre = "CategoriaTestAEliminar" });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.CategoriaProducto { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

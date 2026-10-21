@@ -27,7 +27,7 @@ namespace TpIDS.IntegrationTests
                 bool insertado = repositorio.Insertar(Crear(comercioId, productoId, monedaId, 100.50m));
 
                 Assert.IsTrue(insertado);
-                BE.ComercioProducto obtenido = repositorio.ObtenerPorId(comercioId, productoId);
+                BE.ComercioProducto obtenido = repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioId }, new BE.Producto { Id = productoId });
                 Assert.IsNotNull(obtenido);
                 Assert.AreEqual(comercioId, obtenido.Comercio.Id);
                 Assert.AreEqual("ComercioTestAsignacionPropia", obtenido.Comercio.Nombre);
@@ -55,7 +55,7 @@ namespace TpIDS.IntegrationTests
                 repositorio.Insertar(Crear(comercioId, productoPropioId, monedaId, 10m));
                 repositorio.Insertar(Crear(otroComercioId, productoAjenoId, monedaId, 20m));
 
-                System.Collections.Generic.List<BE.ComercioProducto> propios = repositorio.ObtenerPorComercio(comercioId);
+                System.Collections.Generic.List<BE.ComercioProducto> propios = repositorio.ObtenerPorComercio(new BE.Comercio { Id = comercioId });
 
                 Assert.IsTrue(propios.Any(item => item.Producto.Id == productoPropioId));
                 Assert.IsFalse(propios.Any(item => item.Producto.Id == productoAjenoId));
@@ -79,8 +79,8 @@ namespace TpIDS.IntegrationTests
                 repositorio.Insertar(Crear(comercioAId, productoId, monedaId, 100m));
                 repositorio.Insertar(Crear(comercioBId, productoId, monedaId, 130m));
 
-                Assert.AreEqual(100m, repositorio.ObtenerPorId(comercioAId, productoId).Precio);
-                Assert.AreEqual(130m, repositorio.ObtenerPorId(comercioBId, productoId).Precio);
+                Assert.AreEqual(100m, repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioAId }, new BE.Producto { Id = productoId }).Precio);
+                Assert.AreEqual(130m, repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioBId }, new BE.Producto { Id = productoId }).Precio);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -135,11 +135,11 @@ namespace TpIDS.IntegrationTests
                 repositorio.Insertar(Crear(comercioAId, productoId, monedaId, 50m));
                 repositorio.Insertar(Crear(comercioBId, productoId, monedaId, 80m));
 
-                bool actualizado = repositorio.ActualizarPrecio(comercioAId, productoId, 75.25m);
+                bool actualizado = repositorio.ActualizarPrecio(Crear(comercioAId, productoId, monedaId, 75.25m));
 
                 Assert.IsTrue(actualizado);
-                Assert.AreEqual(75.25m, repositorio.ObtenerPorId(comercioAId, productoId).Precio);
-                Assert.AreEqual(80m, repositorio.ObtenerPorId(comercioBId, productoId).Precio);
+                Assert.AreEqual(75.25m, repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioAId }, new BE.Producto { Id = productoId }).Precio);
+                Assert.AreEqual(80m, repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioBId }, new BE.Producto { Id = productoId }).Precio);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -158,10 +158,10 @@ namespace TpIDS.IntegrationTests
                 int monedaId = InsertarMonedaTest(accesoDatos, "TA7", "MonedaTestQuitar");
                 repositorio.Insertar(Crear(comercioId, productoId, monedaId, 30m));
 
-                bool eliminado = repositorio.Eliminar(comercioId, productoId);
+                bool eliminado = repositorio.Eliminar(Crear(comercioId, productoId, monedaId, 30m));
 
                 Assert.IsTrue(eliminado);
-                Assert.IsNull(repositorio.ObtenerPorId(comercioId, productoId));
+                Assert.IsNull(repositorio.ObtenerPorComercioYProducto(new BE.Comercio { Id = comercioId }, new BE.Producto { Id = productoId }));
                 Assert.IsNotNull(productos.ObtenerPorId(productoId));
 
                 accesoDatos.RollbackTransactionScope();
@@ -183,8 +183,8 @@ namespace TpIDS.IntegrationTests
                 repositorio.Insertar(Crear(comercioAId, productoVendidoId, monedaId, 10m));
                 repositorio.Insertar(Crear(comercioBId, productoVendidoId, monedaId, 12m));
 
-                Assert.AreEqual(2, repositorio.ContarPorProducto(productoVendidoId));
-                Assert.AreEqual(0, repositorio.ContarPorProducto(productoSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorProducto(new BE.Producto { Id = productoVendidoId }));
+                Assert.AreEqual(0, repositorio.ContarPorProducto(new BE.Producto { Id = productoSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -204,7 +204,7 @@ namespace TpIDS.IntegrationTests
                 int monedaId = InsertarMonedaTest(accesoDatos, "TA9", "MonedaTestComercioConProducto");
                 repositorio.Insertar(Crear(comercioId, productoId, monedaId, 10m));
 
-                Assert.ThrowsExactly<SERVICIOS.ExcepcionTecnica>(() => new ComercioRepositorio(accesoDatos).Eliminar(comercioId));
+                Assert.ThrowsExactly<SERVICIOS.ExcepcionTecnica>(() => new ComercioRepositorio(accesoDatos).Eliminar(new BE.Comercio { Id = comercioId }));
 
                 accesoDatos.RollbackTransactionScope();
             }

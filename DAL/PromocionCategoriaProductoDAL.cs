@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class PromocionCategoriaProductoDAL
     {
-        public List<int> ObtenerCategoriaProductoIdsPorPromocion(int promocionId, bool excluidos, AccesoDatosSqlServer accesoDatos = null)
+        public List<CategoriaProducto> ObtenerCategoriasProductoPorPromocion(Promocion promocion, bool excluidos, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT CategoriaProductoId
@@ -22,13 +23,13 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId),
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id),
                     accesoDatos.CreateParameter("@Excluido", SqlDbType.Bit, excluidos)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["CategoriaProductoId"])
+                    .Select(row => new CategoriaProducto { Id = (int)row["CategoriaProductoId"] })
                     .ToList();
             }
             finally
@@ -42,7 +43,7 @@ namespace DAL
 
         // Un mismo elemento no puede ir incluido y excluido a la vez: la PK (PromocionId, CategoriaProductoId)
         // rechaza el segundo INSERT y la transaccion completa se revierte.
-        public bool ReemplazarCategoriasProductoDePromocion(int promocionId, List<int> incluidos, List<int> excluidos, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarCategoriasProductoDePromocion(Promocion promocion, List<CategoriaProducto> incluidos, List<CategoriaProducto> excluidos, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -51,7 +52,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"
@@ -64,7 +65,7 @@ namespace DAL
                         INSERT INTO PromocionCategoriaProducto (PromocionId, CategoriaProductoId, Excluido)
                         VALUES (@PromocionId, @IncluidoId{0}, 0);", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@IncluidoId" + i, SqlDbType.Int, incluidos[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@IncluidoId" + i, SqlDbType.Int, incluidos[i].Id));
                 }
 
                 for (int i = 0; i < excluidos.Count; i++)
@@ -73,7 +74,7 @@ namespace DAL
                         INSERT INTO PromocionCategoriaProducto (PromocionId, CategoriaProductoId, Excluido)
                         VALUES (@PromocionId, @ExcluidoId{0}, 1);", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@ExcluidoId" + i, SqlDbType.Int, excluidos[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@ExcluidoId" + i, SqlDbType.Int, excluidos[i].Id));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
@@ -87,7 +88,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorCategoriaProducto(int categoriaProductoId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorCategoriaProducto(CategoriaProducto categoriaProducto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -101,7 +102,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoriaProductoId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoriaProducto.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

@@ -242,6 +242,30 @@ namespace SERVICIOS.Tests
             Assert.AreSame(permission, leaves[0]);
         }
 
+        [TestMethod]
+        public void PermisoSimple_Contiene_ComparaPorIdentidadPersistida()
+        {
+            IPermiso permission = Simple(1, "usuarios");
+
+            Assert.IsTrue(permission.Contiene(Simple(1, "otro")));
+            Assert.IsFalse(permission.Contiene(Simple(2, "usuarios")));
+            Assert.IsFalse(permission.Contiene(null));
+        }
+
+        [TestMethod]
+        public void PermisoGrupo_Contiene_BuscaEnSiMismoYEnSusHijos()
+        {
+            IPermiso root = Grupo(1, "admin");
+            IPermiso familia = Grupo(2, "familia");
+            familia.Agregar(Simple(3, "usuarios"));
+            root.Agregar(familia);
+
+            Assert.IsTrue(root.Contiene(Grupo(1, "admin")));
+            Assert.IsTrue(root.Contiene(Simple(3, "usuarios")));
+            Assert.IsFalse(root.Contiene(Simple(4, "bitacora")));
+            Assert.IsFalse(root.Contiene(null));
+        }
+
         private static IPermiso Grupo(int id, string name)
         {
             return new PermisoGrupo { Id = id, Nombre = name };

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using ABSTRACCIONES;
+using SERVICIOS;
 
 namespace BLL
 {
@@ -25,7 +26,7 @@ namespace BLL
     {
         private static readonly Regex InicioDeLista = new Regex(@"^([-*+]|\d+[.)])\s", RegexOptions.Compiled);
 
-        internal ResultadoValidacionRespuesta Validar(string respuesta, IEnumerable<ReferenciaAsistente> universo, ContextoAsistente contexto)
+        internal ResultadoValidacionRespuesta Validar(string respuesta, IEnumerable<IReferenciaAsistente> universo, IContextoAsistente contexto)
         {
             if (string.IsNullOrWhiteSpace(respuesta))
             {
@@ -74,7 +75,7 @@ namespace BLL
             return false;
         }
 
-        private static bool NombraReferenciaNoPermitida(string respuesta, IEnumerable<ReferenciaAsistente> universo, ContextoAsistente contexto)
+        private static bool NombraReferenciaNoPermitida(string respuesta, IEnumerable<IReferenciaAsistente> universo, IContextoAsistente contexto)
         {
             string texto = PrefiltroConsultasAsistente.Normalizar(respuesta);
             HashSet<string> permitidas = new HashSet<string>(
@@ -82,7 +83,7 @@ namespace BLL
                     .Where(referencia => referencia != null && !string.IsNullOrWhiteSpace(referencia.Nombre))
                     .Select(referencia => Clave(referencia.Tipo, referencia.Nombre)));
 
-            foreach (ReferenciaAsistente referencia in universo)
+            foreach (IReferenciaAsistente referencia in universo)
             {
                 if (referencia == null || string.IsNullOrWhiteSpace(referencia.Nombre))
                 {

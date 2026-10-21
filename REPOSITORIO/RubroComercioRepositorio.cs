@@ -40,9 +40,9 @@ namespace REPOSITORIO
             return _rubroComercioDAL.Actualizar(rubro, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RubroComercio rubro)
         {
-            return _rubroComercioDAL.Eliminar(id, _accesoDatos);
+            return _rubroComercioDAL.Eliminar(rubro, _accesoDatos);
         }
     }
 }

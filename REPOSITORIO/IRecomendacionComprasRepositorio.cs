@@ -6,11 +6,11 @@ namespace REPOSITORIO
 {
     // Lecturas de solo lectura para la recomendacion de compras del asistente, resueltas con
     // consultas con JOIN para no hidratar fila por fila. Las que dependen del usuario reciben
-    // su Id desde el BLL (que lo toma de la sesion), nunca desde el modelo de lenguaje.
+    // el Usuario desde el BLL, nunca un dato del modelo de lenguaje.
     public interface IRecomendacionComprasRepositorio
     {
         // Items no comprados de todas las listas del usuario, con Id, nombre y dueno de su lista.
-        List<ItemLista> ObtenerItemsPendientesPorUsuario(int usuarioId);
+        List<ItemLista> ObtenerItemsPendientesPorUsuario(Usuario usuario);
 
         // Catalogo de productos con Id y nombre de su categoria.
         List<Producto> ObtenerProductosConCategoria();
@@ -24,6 +24,6 @@ namespace REPOSITORIO
 
         // Cuentas del usuario con su entidad y los medios de pago contratados. Nunca trae
         // CredencialesCifradas.
-        List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(int usuarioId);
+        List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(Usuario usuario);
     }
 }

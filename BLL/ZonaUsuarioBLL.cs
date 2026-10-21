@@ -42,8 +42,7 @@ namespace BLL
 
         public List<ZonaUsuario> ObtenerMisZonas()
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
-            return _zonaUsuarioRepositorio.ObtenerPorUsuario(usuarioActualId);
+            return _zonaUsuarioRepositorio.ObtenerPorUsuario(_sesion.ObtenerUsuarioActual());
         }
 
         // latitud/longitud null = el usuario todavia no eligio un punto (busqueda o clic en el mapa).
@@ -53,13 +52,13 @@ namespace BLL
             ValidarPunto(latitud, longitud);
             ValidarRadio(radioMetros);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    List<ZonaUsuario> zonasDelUsuario = unidad.ZonasUsuario.ObtenerPorUsuario(usuarioActualId);
+                    List<ZonaUsuario> zonasDelUsuario = unidad.ZonasUsuario.ObtenerPorUsuario(usuarioActual);
                     if (zonasDelUsuario.Count >= MaximoZonasPorUsuario)
                     {
                         throw new ExcepcionNegocio("Error.MyZones.LimitReached");
@@ -72,7 +71,7 @@ namespace BLL
 
                     ZonaUsuario nuevaZona = new ZonaUsuario
                     {
-                        Usuario = new Usuario { Id = usuarioActualId },
+                        Usuario = usuarioActual,
                         Nombre = nombreNormalizado,
                         Latitud = Math.Round(latitud.Value, DecimalesCoordenadas, MidpointRounding.AwayFromZero),
                         Longitud = Math.Round(longitud.Value, DecimalesCoordenadas, MidpointRounding.AwayFromZero),
@@ -95,18 +94,18 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ZonaUsuario recibida)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ZonaUsuario zona = unidad.ZonasUsuario.ObtenerPorId(id);
-                    ValidarPropiedad(zona, usuarioActualId);
+                    ZonaUsuario zona = recibida == null ? null : unidad.ZonasUsuario.ObtenerPorId(recibida.Id);
+                    ValidarPropiedad(zona, usuarioActual);
 
-                    if (!unidad.ZonasUsuario.Eliminar(id))
+                    if (!unidad.ZonasUsuario.Eliminar(zona))
                     {
                         throw new ExcepcionTecnica("Error.MyZones.DeleteFailed");
                     }
@@ -199,14 +198,14 @@ namespace BLL
         }
 
         // Una zona solo puede ser quitada por su dueno.
-        private static void ValidarPropiedad(ZonaUsuario zona, int usuarioActualId)
+        private static void ValidarPropiedad(ZonaUsuario zona, Usuario usuarioActual)
         {
             if (zona == null)
             {
                 throw new ExcepcionNegocio("Error.MyZones.NotFound");
             }
 
-            if (zona.Usuario == null || zona.Usuario.Id != usuarioActualId)
+            if (zona.Usuario == null || zona.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.MyZones.NotOwned");
             }

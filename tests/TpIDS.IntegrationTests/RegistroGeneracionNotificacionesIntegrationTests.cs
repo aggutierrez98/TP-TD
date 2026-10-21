@@ -36,25 +36,28 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarDetalleYObtenerId(Detalle(corridaId, user, TipoNotificacionAutomatica.Movimientos, ResultadoGeneracionNotificacion.Entregada, null, notificacionId));
                 repositorio.InsertarDetalleYObtenerId(Detalle(corridaId, user, TipoNotificacionAutomatica.Compras, ResultadoGeneracionNotificacion.Omitida, "SinPendientes", null));
                 repositorio.InsertarDetalleYObtenerId(Detalle(corridaId, admin, TipoNotificacionAutomatica.Inversiones, ResultadoGeneracionNotificacion.Fallida, "FalloProveedorIA", null));
-                Assert.IsTrue(repositorio.FinalizarCorrida(corridaId, Entrega.AddMinutes(2), 1, 1, 1));
+                Assert.IsTrue(repositorio.FinalizarCorrida(repositorio.ObtenerPorId(corridaId), Entrega.AddMinutes(2), 1, 1, 1));
 
-                CorridaGeneracionNotificaciones corrida = repositorio.ObtenerCorrida(corridaId);
+                CorridaGeneracionNotificaciones corrida = repositorio.ObtenerPorId(corridaId);
                 Assert.AreEqual(Entrega, corrida.InicioUtc);
                 Assert.AreEqual(Entrega.AddMinutes(2), corrida.FinUtc);
                 Assert.AreEqual(Jornada, corrida.Jornada);
                 Assert.AreEqual(1, corrida.Entregadas);
                 Assert.AreEqual(1, corrida.Omitidas);
                 Assert.AreEqual(1, corrida.Fallidas);
-                List<DetalleGeneracionNotificacion> detalles = repositorio.ObtenerDetallePorCorrida(corridaId);
+                List<DetalleGeneracionNotificacion> detalles = repositorio.ObtenerDetallePorCorrida(corrida);
+                Assert.IsTrue(detalles.All(d => ReferenceEquals(corrida, d.Corrida)));
+                Assert.IsTrue(detalles.All(d => !string.IsNullOrWhiteSpace(d.Usuario.Username)));
+                Assert.AreEqual("Aviso de prueba", detalles[0].Notificacion.Mensaje);
                 Assert.AreEqual(3, detalles.Count);
-                Assert.AreEqual(notificacionId, detalles[0].NotificacionId);
+                Assert.AreEqual(notificacionId, detalles[0].Notificacion.Id);
                 Assert.AreEqual(TipoNotificacionAutomatica.Movimientos, detalles[0].Tipo);
                 Assert.AreEqual(Jornada, detalles[0].Jornada);
                 Assert.IsNull(detalles[0].Motivo);
                 Assert.AreEqual("SinPendientes", detalles[1].Motivo);
                 Assert.AreEqual(ResultadoGeneracionNotificacion.Omitida, detalles[1].Resultado);
-                Assert.IsNull(detalles[1].NotificacionId);
-                Assert.AreEqual(admin, detalles[2].UsuarioId);
+                Assert.IsNull(detalles[1].Notificacion);
+                Assert.AreEqual(admin, detalles[2].Usuario.Id);
                 Assert.AreEqual(ResultadoGeneracionNotificacion.Fallida, detalles[2].Resultado);
                 Assert.IsTrue(repositorio.ObtenerRecientes(5).Any(c => c.Id == corridaId));
                 acceso.RollbackTransactionScope();
@@ -71,10 +74,10 @@ namespace TpIDS.IntegrationTests
 
                 int corridaId = repositorio.InsertarCorridaYObtenerId(new CorridaGeneracionNotificaciones { InicioUtc = Entrega, Jornada = Jornada });
 
-                CorridaGeneracionNotificaciones corrida = repositorio.ObtenerCorrida(corridaId);
+                CorridaGeneracionNotificaciones corrida = repositorio.ObtenerPorId(corridaId);
                 Assert.IsNull(corrida.FinUtc);
                 Assert.AreEqual(0, corrida.Entregadas + corrida.Omitidas + corrida.Fallidas);
-                Assert.IsNull(repositorio.ObtenerCorrida(2000000000));
+                Assert.IsNull(repositorio.ObtenerPorId(2000000000));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -130,9 +133,10 @@ namespace TpIDS.IntegrationTests
                 var repositorio = new GeneracionNotificacionesRepositorio(acceso);
                 int corridaId = repositorio.InsertarCorridaYObtenerId(new CorridaGeneracionNotificaciones { InicioUtc = Entrega, Jornada = Jornada });
 
-                Assert.ThrowsExactly<ExcepcionTecnica>(() => repositorio.FinalizarCorrida(corridaId, Entrega.AddSeconds(-1), 0, 0, 0));
-                Assert.ThrowsExactly<ExcepcionTecnica>(() => repositorio.FinalizarCorrida(corridaId, Entrega, -1, 0, 0));
-                Assert.IsFalse(repositorio.FinalizarCorrida(2000000000, Entrega, 0, 0, 0));
+                var corrida = repositorio.ObtenerPorId(corridaId);
+                Assert.ThrowsExactly<ExcepcionTecnica>(() => repositorio.FinalizarCorrida(corrida, Entrega.AddSeconds(-1), 0, 0, 0));
+                Assert.ThrowsExactly<ExcepcionTecnica>(() => repositorio.FinalizarCorrida(corrida, Entrega, -1, 0, 0));
+                Assert.IsFalse(repositorio.FinalizarCorrida(new CorridaGeneracionNotificaciones { Id = 2000000000 }, Entrega, 0, 0, 0));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -172,10 +176,10 @@ namespace TpIDS.IntegrationTests
                 int corridaId = repositorio.InsertarCorridaYObtenerId(new CorridaGeneracionNotificaciones { InicioUtc = Entrega, Jornada = Jornada });
                 repositorio.InsertarDetalleYObtenerId(Detalle(corridaId, user, TipoNotificacionAutomatica.Movimientos, ResultadoGeneracionNotificacion.Entregada, null, notificacionId));
 
-                Assert.IsTrue(new NotificacionRepositorio(acceso).Eliminar(notificacionId));
+                Assert.IsTrue(new NotificacionRepositorio(acceso).Eliminar(new BE.Notificacion { Id = notificacionId }));
 
-                DetalleGeneracionNotificacion detalle = repositorio.ObtenerDetallePorCorrida(corridaId).Single();
-                Assert.IsNull(detalle.NotificacionId);
+                DetalleGeneracionNotificacion detalle = repositorio.ObtenerDetallePorCorrida(repositorio.ObtenerPorId(corridaId)).Single();
+                Assert.IsNull(detalle.Notificacion);
                 Assert.AreEqual(ResultadoGeneracionNotificacion.Entregada, detalle.Resultado);
                 acceso.RollbackTransactionScope();
             }
@@ -201,8 +205,8 @@ namespace TpIDS.IntegrationTests
         {
             return new DetalleGeneracionNotificacion
             {
-                CorridaId = corridaId, UsuarioId = usuarioId, Tipo = tipo, Jornada = Jornada, Resultado = resultado,
-                Motivo = motivo, NotificacionId = notificacionId, FechaUtc = Entrega
+                Corrida = new CorridaGeneracionNotificaciones { Id = corridaId }, Usuario = new BE.Usuario { Id = usuarioId }, Tipo = tipo, Jornada = Jornada, Resultado = resultado,
+                Motivo = motivo, Notificacion = notificacionId.HasValue ? new BE.Notificacion { Id = notificacionId.Value } : null, FechaUtc = Entrega
             };
         }
 

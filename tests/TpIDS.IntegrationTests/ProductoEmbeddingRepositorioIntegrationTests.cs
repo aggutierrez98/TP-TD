@@ -25,7 +25,7 @@ namespace TpIDS.IntegrationTests
 
                 repositorio.Guardar(Crear(productoId, "modelo-test", "ProductoTestEmbedding Cat", vector, fecha));
 
-                BE.ProductoEmbedding leido = repositorio.ObtenerTodos().Single(item => item.ProductoId == productoId);
+                BE.ProductoEmbedding leido = repositorio.ObtenerTodos().Single(item => item.Producto.Id == productoId);
                 Assert.AreEqual("modelo-test", leido.Modelo);
                 Assert.AreEqual("ProductoTestEmbedding Cat", leido.TextoFuente);
                 Assert.AreEqual(fecha, leido.FechaCalculo);
@@ -47,7 +47,7 @@ namespace TpIDS.IntegrationTests
 
                 repositorio.Guardar(Crear(productoId, "modelo-nuevo", "texto nuevo", new[] { 4f, 5f }, new DateTime(2026, 2, 1)));
 
-                BE.ProductoEmbedding leido = repositorio.ObtenerTodos().Single(item => item.ProductoId == productoId);
+                BE.ProductoEmbedding leido = repositorio.ObtenerTodos().Single(item => item.Producto.Id == productoId);
                 Assert.AreEqual("modelo-nuevo", leido.Modelo);
                 Assert.AreEqual("texto nuevo", leido.TextoFuente);
                 Assert.AreEqual(new DateTime(2026, 2, 1), leido.FechaCalculo);
@@ -67,9 +67,9 @@ namespace TpIDS.IntegrationTests
                 int productoId = InsertarProducto(accesoDatos, "ProductoTestEmbeddingBaja");
                 repositorio.Guardar(Crear(productoId, "modelo-test", "texto", new[] { 1f }, new DateTime(2026, 1, 1)));
 
-                Assert.IsTrue(new ProductoRepositorio(accesoDatos).Eliminar(productoId));
+                Assert.IsTrue(new ProductoRepositorio(accesoDatos).Eliminar(new BE.Producto { Id = productoId }));
 
-                Assert.IsFalse(repositorio.ObtenerTodos().Any(item => item.ProductoId == productoId));
+                Assert.IsFalse(repositorio.ObtenerTodos().Any(item => item.Producto.Id == productoId));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -94,7 +94,7 @@ namespace TpIDS.IntegrationTests
         {
             return new BE.ProductoEmbedding
             {
-                ProductoId = productoId,
+                Producto = new BE.Producto { Id = productoId },
                 Modelo = modelo,
                 TextoFuente = textoFuente,
                 Vector = vector,

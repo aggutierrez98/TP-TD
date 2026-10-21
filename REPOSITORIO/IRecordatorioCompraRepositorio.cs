@@ -7,7 +7,7 @@ namespace REPOSITORIO
     {
         RecordatorioCompra ObtenerPorId(int id);
 
-        List<RecordatorioCompra> ObtenerPorUsuario(int usuarioId);
+        List<RecordatorioCompra> ObtenerPorUsuario(Usuario usuario);
 
         List<RecordatorioCompra> ObtenerTodas();
 
@@ -15,6 +15,6 @@ namespace REPOSITORIO
 
         bool Actualizar(RecordatorioCompra recordatorio);
 
-        bool Eliminar(int id);
+        bool Eliminar(RecordatorioCompra recordatorio);
     }
 }

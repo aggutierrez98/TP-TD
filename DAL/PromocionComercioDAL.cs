@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class PromocionComercioDAL
     {
-        public List<int> ObtenerComercioIdsPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public List<Comercio> ObtenerComerciosPorPromocion(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT ComercioId
@@ -22,12 +23,12 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["ComercioId"])
+                    .Select(row => new Comercio { Id = (int)row["ComercioId"] })
                     .ToList();
             }
             finally
@@ -39,7 +40,7 @@ namespace DAL
             }
         }
 
-        public List<int> ObtenerPromocionIdsPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<Promocion> ObtenerPromocionesPorComercio(Comercio comercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT PromocionId
@@ -54,12 +55,12 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercioId)
+                    accesoDatos.CreateParameter("@ComercioId", SqlDbType.Int, comercio.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["PromocionId"])
+                    .Select(row => new Promocion { Id = (int)row["PromocionId"] })
                     .ToList();
             }
             finally
@@ -71,7 +72,7 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarComerciosDePromocion(int promocionId, List<int> comercioIds, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarComerciosDePromocion(Promocion promocion, List<Comercio> comercios, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -80,20 +81,20 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"
                     DELETE FROM PromocionComercio
                     WHERE PromocionId = @PromocionId;";
 
-                for (int i = 0; i < comercioIds.Count; i++)
+                for (int i = 0; i < comercios.Count; i++)
                 {
                     query += string.Format(@"
                         INSERT INTO PromocionComercio (PromocionId, ComercioId)
                         VALUES (@PromocionId, @ComercioId{0});", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@ComercioId" + i, SqlDbType.Int, comercioIds[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@ComercioId" + i, SqlDbType.Int, comercios[i].Id));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;

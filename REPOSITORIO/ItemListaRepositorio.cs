@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return itemLista;
         }
 
-        public List<ItemLista> ObtenerPorListaDeCompras(int listaDeComprasId)
+        public List<ItemLista> ObtenerPorListaDeCompras(ListaDeCompras lista)
         {
-            List<ItemLista> items = _itemListaDAL.ObtenerPorListaDeCompras(listaDeComprasId, _accesoDatos);
+            List<ItemLista> items = _itemListaDAL.ObtenerPorListaDeCompras(lista, _accesoDatos);
             items.ForEach(Hidratar);
             return items;
         }
@@ -54,9 +54,9 @@ namespace REPOSITORIO
             return _itemListaDAL.Actualizar(itemLista, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ItemLista item)
         {
-            return _itemListaDAL.Eliminar(id, _accesoDatos);
+            return _itemListaDAL.Eliminar(item, _accesoDatos);
         }
     }
 }

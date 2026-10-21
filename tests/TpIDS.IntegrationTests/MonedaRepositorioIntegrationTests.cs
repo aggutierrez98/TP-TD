@@ -80,7 +80,7 @@ namespace TpIDS.IntegrationTests
                 MonedaRepositorio repositorio = new MonedaRepositorio(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.Moneda { Codigo = "TS4", Nombre = "MonedaTestAEliminar" });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.Moneda { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

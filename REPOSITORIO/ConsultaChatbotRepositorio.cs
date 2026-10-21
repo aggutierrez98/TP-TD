@@ -20,9 +20,9 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId)
+        public List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario)
         {
-            return _consultaChatbotDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            return _consultaChatbotDAL.ObtenerPorUsuario(usuario, _accesoDatos);
         }
 
         public int InsertarYObtenerId(ConsultaChatbot consultaChatbot)

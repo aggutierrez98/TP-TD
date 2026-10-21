@@ -29,13 +29,13 @@ namespace TpIDS.IntegrationTests
                 acceso.BeginTransactionScope();
                 var repositorio = new NotificacionRepositorio(acceso);
                 int usuarioId = new UsuarioDAL().ObtenerPorUsername("user", acceso).Id;
-                int basal = repositorio.ContarNoLeidas(usuarioId);
+                int basal = repositorio.ContarNoLeidas(new Usuario { Id = usuarioId });
 
                 CargarBloque(acceso, usuarioId);
 
                 List<Notificacion> ejemplos = Ejemplos(repositorio, usuarioId, null);
                 Assert.AreEqual(3, ejemplos.Count);
-                Assert.AreEqual(basal + 3, repositorio.ContarNoLeidas(usuarioId));
+                Assert.AreEqual(basal + 3, repositorio.ContarNoLeidas(new Usuario { Id = usuarioId }));
                 foreach (Notificacion e in ejemplos)
                 {
                     Assert.IsFalse(e.Leida, e.ClaveEjemplo);
@@ -51,11 +51,11 @@ namespace TpIDS.IntegrationTests
                 Assert.IsFalse(ejemplos.Single(e => e.ClaveEjemplo == "Demo.Movimientos") is RecordatorioCompra);
                 Assert.Contains("Serenísima", compras.Mensaje);
                 // Lectura de Mis notificaciones: los tres aparecen en la primera pagina y se abren completos.
-                PaginaNotificaciones primera = repositorio.ObtenerPaginaPersonal(usuarioId, null, 1);
+                PaginaNotificaciones primera = repositorio.ObtenerPaginaPersonal(new Usuario { Id = usuarioId }, null, 1);
                 foreach (Notificacion e in ejemplos)
                 {
                     Notificacion enPagina = primera.Elementos.Single(p => p.Id == e.Id);
-                    Assert.AreEqual(e.Mensaje, repositorio.ObtenerPersonal(e.Id, usuarioId).Mensaje);
+                    Assert.AreEqual(e.Mensaje, repositorio.ObtenerPersonal(e, new Usuario { Id = usuarioId }).Mensaje);
                     Assert.IsFalse(enPagina.Leida);
                 }
                 acceso.RollbackTransactionScope();
@@ -72,7 +72,7 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = new UsuarioDAL().ObtenerPorUsername("user", acceso).Id;
                 CargarBloque(acceso, usuarioId);
                 Notificacion compras = Ejemplos(repositorio, usuarioId, null).Single(e => e.ClaveEjemplo == "Demo.Compras");
-                Assert.IsTrue(repositorio.MarcarPersonalLeida(compras.Id, usuarioId));
+                Assert.IsTrue(repositorio.MarcarPersonalLeida(compras, new Usuario { Id = usuarioId }));
                 DateTime antigua = new DateTime(2020, 1, 1, 8, 0, 0);
                 acceso.Write("UPDATE dbo.Notificacion SET Fecha = @F WHERE UsuarioId = @U AND ClaveEjemplo LIKE 'Demo.%'",
                     new List<SqlParameter>
@@ -101,7 +101,7 @@ namespace TpIDS.IntegrationTests
         // ObtenerPaginaPersonal devuelve las tres especializaciones; ObtenerPorUsuario solo la base.
         private static List<Notificacion> Ejemplos(NotificacionRepositorio repositorio, int usuarioId, FiltroNotificacion filtro)
         {
-            return repositorio.ObtenerPaginaPersonal(usuarioId, filtro, 1).Elementos.Where(n => n.ClaveEjemplo != null && Claves.Contains(n.ClaveEjemplo)).ToList();
+            return repositorio.ObtenerPaginaPersonal(new Usuario { Id = usuarioId }, filtro, 1).Elementos.Where(n => n.ClaveEjemplo != null && Claves.Contains(n.ClaveEjemplo)).ToList();
         }
 
         private static void CargarBloque(AccesoDatosSqlServer acceso, int usuarioId)

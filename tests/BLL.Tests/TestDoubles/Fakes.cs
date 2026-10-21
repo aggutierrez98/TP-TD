@@ -314,7 +314,7 @@ namespace BLL.Tests.TestDoubles
 
         public Categoria LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public Categoria LastDeleted { get; private set; }
 
         public Categoria ObtenerPorId(int id)
         {
@@ -322,10 +322,10 @@ namespace BLL.Tests.TestDoubles
             return Categorias.TryGetValue(id, out categoria) ? categoria : null;
         }
 
-        public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
+        public List<Categoria> ObtenerVisiblesParaUsuario(Usuario usuario)
         {
             return Categorias.Values
-                .Where(item => item.Usuario == null || item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario == null || item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
@@ -353,23 +353,23 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Categoria categoria)
         {
-            LastDeletedId = id;
+            LastDeleted = categoria;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Categorias.Remove(id);
+            return Categorias.Remove(categoria.Id);
         }
 
-        public bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido)
+        public bool ExisteNombreEnScope(string nombre, Usuario usuario, Categoria excluida)
         {
             return Categorias.Values.Any(item =>
-                item.Usuario?.Id == usuarioId &&
+                item.Usuario?.Id == usuario?.Id &&
                 string.Equals(item.Nombre, nombre, StringComparison.OrdinalIgnoreCase) &&
-                (!idExcluido.HasValue || item.Id != idExcluido.Value));
+                (excluida == null || item.Id != excluida.Id));
         }
     }
 
@@ -389,7 +389,7 @@ namespace BLL.Tests.TestDoubles
 
         public RubroComercio LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public RubroComercio LastDeleted { get; private set; }
 
         public RubroComercio ObtenerPorId(int id)
         {
@@ -426,9 +426,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RubroComercio rubro)
         {
-            LastDeletedId = id;
+            LastDeleted = rubro;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -439,7 +439,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return Rubros.Remove(id);
+            return Rubros.Remove(rubro.Id);
         }
     }
 
@@ -459,7 +459,7 @@ namespace BLL.Tests.TestDoubles
 
         public Comercio LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public Comercio LastDeleted { get; private set; }
 
         public Comercio ObtenerPorId(int id)
         {
@@ -467,10 +467,10 @@ namespace BLL.Tests.TestDoubles
             return Comercios.TryGetValue(id, out comercio) ? comercio : null;
         }
 
-        public List<Comercio> ObtenerPorRubro(int rubroComercioId)
+        public List<Comercio> ObtenerPorRubro(RubroComercio rubro)
         {
             return Comercios.Values
-                .Where(item => item.RubroComercio != null && item.RubroComercio.Id == rubroComercioId)
+                .Where(item => item.RubroComercio != null && item.RubroComercio.Id == rubro.Id)
                 .ToList();
         }
 
@@ -503,9 +503,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Comercio comercio)
         {
-            LastDeletedId = id;
+            LastDeleted = comercio;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -516,7 +516,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return Comercios.Remove(id);
+            return Comercios.Remove(comercio.Id);
         }
     }
 
@@ -634,7 +634,7 @@ namespace BLL.Tests.TestDoubles
 
         public CategoriaProducto LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public CategoriaProducto LastDeleted { get; private set; }
 
         public CategoriaProducto ObtenerPorId(int id)
         {
@@ -671,9 +671,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(CategoriaProducto categoria)
         {
-            LastDeletedId = id;
+            LastDeleted = categoria;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -684,7 +684,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return Categorias.Remove(id);
+            return Categorias.Remove(categoria.Id);
         }
     }
 
@@ -702,7 +702,7 @@ namespace BLL.Tests.TestDoubles
 
         public Producto LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public Producto LastDeleted { get; private set; }
 
         public Producto ObtenerPorId(int id)
         {
@@ -739,20 +739,20 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Producto producto)
         {
-            LastDeletedId = id;
+            LastDeleted = producto;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Productos.Remove(id);
+            return Productos.Remove(producto.Id);
         }
 
-        public int ContarPorCategoria(int categoriaProductoId)
+        public int ContarPorCategoria(CategoriaProducto categoria)
         {
-            return Productos.Values.Count(item => item.CategoriaProducto != null && item.CategoriaProducto.Id == categoriaProductoId);
+            return Productos.Values.Count(item => item.CategoriaProducto != null && item.CategoriaProducto.Id == categoria.Id);
         }
     }
 
@@ -768,14 +768,24 @@ namespace BLL.Tests.TestDoubles
 
         public ComercioProducto LastInserted { get; private set; }
 
-        public List<ComercioProducto> ObtenerPorComercio(int comercioId)
-        {
-            return Asignaciones.Where(item => item.Comercio.Id == comercioId).ToList();
-        }
+        public ComercioProducto LastPrecioActualizado { get; private set; }
 
-        public ComercioProducto ObtenerPorId(int comercioId, int productoId)
+        public ComercioProducto LastDeleted { get; private set; }
+
+        // Ayuda de los tests: busca por ids sin armar entidades.
+        public ComercioProducto Buscar(int comercioId, int productoId)
         {
             return Asignaciones.FirstOrDefault(item => item.Comercio.Id == comercioId && item.Producto.Id == productoId);
+        }
+
+        public List<ComercioProducto> ObtenerPorComercio(Comercio comercio)
+        {
+            return Asignaciones.Where(item => item.Comercio.Id == comercio.Id).ToList();
+        }
+
+        public ComercioProducto ObtenerPorComercioYProducto(Comercio comercio, Producto producto)
+        {
+            return Buscar(comercio.Id, producto.Id);
         }
 
         public bool Insertar(ComercioProducto comercioProducto)
@@ -790,32 +800,34 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool ActualizarPrecio(int comercioId, int productoId, decimal precio)
+        public bool ActualizarPrecio(ComercioProducto comercioProducto)
         {
-            ComercioProducto asignacion = ObtenerPorId(comercioId, productoId);
+            LastPrecioActualizado = comercioProducto;
+            ComercioProducto asignacion = Buscar(comercioProducto.Comercio.Id, comercioProducto.Producto.Id);
             if (!ActualizarPrecioResult || asignacion == null)
             {
                 return false;
             }
 
-            asignacion.Precio = precio;
+            asignacion.Precio = comercioProducto.Precio;
             return true;
         }
 
-        public bool Eliminar(int comercioId, int productoId)
+        public bool Eliminar(ComercioProducto comercioProducto)
         {
+            LastDeleted = comercioProducto;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            ComercioProducto asignacion = ObtenerPorId(comercioId, productoId);
+            ComercioProducto asignacion = Buscar(comercioProducto.Comercio.Id, comercioProducto.Producto.Id);
             return asignacion != null && Asignaciones.Remove(asignacion);
         }
 
-        public int ContarPorProducto(int productoId)
+        public int ContarPorProducto(Producto producto)
         {
-            return Asignaciones.Count(item => item.Producto.Id == productoId);
+            return Asignaciones.Count(item => item.Producto.Id == producto.Id);
         }
     }
 
@@ -879,9 +891,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Promocion promocion)
         {
-            LastDeletedId = id;
+            LastDeletedId = promocion.Id;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -892,13 +904,13 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return Promociones.Remove(id);
+            return Promociones.Remove(promocion.Id);
         }
 
-        public bool ReemplazarDiasDePromocion(int promocionId, List<DiaSemana> dias)
+        public bool ReemplazarDiasDePromocion(Promocion recibida, List<DiaSemana> dias)
         {
             Promocion promocion;
-            if (!Promociones.TryGetValue(promocionId, out promocion))
+            if (!Promociones.TryGetValue(recibida.Id, out promocion))
             {
                 return false;
             }
@@ -911,75 +923,75 @@ namespace BLL.Tests.TestDoubles
     // Filtros de promocion: guardan lo que el BLL reemplaza para poder verificar la persistencia.
     internal sealed class FakePromocionRubroComercioRepositorio : IPromocionRubroComercioRepositorio
     {
-        public int ContarPorRubroComercio(int rubroComercioId)
+        public int ContarPorRubroComercio(RubroComercio rubroComercio)
         {
-            return RubroComercioIdsPorPromocion.Values.Count(ids => ids.Contains(rubroComercioId));
+            return RubroComercioIdsPorPromocion.Values.Count(ids => ids.Contains(rubroComercio.Id));
         }
 
         public Dictionary<int, List<int>> RubroComercioIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<int> ObtenerRubroComercioIdsPorPromocion(int promocionId)
+        public List<RubroComercio> ObtenerRubrosComercioPorPromocion(Promocion promocion)
         {
             List<int> ids;
-            return RubroComercioIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+            return RubroComercioIdsPorPromocion.TryGetValue(promocion.Id, out ids) ? ids.Select(id => new RubroComercio { Id = id }).ToList() : new List<RubroComercio>();
         }
 
-        public bool ReemplazarRubrosComercioDePromocion(int promocionId, List<int> rubroComercioIds)
+        public bool ReemplazarRubrosComercioDePromocion(Promocion promocion, List<RubroComercio> rubrosComercio)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            RubroComercioIdsPorPromocion[promocionId] = (rubroComercioIds ?? new List<int>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            RubroComercioIdsPorPromocion[promocion.Id] = (rubrosComercio ?? new List<RubroComercio>()).Select(item => item.Id).ToList();
             return true;
         }
     }
 
     internal sealed class FakePromocionEntidadFinancieraRepositorio : IPromocionEntidadFinancieraRepositorio
     {
-        public int ContarPorEntidadFinanciera(int entidadFinancieraId)
+        public int ContarPorEntidadFinanciera(EntidadFinanciera entidadFinanciera)
         {
-            return EntidadFinancieraIdsPorPromocion.Values.Count(ids => ids.Contains(entidadFinancieraId));
+            return EntidadFinancieraIdsPorPromocion.Values.Count(ids => ids.Contains(entidadFinanciera.Id));
         }
 
         public Dictionary<int, List<int>> EntidadFinancieraIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<int> ObtenerEntidadFinancieraIdsPorPromocion(int promocionId)
+        public List<EntidadFinanciera> ObtenerEntidadesFinancierasPorPromocion(Promocion promocion)
         {
             List<int> ids;
-            return EntidadFinancieraIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+            return EntidadFinancieraIdsPorPromocion.TryGetValue(promocion.Id, out ids) ? ids.Select(id => new EntidadFinanciera { Id = id }).ToList() : new List<EntidadFinanciera>();
         }
 
-        public bool ReemplazarEntidadesFinancierasDePromocion(int promocionId, List<int> entidadFinancieraIds)
+        public bool ReemplazarEntidadesFinancierasDePromocion(Promocion promocion, List<EntidadFinanciera> entidadesFinancieras)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            EntidadFinancieraIdsPorPromocion[promocionId] = (entidadFinancieraIds ?? new List<int>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            EntidadFinancieraIdsPorPromocion[promocion.Id] = (entidadesFinancieras ?? new List<EntidadFinanciera>()).Select(item => item.Id).ToList();
             return true;
         }
     }
 
     internal sealed class FakePromocionMedioPagoRepositorio : IPromocionMedioPagoRepositorio
     {
-        public int ContarPorMedioPago(int medioPagoId)
+        public int ContarPorMedioPago(MedioPago medioPago)
         {
-            return MedioPagoIdsPorPromocion.Values.Count(ids => ids.Contains(medioPagoId));
+            return MedioPagoIdsPorPromocion.Values.Count(ids => ids.Contains(medioPago.Id));
         }
 
         public Dictionary<int, List<int>> MedioPagoIdsPorPromocion { get; } = new Dictionary<int, List<int>>();
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<int> ObtenerMedioPagoIdsPorPromocion(int promocionId)
+        public List<MedioPago> ObtenerMediosPagoPorPromocion(Promocion promocion)
         {
             List<int> ids;
-            return MedioPagoIdsPorPromocion.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+            return MedioPagoIdsPorPromocion.TryGetValue(promocion.Id, out ids) ? ids.Select(id => new MedioPago { Id = id }).ToList() : new List<MedioPago>();
         }
 
-        public bool ReemplazarMediosPagoDePromocion(int promocionId, List<int> medioPagoIds)
+        public bool ReemplazarMediosPagoDePromocion(Promocion promocion, List<MedioPago> mediosPago)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            MedioPagoIdsPorPromocion[promocionId] = (medioPagoIds ?? new List<int>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            MedioPagoIdsPorPromocion[promocion.Id] = (mediosPago ?? new List<MedioPago>()).Select(item => item.Id).ToList();
             return true;
         }
     }
@@ -990,26 +1002,26 @@ namespace BLL.Tests.TestDoubles
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<string> ObtenerSegmentosPorPromocion(int promocionId)
+        public List<string> ObtenerSegmentosPorPromocion(Promocion promocion)
         {
             List<string> segmentos;
-            return SegmentosPorPromocion.TryGetValue(promocionId, out segmentos) ? segmentos.ToList() : new List<string>();
+            return SegmentosPorPromocion.TryGetValue(promocion.Id, out segmentos) ? segmentos.ToList() : new List<string>();
         }
 
-        public bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos)
+        public bool ReemplazarSegmentosDePromocion(Promocion promocion, List<string> segmentos)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            SegmentosPorPromocion[promocionId] = (segmentos ?? new List<string>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            SegmentosPorPromocion[promocion.Id] = (segmentos ?? new List<string>()).ToList();
             return true;
         }
     }
 
     internal sealed class FakePromocionProductoRepositorio : IPromocionProductoRepositorio
     {
-        public int ContarPorProducto(int productoId)
+        public int ContarPorProducto(Producto producto)
         {
-            return IncluidosPorPromocion.Values.Count(ids => ids.Contains(productoId))
-                + ExcluidosPorPromocion.Values.Count(ids => ids.Contains(productoId));
+            return IncluidosPorPromocion.Values.Count(ids => ids.Contains(producto.Id))
+                + ExcluidosPorPromocion.Values.Count(ids => ids.Contains(producto.Id));
         }
 
         public Dictionary<int, List<int>> IncluidosPorPromocion { get; } = new Dictionary<int, List<int>>();
@@ -1018,28 +1030,28 @@ namespace BLL.Tests.TestDoubles
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<int> ObtenerProductoIdsPorPromocion(int promocionId, bool excluidos)
+        public List<Producto> ObtenerProductosPorPromocion(Promocion promocion, bool excluidos)
         {
             Dictionary<int, List<int>> origen = excluidos ? ExcluidosPorPromocion : IncluidosPorPromocion;
             List<int> ids;
-            return origen.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+            return origen.TryGetValue(promocion.Id, out ids) ? ids.Select(id => new Producto { Id = id }).ToList() : new List<Producto>();
         }
 
-        public bool ReemplazarProductosDePromocion(int promocionId, List<int> incluidos, List<int> excluidos)
+        public bool ReemplazarProductosDePromocion(Promocion promocion, List<Producto> incluidos, List<Producto> excluidos)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            IncluidosPorPromocion[promocionId] = (incluidos ?? new List<int>()).ToList();
-            ExcluidosPorPromocion[promocionId] = (excluidos ?? new List<int>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            IncluidosPorPromocion[promocion.Id] = (incluidos ?? new List<Producto>()).Select(item => item.Id).ToList();
+            ExcluidosPorPromocion[promocion.Id] = (excluidos ?? new List<Producto>()).Select(item => item.Id).ToList();
             return true;
         }
     }
 
     internal sealed class FakePromocionCategoriaProductoRepositorio : IPromocionCategoriaProductoRepositorio
     {
-        public int ContarPorCategoriaProducto(int categoriaProductoId)
+        public int ContarPorCategoriaProducto(CategoriaProducto categoriaProducto)
         {
-            return IncluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProductoId))
-                + ExcluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProductoId));
+            return IncluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProducto.Id))
+                + ExcluidasPorPromocion.Values.Count(ids => ids.Contains(categoriaProducto.Id));
         }
 
         public Dictionary<int, List<int>> IncluidasPorPromocion { get; } = new Dictionary<int, List<int>>();
@@ -1048,18 +1060,18 @@ namespace BLL.Tests.TestDoubles
 
         public List<int> PromocionIdsReemplazados { get; } = new List<int>();
 
-        public List<int> ObtenerCategoriaProductoIdsPorPromocion(int promocionId, bool excluidos)
+        public List<CategoriaProducto> ObtenerCategoriasProductoPorPromocion(Promocion promocion, bool excluidos)
         {
             Dictionary<int, List<int>> origen = excluidos ? ExcluidasPorPromocion : IncluidasPorPromocion;
             List<int> ids;
-            return origen.TryGetValue(promocionId, out ids) ? ids.ToList() : new List<int>();
+            return origen.TryGetValue(promocion.Id, out ids) ? ids.Select(id => new CategoriaProducto { Id = id }).ToList() : new List<CategoriaProducto>();
         }
 
-        public bool ReemplazarCategoriasProductoDePromocion(int promocionId, List<int> incluidas, List<int> excluidas)
+        public bool ReemplazarCategoriasProductoDePromocion(Promocion promocion, List<CategoriaProducto> incluidas, List<CategoriaProducto> excluidas)
         {
-            PromocionIdsReemplazados.Add(promocionId);
-            IncluidasPorPromocion[promocionId] = (incluidas ?? new List<int>()).ToList();
-            ExcluidasPorPromocion[promocionId] = (excluidas ?? new List<int>()).ToList();
+            PromocionIdsReemplazados.Add(promocion.Id);
+            IncluidasPorPromocion[promocion.Id] = (incluidas ?? new List<CategoriaProducto>()).Select(item => item.Id).ToList();
+            ExcluidasPorPromocion[promocion.Id] = (excluidas ?? new List<CategoriaProducto>()).Select(item => item.Id).ToList();
             return true;
         }
     }
@@ -1074,23 +1086,23 @@ namespace BLL.Tests.TestDoubles
 
         public List<int> LastComercioIdsReemplazados { get; private set; }
 
-        public List<int> ObtenerComercioIdsPorPromocion(int promocionId)
+        public List<Comercio> ObtenerComerciosPorPromocion(Promocion promocion)
         {
             List<int> comercioIds;
-            return ComercioIdsPorPromocion.TryGetValue(promocionId, out comercioIds) ? comercioIds.ToList() : new List<int>();
+            return ComercioIdsPorPromocion.TryGetValue(promocion.Id, out comercioIds) ? comercioIds.Select(id => new Comercio { Id = id }).ToList() : new List<Comercio>();
         }
 
-        public List<int> ObtenerPromocionIdsPorComercio(int comercioId)
+        public List<Promocion> ObtenerPromocionesPorComercio(Comercio comercio)
         {
             List<int> promocionIds;
-            return PromocionIdsPorComercio.TryGetValue(comercioId, out promocionIds) ? promocionIds.ToList() : new List<int>();
+            return PromocionIdsPorComercio.TryGetValue(comercio.Id, out promocionIds) ? promocionIds.Select(id => new Promocion { Id = id }).ToList() : new List<Promocion>();
         }
 
-        public bool ReemplazarComerciosDePromocion(int promocionId, List<int> comercioIds)
+        public bool ReemplazarComerciosDePromocion(Promocion promocion, List<Comercio> comercios)
         {
-            LastPromocionIdReemplazado = promocionId;
-            LastComercioIdsReemplazados = comercioIds == null ? new List<int>() : comercioIds.ToList();
-            ComercioIdsPorPromocion[promocionId] = LastComercioIdsReemplazados.ToList();
+            LastPromocionIdReemplazado = promocion.Id;
+            LastComercioIdsReemplazados = comercios == null ? new List<int>() : comercios.Select(item => item.Id).ToList();
+            ComercioIdsPorPromocion[promocion.Id] = LastComercioIdsReemplazados.ToList();
             return true;
         }
     }
@@ -1109,7 +1121,7 @@ namespace BLL.Tests.TestDoubles
 
         public Moneda LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public Moneda LastDeleted { get; private set; }
 
         public Moneda ObtenerPorId(int id)
         {
@@ -1146,15 +1158,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Moneda moneda)
         {
-            LastDeletedId = id;
+            LastDeleted = moneda;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Monedas.Remove(id);
+            return Monedas.Remove(moneda.Id);
         }
     }
 
@@ -1185,11 +1197,11 @@ namespace BLL.Tests.TestDoubles
             return Tasas.Values.ToList();
         }
 
-        public TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId)
+        public TasaConversion ObtenerPorParDeMonedas(Moneda monedaBase, Moneda monedaConversion)
         {
             return Tasas.Values.FirstOrDefault(item =>
-                item.MonedaBase != null && item.MonedaBase.Id == monedaBaseId &&
-                item.MonedaConversion != null && item.MonedaConversion.Id == monedaConversionId);
+                item.MonedaBase != null && item.MonedaBase.Id == monedaBase.Id &&
+                item.MonedaConversion != null && item.MonedaConversion.Id == monedaConversion.Id);
         }
 
         public int InsertarYObtenerId(TasaConversion tasa)
@@ -1218,11 +1230,11 @@ namespace BLL.Tests.TestDoubles
 
         public Action OnActualizarValorAutomatico { get; set; }
 
-        public bool ActualizarValorAutomatico(int id, decimal calculoConversion)
+        public bool ActualizarValorAutomatico(TasaConversion recibida, decimal calculoConversion)
         {
             OnActualizarValorAutomatico?.Invoke();
             TasaConversion tasa;
-            if (!Tasas.TryGetValue(id, out tasa) || tasa.EsManual)
+            if (!Tasas.TryGetValue(recibida.Id, out tasa) || tasa.EsManual)
             {
                 return false;
             }
@@ -1232,43 +1244,43 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool MarcarManual(int id, int usuarioId)
+        public bool MarcarManual(TasaConversion recibida, Usuario usuario)
         {
             TasaConversion tasa;
-            if (!Tasas.TryGetValue(id, out tasa))
+            if (!Tasas.TryGetValue(recibida.Id, out tasa))
             {
                 return false;
             }
 
             tasa.EsManual = true;
-            tasa.ProtegidaPorUsuarioId = usuarioId;
+            tasa.ProtegidaPorUsuario = usuario;
             tasa.FechaProteccion = DateTime.Now;
             return true;
         }
 
-        public bool Liberar(int id)
+        public bool Liberar(TasaConversion recibida)
         {
             TasaConversion tasa;
-            if (!Tasas.TryGetValue(id, out tasa))
+            if (!Tasas.TryGetValue(recibida.Id, out tasa))
             {
                 return false;
             }
 
             tasa.EsManual = false;
-            tasa.ProtegidaPorUsuarioId = null;
+            tasa.ProtegidaPorUsuario = null;
             tasa.FechaProteccion = null;
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(TasaConversion tasa)
         {
-            LastDeletedId = id;
+            LastDeletedId = tasa.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Tasas.Remove(id);
+            return Tasas.Remove(tasa.Id);
         }
     }
 
@@ -1303,9 +1315,9 @@ namespace BLL.Tests.TestDoubles
             return Ejecuciones.OrderByDescending(item => item.FechaInicio).ThenByDescending(item => item.Id).Take(cantidad).ToList();
         }
 
-        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(int ejecucionId)
+        public List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(EjecucionActualizacionTasas ejecucion)
         {
-            return Detalles.Where(item => item.EjecucionId == ejecucionId).ToList();
+            return Detalles.Where(item => item.Ejecucion.Id == ejecucion.Id).ToList();
         }
 
         public EjecucionActualizacionTasas ObtenerUltimaExitosa()
@@ -1354,10 +1366,10 @@ namespace BLL.Tests.TestDoubles
             return Items.TryGetValue(id, out item) ? item : null;
         }
 
-        public List<ItemLista> ObtenerPorListaDeCompras(int listaDeComprasId)
+        public List<ItemLista> ObtenerPorListaDeCompras(ListaDeCompras lista)
         {
             return Items.Values
-                .Where(item => item.ListaDeCompras != null && item.ListaDeCompras.Id == listaDeComprasId)
+                .Where(item => item.ListaDeCompras != null && item.ListaDeCompras.Id == lista.Id)
                 .ToList();
         }
 
@@ -1385,15 +1397,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ItemLista item)
         {
-            LastDeletedId = id;
+            LastDeletedId = item.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Items.Remove(id);
+            return Items.Remove(item.Id);
         }
     }
 
@@ -1419,10 +1431,10 @@ namespace BLL.Tests.TestDoubles
             return Listas.TryGetValue(id, out lista) ? lista : null;
         }
 
-        public List<ListaDeCompras> ObtenerPorUsuario(int usuarioId)
+        public List<ListaDeCompras> ObtenerPorUsuario(Usuario usuario)
         {
             return Listas.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
@@ -1450,47 +1462,47 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ListaDeCompras lista)
         {
-            LastDeletedId = id;
+            LastDeletedId = lista.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Listas.Remove(id);
+            return Listas.Remove(lista.Id);
         }
     }
 
     internal sealed class FakeNotificacionRepositorio : INotificacionRepositorio
     {
-        public Notificacion ObtenerPersonal(int id, int usuarioId)
+        public Notificacion ObtenerPersonal(Notificacion notificacion, Usuario usuario)
         {
-            var n = ObtenerPorId(id);
-            if (n == null || n.Usuario.Id != usuarioId) return null;
+            var n = ObtenerPorId(notificacion.Id);
+            if (n == null || n.Usuario.Id != usuario.Id) return null;
             Notificacion copia = n is RecordatorioCompra ? (Notificacion)new RecordatorioCompra() : n is RecordatorioInversion ? new RecordatorioInversion() : new Notificacion();
             copia.Id = n.Id; copia.Usuario = n.Usuario; copia.Mensaje = n.Mensaje; copia.Fecha = n.Fecha; copia.Leida = n.Leida;
             return copia;
         }
 
-        public bool MarcarPersonalLeida(int id, int usuarioId)
+        public bool MarcarPersonalLeida(Notificacion notificacion, Usuario usuario)
         {
-            var n = ObtenerPersonal(id, usuarioId);
+            var n = ObtenerPersonal(notificacion, usuario);
             if (n == null || n.Leida || !ActualizarResult) return false;
             n.Leida = true;
-            Notificaciones[id] = n;
+            Notificaciones[n.Id] = n;
             return true;
         }
 
-        public PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina)
+        public PaginaNotificaciones ObtenerPaginaPersonal(Usuario usuario, FiltroNotificacion filtro, int pagina)
         {
-            var lista = ObtenerPorUsuario(usuarioId).Where(n => !filtro.FechaDesde.HasValue || n.Fecha.Date >= filtro.FechaDesde.Value.Date)
+            var lista = ObtenerPorUsuario(usuario).Where(n => !filtro.FechaDesde.HasValue || n.Fecha.Date >= filtro.FechaDesde.Value.Date)
                 .Where(n => !filtro.FechaHasta.HasValue || n.Fecha.Date <= filtro.FechaHasta.Value.Date)
                 .OrderByDescending(n => n.Fecha).ThenByDescending(n => n.Id).ToList();
             return new PaginaNotificaciones { Total = lista.Count, Pagina = pagina, Elementos = lista.Skip((pagina - 1) * 10).Take(10).ToList() };
         }
 
-        public int ContarNoLeidas(int usuarioId) => ObtenerPorUsuario(usuarioId).Count(n => !n.Leida);
+        public int ContarNoLeidas(Usuario usuario) => ObtenerPorUsuario(usuario).Count(n => !n.Leida);
 
         private int _nextId = 1;
 
@@ -1510,10 +1522,10 @@ namespace BLL.Tests.TestDoubles
         // Notificacion no guarda PromocionId).
         public Dictionary<int, int> NotificacionesPorPromocion { get; } = new Dictionary<int, int>();
 
-        public int ContarPorPromocion(int promocionId)
+        public int ContarPorPromocion(Promocion promocion)
         {
             int cantidad;
-            return NotificacionesPorPromocion.TryGetValue(promocionId, out cantidad) ? cantidad : 0;
+            return NotificacionesPorPromocion.TryGetValue(promocion.Id, out cantidad) ? cantidad : 0;
         }
 
         public DateTime? UltimaAutomaticaInversionUtc { get; set; }
@@ -1522,10 +1534,10 @@ namespace BLL.Tests.TestDoubles
 
         public bool UsuarioExiste { get; set; } = true;
 
-        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId)
+        public DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(Usuario usuario)
         {
             if (UltimaAutomaticaInversionUtc.HasValue) return UltimaAutomaticaInversionUtc;
-            DateTime? ultima = Fuentes().Where(n => n.Usuario != null && n.Usuario.Id == usuarioId && n.TipoAutomatico == TipoNotificacionAutomatica.Inversiones)
+            DateTime? ultima = Fuentes().Where(n => n.Usuario != null && n.Usuario.Id == usuario.Id && n.TipoAutomatico == TipoNotificacionAutomatica.Inversiones)
                 .Select(n => (DateTime?)n.Fecha).Max();
             return ultima.HasValue ? DateTime.SpecifyKind(ultima.Value, DateTimeKind.Local).ToUniversalTime() : (DateTime?)null;
         }
@@ -1533,14 +1545,14 @@ namespace BLL.Tests.TestDoubles
         // Todas las notificaciones del fake (base y subtipos); la asigna FakeUnidadDeTrabajo.
         public Func<IEnumerable<Notificacion>> Fuentes { get; set; } = () => new Notificacion[0];
 
-        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, DateTime jornada)
+        public bool ExisteAutomatica(Usuario usuario, TipoNotificacionAutomatica tipo, DateTime jornada)
         {
-            return Fuentes().Any(n => n.Usuario != null && n.Usuario.Id == usuarioId && n.TipoAutomatico == tipo && n.FechaJornada.HasValue && n.FechaJornada.Value.Date == jornada.Date);
+            return Fuentes().Any(n => n.Usuario != null && n.Usuario.Id == usuario.Id && n.TipoAutomatico == tipo && n.FechaJornada.HasValue && n.FechaJornada.Value.Date == jornada.Date);
         }
 
-        public bool BloquearUsuarioParaEntrega(int usuarioId)
+        public bool BloquearUsuarioParaEntrega(Usuario usuario)
         {
-            Llamadas.Add("bloquear:" + usuarioId);
+            Llamadas.Add("bloquear:" + usuario.Id);
             return UsuarioExiste;
         }
 
@@ -1550,10 +1562,10 @@ namespace BLL.Tests.TestDoubles
             return Notificaciones.TryGetValue(id, out notificacion) ? notificacion : null;
         }
 
-        public List<Notificacion> ObtenerPorUsuario(int usuarioId)
+        public List<Notificacion> ObtenerPorUsuario(Usuario usuario)
         {
             return Notificaciones.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
@@ -1586,15 +1598,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Notificacion notificacion)
         {
-            LastDeletedId = id;
+            LastDeletedId = notificacion.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Notificaciones.Remove(id);
+            return Notificaciones.Remove(notificacion.Id);
         }
     }
 
@@ -1620,10 +1632,10 @@ namespace BLL.Tests.TestDoubles
             return Recordatorios.TryGetValue(id, out recordatorio) ? recordatorio : null;
         }
 
-        public List<RecordatorioCompra> ObtenerPorUsuario(int usuarioId)
+        public List<RecordatorioCompra> ObtenerPorUsuario(Usuario usuario)
         {
             return Recordatorios.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
@@ -1656,15 +1668,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RecordatorioCompra recordatorio)
         {
-            LastDeletedId = id;
+            LastDeletedId = recordatorio.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Recordatorios.Remove(id);
+            return Recordatorios.Remove(recordatorio.Id);
         }
     }
 
@@ -1690,10 +1702,10 @@ namespace BLL.Tests.TestDoubles
             return Recordatorios.TryGetValue(id, out recordatorio) ? recordatorio : null;
         }
 
-        public List<RecordatorioInversion> ObtenerPorUsuario(int usuarioId)
+        public List<RecordatorioInversion> ObtenerPorUsuario(Usuario usuario)
         {
             return Recordatorios.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
@@ -1726,15 +1738,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RecordatorioInversion recordatorio)
         {
-            LastDeletedId = id;
+            LastDeletedId = recordatorio.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Recordatorios.Remove(id);
+            return Recordatorios.Remove(recordatorio.Id);
         }
     }
 
@@ -1752,7 +1764,7 @@ namespace BLL.Tests.TestDoubles
 
         public Movimiento LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public Movimiento LastDeleted { get; private set; }
 
         public Movimiento ObtenerPorId(int id)
         {
@@ -1760,9 +1772,9 @@ namespace BLL.Tests.TestDoubles
             return Movimientos.TryGetValue(id, out movimiento) ? movimiento : null;
         }
 
-        public List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro)
+        public List<Movimiento> ObtenerPorUsuario(Usuario usuario, FiltroMovimiento filtro)
         {
-            IEnumerable<Movimiento> query = Movimientos.Values.Where(item => item.Usuario.Id == usuarioId);
+            IEnumerable<Movimiento> query = Movimientos.Values.Where(item => item.Usuario.Id == usuario.Id);
 
             if (filtro != null)
             {
@@ -1776,9 +1788,9 @@ namespace BLL.Tests.TestDoubles
                     query = query.Where(item => item.Fecha <= filtro.FechaHasta.Value);
                 }
 
-                if (filtro.CategoriaId.HasValue)
+                if (filtro.Categoria != null)
                 {
-                    query = query.Where(item => item.Categoria.Id == filtro.CategoriaId.Value);
+                    query = query.Where(item => item.Categoria.Id == filtro.Categoria.Id);
                 }
 
                 if (filtro.Tipo.HasValue)
@@ -1792,51 +1804,51 @@ namespace BLL.Tests.TestDoubles
 
         public List<TotalPorCategoria> ObtenerTotalesPorCategoriaResult { get; set; } = new List<TotalPorCategoria>();
 
-        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorCategoriaArgs { get; private set; }
+        public Tuple<Usuario, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorCategoriaArgs { get; private set; }
 
-        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorCategoria> ObtenerTotalesPorCategoria(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            LastObtenerTotalesPorCategoriaArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            LastObtenerTotalesPorCategoriaArgs = Tuple.Create(usuario, tipo, desde, hasta);
             return ObtenerTotalesPorCategoriaResult;
         }
 
         public List<TotalPorMes> ObtenerTotalesPorMesResult { get; set; } = new List<TotalPorMes>();
 
-        public Tuple<int, DateTime, DateTime> LastObtenerTotalesPorMesArgs { get; private set; }
+        public Tuple<Usuario, DateTime, DateTime> LastObtenerTotalesPorMesArgs { get; private set; }
 
-        public List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta)
+        public List<TotalPorMes> ObtenerTotalesPorMes(Usuario usuario, DateTime desde, DateTime hasta)
         {
-            LastObtenerTotalesPorMesArgs = Tuple.Create(usuarioId, desde, hasta);
+            LastObtenerTotalesPorMesArgs = Tuple.Create(usuario, desde, hasta);
             return ObtenerTotalesPorMesResult;
         }
 
         public List<TotalPorComercio> ObtenerTotalesPorComercioResult { get; set; } = new List<TotalPorComercio>();
 
-        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorComercioArgs { get; private set; }
+        public Tuple<Usuario, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorComercioArgs { get; private set; }
 
-        public List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorComercio> ObtenerTotalesPorComercio(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            LastObtenerTotalesPorComercioArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            LastObtenerTotalesPorComercioArgs = Tuple.Create(usuario, tipo, desde, hasta);
             return ObtenerTotalesPorComercioResult;
         }
 
         public List<TotalPorDia> ObtenerTotalesPorDiaResult { get; set; } = new List<TotalPorDia>();
 
-        public Tuple<int, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorDiaArgs { get; private set; }
+        public Tuple<Usuario, TipoMovimiento, DateTime, DateTime> LastObtenerTotalesPorDiaArgs { get; private set; }
 
-        public List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta)
+        public List<TotalPorDia> ObtenerTotalesPorDia(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta)
         {
-            LastObtenerTotalesPorDiaArgs = Tuple.Create(usuarioId, tipo, desde, hasta);
+            LastObtenerTotalesPorDiaArgs = Tuple.Create(usuario, tipo, desde, hasta);
             return ObtenerTotalesPorDiaResult;
         }
 
         public ResumenMovimientos ObtenerResumenResult { get; set; } = new ResumenMovimientos();
 
-        public Tuple<int, DateTime, DateTime> LastObtenerResumenArgs { get; private set; }
+        public Tuple<Usuario, DateTime, DateTime> LastObtenerResumenArgs { get; private set; }
 
-        public ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta)
+        public ResumenMovimientos ObtenerResumen(Usuario usuario, DateTime desde, DateTime hasta)
         {
-            LastObtenerResumenArgs = Tuple.Create(usuarioId, desde, hasta);
+            LastObtenerResumenArgs = Tuple.Create(usuario, desde, hasta);
             return ObtenerResumenResult;
         }
 
@@ -1864,20 +1876,20 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Movimiento movimiento)
         {
-            LastDeletedId = id;
+            LastDeleted = movimiento;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Movimientos.Remove(id);
+            return Movimientos.Remove(movimiento.Id);
         }
 
-        public int ContarPorComercio(int comercioId)
+        public int ContarPorComercio(Comercio comercio)
         {
-            return Movimientos.Values.Count(item => item.Comercio != null && item.Comercio.Id == comercioId);
+            return Movimientos.Values.Count(item => item.Comercio != null && item.Comercio.Id == comercio.Id);
         }
     }
 
@@ -1905,6 +1917,9 @@ namespace BLL.Tests.TestDoubles
 
         public int? LastDeletedId { get; private set; }
 
+        // Como la base: ObtenerPorId devuelve una instancia nueva de la fila, no la guardada.
+        public bool CopiarAlLeer { get; set; }
+
         public int ActualizarEstadoBloqueoCallCount { get; private set; }
 
         public Tuple<int, int, bool, DateTime?, string> LastEstadoBloqueoUpdate { get; private set; }
@@ -1912,7 +1927,8 @@ namespace BLL.Tests.TestDoubles
         public Usuario ObtenerPorId(int id)
         {
             Usuario usuario;
-            return Usuarios.TryGetValue(id, out usuario) ? usuario : null;
+            if (!Usuarios.TryGetValue(id, out usuario)) return null;
+            return CopiarAlLeer ? new Usuario { Id = usuario.Id, Username = usuario.Username, PasswordHash = usuario.PasswordHash, Activo = usuario.Activo, DVH = usuario.DVH } : usuario;
         }
 
         public Usuario ObtenerPorUsername(string username)
@@ -1927,11 +1943,8 @@ namespace BLL.Tests.TestDoubles
                 throw new InvalidOperationException("Insert failed.");
             }
 
-            if (usuario.Id <= 0)
-            {
-                usuario.Id = _nextId++;
-            }
-
+            // Como la identidad de la base: el Id recibido no se respeta.
+            usuario.Id = _nextId++;
             Usuarios[usuario.Id] = usuario;
             LastInserted = usuario;
             return usuario.Id;
@@ -1949,15 +1962,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool ActualizarDVH(int id, string dvh)
+        public bool ActualizarDVH(Usuario recibida, string dvh)
         {
             if (!ActualizarDvhResult)
             {
                 return false;
             }
 
-            Usuario usuario = ObtenerPorId(id);
-            if (usuario != null)
+            Usuario usuario;
+            if (Usuarios.TryGetValue(recibida.Id, out usuario))
             {
                 usuario.DVH = dvh;
             }
@@ -1977,8 +1990,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool ActualizarEstadoBloqueo(int id, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
+        public bool ActualizarEstadoBloqueo(Usuario recibida, int intentosFallidos, bool bloqueado, DateTime? bloqueadoHasta, string dvh)
         {
+            int id = recibida.Id;
             if (ThrowOnActualizarEstadoBloqueo)
             {
                 throw new InvalidOperationException("ActualizarEstadoBloqueo failed.");
@@ -1999,15 +2013,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool EliminarFisicamente(int id)
+        public bool EliminarFisicamente(Usuario usuario)
         {
-            LastDeletedId = id;
-            return EliminarResult && Usuarios.Remove(id);
+            LastDeletedId = usuario.Id;
+            return EliminarResult && Usuarios.Remove(usuario.Id);
         }
 
-        public List<int> ObtenerIdsActivosDespuesDe(int ultimoId, int cantidad)
+        public List<Usuario> ObtenerActivosDespuesDe(Usuario ultimo, int cantidad)
         {
-            return Usuarios.Values.Where(u => u.Activo && u.Id > ultimoId).Select(u => u.Id).OrderBy(id => id).Take(cantidad).ToList();
+            return Usuarios.Values.Where(u => u.Activo && u.Id > (ultimo?.Id ?? 0)).OrderBy(u => u.Id).Take(cantidad).ToList();
         }
 
         public List<Usuario> ObtenerTodos()
@@ -2073,17 +2087,22 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool EliminarPermisos(List<int> idsPermiso)
+        public bool EliminarPermisos(List<IPermiso> permisos)
         {
-            IdsEliminados = idsPermiso ?? new List<int>();
+            IdsEliminados = permisos == null ? new List<int>() : permisos.Select(item => item.Id).ToList();
             Nodos.RemoveAll(item => IdsEliminados.Contains(item.Id));
             return true;
         }
 
-        public int ObtenerIdPorNombre(string nombre)
+        public IPermiso ObtenerPorNombre(string nombre)
         {
             int id;
-            return IdsPorNombre.TryGetValue(nombre, out id) ? id : 0;
+            if (!IdsPorNombre.TryGetValue(nombre, out id))
+            {
+                return null;
+            }
+
+            return Nodos.FirstOrDefault(item => item.Id == id) ?? new PermisoGrupo { Id = id, Nombre = nombre };
         }
     }
 
@@ -2095,17 +2114,19 @@ namespace BLL.Tests.TestDoubles
 
         public List<int> LastPermisos { get; private set; }
 
-        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId)
+        public List<IPermiso> ObtenerPermisosPorUsuario(Usuario usuario)
         {
             List<int> permisos;
-            return PermisosPorUsuario.TryGetValue(usuarioId, out permisos) ? permisos.ToList() : new List<int>();
+            return PermisosPorUsuario.TryGetValue(usuario.Id, out permisos)
+                ? permisos.Select(id => (IPermiso)new PermisoSimple { Id = id }).ToList()
+                : new List<IPermiso>();
         }
 
-        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId)
+        public bool ReemplazarPermisosUsuario(Usuario usuario, List<IPermiso> permisos)
         {
-            LastUsuarioId = usuarioId;
-            LastPermisos = permisosId == null ? new List<int>() : permisosId.ToList();
-            PermisosPorUsuario[usuarioId] = LastPermisos.ToList();
+            LastUsuarioId = usuario.Id;
+            LastPermisos = permisos == null ? new List<int>() : permisos.Select(item => item.Id).ToList();
+            PermisosPorUsuario[usuario.Id] = LastPermisos.ToList();
             return true;
         }
     }
@@ -2130,14 +2151,14 @@ namespace BLL.Tests.TestDoubles
             return snapshot.HistorialId;
         }
 
-        public List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId)
+        public List<UsuarioHistorialSnapshot> ObtenerVersiones(IUsuarioAutenticado usuario)
         {
-            return Snapshots.Where(item => item.UsuarioId == usuarioId).ToList();
+            return Snapshots.Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id).ToList();
         }
 
-        public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
+        public UsuarioHistorialSnapshot ObtenerPorId(int id)
         {
-            return Snapshots.FirstOrDefault(item => item.HistorialId == historialId);
+            return Snapshots.FirstOrDefault(item => item.HistorialId == id);
         }
     }
 
@@ -2149,31 +2170,31 @@ namespace BLL.Tests.TestDoubles
 
         public int? LastIdiomaId { get; private set; }
 
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
+        public UsuarioPreferencia ObtenerPorUsuario(IUsuarioAutenticado usuario)
         {
             UsuarioPreferencia preferencia;
-            return Preferencias.TryGetValue(usuarioId, out preferencia) ? preferencia : null;
+            return Preferencias.TryGetValue(usuario.Id, out preferencia) ? preferencia : null;
         }
 
         public bool Guardar(UsuarioPreferencia preferencia)
         {
-            Preferencias[preferencia.UsuarioId] = preferencia;
-            LastUsuarioId = preferencia.UsuarioId;
-            LastIdiomaId = preferencia.IdiomaId;
+            Preferencias[preferencia.Usuario.Id] = preferencia;
+            LastUsuarioId = preferencia.Usuario.Id;
+            LastIdiomaId = preferencia.Idioma?.Id;
             return true;
         }
 
-        public bool Guardar(int usuarioId, int? idiomaId)
+        public bool Guardar(IUsuarioAutenticado usuario, IIdioma idioma)
         {
-            LastUsuarioId = usuarioId;
-            LastIdiomaId = idiomaId;
-            if (idiomaId.HasValue)
+            LastUsuarioId = usuario.Id;
+            LastIdiomaId = idioma?.Id;
+            if (idioma != null)
             {
-                Preferencias[usuarioId] = new UsuarioPreferencia { UsuarioId = usuarioId, IdiomaId = idiomaId.Value };
+                Preferencias[usuario.Id] = new UsuarioPreferencia { Usuario = usuario, Idioma = idioma };
             }
             else
             {
-                Preferencias.Remove(usuarioId);
+                Preferencias.Remove(usuario.Id);
             }
 
             return true;
@@ -2197,9 +2218,9 @@ namespace BLL.Tests.TestDoubles
             return Idiomas.ToList();
         }
 
-        public Idioma ObtenerIdiomaCompleto(int idiomaId)
+        public Idioma ObtenerPorId(int id)
         {
-            return Idiomas.FirstOrDefault(item => item.Id == idiomaId);
+            return Idiomas.FirstOrDefault(item => item.Id == id);
         }
 
         public Idioma ObtenerIdiomaDefault()
@@ -2222,7 +2243,7 @@ namespace BLL.Tests.TestDoubles
         public bool ActualizarIdioma(Idioma idioma)
         {
             LastUpdated = idioma;
-            Idioma existing = ObtenerIdiomaCompleto(idioma.Id);
+            Idioma existing = ObtenerPorId(idioma.Id);
             if (existing == null)
             {
                 return false;
@@ -2232,35 +2253,35 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool EliminarIdioma(int idiomaId)
+        public bool EliminarIdioma(Idioma idioma)
         {
-            LastDeletedId = idiomaId;
-            return Idiomas.RemoveAll(item => item.Id == idiomaId) > 0;
+            LastDeletedId = idioma.Id;
+            return Idiomas.RemoveAll(item => item.Id == idioma.Id) > 0;
         }
 
-        public bool ConsolidarIdioma(int idiomaOrigenId, int idiomaDestinoId)
+        public bool ConsolidarIdioma(Idioma origen, Idioma destino)
         {
             return true;
         }
 
-        public int ObtenerPalabraIdPorKey(string key)
+        public Palabra ObtenerPalabraPorKey(string key)
         {
-            return 0;
+            return null;
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
+        public bool GuardarTraduccion(Traduccion traduccion)
         {
             return true;
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(Traduccion traduccion)
         {
             return true;
         }
 
-        public bool SwitchearIdiomaDefault(int idiomaId)
+        public bool SwitchearIdiomaDefault(Idioma recibida)
         {
-            Idioma idioma = ObtenerIdiomaCompleto(idiomaId);
+            Idioma idioma = ObtenerPorId(recibida.Id);
             if (idioma == null)
             {
                 throw new InvalidOperationException("Language not found.");
@@ -2279,25 +2300,28 @@ namespace BLL.Tests.TestDoubles
 
         public bool ThrowOnGuardar { get; set; }
 
-        public int ObtenerPalabraIdPorKey(string key)
+        public List<Traduccion> TraduccionesEliminadas { get; } = new List<Traduccion>();
+
+        public Palabra ObtenerPalabraPorKey(string key)
         {
             int id;
-            return PalabraIdsPorKey.TryGetValue(key, out id) ? id : 0;
+            return PalabraIdsPorKey.TryGetValue(key, out id) ? new Palabra { Id = id, Key = key } : null;
         }
 
-        public bool GuardarTraduccion(int idiomaId, int palabraId, string valor)
+        public bool GuardarTraduccion(Traduccion traduccion)
         {
             if (ThrowOnGuardar)
             {
                 throw new InvalidOperationException("Translation save failed.");
             }
 
-            TraduccionesGuardadas.Add(Tuple.Create(idiomaId, palabraId, valor));
+            TraduccionesGuardadas.Add(Tuple.Create(traduccion.Idioma.Id, traduccion.Palabra.Id, traduccion.Valor));
             return true;
         }
 
-        public bool EliminarTraduccion(int idiomaId, int palabraId)
+        public bool EliminarTraduccion(Traduccion traduccion)
         {
+            TraduccionesEliminadas.Add(traduccion);
             return true;
         }
     }
@@ -2400,11 +2424,6 @@ namespace BLL.Tests.TestDoubles
         public IUsuarioAutenticado GetUsuarioActual()
         {
             return _usuario;
-        }
-
-        public int? GetUsuarioActualId()
-        {
-            return _usuario == null ? (int?)null : _usuario.Id;
         }
 
         public string GetUsuarioActualNombre()
@@ -2518,15 +2537,15 @@ namespace BLL.Tests.TestDoubles
 
         public Action<int> AlObtenerIdioma { get; set; }
 
-        public Idioma ObtenerIdiomaParaUsuario(int usuarioId)
+        public Idioma ObtenerIdiomaParaUsuario(Usuario usuario)
         {
-            AlObtenerIdioma?.Invoke(usuarioId);
+            AlObtenerIdioma?.Invoke(usuario.Id);
             return IdiomaDelUsuario;
         }
 
-        public void AplicarIdiomaSesionUsuario(int usuarioId)
+        public void AplicarIdiomaSesionUsuario(Usuario usuario)
         {
-            AplicarIdiomaSesionUsuarioId = usuarioId;
+            AplicarIdiomaSesionUsuarioId = usuario.Id;
         }
     }
 
@@ -2544,22 +2563,22 @@ namespace BLL.Tests.TestDoubles
 
         public IUnidadDeTrabajo LastUnidad { get; private set; }
 
-        public List<IPermiso> ObtenerPermisosDirectosUsuario(int usuarioId)
+        public List<IPermiso> ObtenerPermisosDirectosUsuario(Usuario usuario)
         {
-            ObtenerPermisosUsuarioId = usuarioId;
+            ObtenerPermisosUsuarioId = usuario.Id;
             return PermisosDirectos;
         }
 
-        public void AsignarPerfilBasicoInterno(int usuarioId, IUnidadDeTrabajo unidad)
+        public void AsignarPerfilBasicoInterno(Usuario usuario, IUnidadDeTrabajo unidad)
         {
-            AsignarPerfilUsuarioId = usuarioId;
+            AsignarPerfilUsuarioId = usuario.Id;
             LastUnidad = unidad;
         }
 
-        public void GuardarPermisosUsuarioInterno(int usuarioId, List<int> permisosId, IUnidadDeTrabajo unidad)
+        public void GuardarPermisosUsuarioInterno(Usuario usuario, List<IPermiso> permisos, IUnidadDeTrabajo unidad)
         {
-            GuardarPermisosUsuarioId = usuarioId;
-            GuardarPermisosIds = permisosId;
+            GuardarPermisosUsuarioId = usuario.Id;
+            GuardarPermisosIds = permisos == null ? null : permisos.Select(item => item.Id).ToList();
             LastUnidad = unidad;
         }
 
@@ -2567,9 +2586,9 @@ namespace BLL.Tests.TestDoubles
 
         public bool ThrowOnValidarPuedeEliminarUsuario { get; set; }
 
-        public void ValidarPuedeEliminarUsuario(int usuarioId, IUnidadDeTrabajo unidad)
+        public void ValidarPuedeEliminarUsuario(Usuario usuario, IUnidadDeTrabajo unidad)
         {
-            ValidarPuedeEliminarUsuarioId = usuarioId;
+            ValidarPuedeEliminarUsuarioId = usuario.Id;
             LastUnidad = unidad;
             if (ThrowOnValidarPuedeEliminarUsuario)
             {
@@ -2584,6 +2603,8 @@ namespace BLL.Tests.TestDoubles
 
         public int? GuardarUsuarioId { get; private set; }
 
+        public Usuario GuardarUsuario { get; private set; }
+
         public string GuardarAccion { get; private set; }
 
         public string GuardarObservaciones { get; private set; }
@@ -2592,32 +2613,34 @@ namespace BLL.Tests.TestDoubles
 
         public IUnidadDeTrabajo LastUnidad { get; private set; }
 
-        public int GuardarVersionActual(int usuarioId, string accion, string observaciones)
+        public UsuarioHistorialSnapshot GuardarVersionActual(Usuario usuario, string accion, string observaciones)
         {
-            GuardarUsuarioId = usuarioId;
+            GuardarUsuarioId = usuario.Id;
+            GuardarUsuario = usuario;
             GuardarAccion = accion;
             GuardarObservaciones = observaciones;
-            return 1;
+            return new UsuarioHistorialSnapshot { HistorialId = 1, Usuario = usuario, Accion = accion, Observaciones = observaciones };
         }
 
-        public int GuardarVersionActualInterno(int usuarioId, string accion, string observaciones, IUnidadDeTrabajo unidad)
+        public UsuarioHistorialSnapshot GuardarVersionActualInterno(Usuario usuario, string accion, string observaciones, IUnidadDeTrabajo unidad)
         {
-            GuardarUsuarioId = usuarioId;
+            GuardarUsuarioId = usuario.Id;
+            GuardarUsuario = usuario;
             GuardarAccion = accion;
             GuardarObservaciones = observaciones;
             LastUnidad = unidad;
-            return 1;
+            return new UsuarioHistorialSnapshot { HistorialId = 1, Usuario = usuario, Accion = accion, Observaciones = observaciones };
         }
 
-        public List<UsuarioHistorialSnapshot> ObtenerHistorial(int usuarioId)
+        public List<UsuarioHistorialSnapshot> ObtenerHistorial(Usuario usuario)
         {
-            return Versiones.Values.Where(item => item.UsuarioId == usuarioId).ToList();
+            return Versiones.Values.Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id).ToList();
         }
 
-        public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
+        public UsuarioHistorialSnapshot ObtenerVersion(IUsuarioSnapshot recibida)
         {
             UsuarioHistorialSnapshot snapshot;
-            return Versiones.TryGetValue(historialId, out snapshot) ? snapshot : null;
+            return recibida != null && Versiones.TryGetValue(recibida.HistorialId, out snapshot) ? snapshot : null;
         }
 
         public List<ResultadoComparacionEstado> CompararVersiones(UsuarioHistorialSnapshot versionActual, UsuarioHistorialSnapshot versionAnterior)
@@ -2627,7 +2650,7 @@ namespace BLL.Tests.TestDoubles
 
         public void AplicarSnapshotInterno(UsuarioHistorialSnapshot snapshot, IUnidadDeTrabajo unidad)
         {
-            AplicarSnapshotUsuarioId = snapshot == null ? (int?)null : snapshot.UsuarioId;
+            AplicarSnapshotUsuarioId = snapshot == null || snapshot.Usuario == null ? (int?)null : snapshot.Usuario.Id;
             LastUnidad = unidad;
         }
     }
@@ -2694,13 +2717,13 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeEscaneoTicketService : IEscaneoTicketService
     {
-        public TicketEscaneado NextResultado { get; set; } = new TicketEscaneado();
+        public ITicketEscaneado NextResultado { get; set; } = new TicketEscaneado();
 
         public Exception ThrowException { get; set; }
 
         public byte[] LastImagenBytes { get; private set; }
 
-        public Task<TicketEscaneado> EscanearTicketAsync(byte[] imagenBytes)
+        public Task<ITicketEscaneado> EscanearTicketAsync(byte[] imagenBytes)
         {
             LastImagenBytes = imagenBytes;
             if (ThrowException != null)
@@ -2773,7 +2796,7 @@ namespace BLL.Tests.TestDoubles
 
         public ReglaCategorizacion LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public ReglaCategorizacion LastDeleted { get; private set; }
 
         public ReglaCategorizacion ObtenerPorId(int id)
         {
@@ -2781,9 +2804,9 @@ namespace BLL.Tests.TestDoubles
             return Reglas.TryGetValue(id, out regla) ? regla : null;
         }
 
-        public List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId)
+        public List<ReglaCategorizacion> ObtenerPorUsuario(Usuario usuario)
         {
-            return Reglas.Values.Where(item => item.Usuario != null && item.Usuario.Id == usuarioId).ToList();
+            return Reglas.Values.Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id).ToList();
         }
 
         public int InsertarYObtenerId(ReglaCategorizacion reglaCategorizacion)
@@ -2810,15 +2833,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ReglaCategorizacion reglaCategorizacion)
         {
-            LastDeletedId = id;
+            LastDeleted = reglaCategorizacion;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Reglas.Remove(id);
+            return Reglas.Remove(reglaCategorizacion.Id);
         }
     }
 
@@ -2828,26 +2851,32 @@ namespace BLL.Tests.TestDoubles
 
         public bool ReemplazarResult { get; set; } = true;
 
-        public List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId)
+        // Ids asociados a la regla, para preparar datos y verificar en los tests.
+        public List<int> ComercioIdsDe(int reglaCategorizacionId)
         {
             List<int> ids;
             return ComerciosPorRegla.TryGetValue(reglaCategorizacionId, out ids) ? new List<int>(ids) : new List<int>();
         }
 
-        public bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds)
+        public List<Comercio> ObtenerComerciosPorReglaCategorizacion(ReglaCategorizacion reglaCategorizacion)
+        {
+            return ComercioIdsDe(reglaCategorizacion.Id).Select(id => new Comercio { Id = id }).ToList();
+        }
+
+        public bool ReemplazarComerciosDeReglaCategorizacion(ReglaCategorizacion reglaCategorizacion, IEnumerable<Comercio> comercios)
         {
             if (!ReemplazarResult)
             {
                 return false;
             }
 
-            ComerciosPorRegla[reglaCategorizacionId] = comercioIds == null ? new List<int>() : new List<int>(comercioIds);
+            ComerciosPorRegla[reglaCategorizacion.Id] = comercios == null ? new List<int>() : comercios.Select(item => item.Id).ToList();
             return true;
         }
 
-        public int ContarPorComercio(int comercioId)
+        public int ContarPorComercio(Comercio comercio)
         {
-            return ComerciosPorRegla.Values.Count(ids => ids.Contains(comercioId));
+            return ComerciosPorRegla.Values.Count(ids => ids.Contains(comercio.Id));
         }
     }
 
@@ -2859,9 +2888,9 @@ namespace BLL.Tests.TestDoubles
 
         public ConsultaChatbot LastInserted { get; private set; }
 
-        public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId)
+        public List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario)
         {
-            return Consultas.Values.Where(item => item.UsuarioId == usuarioId).ToList();
+            return Consultas.Values.Where(item => item.Usuario?.Id == usuario.Id).ToList();
         }
 
         public int InsertarYObtenerId(ConsultaChatbot consultaChatbot)
@@ -2895,9 +2924,9 @@ namespace BLL.Tests.TestDoubles
             return Dashboards.TryGetValue(id, out dashboard) ? dashboard : null;
         }
 
-        public Dashboard ObtenerPorUsuario(int usuarioId)
+        public Dashboard ObtenerPorUsuario(Usuario usuario)
         {
-            return Dashboards.Values.FirstOrDefault(item => item.Usuario != null && item.Usuario.Id == usuarioId);
+            return Dashboards.Values.FirstOrDefault(item => item.Usuario != null && item.Usuario.Id == usuario.Id);
         }
 
         public int InsertarYObtenerId(Dashboard dashboard)
@@ -2912,15 +2941,15 @@ namespace BLL.Tests.TestDoubles
             return dashboard.Id;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Dashboard dashboard)
         {
-            LastDeletedId = id;
+            LastDeletedId = dashboard.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Dashboards.Remove(id);
+            return Dashboards.Remove(dashboard.Id);
         }
     }
 
@@ -2946,10 +2975,10 @@ namespace BLL.Tests.TestDoubles
             return Tarjetas.TryGetValue(id, out tarjeta) ? tarjeta : null;
         }
 
-        public List<TarjetaDashboard> ObtenerPorDashboard(int dashboardId)
+        public List<TarjetaDashboard> ObtenerPorDashboard(Dashboard dashboard)
         {
             return Tarjetas.Values
-                .Where(item => item.Dashboard != null && item.Dashboard.Id == dashboardId)
+                .Where(item => item.Dashboard != null && item.Dashboard.Id == dashboard.Id)
                 .OrderBy(item => item.Orden)
                 .ToList();
         }
@@ -2978,15 +3007,15 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(TarjetaDashboard tarjeta)
         {
-            LastDeletedId = id;
+            LastDeletedId = tarjeta.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Tarjetas.Remove(id);
+            return Tarjetas.Remove(tarjeta.Id);
         }
     }
 
@@ -3002,12 +3031,12 @@ namespace BLL.Tests.TestDoubles
 
     internal sealed class FakeAsistenteFinancieroService : IAsistenteFinancieroService
     {
-        public LlamadaHerramientaAsistente LlamadaHerramienta { get; set; }
-        public HerramientaAsistente UltimaHerramienta { get; private set; }
+        public ILlamadaHerramientaAsistente LlamadaHerramienta { get; set; }
+        public IHerramientaAsistente UltimaHerramienta { get; private set; }
         public List<string> OrdenLlamadas { get; } = new List<string>();
         public Action AlExtraerHerramienta { get; set; }
         public Exception ThrowOnHerramienta { get; set; }
-        public Task<LlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(SolicitudAsistente solicitud, HerramientaAsistente herramienta, System.Threading.CancellationToken cancellationToken)
+        public Task<ILlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(ISolicitudAsistente solicitud, IHerramientaAsistente herramienta, System.Threading.CancellationToken cancellationToken)
         {
             UltimaHerramienta = herramienta;
             OrdenLlamadas.Add("herramienta");
@@ -3021,19 +3050,19 @@ namespace BLL.Tests.TestDoubles
 
         public string LastPregunta { get; private set; }
 
-        public List<IntercambioChatbot> LastHistorial { get; private set; }
+        public List<IIntercambioChatbot> LastHistorial { get; private set; }
 
-        public SolicitudAsistente LastSolicitud { get; private set; }
+        public ISolicitudAsistente LastSolicitud { get; private set; }
 
         public int CallCount { get; private set; }
 
-        public Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud)
+        public Task<string> ObtenerRespuestaAsync(ISolicitudAsistente solicitud)
         {
             OrdenLlamadas.Add("respuesta");
             CallCount++;
             LastSolicitud = solicitud;
             LastPregunta = solicitud.Pregunta;
-            LastHistorial = solicitud.Historial == null ? new List<IntercambioChatbot>() : solicitud.Historial.ToList();
+            LastHistorial = solicitud.Historial == null ? new List<IIntercambioChatbot>() : solicitud.Historial.ToList();
 
             if (ThrowException != null)
             {
@@ -3084,7 +3113,7 @@ namespace BLL.Tests.TestDoubles
 
         public MedioPago LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public MedioPago LastDeleted { get; private set; }
 
         public MedioPago ObtenerPorId(int id)
         {
@@ -3121,9 +3150,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(MedioPago medioPago)
         {
-            LastDeletedId = id;
+            LastDeleted = medioPago;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -3134,7 +3163,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return MediosPago.Remove(id);
+            return MediosPago.Remove(medioPago.Id);
         }
     }
 
@@ -3152,7 +3181,7 @@ namespace BLL.Tests.TestDoubles
 
         public MedioPagoEntidad LastInserted { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public MedioPagoEntidad LastDeleted { get; private set; }
 
         public MedioPagoEntidad ObtenerPorId(int id)
         {
@@ -3160,17 +3189,17 @@ namespace BLL.Tests.TestDoubles
             return MediosPagoEntidad.TryGetValue(id, out medioPagoEntidad) ? medioPagoEntidad : null;
         }
 
-        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        public List<MedioPagoEntidad> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad)
         {
             return MediosPagoEntidad.Values
-                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidadFinancieraId)
+                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidad.Id)
                 .ToList();
         }
 
-        public List<MedioPagoEntidad> ObtenerPorMedioPago(int medioPagoId)
+        public List<MedioPagoEntidad> ObtenerPorMedioPago(MedioPago medioPago)
         {
             return MediosPagoEntidad.Values
-                .Where(item => item.MedioPago != null && item.MedioPago.Id == medioPagoId)
+                .Where(item => item.MedioPago != null && item.MedioPago.Id == medioPago.Id)
                 .ToList();
         }
 
@@ -3207,9 +3236,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(MedioPagoEntidad medioPagoEntidad)
         {
-            LastDeletedId = id;
+            LastDeleted = medioPagoEntidad;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -3220,7 +3249,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return MediosPagoEntidad.Remove(id);
+            return MediosPagoEntidad.Remove(medioPagoEntidad.Id);
         }
     }
 
@@ -3240,7 +3269,7 @@ namespace BLL.Tests.TestDoubles
 
         public EntidadFinanciera LastUpdated { get; private set; }
 
-        public int? LastDeletedId { get; private set; }
+        public EntidadFinanciera LastDeleted { get; private set; }
 
         public EntidadFinanciera ObtenerPorId(int id)
         {
@@ -3277,9 +3306,9 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(EntidadFinanciera entidad)
         {
-            LastDeletedId = id;
+            LastDeleted = entidad;
             if (ExcepcionEnEliminar != null)
             {
                 throw ExcepcionEnEliminar;
@@ -3290,7 +3319,7 @@ namespace BLL.Tests.TestDoubles
                 return false;
             }
 
-            return Entidades.Remove(id);
+            return Entidades.Remove(entidad.Id);
         }
     }
 
@@ -3323,17 +3352,17 @@ namespace BLL.Tests.TestDoubles
             return Cuentas.TryGetValue(id, out cuenta) ? cuenta : null;
         }
 
-        public List<CuentaFinanciera> ObtenerPorUsuario(int usuarioId)
+        public List<CuentaFinanciera> ObtenerPorUsuario(Usuario usuario)
         {
             return Cuentas.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .ToList();
         }
 
-        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(int entidadFinancieraId)
+        public List<CuentaFinanciera> ObtenerPorEntidadFinanciera(EntidadFinanciera entidad)
         {
             return Cuentas.Values
-                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidadFinancieraId)
+                .Where(item => item.EntidadFinanciera != null && item.EntidadFinanciera.Id == entidad.Id)
                 .ToList();
         }
 
@@ -3361,18 +3390,18 @@ namespace BLL.Tests.TestDoubles
             return true;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(CuentaFinanciera cuenta)
         {
-            LastDeletedId = id;
+            LastDeletedId = cuenta.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Cuentas.Remove(id);
+            return Cuentas.Remove(cuenta.Id);
         }
 
-        public bool ReemplazarMediosPagoEntidadDeCuenta(int cuentaFinancieraId, List<int> medioPagoEntidadIds)
+        public bool ReemplazarMediosPagoEntidadDeCuenta(CuentaFinanciera cuenta, IEnumerable<MedioPagoEntidad> medios)
         {
             ReemplazarCallCount++;
             if (ThrowOnReemplazar)
@@ -3380,13 +3409,13 @@ namespace BLL.Tests.TestDoubles
                 throw new InvalidOperationException("Fallo simulado al reemplazar medios de pago.");
             }
 
-            MedioPagoEntidadIdsPorCuenta[cuentaFinancieraId] = new List<int>(medioPagoEntidadIds);
+            MedioPagoEntidadIdsPorCuenta[cuenta.Id] = medios.Select(item => item.Id).ToList();
             return true;
         }
 
-        public int ContarPorMedioPagoEntidad(int medioPagoEntidadId)
+        public int ContarPorMedioPagoEntidad(MedioPagoEntidad medio)
         {
-            return MedioPagoEntidadIdsPorCuenta.Values.Count(ids => ids.Contains(medioPagoEntidadId));
+            return MedioPagoEntidadIdsPorCuenta.Values.Count(ids => ids.Contains(medio.Id));
         }
     }
 
@@ -3408,10 +3437,10 @@ namespace BLL.Tests.TestDoubles
             return Zonas.TryGetValue(id, out zona) ? zona : null;
         }
 
-        public List<ZonaUsuario> ObtenerPorUsuario(int usuarioId)
+        public List<ZonaUsuario> ObtenerPorUsuario(Usuario usuario)
         {
             return Zonas.Values
-                .Where(item => item.Usuario != null && item.Usuario.Id == usuarioId)
+                .Where(item => item.Usuario != null && item.Usuario.Id == usuario.Id)
                 .OrderBy(item => item.Nombre)
                 .ToList();
         }
@@ -3429,15 +3458,15 @@ namespace BLL.Tests.TestDoubles
             return zona.Id;
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ZonaUsuario zona)
         {
-            LastDeletedId = id;
+            LastDeletedId = zona.Id;
             if (!EliminarResult)
             {
                 return false;
             }
 
-            return Zonas.Remove(id);
+            return Zonas.Remove(zona.Id);
         }
     }
 
@@ -3467,13 +3496,41 @@ namespace BLL.Tests.TestDoubles
 
         public List<ProductoEmbedding> ObtenerTodos()
         {
-            return Embeddings.Values.OrderBy(item => item.ProductoId).ToList();
+            return Embeddings.Values.OrderBy(item => item.Producto.Id).ToList();
         }
 
         public void Guardar(ProductoEmbedding embedding)
         {
             Guardados.Add(embedding);
-            Embeddings[embedding.ProductoId] = embedding;
+            Embeddings[embedding.Producto.Id] = embedding;
+        }
+    }
+
+    // Cupo fijo por usuario (sin ventana): el reloj de los tests no avanza.
+    internal sealed class FakeLimiteUsoAsistente : ILimiteUsoAsistente
+    {
+        private readonly int _maximo;
+        private readonly Dictionary<int, int> _consumidasPorUsuario = new Dictionary<int, int>();
+
+        public FakeLimiteUsoAsistente(int maximo)
+        {
+            _maximo = maximo;
+        }
+
+        public bool IntentarConsumir(IUsuarioAutenticado usuario)
+        {
+            lock (_consumidasPorUsuario)
+            {
+                int consumidas;
+                _consumidasPorUsuario.TryGetValue(usuario.Id, out consumidas);
+                if (consumidas >= _maximo)
+                {
+                    return false;
+                }
+
+                _consumidasPorUsuario[usuario.Id] = consumidas + 1;
+                return true;
+            }
         }
     }
 }

@@ -114,7 +114,7 @@ namespace SERVICIOS.Tests
             }
         }
 
-        private static Task<IReadOnlyList<DatoMercado>> Consultar(string fuente, MercadoHandler h, TimeSpan? timeout = null, CancellationToken ct = default(CancellationToken))
+        private static Task<IReadOnlyList<IDatoMercado>> Consultar(string fuente, MercadoHandler h, TimeSpan? timeout = null, CancellationToken ct = default(CancellationToken))
         {
             TimeSpan maximo = timeout ?? TimeSpan.FromSeconds(2);
             if (fuente == "argentina") return new ProveedorArgentinaDatos(h, maximo, () => Hoy).ObtenerPlazosFijosAsync(ct);

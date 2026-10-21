@@ -20,7 +20,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task CorridaExitosa_SalidaCeroConResumen()
         {
-            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { CorridaId = 7, Jornada = new DateTime(2026, 10, 20), Entregadas = 3, Omitidas = 2 }));
+            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { Corrida = new BE.CorridaGeneracionNotificaciones { Id = 7 }, Jornada = new DateTime(2026, 10, 20), Entregadas = 3, Omitidas = 2 }));
             Assert.AreEqual(0, r.codigo);
             StringAssert.Contains(r.salida, "3 delivered");
             StringAssert.Contains(r.salida, "2 skipped");
@@ -30,7 +30,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task CorridaSoloConOmisiones_SalidaCero()
         {
-            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { CorridaId = 1, Omitidas = 9 }));
+            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { Corrida = new BE.CorridaGeneracionNotificaciones { Id = 1 }, Omitidas = 9 }));
             Assert.AreEqual(0, r.codigo);
         }
 
@@ -45,7 +45,7 @@ namespace BLL.Tests
         [TestMethod]
         public async Task CorridaParcialmenteFallida_SalidaUno()
         {
-            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { CorridaId = 4, Entregadas = 5, Fallidas = 1 }));
+            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { Corrida = new BE.CorridaGeneracionNotificaciones { Id = 4 }, Entregadas = 5, Fallidas = 1 }));
             Assert.AreEqual(1, r.codigo);
             StringAssert.Contains(r.salida, "1 failed");
         }
@@ -71,9 +71,14 @@ namespace BLL.Tests
         [TestMethod]
         public async Task CorridaCancelada_SalidaDosNuncaExitoFalso()
         {
-            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { CorridaId = 2, Entregadas = 1, Cancelada = true }));
+            var r = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { Corrida = new BE.CorridaGeneracionNotificaciones { Id = 2 }, Entregadas = 1, Cancelada = true }));
             Assert.AreEqual(2, r.codigo);
             StringAssert.Contains(r.error, "cancelled");
+
+            var antesDeCrearCorrida = await Ejecutar(ct => Task.FromResult(new ResultadoCorridaNotificaciones { Cancelada = true }));
+            Assert.AreEqual(2, antesDeCrearCorrida.codigo);
+            StringAssert.Contains(antesDeCrearCorrida.error, "cancelled");
+            StringAssert.Contains(antesDeCrearCorrida.error, "Run 0");
         }
 
         [TestMethod]

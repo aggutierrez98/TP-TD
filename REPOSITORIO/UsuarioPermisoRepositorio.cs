@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using DAL;
+using ABSTRACCIONES;
+using BE;
 
 namespace REPOSITORIO
 {
@@ -19,14 +21,14 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerPermisoIdsPorUsuario(int usuarioId)
+        public List<IPermiso> ObtenerPermisosPorUsuario(Usuario usuario)
         {
-            return _usuarioPermisoDAL.ObtenerPermisoIdsPorUsuario(usuarioId, _accesoDatos);
+            return _usuarioPermisoDAL.ObtenerPermisosPorUsuario(usuario, _accesoDatos);
         }
 
-        public bool ReemplazarPermisosUsuario(int usuarioId, List<int> permisosId)
+        public bool ReemplazarPermisosUsuario(Usuario usuario, List<IPermiso> permisos)
         {
-            return _usuarioPermisoDAL.ReemplazarPermisosUsuario(usuarioId, permisosId, _accesoDatos);
+            return _usuarioPermisoDAL.ReemplazarPermisosUsuario(usuario, permisos, _accesoDatos);
         }
     }
 }

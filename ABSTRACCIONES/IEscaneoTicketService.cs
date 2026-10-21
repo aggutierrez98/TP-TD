@@ -7,6 +7,6 @@ namespace ABSTRACCIONES
     // unica interfaz en SERVICIOS, sin tocar BLL ni UI.
     public interface IEscaneoTicketService
     {
-        Task<TicketEscaneado> EscanearTicketAsync(byte[] imagenBytes);
+        Task<ITicketEscaneado> EscanearTicketAsync(byte[] imagenBytes);
     }
 }

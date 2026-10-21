@@ -58,6 +58,7 @@
     <Compile Include="Moneda.cs" />
     <Compile Include="Movimiento.cs" />
     <Compile Include="ReporteMovimientosPdf.cs" />
+    <Compile Include="FiltroMovimiento.cs" />
     <Compile Include="OrigenActualizacionTasas.cs" />
     <Compile Include="ResultadoActualizacionTasas.cs" />
     <Compile Include="ResultadoEjecucionActualizacionTasas.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Usuario.cs" />
     <Compile Include="PerfilInversor.cs" />
     <Compile Include="ZonaUsuario.cs" />
+    <Compile Include="DigitoVerificadorAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

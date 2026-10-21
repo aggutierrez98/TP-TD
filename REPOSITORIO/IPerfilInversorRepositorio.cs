@@ -4,7 +4,7 @@ namespace REPOSITORIO
 {
     public interface IPerfilInversorRepositorio
     {
-        PerfilInversor ObtenerPorUsuario(int usuarioId);
+        PerfilInversor ObtenerPorUsuario(Usuario usuario);
         void Guardar(PerfilInversor perfil);
     }
 }

@@ -66,9 +66,9 @@ namespace BLL.Tests
         {
             ComprasFixture f = new ComprasFixture();
             f.Oferta(1, "Super", 100);
-            f.Promocion().EntidadFinancieraIds.Add(999);
-            f.Promocion().ProductoExcluidoIds.Add(1);
-            f.Promocion().ComercioIds.Add(999);
+            f.Promocion().EntidadesFinancieras.Add(new EntidadFinanciera { Id = 999 });
+            f.Promocion().ProductosExcluidos.Add(new Producto { Id = 1 });
+            f.Promocion().Comercios.Add(new Comercio { Id = 999 });
             f.Promocion().VigenciaDesde = ComprasFixture.Hoy.AddDays(7);
             f.Promocion().Segmentos.Add("Otro segmento");
             ResumenCompras r = await f.CalcularAsync();
@@ -215,12 +215,14 @@ namespace BLL.Tests
         internal static readonly DateTime Hoy = new DateTime(2026, 10, 19);
         internal readonly FakeComprasRepositorio Repo = new FakeComprasRepositorio();
         internal readonly FakeZonaUsuarioRepositorio Zonas = new FakeZonaUsuarioRepositorio();
+        internal readonly FakeUsuarioRepositorio Usuarios = new FakeUsuarioRepositorio();
         internal readonly FakeTasaConversionRepositorio Tasas = new FakeTasaConversionRepositorio();
         internal readonly FakeSesion Sesion = new FakeSesion();
         internal readonly FakeServicioEmbeddings Embeddings = new FakeServicioEmbeddings();
         internal ComprasFixture()
         {
             Sesion.IniciarSesion(new Usuario { Id = 7 });
+            Usuarios.Usuarios.Add(7, new Usuario { Id = 7 });
             Repo.Items.Add(new ItemLista { Id = 1, Descripcion = "Cerveza", Cantidad = 1, ListaDeCompras = new ListaDeCompras { Nombre = "Semanal", Usuario = new Usuario { Id = 7 } } });
             Repo.Productos.Add(new Producto { Id = 1, Nombre = "Cerveza", CategoriaProducto = new CategoriaProducto { Id = 1, Nombre = "Bebidas" } });
             Repo.Cuentas.Add(new CuentaFinanciera { Id = 1, Usuario = new Usuario { Id = 7 }, Alias = "Mi cuenta", EntidadFinanciera = new EntidadFinanciera { Id = 1 }, MediosPagoEntidad = new List<MedioPagoEntidad> { new MedioPagoEntidad { MedioPago = new MedioPago { Id = 1, Marca = "Visa" } } } });
@@ -237,9 +239,9 @@ namespace BLL.Tests
         }
         internal RecomendacionComprasBLL Crear()
         {
-            return new RecomendacionComprasBLL(Repo, Zonas, Tasas, new CoincidenciaSemanticaProductos(Embeddings, new FakeProductoEmbeddingRepositorio(), new FakeUnidadDeTrabajoFactory(), () => Hoy), () => Hoy);
+            return new RecomendacionComprasBLL(Repo, Zonas, Usuarios, Tasas, new CoincidenciaSemanticaProductos(Embeddings, new FakeProductoEmbeddingRepositorio(), new FakeUnidadDeTrabajoFactory(), () => Hoy), () => Hoy);
         }
-        internal Task<ResumenCompras> CalcularAsync(string lista = null) => Crear().CalcularAsync(7, lista, CancellationToken.None);
+        internal Task<ResumenCompras> CalcularAsync(string lista = null) => Crear().CalcularAsync(new Usuario { Id = 7 }, lista, CancellationToken.None);
     }
 
     internal sealed class FakeComprasRepositorio : IRecomendacionComprasRepositorio
@@ -250,10 +252,10 @@ namespace BLL.Tests
         internal readonly List<Promocion> Promociones = new List<Promocion>();
         internal readonly List<CuentaFinanciera> Cuentas = new List<CuentaFinanciera>();
         internal int UsuarioItems, UsuarioCuentas;
-        public List<ItemLista> ObtenerItemsPendientesPorUsuario(int usuarioId) { UsuarioItems = usuarioId; return Items; }
+        public List<ItemLista> ObtenerItemsPendientesPorUsuario(Usuario usuario) { UsuarioItems = usuario.Id; return Items; }
         public List<Producto> ObtenerProductosConCategoria() => Productos;
         public List<ComercioProducto> ObtenerOfertas() => Ofertas;
         public List<Promocion> ObtenerPromocionesVigentesEntre(DateTime desde, DateTime hasta) => Promociones;
-        public List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(int usuarioId) { UsuarioCuentas = usuarioId; return Cuentas; }
+        public List<CuentaFinanciera> ObtenerCuentasConMediosPorUsuario(Usuario usuario) { UsuarioCuentas = usuario.Id; return Cuentas; }
     }
 }

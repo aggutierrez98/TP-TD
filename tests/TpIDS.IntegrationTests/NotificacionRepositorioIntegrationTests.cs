@@ -66,7 +66,7 @@ namespace TpIDS.IntegrationTests
                     Leida = false
                 });
 
-                System.Collections.Generic.List<BE.Notificacion> propias = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.Notificacion> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propias.Any(item => item.Id == idPropia));
                 Assert.IsFalse(propias.Any(item => item.Id == idAjena));
@@ -123,7 +123,7 @@ namespace TpIDS.IntegrationTests
                     Leida = false
                 });
 
-                bool eliminada = repositorio.Eliminar(id);
+                bool eliminada = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminada);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
@@ -239,7 +239,7 @@ namespace TpIDS.IntegrationTests
                     FechaVencimiento = new System.DateTime(2026, 2, 10)
                 });
 
-                System.Collections.Generic.List<BE.Notificacion> propias = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.Notificacion> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propias.Any(item => item.Id == idNotificacion));
                 Assert.IsFalse(propias.Any(item => item.Id == idRecordatorio));
@@ -275,8 +275,8 @@ namespace TpIDS.IntegrationTests
                     });
                 }
 
-                Assert.AreEqual(2, repositorio.ContarPorPromocion(promocionUsadaId));
-                Assert.AreEqual(0, repositorio.ContarPorPromocion(promocionSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorPromocion(new BE.Promocion { Id = promocionUsadaId }));
+                Assert.AreEqual(0, repositorio.ContarPorPromocion(new BE.Promocion { Id = promocionSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -319,9 +319,10 @@ namespace TpIDS.IntegrationTests
                 }
                 repo.InsertarYObtenerId(new BE.Notificacion { Usuario = new BE.Usuario { Id = otro }, Mensaje = "Ajena", Fecha = new System.DateTime(2026, 10, 15) });
                 var filtro = new BE.FiltroNotificacion { FechaDesde = new System.DateTime(2026, 10, 14), FechaHasta = new System.DateTime(2026, 10, 14) };
-                var primera = repo.ObtenerPaginaPersonal(usuario, filtro, 1);
-                var segunda = repo.ObtenerPaginaPersonal(usuario, filtro, 2);
-                var tercera = repo.ObtenerPaginaPersonal(usuario, filtro, 3);
+                var destinatario = new UsuarioRepositorio(acceso).ObtenerPorId(usuario);
+                var primera = repo.ObtenerPaginaPersonal(destinatario, filtro, 1);
+                var segunda = repo.ObtenerPaginaPersonal(destinatario, filtro, 2);
+                var tercera = repo.ObtenerPaginaPersonal(destinatario, filtro, 3);
                 Assert.AreEqual(24, primera.Total);
                 Assert.AreEqual(3, primera.TotalPaginas);
                 Assert.AreEqual(10, primera.Elementos.Count);
@@ -330,12 +331,13 @@ namespace TpIDS.IntegrationTests
                 CollectionAssert.AreEqual(ids.OrderByDescending(id => id).ToList(), primera.Elementos.Concat(segunda.Elementos).Concat(tercera.Elementos).Select(n => n.Id).ToList());
                 Assert.IsTrue(primera.Elementos.Any(n => n is BE.RecordatorioCompra));
                 Assert.IsTrue(primera.Elementos.Any(n => n is BE.RecordatorioInversion));
-                Assert.AreEqual(24, repo.ContarNoLeidas(usuario));
+                Assert.AreEqual(24, repo.ContarNoLeidas(destinatario));
+                Assert.IsTrue(primera.Elementos.All(n => n.Usuario.Username == destinatario.Username));
                 foreach (int id in ids.Take(3))
                 {
-                    BE.Notificacion antes = repo.ObtenerPersonal(id, usuario);
-                    Assert.IsTrue(repo.MarcarPersonalLeida(id, usuario));
-                    BE.Notificacion despues = repo.ObtenerPersonal(id, usuario);
+                    BE.Notificacion antes = repo.ObtenerPersonal(new BE.Notificacion { Id = id }, destinatario);
+                    Assert.IsTrue(repo.MarcarPersonalLeida(antes, destinatario));
+                    BE.Notificacion despues = repo.ObtenerPersonal(antes, destinatario);
                     Assert.AreEqual(antes.GetType(), despues.GetType());
                     Assert.AreEqual(antes.Mensaje, despues.Mensaje);
                     Assert.AreEqual(antes.Fecha, despues.Fecha);
@@ -346,9 +348,9 @@ namespace TpIDS.IntegrationTests
                         Assert.AreEqual(compra.FechaVencimiento, otra.FechaVencimiento);
                     }
                 }
-                Assert.AreEqual(21, repo.ContarNoLeidas(usuario));
-                Assert.AreEqual(3, repo.ObtenerPaginaPersonal(usuario, filtro, 99).Pagina);
-                var vacia = repo.ObtenerPaginaPersonal(usuario, new BE.FiltroNotificacion { FechaDesde = new System.DateTime(2026, 10, 15) }, 1);
+                Assert.AreEqual(21, repo.ContarNoLeidas(destinatario));
+                Assert.AreEqual(3, repo.ObtenerPaginaPersonal(destinatario, filtro, 99).Pagina);
+                var vacia = repo.ObtenerPaginaPersonal(destinatario, new BE.FiltroNotificacion { FechaDesde = new System.DateTime(2026, 10, 15) }, 1);
                 Assert.AreEqual(0, vacia.Total);
                 Assert.AreEqual(0, vacia.Elementos.Count);
                 acceso.RollbackTransactionScope();
@@ -372,17 +374,20 @@ namespace TpIDS.IntegrationTests
                     acceso.BeginTransactionScope();
                     var repo = new NotificacionRepositorio(acceso);
                     int otro = ObtenerUsuarioAdminId(acceso);
-                    Assert.IsNull(repo.ObtenerPersonal(id, otro));
-                    Assert.IsFalse(repo.MarcarPersonalLeida(id, otro));
-                    Assert.IsTrue(repo.MarcarPersonalLeida(id, usuario));
-                    Assert.IsFalse(repo.MarcarPersonalLeida(id, usuario));
-                    Assert.IsTrue(repo.ObtenerPersonal(id, usuario).Leida);
-                    Assert.AreEqual("LecturaTransaccional", repo.ObtenerPersonal(id, usuario).Mensaje);
+                    var notificacion = new BE.Notificacion { Id = id };
+                    var destinatario = new BE.Usuario { Id = usuario };
+                    var ajeno = new BE.Usuario { Id = otro };
+                    Assert.IsNull(repo.ObtenerPersonal(notificacion, ajeno));
+                    Assert.IsFalse(repo.MarcarPersonalLeida(notificacion, ajeno));
+                    Assert.IsTrue(repo.MarcarPersonalLeida(notificacion, destinatario));
+                    Assert.IsFalse(repo.MarcarPersonalLeida(notificacion, destinatario));
+                    Assert.IsTrue(repo.ObtenerPersonal(notificacion, destinatario).Leida);
+                    Assert.AreEqual("LecturaTransaccional", repo.ObtenerPersonal(notificacion, destinatario).Mensaje);
                     acceso.RollbackTransactionScope();
                 }
-                Assert.IsFalse(new NotificacionRepositorio().ObtenerPersonal(id, usuario).Leida);
+                Assert.IsFalse(new NotificacionRepositorio().ObtenerPersonal(new BE.Notificacion { Id = id }, new BE.Usuario { Id = usuario }).Leida);
             }
-            finally { new NotificacionRepositorio().Eliminar(id); }
+            finally { new NotificacionRepositorio().Eliminar(new BE.Notificacion { Id = id }); }
         }
 
         private static int ObtenerUsuarioBasicoId(AccesoDatosSqlServer accesoDatos)

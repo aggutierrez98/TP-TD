@@ -25,6 +25,7 @@ namespace TpIDS
         // View-model plano para la grilla: mezcla las 3 subclases de Notificacion.
         private sealed class FilaNotificacion
         {
+            public Notificacion Notificacion { get; set; }
             public int Id { get; set; }
             public string Usuario { get; set; }
             public string Tipo { get; set; }
@@ -87,6 +88,7 @@ namespace TpIDS
             return new FilaNotificacion
             {
                 Id = notificacion.Id,
+                Notificacion = notificacion,
                 Usuario = notificacion.Usuario?.Username ?? string.Empty,
                 Tipo = notificacion.GetType().Name,
                 Mensaje = VistaPreviaNotificacion.Resumir(notificacion.Mensaje),
@@ -107,7 +109,7 @@ namespace TpIDS
 
             try
             {
-                notificacionBLL.CrearManual(usuarioDestino.Id, mensaje);
+                notificacionBLL.CrearManual(new Notificacion { Usuario = usuarioDestino, Mensaje = mensaje });
                 txtbMensajeNotificacion.Clear();
                 CargarNotificaciones();
                 UiDialogHelper.MostrarInfo("FormNotificationManagement.Success.NotificationCreated");
@@ -138,7 +140,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminada = notificacionBLL.Eliminar(fila.Id);
+                bool eliminada = notificacionBLL.Eliminar(fila.Notificacion);
                 if (eliminada)
                 {
                     CargarNotificaciones();
@@ -178,7 +180,7 @@ namespace TpIDS
 
             try
             {
-                notificacionBLL.MarcarLeida(fila.Id, fila.Leida);
+                notificacionBLL.MarcarLeida(fila.Notificacion, fila.Leida);
             }
             catch (Exception ex)
             {

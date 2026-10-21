@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,20 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerCategoriaProductoIdsPorPromocion(int promocionId, bool excluidos)
+        public List<CategoriaProducto> ObtenerCategoriasProductoPorPromocion(Promocion promocion, bool excluidos)
         {
-            return _dal.ObtenerCategoriaProductoIdsPorPromocion(promocionId, excluidos, _accesoDatos);
+            CategoriaProductoRepositorio repositorio = new CategoriaProductoRepositorio(_accesoDatos);
+            return _dal.ObtenerCategoriasProductoPorPromocion(promocion, excluidos, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarCategoriasProductoDePromocion(int promocionId, List<int> incluidos, List<int> excluidos)
+        public bool ReemplazarCategoriasProductoDePromocion(Promocion promocion, List<CategoriaProducto> incluidos, List<CategoriaProducto> excluidos)
         {
-            return _dal.ReemplazarCategoriasProductoDePromocion(promocionId, incluidos ?? new List<int>(), excluidos ?? new List<int>(), _accesoDatos);
+            return _dal.ReemplazarCategoriasProductoDePromocion(promocion, incluidos ?? new List<CategoriaProducto>(), excluidos ?? new List<CategoriaProducto>(), _accesoDatos);
         }
 
-        public int ContarPorCategoriaProducto(int categoriaProductoId)
+        public int ContarPorCategoriaProducto(CategoriaProducto categoriaProducto)
         {
-            return _dal.ContarPorCategoriaProducto(categoriaProductoId, _accesoDatos);
+            return _dal.ContarPorCategoriaProducto(categoriaProducto, _accesoDatos);
         }
     }
 }

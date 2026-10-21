@@ -56,7 +56,7 @@ namespace SERVICIOS
             _reloj = reloj;
         }
 
-        public async Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarAsync(ConsultaUbicacion consulta, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarAsync(IConsultaUbicacion consulta, CancellationToken cancellationToken)
         {
             if (consulta == null)
             {
@@ -494,7 +494,7 @@ namespace SERVICIOS
         // viewbox = oeste,norte,este,sur (lon,lat de dos esquinas). Devuelve null
         // si la zona no es un rectangulo valido (no finita, fuera de rango,
         // invertida/degenerada o que cruza el antimeridiano).
-        private static string FormatearViewbox(LimitesGeograficos zona)
+        private static string FormatearViewbox(ILimitesGeograficos zona)
         {
             if (zona == null
                 || !EsFinito(zona.Sur) || !EsFinito(zona.Norte) || !EsFinito(zona.Oeste) || !EsFinito(zona.Este)

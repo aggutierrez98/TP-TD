@@ -112,7 +112,7 @@ namespace TpIDS.IntegrationTests
                     Nombre = "ProductoTestAEliminar"
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.Producto { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
@@ -133,8 +133,8 @@ namespace TpIDS.IntegrationTests
                 repositorio.InsertarYObtenerId(new BE.Producto { CategoriaProducto = new BE.CategoriaProducto { Id = categoriaConProductosId }, Nombre = "ProductoTestContarCategoriaA" });
                 repositorio.InsertarYObtenerId(new BE.Producto { CategoriaProducto = new BE.CategoriaProducto { Id = categoriaConProductosId }, Nombre = "ProductoTestContarCategoriaB" });
 
-                Assert.AreEqual(2, repositorio.ContarPorCategoria(categoriaConProductosId));
-                Assert.AreEqual(0, repositorio.ContarPorCategoria(categoriaSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorCategoria(new BE.CategoriaProducto { Id = categoriaConProductosId }));
+                Assert.AreEqual(0, repositorio.ContarPorCategoria(new BE.CategoriaProducto { Id = categoriaSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }

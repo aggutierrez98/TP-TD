@@ -1,0 +1,88 @@
+@startuml
+' Fuente: diagramas/NEG02-movimientos/NEG02-movimientos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN10 Exportar movimientos seleccionados a PDF — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormMovimientos {
+    -btnExportarMovimientosPdf_Click(sender: object, e: EventArgs): void
+  }
+  class ArchivoPdf {
+    +Guardar(destino: string, contenido: byte[]): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+FormMovimientos -[hidden]right-> ArchivoPdf
+package "BLL" as L_BLL {
+  class MovimientoBLL {
+    +ExportarPdf(reporte: ReporteMovimientosPdf): byte[]
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+MovimientoBLL -[hidden]right-> SesionUsuarioExtensiones
+package "SERVICIOS" as L_SERVICIOS {
+  class "Sesion" as ISesion <<ISesion>> {
+    +HaySesionActiva(): bool
+  }
+  class "ReporteTabularPdfService" as IReporteTabularPdfService <<IReporteTabularPdfService>> {
+    +Generar(reporte: IReporteTabularPdf): byte[]
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ISesion -[hidden]right-> IReporteTabularPdfService
+package "BE" as L_BE {
+  class ReporteMovimientosPdf {
+    +Usuario: Usuario
+    +Titulo: string
+    +Encabezados: IReadOnlyList<string>
+    +Filas: IReadOnlyList<IReadOnlyList<string>>
+    +Filtros: IReadOnlyList<string>
+    +Logo: byte[]
+    +FechaGeneracion: DateTime
+    +EtiquetaFechaGeneracion: string
+    +EtiquetaCantidad: string
+    +FormatoPagina: string
+    +TextoContinuacion: string
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ReporteMovimientosPdf -[hidden]right-> Usuario
+FormMovimientos ..> ArchivoPdf : usa
+FormMovimientos ..> MovimientoBLL : usa
+MovimientoBLL ..> IReporteTabularPdfService : usa
+MovimientoBLL ..> ISesion : usa
+MovimientoBLL ..> SesionUsuarioExtensiones : usa
+MovimientoBLL ..> ReporteMovimientosPdf : datos
+ReporteMovimientosPdf --> Usuario : Usuario
+' ABSTRACCIONES/IReporteTabularPdfService.cs:22 IReporteTabularPdfService.Generar
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/MovimientoBLL.cs:52 MovimientoBLL.ExportarPdf
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' UI/ArchivoPdf.cs:8 ArchivoPdf.Guardar
+' UI/FormMovimientos.cs:264 FormMovimientos.btnExportarMovimientosPdf_Click
+@enduml

@@ -22,6 +22,7 @@ namespace BLL.Tests
 
             Assert.IsNotNull(resultado);
             Assert.AreEqual(7, resultado.Usuario.Id);
+            Assert.AreSame(fixture.Sesion.ObtenerUsuarioActual(), resultado.Usuario);
             Assert.AreEqual(1, fixture.UnidadFactory.CrearCallCount);
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls.Single().Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
@@ -101,7 +102,7 @@ namespace BLL.Tests
             fixture.Unidad.TarjetaDashboardRepo.Tarjetas.Add(10, new TarjetaDashboard { Id = 10, Dashboard = dashboardPropio, Tipo = TipoTarjetaDashboard.GastosPorCategoria, Orden = 1 });
 
             DashboardBLL sut = fixture.CreateSut();
-            bool resultado = sut.QuitarTarjeta(10);
+            bool resultado = sut.QuitarTarjeta(fixture.Unidad.TarjetaDashboardRepo.Tarjetas[10]);
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.TarjetaDashboardRepo.Tarjetas.ContainsKey(10));
@@ -118,7 +119,12 @@ namespace BLL.Tests
 
             DashboardBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarTarjeta(10));
+            TarjetaDashboard recibida = new TarjetaDashboard
+            {
+                Id = 10,
+                Dashboard = new Dashboard { Id = 2, Usuario = new Usuario { Id = 4 } }
+            };
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarTarjeta(recibida));
             Assert.IsTrue(fixture.Unidad.TarjetaDashboardRepo.Tarjetas.ContainsKey(10));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
@@ -129,7 +135,7 @@ namespace BLL.Tests
             DashboardFixture fixture = new DashboardFixture(usuarioActualId: 4);
             DashboardBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarTarjeta(999));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarTarjeta(new TarjetaDashboard { Id = 999 }));
         }
 
         [TestMethod]

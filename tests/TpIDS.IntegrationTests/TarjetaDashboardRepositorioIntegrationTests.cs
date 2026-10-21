@@ -61,7 +61,7 @@ namespace TpIDS.IntegrationTests
                     Orden = 1
                 });
 
-                System.Collections.Generic.List<BE.TarjetaDashboard> propias = repositorio.ObtenerPorDashboard(dashboardId);
+                System.Collections.Generic.List<BE.TarjetaDashboard> propias = repositorio.ObtenerPorDashboard(new DashboardRepositorio(accesoDatos).ObtenerPorId(dashboardId));
 
                 Assert.IsTrue(propias.Any(item => item.Id == idPropia));
                 Assert.IsFalse(propias.Any(item => item.Id == idAjena));
@@ -117,7 +117,7 @@ namespace TpIDS.IntegrationTests
                     Orden = 1
                 });
 
-                bool eliminada = repositorio.Eliminar(id);
+                bool eliminada = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminada);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

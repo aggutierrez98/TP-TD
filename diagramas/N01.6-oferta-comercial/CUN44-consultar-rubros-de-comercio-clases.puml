@@ -1,0 +1,63 @@
+@startuml
+' Fuente: diagramas/NEG10-rubros-comercio/NEG10-rubros-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN44 Consultar rubros de comercio — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionComercios {
+    -CargarRubros(rubroSeleccionadoId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class RubroComercioBLL {
+    +ObtenerTodas(): List<RubroComercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IRubroComercioRepositorio {
+    +ObtenerTodas(): List<RubroComercio>
+  }
+  class RubroComercioRepositorio {
+    +ObtenerTodas(): List<RubroComercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IRubroComercioRepositorio -[hidden]right-> RubroComercioRepositorio
+package "DAL" as L_DAL {
+  class RubroComercioDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<RubroComercio>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+FormGestionComercios ..> RubroComercioBLL : usa
+RubroComercioRepositorio ..> RubroComercioDAL : usa
+RubroComercioBLL ..> IRubroComercioRepositorio : usa
+RubroComercioRepositorio ..|> IRubroComercioRepositorio
+RubroComercioBLL ..> RubroComercio : datos
+' BLL/RubroComercioBLL.cs:27 RubroComercioBLL.ObtenerTodas
+' DAL/RubroComercioDAL.cs:48 RubroComercioDAL.ObtenerTodas
+' REPOSITORIO/IRubroComercioRepositorio.cs:10 IRubroComercioRepositorio.ObtenerTodas
+' REPOSITORIO/RubroComercioRepositorio.cs:28 RubroComercioRepositorio.ObtenerTodas
+' UI/FormGestionComercios.cs:280 FormGestionComercios.CargarRubros
+@enduml

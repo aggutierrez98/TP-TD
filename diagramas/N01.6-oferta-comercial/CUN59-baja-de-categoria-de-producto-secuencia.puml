@@ -1,0 +1,83 @@
+@startuml
+' Fuente: diagramas/NEG13-categorias-producto/NEG13-categorias-producto-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN59 Baja de categoría de producto — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionCategoriasProducto" as FormGestionCategoriasProducto
+control "CategoriaProductoBLL" as CategoriaProductoBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "CategoriaProductoRepositorio\n:ICategoriaProductoRepositorio" as ICategoriaProductoRepositorio
+participant "CategoriaProductoDAL" as CategoriaProductoDAL
+participant "ProductoRepositorio\n:IProductoRepositorio" as IProductoRepositorio
+participant "PromocionCategoriaProductoRepositorio\n:IPromocionCategoriaProductoRepositorio" as IPromocionCategoriaProductoRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionCategoriasProducto : El actor desea eliminar una categoría que ya no corresponde mantener.
+Actor -> FormGestionCategoriasProducto : selecciona una categoría del listado.
+Actor -> FormGestionCategoriasProducto : selecciona la acción «Eliminar».
+FormGestionCategoriasProducto --> Actor : solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se\neliminará la categoría seleccionada. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormGestionCategoriasProducto : confirma la eliminación.
+FormGestionCategoriasProducto -> CategoriaProductoBLL ++ : Eliminar(categoria: CategoriaProducto)
+CategoriaProductoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> CategoriaProductoBLL -- : IUnidadDeTrabajo
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : ObtenerPorId(id: int)
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : CategoriaProducto
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : CategoriaProducto
+CategoriaProductoBLL -> IProductoRepositorio ++ : ContarPorCategoria(categoria: CategoriaProducto)
+IProductoRepositorio --> CategoriaProductoBLL -- : int
+CategoriaProductoBLL -> IPromocionCategoriaProductoRepositorio ++ : ContarPorCategoriaProducto(categoriaProducto: CategoriaProducto)
+IPromocionCategoriaProductoRepositorio --> CategoriaProductoBLL -- : int
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : Eliminar(categoria: CategoriaProducto)
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : Eliminar(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : bool
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : bool
+CategoriaProductoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> CategoriaProductoBLL -- : void
+CategoriaProductoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> CategoriaProductoBLL -- : void
+CategoriaProductoBLL --> FormGestionCategoriasProducto -- : bool
+group Refrescar listado tras la operacion exitosa
+FormGestionCategoriasProducto -> CategoriaProductoBLL ++ : ObtenerTodas()
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : ObtenerTodas()
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : List<CategoriaProducto>
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : List<CategoriaProducto>
+CategoriaProductoBLL --> FormGestionCategoriasProducto -- : List<CategoriaProducto>
+end
+FormGestionCategoriasProducto --> Actor : elimina la categoría, limpia el campo «Nombre», actualiza el listado sin la categoría\neliminada e informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormGestionCategoriasProducto : Cancelar la operacion
+FormGestionCategoriasProducto --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/CategoriaProductoBLL.cs:104 CategoriaProductoBLL.Eliminar
+' BLL/CategoriaProductoBLL.cs:28 CategoriaProductoBLL.ObtenerTodas
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' DAL/CategoriaProductoDAL.cs:135 CategoriaProductoDAL.Eliminar
+' DAL/CategoriaProductoDAL.cs:19 CategoriaProductoDAL.ObtenerPorId
+' DAL/CategoriaProductoDAL.cs:48 CategoriaProductoDAL.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:23 CategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:28 CategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:43 CategoriaProductoRepositorio.Eliminar
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:10 ICategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:16 ICategoriaProductoRepositorio.Eliminar
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:8 ICategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IProductoRepositorio.cs:18 IProductoRepositorio.ContarPorCategoria
+' REPOSITORIO/IPromocionCategoriaProductoRepositorio.cs:13 IPromocionCategoriaProductoRepositorio.ContarPorCategoriaProducto
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionCategoriasProducto.cs:99 FormGestionCategoriasProducto.btnEliminarCategoriaProducto_Click
+@enduml

@@ -1,0 +1,641 @@
+@startuml N01.7-comunicacion-usuarios-clases
+title N01.7 · Comunicar información a los usuarios y dar seguimiento a su lectura\nDiagrama de clases por proceso de negocio
+caption CUN81, CUN82, CUN83, CUN84, CUN85, CUN86
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class FormDetalleNotificacion #DBEAFE {
+  }
+  class FormGestionNotificaciones #DBEAFE {
+    -CargarNotificaciones(): void
+    -btnAgregarNotificacion_Click(sender: object, e: EventArgs): void
+    -btnEliminarNotificacion_Click(sender: object, e: EventArgs): void
+    -dgvNotificaciones_CellValueChanged(sender: object, e:\nDataGridViewCellEventArgs): void
+  }
+  class FormMisNotificaciones #DBEAFE {
+    -CargarPaginaAsync(pagina: int, filtro: FiltroNotificacion): Task
+    -LeerSeleccionadaAsync(abrirDetalle: bool): Task
+  }
+  class UiDialogHelper #DBEAFE {
+    +Confirmar(messageKey: string): DialogResult
+    +Confirmar(messageKey: string, titleKey: string, icon:\nMessageBoxIcon): DialogResult
+    +MostrarError(messageKey: string): void
+    +MostrarInfo(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+    +Traducir(key: string): string
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  FormDetalleNotificacion -[hidden]right-> FormGestionNotificaciones
+  FormGestionNotificaciones -[hidden]right-> FormMisNotificaciones
+  FormMisNotificaciones -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class BitacoraBLL #DCFCE7 {
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  class NotificacionBLL #DCFCE7 {
+    +BuscarPersonales(filtro: FiltroNotificacion, pagina: int):\nPaginaNotificaciones
+    +CrearManual(recibida: Notificacion): Notificacion
+    +Eliminar(recibida: Notificacion): bool
+    +LeerPersonal(recibida: Notificacion): Notificacion
+    +MarcarLeida(recibida: Notificacion, leida: bool): bool
+    +ObtenerTodas(): List<Notificacion>
+  }
+  class SesionUsuarioExtensiones #DCFCE7 {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  BitacoraBLL -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> NotificacionBLL
+  NotificacionBLL -[hidden]right-> SesionUsuarioExtensiones
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  interface INotificacionRepositorio #FEF3C7 {
+    +Actualizar(notificacion: Notificacion): bool
+    +Eliminar(notificacion: Notificacion): bool
+    +InsertarYObtenerId(notificacion: Notificacion): int
+    +MarcarPersonalLeida(notificacion: Notificacion, usuario: Usuario):\nbool
+    +ObtenerPaginaPersonal(usuario: Usuario, filtro: FiltroNotificacion,\npagina: int): PaginaNotificaciones
+    +ObtenerPersonal(notificacion: Notificacion, usuario: Usuario):\nNotificacion
+    +ObtenerPorId(id: int): Notificacion
+    +ObtenerTodas(): List<Notificacion>
+  }
+  interface IRecordatorioCompraRepositorio #FEF3C7 {
+    +Actualizar(recordatorio: RecordatorioCompra): bool
+    +Eliminar(recordatorio: RecordatorioCompra): bool
+    +ObtenerPorId(id: int): RecordatorioCompra
+    +ObtenerTodas(): List<RecordatorioCompra>
+  }
+  interface IRecordatorioInversionRepositorio #FEF3C7 {
+    +Actualizar(recordatorio: RecordatorioInversion): bool
+    +Eliminar(recordatorio: RecordatorioInversion): bool
+    +ObtenerPorId(id: int): RecordatorioInversion
+    +ObtenerTodas(): List<RecordatorioInversion>
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +Notificaciones: INotificacionRepositorio
+    +RecordatoriosCompra: IRecordatorioCompraRepositorio
+    +RecordatoriosInversion: IRecordatorioInversionRepositorio
+    +Usuarios: IUsuarioRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IUsuarioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Usuario
+  }
+  class ItemListaRepositorio #FEF3C7 {
+  }
+  class NotificacionRepositorio #FEF3C7 {
+    +Actualizar(notificacion: Notificacion): bool
+    +Eliminar(notificacion: Notificacion): bool
+    +InsertarYObtenerId(notificacion: Notificacion): int
+    +MarcarPersonalLeida(notificacion: Notificacion, usuario: Usuario):\nbool
+    +ObtenerPaginaPersonal(usuario: Usuario, filtro: FiltroNotificacion,\npagina: int): PaginaNotificaciones
+    +ObtenerPersonal(recibida: Notificacion, usuario: Usuario):\nNotificacion
+    +ObtenerPorId(id: int): Notificacion
+    +ObtenerTodas(): List<Notificacion>
+  }
+  class PromocionRepositorio #FEF3C7 {
+  }
+  class RecordatorioCompraRepositorio #FEF3C7 {
+    +Actualizar(recordatorio: RecordatorioCompra): bool
+    +Eliminar(recordatorio: RecordatorioCompra): bool
+    +ObtenerPorId(id: int): RecordatorioCompra
+    +ObtenerTodas(): List<RecordatorioCompra>
+  }
+  class RecordatorioInversionRepositorio #FEF3C7 {
+    +Actualizar(recordatorio: RecordatorioInversion): bool
+    +Eliminar(recordatorio: RecordatorioInversion): bool
+    +ObtenerPorId(id: int): RecordatorioInversion
+    +ObtenerTodas(): List<RecordatorioInversion>
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  class UsuarioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Usuario
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  INotificacionRepositorio -[hidden]right-> IRecordatorioCompraRepositorio
+  IRecordatorioCompraRepositorio -[hidden]right-> IRecordatorioInversionRepositorio
+  IRecordatorioInversionRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> IUsuarioRepositorio
+  IUsuarioRepositorio -[hidden]right-> ItemListaRepositorio
+  ItemListaRepositorio -[hidden]right-> NotificacionRepositorio
+  NotificacionRepositorio -[hidden]right-> PromocionRepositorio
+  PromocionRepositorio -[hidden]right-> RecordatorioCompraRepositorio
+  RecordatorioCompraRepositorio -[hidden]right-> RecordatorioInversionRepositorio
+  RecordatorioInversionRepositorio -[hidden]right-> UnidadDeTrabajoFactory
+  INotificacionRepositorio -[hidden]down-> UnidadDeTrabajoSqlServer
+  UnidadDeTrabajoSqlServer -[hidden]right-> UsuarioRepositorio
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class NotificacionDAL #FFEDD5 {
+    +Actualizar(notificacion: Notificacion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(notificacion: Notificacion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +InsertarYObtenerId(notificacion: Notificacion, accesoDatos:\nAccesoDatosSqlServer): int
+    +MarcarPersonalLeida(notificacion: Notificacion, usuario: Usuario,\naccesoDatos: AccesoDatosSqlServer): bool
+    +ObtenerPaginaPersonal(usuario: Usuario, filtro: FiltroNotificacion,\npagina: int, accesoDatos: AccesoDatosSqlServer): PaginaNotificaciones
+    +ObtenerPersonal(notificacion: Notificacion, usuario: Usuario,\naccesoDatos: AccesoDatosSqlServer): Notificacion
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nNotificacion
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<Notificacion>
+  }
+  class PromocionDAL #FFEDD5 {
+  }
+  class RecordatorioCompraDAL #FFEDD5 {
+    +Actualizar(recordatorio: RecordatorioCompra, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(recordatorio: RecordatorioCompra, accesoDatos:\nAccesoDatosSqlServer): bool
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nRecordatorioCompra
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer):\nList<RecordatorioCompra>
+  }
+  class RecordatorioInversionDAL #FFEDD5 {
+    +Actualizar(recordatorio: RecordatorioInversion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +Eliminar(recordatorio: RecordatorioInversion, accesoDatos:\nAccesoDatosSqlServer): bool
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nRecordatorioInversion
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer):\nList<RecordatorioInversion>
+  }
+  class UsuarioDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Usuario
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> NotificacionDAL
+  NotificacionDAL -[hidden]right-> PromocionDAL
+  PromocionDAL -[hidden]right-> RecordatorioCompraDAL
+  RecordatorioCompraDAL -[hidden]right-> RecordatorioInversionDAL
+  RecordatorioInversionDAL -[hidden]right-> UsuarioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class CategoriaProducto #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class Comercio #F3E8FF {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  enum DiaSemana #F3E8FF {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+  class EntidadFinanciera #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class FiltroNotificacion #F3E8FF {
+    +FechaDesde: DateTime?
+    +FechaHasta: DateTime?
+  }
+  class ItemLista #F3E8FF {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class ListaDeCompras #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +FechaCreacion: DateTime
+    +ItemsLista: List<ItemLista>
+  }
+  class MedioPago #F3E8FF {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad #F3E8FF {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+  class Notificacion #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Mensaje: string
+    +Fecha: DateTime
+    +Leida: bool
+    +TipoAutomatico: TipoNotificacionAutomatica?
+    +FechaJornada: DateTime?
+    +ClaveEjemplo: string
+  }
+  class PaginaNotificaciones #F3E8FF {
+    +Elementos: List<Notificacion>
+    +Total: int
+    +Pagina: int
+    +TotalPaginas: int
+  }
+  class Producto #F3E8FF {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class Promocion #F3E8FF {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RecordatorioCompra #F3E8FF {
+    +ItemLista: ItemLista
+    +Promocion: Promocion
+    +FechaVencimiento: DateTime?
+  }
+  class RecordatorioInversion #F3E8FF {
+  }
+  class RubroComercio #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  enum TipoMedioPago #F3E8FF {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+  enum TipoNotificacionAutomatica #F3E8FF {
+    Compras
+    Inversiones
+    Movimientos
+  }
+  class Usuario #F3E8FF {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaProducto -[hidden]right-> Comercio
+  Comercio -[hidden]right-> DiaSemana
+  DiaSemana -[hidden]right-> EntidadFinanciera
+  EntidadFinanciera -[hidden]right-> FiltroNotificacion
+  FiltroNotificacion -[hidden]right-> ItemLista
+  ItemLista -[hidden]right-> ListaDeCompras
+  ListaDeCompras -[hidden]right-> MedioPago
+  MedioPago -[hidden]right-> MedioPagoEntidad
+  MedioPagoEntidad -[hidden]right-> Notificacion
+  Notificacion -[hidden]right-> PaginaNotificaciones
+  PaginaNotificaciones -[hidden]right-> Producto
+  CategoriaProducto -[hidden]down-> Promocion
+  Promocion -[hidden]right-> RecordatorioCompra
+  RecordatorioCompra -[hidden]right-> RecordatorioInversion
+  RecordatorioInversion -[hidden]right-> RubroComercio
+  RubroComercio -[hidden]right-> TipoMedioPago
+  TipoMedioPago -[hidden]right-> TipoNotificacionAutomatica
+  TipoNotificacionAutomatica -[hidden]right-> Usuario
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class Sesion #CFFAFE {
+    +GetUsuarioActual(): IUsuarioAutenticado
+    +HaySesionActiva(): bool
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IdiomaService -[hidden]right-> Sesion
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface ISesion #F1F5F9 {
+    +GetUsuarioActual(): IUsuarioAutenticado
+    +HaySesionActiva(): bool
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  interface IUsuarioAutenticado #F1F5F9 {
+    +Id: int
+    +Username: string
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IIdioma -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> ISesion
+  ISesion -[hidden]right-> ITraduccion
+  ITraduccion -[hidden]right-> IUsuarioAutenticado
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+FormDetalleNotificacion -[hidden]down-> BitacoraBLL
+BitacoraBLL -[hidden]down-> INotificacionRepositorio
+UnidadDeTrabajoSqlServer -[hidden]down-> AccesoDatosSqlServer
+AccesoDatosSqlServer -[hidden]down-> CategoriaProducto
+Promocion -[hidden]down-> IdiomaService
+IdiomaService -[hidden]down-> IIdioma
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+Comercio -[norank]-> RubroComercio : RubroComercio
+EntidadFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+FormDetalleNotificacion .[norank].> Notificacion
+FormGestionNotificaciones .[norank].> Notificacion
+FormGestionNotificaciones .[norank].> NotificacionBLL
+FormGestionNotificaciones .[norank].> UiDialogHelper
+FormGestionNotificaciones .[norank].> UiExceptionHandler
+FormMisNotificaciones .[norank].> FiltroNotificacion
+FormMisNotificaciones .[norank].> FormDetalleNotificacion
+FormMisNotificaciones .[norank].> ISesion
+FormMisNotificaciones .[norank].> NotificacionBLL
+FormMisNotificaciones .[norank].> PaginaNotificaciones
+FormMisNotificaciones .[norank].> UiDialogHelper
+FormMisNotificaciones .[norank].> UiExceptionHandler
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> INotificacionRepositorio : Notificaciones
+IUnidadDeTrabajo -[norank]-> IRecordatorioCompraRepositorio : RecordatoriosCompra
+IUnidadDeTrabajo -[norank]-> IRecordatorioInversionRepositorio : RecordatoriosInversion
+IUnidadDeTrabajo -[norank]-> IUsuarioRepositorio : Usuarios
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+ItemLista -[norank]-> ListaDeCompras : ListaDeCompras
+ItemListaRepositorio .[norank].> AccesoDatosSqlServer
+ListaDeCompras -[norank]-> "*" ItemLista : ItemsLista
+ListaDeCompras -[norank]-> Usuario : Usuario
+MedioPago -[norank]-> TipoMedioPago : Tipo
+MedioPagoEntidad -[norank]-> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad -[norank]-> MedioPago : MedioPago
+Notificacion -[norank]-> TipoNotificacionAutomatica : TipoAutomatico
+Notificacion -[norank]-> Usuario : Usuario
+NotificacionBLL .[norank].> FiltroNotificacion
+NotificacionBLL .[norank].> IBitacoraBLL
+NotificacionBLL .[norank].> INotificacionRepositorio
+NotificacionBLL .[norank].> IRecordatorioCompraRepositorio
+NotificacionBLL .[norank].> IRecordatorioInversionRepositorio
+NotificacionBLL .[norank].> ISesion
+NotificacionBLL .[norank].> IUnidadDeTrabajo
+NotificacionBLL .[norank].> IUnidadDeTrabajoFactory
+NotificacionBLL .[norank].> IUsuarioRepositorio
+NotificacionBLL .[norank].> Notificacion
+NotificacionBLL .[norank].> SesionUsuarioExtensiones
+NotificacionDAL .[norank].> AccesoDatosSqlServer
+NotificacionRepositorio .[norank].> AccesoDatosSqlServer
+NotificacionRepositorio .[norank].> ItemListaRepositorio
+NotificacionRepositorio .[norank].> NotificacionDAL
+NotificacionRepositorio .[norank].> PromocionRepositorio
+NotificacionRepositorio .[norank].> UsuarioRepositorio
+NotificacionRepositorio .[norank].|> INotificacionRepositorio
+PaginaNotificaciones -[norank]-> Notificacion : Elementos
+PaginaNotificaciones -[norank]-> "*" Notificacion : Elementos
+Producto -[norank]-> CategoriaProducto : CategoriaProducto
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasExcluidas
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasIncluidas
+Promocion -[norank]-> "*" Comercio : Comercios
+Promocion -[norank]-> "*" DiaSemana : DiasSemana
+Promocion -[norank]-> "*" EntidadFinanciera : EntidadesFinancieras
+Promocion -[norank]-> "*" MedioPago : MediosPago
+Promocion -[norank]-> "*" Producto : ProductosExcluidos
+Promocion -[norank]-> "*" Producto : ProductosIncluidos
+Promocion -[norank]-> "*" RubroComercio : RubrosComercio
+PromocionDAL .[norank].> AccesoDatosSqlServer
+PromocionRepositorio .[norank].> AccesoDatosSqlServer
+PromocionRepositorio .[norank].> PromocionDAL
+RecordatorioCompra -[norank]-> ItemLista : ItemLista
+RecordatorioCompra -[norank]-> Promocion : Promocion
+RecordatorioCompra -[norank]-|> Notificacion
+RecordatorioCompraDAL .[norank].> AccesoDatosSqlServer
+RecordatorioCompraRepositorio .[norank].> AccesoDatosSqlServer
+RecordatorioCompraRepositorio .[norank].> ItemListaRepositorio
+RecordatorioCompraRepositorio .[norank].> PromocionRepositorio
+RecordatorioCompraRepositorio .[norank].> RecordatorioCompraDAL
+RecordatorioCompraRepositorio .[norank].> UsuarioRepositorio
+RecordatorioCompraRepositorio .[norank].|> IRecordatorioCompraRepositorio
+RecordatorioInversion -[norank]-|> Notificacion
+RecordatorioInversionDAL .[norank].> AccesoDatosSqlServer
+RecordatorioInversionRepositorio .[norank].> AccesoDatosSqlServer
+RecordatorioInversionRepositorio .[norank].> RecordatorioInversionDAL
+RecordatorioInversionRepositorio .[norank].> UsuarioRepositorio
+RecordatorioInversionRepositorio .[norank].|> IRecordatorioInversionRepositorio
+Sesion .[norank].> IUsuarioAutenticado
+Sesion .[norank].|> ISesion
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> INotificacionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IRecordatorioCompraRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IRecordatorioInversionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IUsuarioRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+Usuario .[norank].|> IUsuarioAutenticado
+UsuarioDAL .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> UsuarioDAL
+UsuarioRepositorio .[norank].|> IUsuarioRepositorio
+' Trazabilidad de cobertura: CUN81, CUN82, CUN83, CUN84, CUN85, CUN86
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: BE/CategoriaProducto.cs :: CategoriaProducto
+' Participante: BE/Comercio.cs :: Comercio
+' Participante: BE/DiaSemana.cs :: DiaSemana
+' Participante: BE/EntidadFinanciera.cs :: EntidadFinanciera
+' Participante: BE/FiltroNotificacion.cs :: FiltroNotificacion
+' Participante: UI/FormDetalleNotificacion.cs :: FormDetalleNotificacion
+' Participante: UI/FormGestionNotificaciones.cs :: FormGestionNotificaciones
+' Participante: UI/FormMisNotificaciones.cs :: FormMisNotificaciones
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: REPOSITORIO/INotificacionRepositorio.cs :: INotificacionRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: REPOSITORIO/IRecordatorioCompraRepositorio.cs :: IRecordatorioCompraRepositorio
+' Participante: REPOSITORIO/IRecordatorioInversionRepositorio.cs :: IRecordatorioInversionRepositorio
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: ABSTRACCIONES/IUsuarioAutenticado.cs :: IUsuarioAutenticado
+' Participante: REPOSITORIO/IUsuarioRepositorio.cs :: IUsuarioRepositorio
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BE/ItemLista.cs :: ItemLista
+' Participante: REPOSITORIO/ItemListaRepositorio.cs :: ItemListaRepositorio
+' Participante: BE/ListaDeCompras.cs :: ListaDeCompras
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: BE/MedioPago.cs :: MedioPago
+' Participante: BE/MedioPagoEntidad.cs :: MedioPagoEntidad
+' Participante: BE/Notificacion.cs :: Notificacion
+' Participante: BLL/NotificacionBLL.cs :: NotificacionBLL
+' Participante: DAL/NotificacionDAL.cs :: NotificacionDAL
+' Participante: REPOSITORIO/NotificacionRepositorio.cs :: NotificacionRepositorio
+' Participante: BE/PaginaNotificaciones.cs :: PaginaNotificaciones
+' Participante: BE/Producto.cs :: Producto
+' Participante: BE/Promocion.cs :: Promocion
+' Participante: DAL/PromocionDAL.cs :: PromocionDAL
+' Participante: REPOSITORIO/PromocionRepositorio.cs :: PromocionRepositorio
+' Participante: BE/RecordatorioCompra.cs :: RecordatorioCompra
+' Participante: DAL/RecordatorioCompraDAL.cs :: RecordatorioCompraDAL
+' Participante: REPOSITORIO/RecordatorioCompraRepositorio.cs :: RecordatorioCompraRepositorio
+' Participante: BE/RecordatorioInversion.cs :: RecordatorioInversion
+' Participante: DAL/RecordatorioInversionDAL.cs :: RecordatorioInversionDAL
+' Participante: REPOSITORIO/RecordatorioInversionRepositorio.cs :: RecordatorioInversionRepositorio
+' Participante: BE/RubroComercio.cs :: RubroComercio
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BLL/SesionUsuarioExtensiones.cs :: SesionUsuarioExtensiones
+' Participante: BE/TipoMedioPago.cs :: TipoMedioPago
+' Participante: BE/TipoNotificacionAutomatica.cs :: TipoNotificacionAutomatica
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' Participante: BE/Usuario.cs :: Usuario
+' Participante: DAL/UsuarioDAL.cs :: UsuarioDAL
+' Participante: REPOSITORIO/UsuarioRepositorio.cs :: UsuarioRepositorio
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' ABSTRACCIONES/ISesion.cs:9 ISesion.GetUsuarioActual
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/NotificacionBLL.cs:105 NotificacionBLL.CrearManual
+' BLL/NotificacionBLL.cs:156 NotificacionBLL.MarcarLeida
+' BLL/NotificacionBLL.cs:220 NotificacionBLL.Eliminar
+' BLL/NotificacionBLL.cs:25 NotificacionBLL.BuscarPersonales
+' BLL/NotificacionBLL.cs:37 NotificacionBLL.LeerPersonal
+' BLL/NotificacionBLL.cs:94 NotificacionBLL.ObtenerTodas
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/NotificacionDAL.cs:10 NotificacionDAL.ObtenerPersonal
+' DAL/NotificacionDAL.cs:104 NotificacionDAL.ObtenerPaginaPersonal
+' DAL/NotificacionDAL.cs:219 NotificacionDAL.ObtenerPorId
+' DAL/NotificacionDAL.cs:284 NotificacionDAL.ObtenerTodas
+' DAL/NotificacionDAL.cs:315 NotificacionDAL.InsertarYObtenerId
+' DAL/NotificacionDAL.cs:347 NotificacionDAL.Actualizar
+' DAL/NotificacionDAL.cs:380 NotificacionDAL.Eliminar
+' DAL/NotificacionDAL.cs:92 NotificacionDAL.MarcarPersonalLeida
+' DAL/RecordatorioCompraDAL.cs:159 RecordatorioCompraDAL.Actualizar
+' DAL/RecordatorioCompraDAL.cs:196 RecordatorioCompraDAL.Eliminar
+' DAL/RecordatorioCompraDAL.cs:28 RecordatorioCompraDAL.ObtenerPorId
+' DAL/RecordatorioCompraDAL.cs:93 RecordatorioCompraDAL.ObtenerTodas
+' DAL/RecordatorioInversionDAL.cs:152 RecordatorioInversionDAL.Actualizar
+' DAL/RecordatorioInversionDAL.cs:185 RecordatorioInversionDAL.Eliminar
+' DAL/RecordatorioInversionDAL.cs:24 RecordatorioInversionDAL.ObtenerPorId
+' DAL/RecordatorioInversionDAL.cs:89 RecordatorioInversionDAL.ObtenerTodas
+' DAL/UsuarioDAL.cs:26 UsuarioDAL.ObtenerPorId
+' REPOSITORIO/INotificacionRepositorio.cs:13 INotificacionRepositorio.ObtenerPersonal
+' REPOSITORIO/INotificacionRepositorio.cs:15 INotificacionRepositorio.MarcarPersonalLeida
+' REPOSITORIO/INotificacionRepositorio.cs:17 INotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/INotificacionRepositorio.cs:21 INotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/INotificacionRepositorio.cs:23 INotificacionRepositorio.InsertarYObtenerId
+' REPOSITORIO/INotificacionRepositorio.cs:25 INotificacionRepositorio.Actualizar
+' REPOSITORIO/INotificacionRepositorio.cs:27 INotificacionRepositorio.Eliminar
+' REPOSITORIO/INotificacionRepositorio.cs:9 INotificacionRepositorio.ObtenerPaginaPersonal
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:12 IRecordatorioCompraRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:16 IRecordatorioCompraRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:18 IRecordatorioCompraRepositorio.Eliminar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:8 IRecordatorioCompraRepositorio.ObtenerPorId
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:12 IRecordatorioInversionRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:16 IRecordatorioInversionRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:18 IRecordatorioInversionRepositorio.Eliminar
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:8 IRecordatorioInversionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IUsuarioRepositorio.cs:9 IUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/NotificacionRepositorio.cs:10 NotificacionRepositorio.ObtenerPersonal
+' REPOSITORIO/NotificacionRepositorio.cs:16 NotificacionRepositorio.MarcarPersonalLeida
+' REPOSITORIO/NotificacionRepositorio.cs:17 NotificacionRepositorio.ObtenerPaginaPersonal
+' REPOSITORIO/NotificacionRepositorio.cs:46 NotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/NotificacionRepositorio.cs:60 NotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/NotificacionRepositorio.cs:82 NotificacionRepositorio.InsertarYObtenerId
+' REPOSITORIO/NotificacionRepositorio.cs:87 NotificacionRepositorio.Actualizar
+' REPOSITORIO/NotificacionRepositorio.cs:92 NotificacionRepositorio.Eliminar
+' REPOSITORIO/RecordatorioCompraRepositorio.cs:23 RecordatorioCompraRepositorio.ObtenerPorId
+' REPOSITORIO/RecordatorioCompraRepositorio.cs:37 RecordatorioCompraRepositorio.ObtenerTodas
+' REPOSITORIO/RecordatorioCompraRepositorio.cs:68 RecordatorioCompraRepositorio.Actualizar
+' REPOSITORIO/RecordatorioCompraRepositorio.cs:73 RecordatorioCompraRepositorio.Eliminar
+' REPOSITORIO/RecordatorioInversionRepositorio.cs:23 RecordatorioInversionRepositorio.ObtenerPorId
+' REPOSITORIO/RecordatorioInversionRepositorio.cs:37 RecordatorioInversionRepositorio.ObtenerTodas
+' REPOSITORIO/RecordatorioInversionRepositorio.cs:59 RecordatorioInversionRepositorio.Actualizar
+' REPOSITORIO/RecordatorioInversionRepositorio.cs:64 RecordatorioInversionRepositorio.Eliminar
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' REPOSITORIO/UsuarioRepositorio.cs:24 UsuarioRepositorio.ObtenerPorId
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' SERVICIOS/Sesion.cs:54 Sesion.GetUsuarioActual
+' SERVICIOS/Sesion.cs:89 Sesion.HaySesionActiva
+' UI/FormGestionNotificaciones.cs:100 FormGestionNotificaciones.btnAgregarNotificacion_Click
+' UI/FormGestionNotificaciones.cs:123 FormGestionNotificaciones.btnEliminarNotificacion_Click
+' UI/FormGestionNotificaciones.cs:164 FormGestionNotificaciones.dgvNotificaciones_CellValueChanged
+' UI/FormGestionNotificaciones.cs:61 FormGestionNotificaciones.CargarNotificaciones
+' UI/FormMisNotificaciones.cs:32 FormMisNotificaciones.CargarPaginaAsync
+' UI/FormMisNotificaciones.cs:71 FormMisNotificaciones.LeerSeleccionadaAsync
+' UI/UiDialogHelper.cs:10 UiDialogHelper.MostrarInfo
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:40 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:45 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:54 UiDialogHelper.Traducir
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

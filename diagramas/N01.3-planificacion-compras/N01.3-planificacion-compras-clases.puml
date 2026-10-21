@@ -1,0 +1,508 @@
+@startuml N01.3-planificacion-compras-clases
+title N01.3 · Planificar y dar seguimiento a las compras personales\nDiagrama de clases por proceso de negocio
+caption CUN68, CUN69, CUN70, CUN71, CUN78, CUN79, CUN80
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class CoordinadorBusquedaUbicacion #DBEAFE {
+    +BuscarAsync(consulta: IConsultaUbicacion): Task<ResultadoCoordinado>
+    +Invalidar(): void
+  }
+  class FilaItemLista #DBEAFE {
+    +Item: ItemLista
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class FilaZonaUsuario #DBEAFE {
+    +Id: int
+    +Nombre: string
+    +RadioMetros: int
+  }
+  class FormListaDeCompras #DBEAFE {
+    -CargarLista(): void
+    -btnAgregarItem_Click(sender: object, e: EventArgs): void
+    -btnEliminarItem_Click(sender: object, e: EventArgs): void
+    -dgvItems_CellValueChanged(sender: object, e:\nDataGridViewCellEventArgs): void
+  }
+  class FormMisZonas #DBEAFE {
+    -CargarZonas(zonaSeleccionadaId: int?): void
+    -btnAgregarZona_Click(sender: object, e: EventArgs): void
+    -btnQuitarZona_Click(sender: object, e: EventArgs): void
+  }
+  class ResultadoCoordinado #DBEAFE {
+    +ConCoincidencias(coincidencias:\nIReadOnlyList<IResultadoBusquedaUbicacion>): ResultadoCoordinado
+    +ConError(estado: EstadoBusquedaUbicacion): ResultadoCoordinado
+    +De(tipo: TipoResultadoBusqueda): ResultadoCoordinado
+  }
+  class UiDialogHelper #DBEAFE {
+    +Confirmar(messageKey: string): DialogResult
+    +Confirmar(messageKey: string, titleKey: string, icon:\nMessageBoxIcon): DialogResult
+    +MostrarError(messageKey: string): void
+    +MostrarInfo(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CoordinadorBusquedaUbicacion -[hidden]right-> FilaItemLista
+  FilaItemLista -[hidden]right-> FilaZonaUsuario
+  FilaZonaUsuario -[hidden]right-> FormListaDeCompras
+  FormListaDeCompras -[hidden]right-> FormMisZonas
+  FormMisZonas -[hidden]right-> ResultadoCoordinado
+  ResultadoCoordinado -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class BitacoraBLL #DCFCE7 {
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class ListaDeComprasBLL #DCFCE7 {
+    +AgregarItem(item: ItemLista): ItemLista
+    +EliminarItem(recibido: ItemLista): bool
+    +MarcarComprado(recibido: ItemLista, comprado: bool): bool
+    +ObtenerOCrearParaUsuarioActual(): ListaDeCompras
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  class SesionUsuarioExtensiones #DCFCE7 {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class ZonaUsuarioBLL #DCFCE7 {
+    +Crear(nombre: string, latitud: decimal?, longitud: decimal?,\nradioMetros: int): ZonaUsuario
+    +Eliminar(recibida: ZonaUsuario): bool
+    +ObtenerMisZonas(): List<ZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  BitacoraBLL -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> ListaDeComprasBLL
+  ListaDeComprasBLL -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> SesionUsuarioExtensiones
+  SesionUsuarioExtensiones -[hidden]right-> ZonaUsuarioBLL
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  interface IItemListaRepositorio #FEF3C7 {
+    +Actualizar(itemLista: ItemLista): bool
+    +Eliminar(item: ItemLista): bool
+    +InsertarYObtenerId(itemLista: ItemLista): int
+    +ObtenerPorId(id: int): ItemLista
+  }
+  interface IListaDeComprasRepositorio #FEF3C7 {
+    +InsertarYObtenerId(listaDeCompras: ListaDeCompras): int
+    +ObtenerPorId(id: int): ListaDeCompras
+    +ObtenerPorUsuario(usuario: Usuario): List<ListaDeCompras>
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +ItemsLista: IItemListaRepositorio
+    +ListasDeCompras: IListaDeComprasRepositorio
+    +ZonasUsuario: IZonaUsuarioRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IZonaUsuarioRepositorio #FEF3C7 {
+    +Eliminar(zona: ZonaUsuario): bool
+    +InsertarYObtenerId(zona: ZonaUsuario): int
+    +ObtenerPorId(id: int): ZonaUsuario
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+  class ItemListaRepositorio #FEF3C7 {
+    +Actualizar(itemLista: ItemLista): bool
+    +Eliminar(item: ItemLista): bool
+    +InsertarYObtenerId(itemLista: ItemLista): int
+    +ObtenerPorId(id: int): ItemLista
+  }
+  class ListaDeComprasRepositorio #FEF3C7 {
+    +InsertarYObtenerId(listaDeCompras: ListaDeCompras): int
+    +ObtenerPorId(id: int): ListaDeCompras
+    +ObtenerPorUsuario(usuario: Usuario): List<ListaDeCompras>
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  class UsuarioRepositorio #FEF3C7 {
+  }
+  class ZonaUsuarioRepositorio #FEF3C7 {
+    +Eliminar(zona: ZonaUsuario): bool
+    +InsertarYObtenerId(zona: ZonaUsuario): int
+    +ObtenerPorId(id: int): ZonaUsuario
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IItemListaRepositorio -[hidden]right-> IListaDeComprasRepositorio
+  IListaDeComprasRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> IZonaUsuarioRepositorio
+  IZonaUsuarioRepositorio -[hidden]right-> ItemListaRepositorio
+  ItemListaRepositorio -[hidden]right-> ListaDeComprasRepositorio
+  ListaDeComprasRepositorio -[hidden]right-> UnidadDeTrabajoFactory
+  UnidadDeTrabajoFactory -[hidden]right-> UnidadDeTrabajoSqlServer
+  UnidadDeTrabajoSqlServer -[hidden]right-> UsuarioRepositorio
+  IItemListaRepositorio -[hidden]down-> ZonaUsuarioRepositorio
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class ItemListaDAL #FFEDD5 {
+    +Actualizar(itemLista: ItemLista, accesoDatos: AccesoDatosSqlServer):\nbool
+    +Eliminar(item: ItemLista, accesoDatos: AccesoDatosSqlServer): bool
+    +InsertarYObtenerId(itemLista: ItemLista, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): ItemLista
+    +ObtenerPorListaDeCompras(lista: ListaDeCompras, accesoDatos:\nAccesoDatosSqlServer): List<ItemLista>
+  }
+  class ListaDeComprasDAL #FFEDD5 {
+    +InsertarYObtenerId(listaDeCompras: ListaDeCompras, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer):\nListaDeCompras
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ListaDeCompras>
+  }
+  class UsuarioDAL #FFEDD5 {
+  }
+  class ZonaUsuarioDAL #FFEDD5 {
+    +Eliminar(zona: ZonaUsuario, accesoDatos: AccesoDatosSqlServer): bool
+    +InsertarYObtenerId(zona: ZonaUsuario, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): ZonaUsuario
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> ItemListaDAL
+  ItemListaDAL -[hidden]right-> ListaDeComprasDAL
+  ListaDeComprasDAL -[hidden]right-> UsuarioDAL
+  UsuarioDAL -[hidden]right-> ZonaUsuarioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class ItemLista #F3E8FF {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class ListaDeCompras #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +FechaCreacion: DateTime
+    +ItemsLista: List<ItemLista>
+  }
+  class Usuario #F3E8FF {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  class ZonaUsuario #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +Latitud: decimal
+    +Longitud: decimal
+    +RadioMetros: int
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  ItemLista -[hidden]right-> ListaDeCompras
+  ListaDeCompras -[hidden]right-> Usuario
+  Usuario -[hidden]right-> ZonaUsuario
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class NominatimBusquedaUbicacionesService #CFFAFE {
+    +BuscarAsync(consulta: IConsultaUbicacion, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IResultadoBusquedaUbicacion>>
+  }
+  class Sesion #CFFAFE {
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  IdiomaService -[hidden]right-> NominatimBusquedaUbicacionesService
+  NominatimBusquedaUbicacionesService -[hidden]right-> Sesion
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  enum EstadoBusquedaUbicacion #F1F5F9 {
+    ConexionFallida
+    TiempoAgotado
+    LimiteExcedido
+    RespuestaInvalida
+    ConfiguracionInvalida
+  }
+  interface IBusquedaUbicacionesService #F1F5F9 {
+    +BuscarAsync(consulta: IConsultaUbicacion, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IResultadoBusquedaUbicacion>>
+  }
+  interface IConsultaUbicacion #F1F5F9 {
+    +Texto: string
+    +Idioma: string
+    +ZonaPreferida: ILimitesGeograficos
+  }
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+  }
+  interface ILimitesGeograficos #F1F5F9 {
+    +Sur: double
+    +Oeste: double
+    +Norte: double
+    +Este: double
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface IResultadoBusquedaUbicacion #F1F5F9 {
+    +Descripcion: string
+    +Latitud: double
+    +Longitud: double
+    +Tipo: string
+    +Limites: ILimitesGeograficos
+  }
+  interface ISesion #F1F5F9 {
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  EstadoBusquedaUbicacion -[hidden]right-> IBusquedaUbicacionesService
+  IBusquedaUbicacionesService -[hidden]right-> IConsultaUbicacion
+  IConsultaUbicacion -[hidden]right-> IIdioma
+  IIdioma -[hidden]right-> ILimitesGeograficos
+  ILimitesGeograficos -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> IResultadoBusquedaUbicacion
+  IResultadoBusquedaUbicacion -[hidden]right-> ISesion
+  ISesion -[hidden]right-> ITraduccion
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+CoordinadorBusquedaUbicacion -[hidden]down-> BitacoraBLL
+BitacoraBLL -[hidden]down-> IItemListaRepositorio
+ZonaUsuarioRepositorio -[hidden]down-> AccesoDatosSqlServer
+AccesoDatosSqlServer -[hidden]down-> ItemLista
+ItemLista -[hidden]down-> IdiomaService
+IdiomaService -[hidden]down-> EstadoBusquedaUbicacion
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+CoordinadorBusquedaUbicacion .[norank].> IBusquedaUbicacionesService
+CoordinadorBusquedaUbicacion .[norank].> ResultadoCoordinado
+FilaItemLista -[norank]-> ItemLista : Item
+FormListaDeCompras .[norank].> FilaItemLista
+FormListaDeCompras .[norank].> ItemLista
+FormListaDeCompras .[norank].> ListaDeCompras
+FormListaDeCompras .[norank].> ListaDeComprasBLL
+FormListaDeCompras .[norank].> UiDialogHelper
+FormListaDeCompras .[norank].> UiExceptionHandler
+FormMisZonas .[norank].> CoordinadorBusquedaUbicacion
+FormMisZonas .[norank].> FilaZonaUsuario
+FormMisZonas .[norank].> IResultadoBusquedaUbicacion
+FormMisZonas .[norank].> IdiomaService
+FormMisZonas .[norank].> UiDialogHelper
+FormMisZonas .[norank].> UiExceptionHandler
+FormMisZonas .[norank].> ZonaUsuario
+FormMisZonas .[norank].> ZonaUsuarioBLL
+IConsultaUbicacion -[norank]-> ILimitesGeograficos : ZonaPreferida
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+IResultadoBusquedaUbicacion -[norank]-> ILimitesGeograficos : Limites
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> IItemListaRepositorio : ItemsLista
+IUnidadDeTrabajo -[norank]-> IListaDeComprasRepositorio : ListasDeCompras
+IUnidadDeTrabajo -[norank]-> IZonaUsuarioRepositorio : ZonasUsuario
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+ItemLista -[norank]-> ListaDeCompras : ListaDeCompras
+ItemListaDAL .[norank].> AccesoDatosSqlServer
+ItemListaRepositorio .[norank].> AccesoDatosSqlServer
+ItemListaRepositorio .[norank].> ItemListaDAL
+ItemListaRepositorio .[norank].> ListaDeComprasRepositorio
+ItemListaRepositorio .[norank].|> IItemListaRepositorio
+ListaDeCompras -[norank]-> ItemLista : ItemsLista
+ListaDeCompras -[norank]-> "*" ItemLista : ItemsLista
+ListaDeCompras -[norank]-> Usuario : Usuario
+ListaDeComprasBLL .[norank].> IBitacoraBLL
+ListaDeComprasBLL .[norank].> IItemListaRepositorio
+ListaDeComprasBLL .[norank].> IListaDeComprasRepositorio
+ListaDeComprasBLL .[norank].> ISesion
+ListaDeComprasBLL .[norank].> IUnidadDeTrabajo
+ListaDeComprasBLL .[norank].> IUnidadDeTrabajoFactory
+ListaDeComprasBLL .[norank].> ItemLista
+ListaDeComprasBLL .[norank].> ListaDeCompras
+ListaDeComprasBLL .[norank].> SesionUsuarioExtensiones
+ListaDeComprasDAL .[norank].> AccesoDatosSqlServer
+ListaDeComprasRepositorio .[norank].> AccesoDatosSqlServer
+ListaDeComprasRepositorio .[norank].> ItemListaDAL
+ListaDeComprasRepositorio .[norank].> ListaDeComprasDAL
+ListaDeComprasRepositorio .[norank].> UsuarioRepositorio
+ListaDeComprasRepositorio .[norank].|> IListaDeComprasRepositorio
+NominatimBusquedaUbicacionesService .[norank].|> IBusquedaUbicacionesService
+Sesion .[norank].|> ISesion
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> IItemListaRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IListaDeComprasRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IZonaUsuarioRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+UsuarioDAL .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> UsuarioDAL
+ZonaUsuario -[norank]-> Usuario : Usuario
+ZonaUsuarioBLL .[norank].> IBitacoraBLL
+ZonaUsuarioBLL .[norank].> ISesion
+ZonaUsuarioBLL .[norank].> IUnidadDeTrabajo
+ZonaUsuarioBLL .[norank].> IUnidadDeTrabajoFactory
+ZonaUsuarioBLL .[norank].> IZonaUsuarioRepositorio
+ZonaUsuarioBLL .[norank].> SesionUsuarioExtensiones
+ZonaUsuarioBLL .[norank].> ZonaUsuario
+ZonaUsuarioDAL .[norank].> AccesoDatosSqlServer
+ZonaUsuarioRepositorio .[norank].> AccesoDatosSqlServer
+ZonaUsuarioRepositorio .[norank].> ZonaUsuarioDAL
+ZonaUsuarioRepositorio .[norank].|> IZonaUsuarioRepositorio
+' Trazabilidad de cobertura: CUN68, CUN69, CUN70, CUN71, CUN78, CUN79, CUN80
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: UI/CoordinadorBusquedaUbicacion.cs :: CoordinadorBusquedaUbicacion
+' Participante: ABSTRACCIONES/EstadoBusquedaUbicacion.cs :: EstadoBusquedaUbicacion
+' Participante: UI/FormListaDeCompras.cs :: FilaItemLista
+' Participante: UI/FormMisZonas.cs :: FilaZonaUsuario
+' Participante: UI/FormListaDeCompras.cs :: FormListaDeCompras
+' Participante: UI/FormMisZonas.cs :: FormMisZonas
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: ABSTRACCIONES/IBusquedaUbicacionesService.cs :: IBusquedaUbicacionesService
+' Participante: ABSTRACCIONES/IConsultaUbicacion.cs :: IConsultaUbicacion
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: REPOSITORIO/IItemListaRepositorio.cs :: IItemListaRepositorio
+' Participante: ABSTRACCIONES/ILimitesGeograficos.cs :: ILimitesGeograficos
+' Participante: REPOSITORIO/IListaDeComprasRepositorio.cs :: IListaDeComprasRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: ABSTRACCIONES/IResultadoBusquedaUbicacion.cs :: IResultadoBusquedaUbicacion
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: REPOSITORIO/IZonaUsuarioRepositorio.cs :: IZonaUsuarioRepositorio
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BE/ItemLista.cs :: ItemLista
+' Participante: DAL/ItemListaDAL.cs :: ItemListaDAL
+' Participante: REPOSITORIO/ItemListaRepositorio.cs :: ItemListaRepositorio
+' Participante: BE/ListaDeCompras.cs :: ListaDeCompras
+' Participante: BLL/ListaDeComprasBLL.cs :: ListaDeComprasBLL
+' Participante: DAL/ListaDeComprasDAL.cs :: ListaDeComprasDAL
+' Participante: REPOSITORIO/ListaDeComprasRepositorio.cs :: ListaDeComprasRepositorio
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: SERVICIOS/NominatimBusquedaUbicacionesService.cs :: NominatimBusquedaUbicacionesService
+' Participante: UI/CoordinadorBusquedaUbicacion.cs :: ResultadoCoordinado
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BLL/SesionUsuarioExtensiones.cs :: SesionUsuarioExtensiones
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' Participante: BE/Usuario.cs :: Usuario
+' Participante: DAL/UsuarioDAL.cs :: UsuarioDAL
+' Participante: REPOSITORIO/UsuarioRepositorio.cs :: UsuarioRepositorio
+' Participante: BE/ZonaUsuario.cs :: ZonaUsuario
+' Participante: BLL/ZonaUsuarioBLL.cs :: ZonaUsuarioBLL
+' Participante: DAL/ZonaUsuarioDAL.cs :: ZonaUsuarioDAL
+' Participante: REPOSITORIO/ZonaUsuarioRepositorio.cs :: ZonaUsuarioRepositorio
+' ABSTRACCIONES/IBusquedaUbicacionesService.cs:13 IBusquedaUbicacionesService.BuscarAsync
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ListaDeComprasBLL.cs:147 ListaDeComprasBLL.MarcarComprado
+' BLL/ListaDeComprasBLL.cs:184 ListaDeComprasBLL.EliminarItem
+' BLL/ListaDeComprasBLL.cs:31 ListaDeComprasBLL.ObtenerOCrearParaUsuarioActual
+' BLL/ListaDeComprasBLL.cs:70 ListaDeComprasBLL.AgregarItem
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ZonaUsuarioBLL.cs:43 ZonaUsuarioBLL.ObtenerMisZonas
+' BLL/ZonaUsuarioBLL.cs:49 ZonaUsuarioBLL.Crear
+' BLL/ZonaUsuarioBLL.cs:97 ZonaUsuarioBLL.Eliminar
+' DAL/ItemListaDAL.cs:118 ItemListaDAL.Actualizar
+' DAL/ItemListaDAL.cs:151 ItemListaDAL.Eliminar
+' DAL/ItemListaDAL.cs:22 ItemListaDAL.ObtenerPorId
+' DAL/ItemListaDAL.cs:51 ItemListaDAL.ObtenerPorListaDeCompras
+' DAL/ItemListaDAL.cs:87 ItemListaDAL.InsertarYObtenerId
+' DAL/ListaDeComprasDAL.cs:21 ListaDeComprasDAL.ObtenerPorId
+' DAL/ListaDeComprasDAL.cs:50 ListaDeComprasDAL.ObtenerPorUsuario
+' DAL/ListaDeComprasDAL.cs:86 ListaDeComprasDAL.InsertarYObtenerId
+' DAL/ZonaUsuarioDAL.cs:120 ZonaUsuarioDAL.Eliminar
+' DAL/ZonaUsuarioDAL.cs:23 ZonaUsuarioDAL.ObtenerPorId
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' DAL/ZonaUsuarioDAL.cs:88 ZonaUsuarioDAL.InsertarYObtenerId
+' REPOSITORIO/IItemListaRepositorio.cs:12 IItemListaRepositorio.InsertarYObtenerId
+' REPOSITORIO/IItemListaRepositorio.cs:14 IItemListaRepositorio.Actualizar
+' REPOSITORIO/IItemListaRepositorio.cs:16 IItemListaRepositorio.Eliminar
+' REPOSITORIO/IItemListaRepositorio.cs:8 IItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/IListaDeComprasRepositorio.cs:10 IListaDeComprasRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IListaDeComprasRepositorio.cs:12 IListaDeComprasRepositorio.InsertarYObtenerId
+' REPOSITORIO/IListaDeComprasRepositorio.cs:8 IListaDeComprasRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:12 IZonaUsuarioRepositorio.InsertarYObtenerId
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:14 IZonaUsuarioRepositorio.Eliminar
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:8 IZonaUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/ItemListaRepositorio.cs:23 ItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/ItemListaRepositorio.cs:47 ItemListaRepositorio.InsertarYObtenerId
+' REPOSITORIO/ItemListaRepositorio.cs:52 ItemListaRepositorio.Actualizar
+' REPOSITORIO/ItemListaRepositorio.cs:57 ItemListaRepositorio.Eliminar
+' REPOSITORIO/ListaDeComprasRepositorio.cs:25 ListaDeComprasRepositorio.ObtenerPorId
+' REPOSITORIO/ListaDeComprasRepositorio.cs:32 ListaDeComprasRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ListaDeComprasRepositorio.cs:57 ListaDeComprasRepositorio.InsertarYObtenerId
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:25 ZonaUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:35 ZonaUsuarioRepositorio.InsertarYObtenerId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:40 ZonaUsuarioRepositorio.Eliminar
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' SERVICIOS/NominatimBusquedaUbicacionesService.cs:59 NominatimBusquedaUbicacionesService.BuscarAsync
+' UI/CoordinadorBusquedaUbicacion.cs:133 CoordinadorBusquedaUbicacion.Invalidar
+' UI/CoordinadorBusquedaUbicacion.cs:41 ResultadoCoordinado.De
+' UI/CoordinadorBusquedaUbicacion.cs:46 ResultadoCoordinado.ConCoincidencias
+' UI/CoordinadorBusquedaUbicacion.cs:51 ResultadoCoordinado.ConError
+' UI/CoordinadorBusquedaUbicacion.cs:78 CoordinadorBusquedaUbicacion.BuscarAsync
+' UI/FormListaDeCompras.cs:135 FormListaDeCompras.dgvItems_CellValueChanged
+' UI/FormListaDeCompras.cs:39 FormListaDeCompras.CargarLista
+' UI/FormListaDeCompras.cs:71 FormListaDeCompras.btnAgregarItem_Click
+' UI/FormListaDeCompras.cs:94 FormListaDeCompras.btnEliminarItem_Click
+' UI/FormMisZonas.cs:122 FormMisZonas.CargarZonas
+' UI/FormMisZonas.cs:298 FormMisZonas.btnAgregarZona_Click
+' UI/FormMisZonas.cs:317 FormMisZonas.btnQuitarZona_Click
+' UI/UiDialogHelper.cs:10 UiDialogHelper.MostrarInfo
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:40 UiDialogHelper.Confirmar
+' UI/UiDialogHelper.cs:45 UiDialogHelper.Confirmar
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

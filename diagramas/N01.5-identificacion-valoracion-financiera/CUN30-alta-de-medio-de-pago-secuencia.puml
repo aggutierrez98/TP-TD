@@ -1,0 +1,68 @@
+@startuml
+' Fuente: diagramas/NEG07-medios-pago/NEG07-medios-pago-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN30 Alta de medio de pago — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMediosPago" as FormGestionMediosPago
+control "MedioPagoBLL" as MedioPagoBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "MedioPagoRepositorio\n:IMedioPagoRepositorio" as IMedioPagoRepositorio
+participant "MedioPagoDAL" as MedioPagoDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionMediosPago : El actor desea incorporar al catálogo un medio de pago que aún no figura.
+Actor -> FormGestionMediosPago : selecciona la opción «Medios de pago» del menú «Operador».
+FormGestionMediosPago --> Actor : presenta la pantalla «Gestión de medios de pago» con el listado de medios registrados.
+Actor -> FormGestionMediosPago : selecciona un tipo de medio de pago en el campo «Tipo:».
+Actor -> FormGestionMediosPago : ingresa, si lo desea, la marca en el campo «Marca:».
+Actor -> FormGestionMediosPago : presiona el botón «Agregar».
+FormGestionMediosPago -> MedioPagoBLL ++ : Crear(medioPago: MedioPago)
+MedioPagoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> MedioPagoBLL -- : IUnidadDeTrabajo
+MedioPagoBLL -> IMedioPagoRepositorio ++ : ObtenerTodos()
+IMedioPagoRepositorio -> MedioPagoDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+MedioPagoDAL --> IMedioPagoRepositorio -- : List<MedioPago>
+IMedioPagoRepositorio --> MedioPagoBLL -- : List<MedioPago>
+MedioPagoBLL -> IMedioPagoRepositorio ++ : InsertarYObtenerId(medioPago: MedioPago)
+IMedioPagoRepositorio -> MedioPagoDAL ++ : InsertarYObtenerId(medioPago: MedioPago, accesoDatos:\nAccesoDatosSqlServer)
+MedioPagoDAL --> IMedioPagoRepositorio -- : int
+IMedioPagoRepositorio --> MedioPagoBLL -- : int
+MedioPagoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> MedioPagoBLL -- : void
+MedioPagoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> MedioPagoBLL -- : void
+MedioPagoBLL --> FormGestionMediosPago -- : MedioPago
+group Refrescar listado tras la operacion exitosa
+FormGestionMediosPago -> MedioPagoBLL ++ : ObtenerTodos()
+MedioPagoBLL -> IMedioPagoRepositorio ++ : ObtenerTodos()
+IMedioPagoRepositorio -> MedioPagoDAL ++ : ObtenerTodos(accesoDatos: AccesoDatosSqlServer)
+MedioPagoDAL --> IMedioPagoRepositorio -- : List<MedioPago>
+IMedioPagoRepositorio --> MedioPagoBLL -- : List<MedioPago>
+MedioPagoBLL --> FormGestionMediosPago -- : List<MedioPago>
+end
+FormGestionMediosPago --> Actor : registra el medio de pago, limpia los campos «Tipo:» y «Marca:», actualiza el listado con\nel nuevo medio seleccionado e informa el resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/MedioPagoBLL.cs:28 MedioPagoBLL.ObtenerTodos
+' BLL/MedioPagoBLL.cs:34 MedioPagoBLL.Crear
+' DAL/MedioPagoDAL.cs:50 MedioPagoDAL.ObtenerTodos
+' DAL/MedioPagoDAL.cs:80 MedioPagoDAL.InsertarYObtenerId
+' REPOSITORIO/IMedioPagoRepositorio.cs:10 IMedioPagoRepositorio.ObtenerTodos
+' REPOSITORIO/IMedioPagoRepositorio.cs:12 IMedioPagoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoRepositorio.cs:29 MedioPagoRepositorio.ObtenerTodos
+' REPOSITORIO/MedioPagoRepositorio.cs:34 MedioPagoRepositorio.InsertarYObtenerId
+' UI/FormGestionMediosPago.cs:88 FormGestionMediosPago.btnAgregarMedioPago_Click
+@enduml

@@ -111,7 +111,7 @@ namespace BLL
             foreach (Usuario usuario in usuarios)
             {
                 usuario.DVH = _integridadService.CalcularDVH(usuario);
-                unidad.Usuarios.ActualizarDVH(usuario.Id, usuario.DVH);
+                unidad.Usuarios.ActualizarDVH(usuario, usuario.DVH);
             }
 
             RecalcularDVVInterno(TablaUsuarios, usuarios.Select(usuario => usuario.DVH), unidad);
@@ -133,7 +133,7 @@ namespace BLL
                         "FormAuditLog.Value.Activity.IntegrityCheckFailed",
                         "FormAuditLog.Value.Info.IntegrityHorizontalCorruption",
                         "IntegridadBLL");
-                    throw new ExcepcionIntegridad(TipoFalloIntegridad.Horizontal, TablaUsuarios, usuario.Id, "Error.Integridad.Horizontal");
+                    throw new ExcepcionIntegridad(TipoFalloIntegridad.Horizontal, TablaUsuarios, usuario, "Error.Integridad.Horizontal");
                 }
             }
         }

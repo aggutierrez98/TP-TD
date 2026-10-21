@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DAL;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace REPOSITORIO
 {
@@ -25,14 +26,14 @@ namespace REPOSITORIO
             return _usuarioHistorialDAL.GuardarVersion(snapshot, _accesoDatos);
         }
 
-        public List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId)
+        public List<UsuarioHistorialSnapshot> ObtenerVersiones(IUsuarioAutenticado usuario)
         {
-            return _usuarioHistorialDAL.ObtenerVersiones(usuarioId);
+            return _usuarioHistorialDAL.ObtenerVersiones(usuario);
         }
 
-        public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
+        public UsuarioHistorialSnapshot ObtenerPorId(int id)
         {
-            return _usuarioHistorialDAL.ObtenerVersion(historialId);
+            return _usuarioHistorialDAL.ObtenerPorId(id);
         }
 
     }

@@ -22,10 +22,10 @@ namespace TpIDS.IntegrationTests
                 PromocionSegmentoRepositorio repositorio = new PromocionSegmentoRepositorio(accesoDatos);
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestAsignacionSegmentos");
 
-                bool reemplazado = repositorio.ReemplazarSegmentosDePromocion(promocionId, new List<string> { "Gold", "Black" });
+                bool reemplazado = repositorio.ReemplazarSegmentosDePromocion(new BE.Promocion { Id = promocionId }, new List<string> { "Gold", "Black" });
 
                 Assert.IsTrue(reemplazado);
-                List<string> asignados = repositorio.ObtenerSegmentosPorPromocion(promocionId);
+                List<string> asignados = repositorio.ObtenerSegmentosPorPromocion(new BE.Promocion { Id = promocionId });
                 Assert.AreEqual(2, asignados.Count);
                 Assert.IsTrue(asignados.Contains("Gold"));
                 Assert.IsTrue(asignados.Contains("Black"));
@@ -43,10 +43,10 @@ namespace TpIDS.IntegrationTests
                 PromocionSegmentoRepositorio repositorio = new PromocionSegmentoRepositorio(accesoDatos);
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestReemplazoSegmentos");
 
-                repositorio.ReemplazarSegmentosDePromocion(promocionId, new List<string> { "Gold" });
-                repositorio.ReemplazarSegmentosDePromocion(promocionId, new List<string> { "Platinum" });
+                repositorio.ReemplazarSegmentosDePromocion(new BE.Promocion { Id = promocionId }, new List<string> { "Gold" });
+                repositorio.ReemplazarSegmentosDePromocion(new BE.Promocion { Id = promocionId }, new List<string> { "Platinum" });
 
-                List<string> asignados = repositorio.ObtenerSegmentosPorPromocion(promocionId);
+                List<string> asignados = repositorio.ObtenerSegmentosPorPromocion(new BE.Promocion { Id = promocionId });
                 Assert.AreEqual(1, asignados.Count);
                 Assert.AreEqual("Platinum", asignados[0]);
 
@@ -62,11 +62,11 @@ namespace TpIDS.IntegrationTests
                 accesoDatos.BeginTransactionScope();
                 PromocionSegmentoRepositorio repositorio = new PromocionSegmentoRepositorio(accesoDatos);
                 int promocionId = InsertarPromocionTest(accesoDatos, "PromocionTestVaciarSegmentos");
-                repositorio.ReemplazarSegmentosDePromocion(promocionId, new List<string> { "Gold" });
+                repositorio.ReemplazarSegmentosDePromocion(new BE.Promocion { Id = promocionId }, new List<string> { "Gold" });
 
-                repositorio.ReemplazarSegmentosDePromocion(promocionId, new List<string>());
+                repositorio.ReemplazarSegmentosDePromocion(new BE.Promocion { Id = promocionId }, new List<string>());
 
-                Assert.AreEqual(0, repositorio.ObtenerSegmentosPorPromocion(promocionId).Count);
+                Assert.AreEqual(0, repositorio.ObtenerSegmentosPorPromocion(new BE.Promocion { Id = promocionId }).Count);
 
                 accesoDatos.RollbackTransactionScope();
             }

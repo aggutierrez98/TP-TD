@@ -4,7 +4,7 @@ namespace BE
     {
         public int Id { get; set; }
 
-        public int EjecucionId { get; set; }
+        public EjecucionActualizacionTasas Ejecucion { get; set; }
 
         public Moneda MonedaBase { get; set; }
 

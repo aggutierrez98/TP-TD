@@ -1,0 +1,73 @@
+@startuml
+' Fuente: diagramas/NEG21-mis-notificaciones/NEG21-mis-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN86 Marcar notificación propia como leída — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormMisNotificaciones" as FormMisNotificaciones
+control "NotificacionBLL" as NotificacionBLL
+participant "Sesion\n:ISesion" as ISesion
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "NotificacionRepositorio\n:INotificacionRepositorio" as INotificacionRepositorio
+participant "NotificacionDAL" as NotificacionDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormMisNotificaciones : El actor desea descartar un aviso pendiente sin leer su detalle.
+Actor -> FormMisNotificaciones : selecciona una notificación con estado «No leída» del listado.
+Actor -> FormMisNotificaciones : selecciona el botón «Marcar como leída».
+FormMisNotificaciones -> NotificacionBLL ++ : LeerPersonal(recibida: Notificacion)
+NotificacionBLL -> ISesion ++ : HaySesionActiva()
+ISesion --> NotificacionBLL -- : bool
+NotificacionBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> NotificacionBLL -- : Usuario
+NotificacionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> NotificacionBLL -- : IUnidadDeTrabajo
+NotificacionBLL -> INotificacionRepositorio ++ : ObtenerPersonal(notificacion: Notificacion, usuario: Usuario)
+INotificacionRepositorio -> NotificacionDAL ++ : ObtenerPersonal(notificacion: Notificacion, usuario: Usuario,\naccesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : Notificacion
+INotificacionRepositorio --> NotificacionBLL -- : Notificacion
+opt !n.Leida
+NotificacionBLL -> INotificacionRepositorio ++ : MarcarPersonalLeida(notificacion: Notificacion, usuario:\nUsuario)
+INotificacionRepositorio -> NotificacionDAL ++ : MarcarPersonalLeida(notificacion: Notificacion, usuario:\nUsuario, accesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : bool
+INotificacionRepositorio --> NotificacionBLL -- : bool
+alt !cambio
+NotificacionBLL -> INotificacionRepositorio ++ : ObtenerPersonal(notificacion: Notificacion, usuario: Usuario)
+INotificacionRepositorio -> NotificacionDAL ++ : ObtenerPersonal(notificacion: Notificacion, usuario: Usuario,\naccesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : Notificacion
+INotificacionRepositorio --> NotificacionBLL -- : Notificacion
+else caso contrario
+NotificacionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> NotificacionBLL -- : void
+end
+end
+NotificacionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> NotificacionBLL -- : void
+NotificacionBLL --> FormMisNotificaciones -- : Notificacion
+FormMisNotificaciones --> Actor : registra la notificación como leída, muestra su estado como «Leída» en el listado y\nactualiza la cantidad de notificaciones no leídas indicada en el menú principal.
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/NotificacionBLL.cs:37 NotificacionBLL.LeerPersonal
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/NotificacionDAL.cs:10 NotificacionDAL.ObtenerPersonal
+' DAL/NotificacionDAL.cs:92 NotificacionDAL.MarcarPersonalLeida
+' REPOSITORIO/INotificacionRepositorio.cs:13 INotificacionRepositorio.ObtenerPersonal
+' REPOSITORIO/INotificacionRepositorio.cs:15 INotificacionRepositorio.MarcarPersonalLeida
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/NotificacionRepositorio.cs:10 NotificacionRepositorio.ObtenerPersonal
+' REPOSITORIO/NotificacionRepositorio.cs:16 NotificacionRepositorio.MarcarPersonalLeida
+' UI/FormMisNotificaciones.cs:71 FormMisNotificaciones.LeerSeleccionadaAsync
+@enduml

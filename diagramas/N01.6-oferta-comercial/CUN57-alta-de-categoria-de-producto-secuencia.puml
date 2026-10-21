@@ -1,0 +1,65 @@
+@startuml
+' Fuente: diagramas/NEG13-categorias-producto/NEG13-categorias-producto-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN57 Alta de categoría de producto — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionCategoriasProducto" as FormGestionCategoriasProducto
+control "CategoriaProductoBLL" as CategoriaProductoBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "CategoriaProductoRepositorio\n:ICategoriaProductoRepositorio" as ICategoriaProductoRepositorio
+participant "CategoriaProductoDAL" as CategoriaProductoDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionCategoriasProducto : El actor desea incorporar una nueva categoría para clasificar productos.
+Actor -> FormGestionCategoriasProducto : ingresa el nombre de la categoría en el campo «Nombre».
+Actor -> FormGestionCategoriasProducto : selecciona la acción «Agregar».
+FormGestionCategoriasProducto -> CategoriaProductoBLL ++ : Crear(categoria: CategoriaProducto)
+CategoriaProductoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> CategoriaProductoBLL -- : IUnidadDeTrabajo
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : ObtenerTodas()
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : List<CategoriaProducto>
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : List<CategoriaProducto>
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : InsertarYObtenerId(categoria: CategoriaProducto)
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : InsertarYObtenerId(categoria: CategoriaProducto, accesoDatos:\nAccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : int
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : int
+CategoriaProductoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> CategoriaProductoBLL -- : void
+CategoriaProductoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> CategoriaProductoBLL -- : void
+CategoriaProductoBLL --> FormGestionCategoriasProducto -- : CategoriaProducto
+group Refrescar listado tras la operacion exitosa
+FormGestionCategoriasProducto -> CategoriaProductoBLL ++ : ObtenerTodas()
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : ObtenerTodas()
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : List<CategoriaProducto>
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : List<CategoriaProducto>
+CategoriaProductoBLL --> FormGestionCategoriasProducto -- : List<CategoriaProducto>
+end
+FormGestionCategoriasProducto --> Actor : registra la categoría, limpia el campo «Nombre», actualiza el listado seleccionando la\ncategoría recién creada e informa el resultado.
+' BLL/CategoriaProductoBLL.cs:28 CategoriaProductoBLL.ObtenerTodas
+' BLL/CategoriaProductoBLL.cs:34 CategoriaProductoBLL.Crear
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' DAL/CategoriaProductoDAL.cs:48 CategoriaProductoDAL.ObtenerTodas
+' DAL/CategoriaProductoDAL.cs:78 CategoriaProductoDAL.InsertarYObtenerId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:28 CategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:33 CategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:10 ICategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:12 ICategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionCategoriasProducto.cs:61 FormGestionCategoriasProducto.btnAgregarCategoriaProducto_Click
+@enduml

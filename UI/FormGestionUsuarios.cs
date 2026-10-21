@@ -140,7 +140,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Registrar(new Usuario(username), password))
+                if (usuarioBLL.Registrar(new Usuario(username), password) != null)
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserCreated");
                     LimpiarSeleccion();
@@ -196,7 +196,9 @@ namespace TpIDS
                     }
                 }
 
-                if (usuarioBLL.Actualizar(_usuarioSeleccionado.Id, nuevoUsername, nuevaPassword, usuarioActivo))
+                _usuarioSeleccionado.Username = nuevoUsername;
+                _usuarioSeleccionado.Activo = usuarioActivo;
+                if (usuarioBLL.Actualizar(_usuarioSeleccionado, nuevaPassword))
                 {
                     ActualizarSesionActualLabel(_sesion.GetUsuarioActualNombre());
                     string successKey = !usuarioEstabaActivo && usuarioActivo
@@ -212,6 +214,8 @@ namespace TpIDS
             catch (Exception ex)
             {
                 UiExceptionHandler.Mostrar(ex, "Edicion de usuario");
+                LimpiarSeleccion();
+                RefrescarDatos();
             }
         }
 
@@ -242,7 +246,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.Eliminar(_usuarioSeleccionado.Id))
+                if (usuarioBLL.Eliminar(_usuarioSeleccionado))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserDeleted");
                     LimpiarSeleccion();
@@ -282,7 +286,7 @@ namespace TpIDS
 
             try
             {
-                if (usuarioBLL.DesbloquearUsuario(_usuarioSeleccionado.Id))
+                if (usuarioBLL.DesbloquearUsuario(_usuarioSeleccionado))
                 {
                     UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserUnlocked");
                     LimpiarSeleccion();
@@ -306,7 +310,7 @@ namespace TpIDS
             try
             {
                 List<IPermiso> catalogo = permisoBLL.ObtenerCatalogo();
-                HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisoIdsDeUsuario(_usuarioSeleccionado.Id));
+                HashSet<int> permisosAsignados = new HashSet<int>(permisoBLL.ObtenerPermisosDeUsuario(_usuarioSeleccionado).Select(p => p.Id));
 
                 foreach (IPermiso raiz in catalogo)
                 {
@@ -352,11 +356,11 @@ namespace TpIDS
 
             try
             {
-                List<int> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
+                List<IPermiso> permisosSeleccionados = ObtenerPermisosSeleccionados(tvwPermisosUsuario.Nodes)
                     .Distinct()
                     .ToList();
 
-                permisoBLL.GuardarPermisosUsuario(_usuarioSeleccionado.Id, permisosSeleccionados);
+                permisoBLL.GuardarPermisosUsuario(_usuarioSeleccionado, permisosSeleccionados);
                 UiDialogHelper.MostrarInfo("FormUserManagement.Success.UserPermissionsSaved");
             }
             catch (Exception ex)
@@ -365,15 +369,15 @@ namespace TpIDS
             }
         }
 
-        private List<int> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
+        private List<IPermiso> ObtenerPermisosSeleccionados(TreeNodeCollection nodos)
         {
-            List<int> ids = new List<int>();
+            List<IPermiso> ids = new List<IPermiso>();
             foreach (TreeNode nodo in nodos)
             {
                 IPermiso permiso = nodo.Tag as IPermiso;
                 if (nodo.Checked && permiso != null)
                 {
-                    ids.Add(permiso.Id);
+                    ids.Add(permiso);
                 }
 
                 ids.AddRange(ObtenerPermisosSeleccionados(nodo.Nodes));
@@ -452,7 +456,7 @@ namespace TpIDS
                 return;
             }
 
-            using (FormHistorialUsuario formHistorialUsuario = new FormHistorialUsuario(_usuarioSeleccionado.Id, txtbNombreUsuario.Text.Trim()))
+            using (FormHistorialUsuario formHistorialUsuario = new FormHistorialUsuario(_usuarioSeleccionado))
             {
                 formHistorialUsuario.ShowDialog(this);
             }

@@ -24,10 +24,10 @@ namespace TpIDS.IntegrationTests
                 int comercioId1 = InsertarComercioTest(accesoDatos, "ComercioTestAsignacion1");
                 int comercioId2 = InsertarComercioTest(accesoDatos, "ComercioTestAsignacion2");
 
-                bool reemplazado = repositorio.ReemplazarComerciosDePromocion(promocionId, new List<int> { comercioId1, comercioId2 });
+                bool reemplazado = repositorio.ReemplazarComerciosDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.Comercio> { new BE.Comercio { Id = comercioId1 }, new BE.Comercio { Id = comercioId2 } });
 
                 Assert.IsTrue(reemplazado);
-                List<int> asignados = repositorio.ObtenerComercioIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerComerciosPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(2, asignados.Count);
                 Assert.IsTrue(asignados.Contains(comercioId1));
                 Assert.IsTrue(asignados.Contains(comercioId2));
@@ -47,10 +47,10 @@ namespace TpIDS.IntegrationTests
                 int comercioIdA = InsertarComercioTest(accesoDatos, "ComercioTestReemplazoA");
                 int comercioIdB = InsertarComercioTest(accesoDatos, "ComercioTestReemplazoB");
 
-                repositorio.ReemplazarComerciosDePromocion(promocionId, new List<int> { comercioIdA });
-                repositorio.ReemplazarComerciosDePromocion(promocionId, new List<int> { comercioIdB });
+                repositorio.ReemplazarComerciosDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.Comercio> { new BE.Comercio { Id = comercioIdA } });
+                repositorio.ReemplazarComerciosDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.Comercio> { new BE.Comercio { Id = comercioIdB } });
 
-                List<int> asignados = repositorio.ObtenerComercioIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerComerciosPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, asignados.Count);
                 Assert.IsTrue(asignados.Contains(comercioIdB));
                 Assert.IsFalse(asignados.Contains(comercioIdA));

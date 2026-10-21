@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace REPOSITORIO
 {
@@ -7,8 +8,8 @@ namespace REPOSITORIO
     {
         int GuardarVersion(UsuarioHistorialSnapshot snapshot);
 
-        List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId);
+        List<UsuarioHistorialSnapshot> ObtenerVersiones(IUsuarioAutenticado usuario);
 
-        UsuarioHistorialSnapshot ObtenerVersion(int historialId);
+        UsuarioHistorialSnapshot ObtenerPorId(int id);
     }
 }

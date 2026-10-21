@@ -1,0 +1,222 @@
+@startuml
+' Fuente: diagramas/NEG22-asistente-financiero/NEG22-asistente-financiero-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN87 Conversar y consultar recomendación financiera — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormAsistentePersonal {
+    -btnEnviarMensajeAsistente_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class AsistenteFinancieroBLL {
+    +ObtenerHistorial(): IReadOnlyList<ConsultaChatbot>
+    +EnviarMensajeAsync(pregunta: string): Task<RespuestaAsistente>
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarFalloNegocio(actividad: string, informacion: string, origen: string): void
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+  class PrefiltroConsultasAsistente {
+    ~Evaluar(pregunta: string): ResultadoPrefiltro
+  }
+  class ExtractorPorcentajeInversion {
+    ~Extraer(llamada: ILlamadaHerramientaAsistente, nombreHerramienta: string):\nResultadoPorcentaje
+  }
+  class "GeneradorRecomendaciones" as IGeneradorRecomendaciones <<IGeneradorRecomendaciones>> {
+    +GenerarAsync(solicitud: SolicitudGeneracion, cancellationToken: CancellationToken):\nTask<ResultadoGeneracion>
+  }
+  class "RecomendacionComprasBLL" as IRecomendacionComprasBLL <<IRecomendacionComprasBLL>> {
+    +CalcularAsync(usuario: Usuario, nombreLista: string, cancellationToken:\nSystem.Threading.CancellationToken): System.Threading.Tasks.Task<ResumenCompras>
+    +ObtenerUniversoReferencias(usuario: Usuario): IReadOnlyList<IReferenciaAsistente>
+  }
+  class "RecomendacionInversionesBLL" as IRecomendacionInversionesBLL <<IRecomendacionInversionesBLL>> {
+    +CalcularAsync(usuario: Usuario, porcentaje: decimal?, cancellationToken:\nSystem.Threading.CancellationToken, perfil: PerfilInversor):\nSystem.Threading.Tasks.Task<ResumenInversiones>
+  }
+  class ValidadorRespuestaAsistente {
+    ~Validar(respuesta: string, universo: IEnumerable<IReferenciaAsistente>, contexto:\nIContextoAsistente): ResultadoValidacionRespuesta
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+AsistenteFinancieroBLL -[hidden]right-> SesionUsuarioExtensiones
+AsistenteFinancieroBLL -[hidden]down-> IBitacoraBLL
+IBitacoraBLL -[hidden]right-> PrefiltroConsultasAsistente
+IBitacoraBLL -[hidden]down-> ExtractorPorcentajeInversion
+ExtractorPorcentajeInversion -[hidden]right-> IGeneradorRecomendaciones
+ExtractorPorcentajeInversion -[hidden]down-> IRecomendacionComprasBLL
+IRecomendacionComprasBLL -[hidden]right-> IRecomendacionInversionesBLL
+IRecomendacionComprasBLL -[hidden]down-> ValidadorRespuestaAsistente
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IConsultaChatbotRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ConsultaChatbot>
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot): int
+  }
+  class ConsultaChatbotRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): List<ConsultaChatbot>
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot): int
+  }
+  class "PerfilInversorRepositorio" as IPerfilInversorRepositorio <<IPerfilInversorRepositorio>> {
+    +ObtenerPorUsuario(usuario: Usuario): PerfilInversor
+  }
+  class "ChatbotFinancieroRepositorio" as IChatbotFinancieroRepositorio <<IChatbotFinancieroRepositorio>> {
+    +ObtenerUnico(): ChatbotFinanciero
+  }
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IConsultaChatbotRepositorio -[hidden]right-> ConsultaChatbotRepositorio
+IConsultaChatbotRepositorio -[hidden]down-> IPerfilInversorRepositorio
+IPerfilInversorRepositorio -[hidden]right-> IChatbotFinancieroRepositorio
+IPerfilInversorRepositorio -[hidden]down-> IUnidadDeTrabajoFactory
+IUnidadDeTrabajoFactory -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class ConsultaChatbotDAL {
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos: AccesoDatosSqlServer):\nList<ConsultaChatbot>
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot, accesoDatos:\nAccesoDatosSqlServer): int
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "SERVICIOS" as L_SERVICIOS {
+  class "LimiteUsoAsistente" as ILimiteUsoAsistente <<ILimiteUsoAsistente>> {
+    +IntentarConsumir(usuario: IUsuarioAutenticado): bool
+  }
+  class "GeminiClasificadorConsultas" as IClasificadorConsultas <<IClasificadorConsultas>> {
+    +ClasificarAsync(pregunta: string, cancellationToken: CancellationToken):\nTask<CategoriaConsulta>
+  }
+  class "GeminiAsistenteFinancieroService" as IAsistenteFinancieroService <<IAsistenteFinancieroService>> {
+    +ObtenerLlamadaHerramientaAsync(solicitud: ISolicitudAsistente, herramienta:\nIHerramientaAsistente, cancellationToken: CancellationToken):\nTask<ILlamadaHerramientaAsistente>
+    +ObtenerRespuestaAsync(solicitud: ISolicitudAsistente): Task<string>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ILimiteUsoAsistente -[hidden]right-> IClasificadorConsultas
+ILimiteUsoAsistente -[hidden]down-> IAsistenteFinancieroService
+package "BE" as L_BE {
+  class ChatbotFinanciero {
+    +Id: int
+    +Nombre: string
+  }
+  class ConsultaChatbot {
+    +Id: int
+    +ChatbotFinanciero: ChatbotFinanciero
+    +Usuario: Usuario
+    +Pregunta: string
+    +Respuesta: string
+    +Fecha: DateTime
+    +EsPregunta: bool
+  }
+  enum NivelRiesgoInversor {
+    Bajo
+    Moderado
+    Alto
+  }
+  class PerfilInversor {
+    +Id: int
+    +Usuario: Usuario
+    +VersionCuestionario: int
+    +FechaEvaluacionUtc: DateTime
+    +Capacidad: decimal
+    +Tolerancia: decimal
+    +Puntaje: decimal
+    +NivelRiesgo: NivelRiesgoInversor
+    +MotivosLimite: List<string>
+    +Respuestas: List<RespuestaPerfilInversor>
+  }
+  class RespuestaPerfilInversor {
+    +Pregunta: PreguntaPerfilInversor
+    +OpcionId: string
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ChatbotFinanciero -[hidden]right-> ConsultaChatbot
+ChatbotFinanciero -[hidden]down-> NivelRiesgoInversor
+NivelRiesgoInversor -[hidden]right-> PerfilInversor
+NivelRiesgoInversor -[hidden]down-> RespuestaPerfilInversor
+RespuestaPerfilInversor -[hidden]right-> Usuario
+AsistenteFinancieroBLL ..> ExtractorPorcentajeInversion : usa
+AsistenteFinancieroBLL ..> IAsistenteFinancieroService : usa
+AsistenteFinancieroBLL ..> IBitacoraBLL : usa
+AsistenteFinancieroBLL ..> IChatbotFinancieroRepositorio : usa
+AsistenteFinancieroBLL ..> IClasificadorConsultas : usa
+AsistenteFinancieroBLL ..> IConsultaChatbotRepositorio : usa
+AsistenteFinancieroBLL ..> IGeneradorRecomendaciones : usa
+AsistenteFinancieroBLL ..> ILimiteUsoAsistente : usa
+AsistenteFinancieroBLL ..> IPerfilInversorRepositorio : usa
+AsistenteFinancieroBLL ..> IUnidadDeTrabajo : usa
+AsistenteFinancieroBLL ..> IUnidadDeTrabajoFactory : usa
+AsistenteFinancieroBLL ..> PrefiltroConsultasAsistente : usa
+AsistenteFinancieroBLL ..> SesionUsuarioExtensiones : usa
+ConsultaChatbotRepositorio ..|> IConsultaChatbotRepositorio
+FormAsistentePersonal ..> AsistenteFinancieroBLL : usa
+ConsultaChatbotRepositorio ..> ConsultaChatbotDAL : usa
+IGeneradorRecomendaciones ..> IAsistenteFinancieroService : usa
+IGeneradorRecomendaciones ..> IRecomendacionComprasBLL : usa
+IGeneradorRecomendaciones ..> IRecomendacionInversionesBLL : usa
+IGeneradorRecomendaciones ..> ValidadorRespuestaAsistente : usa
+L_DAL -[hidden]down-> L_BE
+L_REPOSITORIO -[hidden]down-> L_SERVICIOS
+AsistenteFinancieroBLL ..> ConsultaChatbot : datos
+ConsultaChatbot --> ChatbotFinanciero : ChatbotFinanciero
+ConsultaChatbot --> Usuario : Usuario
+PerfilInversor --> Usuario : Usuario
+PerfilInversor --> NivelRiesgoInversor : NivelRiesgo
+PerfilInversor --> "*" RespuestaPerfilInversor : Respuestas
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:13 IAsistenteFinancieroService.ObtenerRespuestaAsync
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:14 IAsistenteFinancieroService.ObtenerLlamadaHerramientaAsync
+' ABSTRACCIONES/IClasificadorConsultas.cs:12 IClasificadorConsultas.ClasificarAsync
+' ABSTRACCIONES/ILimiteUsoAsistente.cs:7 ILimiteUsoAsistente.IntentarConsumir
+' BLL/AsistenteFinancieroBLL.cs:85 AsistenteFinancieroBLL.ObtenerHistorial
+' BLL/AsistenteFinancieroBLL.cs:93 AsistenteFinancieroBLL.EnviarMensajeAsync
+' BLL/ContratosInternosBLL.cs:11 IRecomendacionInversionesBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:19 IRecomendacionComprasBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:20 IRecomendacionComprasBLL.ObtenerUniversoReferencias
+' BLL/ContratosInternosBLL.cs:29 IBitacoraBLL.RegistrarFalloNegocio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ExtractorPorcentajeInversion.cs:35 ExtractorPorcentajeInversion.Extraer
+' BLL/GeneradorRecomendaciones.cs:18 IGeneradorRecomendaciones.GenerarAsync
+' BLL/PrefiltroConsultasAsistente.cs:53 PrefiltroConsultasAsistente.Evaluar
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ValidadorRespuestaAsistente.cs:29 ValidadorRespuestaAsistente.Validar
+' DAL/ConsultaChatbotDAL.cs:25 ConsultaChatbotDAL.ObtenerPorUsuario
+' DAL/ConsultaChatbotDAL.cs:61 ConsultaChatbotDAL.InsertarYObtenerId
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:23 ConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:28 ConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IChatbotFinancieroRepositorio.cs:7 IChatbotFinancieroRepositorio.ObtenerUnico
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:10 IConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:8 IConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IPerfilInversorRepositorio.cs:7 IPerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormAsistentePersonal.cs:61 FormAsistentePersonal.btnEnviarMensajeAsistente_Click
+@enduml

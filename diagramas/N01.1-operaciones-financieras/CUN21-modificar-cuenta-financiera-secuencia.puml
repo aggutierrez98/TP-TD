@@ -1,0 +1,101 @@
+@startuml
+' Fuente: diagramas/NEG05-cuentas-financieras/NEG05-cuentas-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN21 Modificar cuenta financiera — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormGestionCuentasFinancieras" as FormGestionCuentasFinancieras
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+control "CuentaFinancieraBLL" as CuentaFinancieraBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "CuentaFinancieraRepositorio\n:ICuentaFinancieraRepositorio" as ICuentaFinancieraRepositorio
+participant "CuentaFinancieraDAL" as CuentaFinancieraDAL
+participant "MedioPagoEntidadRepositorio\n:IMedioPagoEntidadRepositorio" as IMedioPagoEntidadRepositorio
+participant "CuentaFinancieraMedioPagoEntidadDAL" as CuentaFinancieraMedioPagoEntidadDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionCuentasFinancieras : El actor necesita corregir los datos de una cuenta o cambiar los medios de pago\nque tiene contratados.
+Actor -> FormGestionCuentasFinancieras : selecciona la opción «Mis cuentas financieras» del menú «Finanzas».
+FormGestionCuentasFinancieras --> Actor : presenta la pantalla «Mis cuentas financieras» con el listado de las cuentas del actor.
+Actor -> FormGestionCuentasFinancieras : selecciona la cuenta a modificar.
+FormGestionCuentasFinancieras -> EntidadFinancieraBLL ++ : ObtenerMediosPagoEntidad(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL --> FormGestionCuentasFinancieras -- : List<MedioPagoEntidad>
+FormGestionCuentasFinancieras --> Actor : muestra la entidad financiera, el alias y el tipo de la cuenta seleccionada y presenta los\nmedios de pago de la entidad, con los contratados marcados.
+Actor -> FormGestionCuentasFinancieras : modifica los datos que desea cambiar. Si cambia la entidad, el sistema presenta los medios\nde pago de la nueva entidad sin ninguno marcado.
+Actor -> FormGestionCuentasFinancieras : presiona el botón «Actualizar».
+FormGestionCuentasFinancieras --> Actor : aplica los cambios y actualiza el listado, donde la cuenta queda seleccionada con sus\ndatos modificados.
+FormGestionCuentasFinancieras -> CuentaFinancieraBLL ++ : Actualizar(cuenta: CuentaFinanciera)
+CuentaFinancieraBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> CuentaFinancieraBLL -- : Usuario
+CuentaFinancieraBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> CuentaFinancieraBLL -- : IUnidadDeTrabajo
+CuentaFinancieraBLL -> ICuentaFinancieraRepositorio ++ : ObtenerPorId(id: int)
+ICuentaFinancieraRepositorio -> CuentaFinancieraDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+CuentaFinancieraDAL --> ICuentaFinancieraRepositorio -- : CuentaFinanciera
+ICuentaFinancieraRepositorio --> CuentaFinancieraBLL -- : CuentaFinanciera
+CuentaFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> CuentaFinancieraBLL -- : EntidadFinanciera
+CuentaFinancieraBLL -> IMedioPagoEntidadRepositorio ++ : ObtenerPorEntidadFinanciera(entidad: EntidadFinanciera)
+IMedioPagoEntidadRepositorio --> CuentaFinancieraBLL -- : List<MedioPagoEntidad>
+CuentaFinancieraBLL -> ICuentaFinancieraRepositorio ++ : Actualizar(cuenta: CuentaFinanciera)
+ICuentaFinancieraRepositorio -> CuentaFinancieraDAL ++ : Actualizar(cuenta: CuentaFinanciera, accesoDatos:\nAccesoDatosSqlServer)
+CuentaFinancieraDAL --> ICuentaFinancieraRepositorio -- : bool
+ICuentaFinancieraRepositorio --> CuentaFinancieraBLL -- : bool
+CuentaFinancieraBLL -> ICuentaFinancieraRepositorio ++ : ReemplazarMediosPagoEntidadDeCuenta(cuenta: CuentaFinanciera,\nmedios: IEnumerable<MedioPagoEntidad>)
+ICuentaFinancieraRepositorio -> CuentaFinancieraMedioPagoEntidadDAL ++ : ReemplazarMediosPagoEntidadDeCuenta(cuenta: CuentaFinanciera,\nmedios: IEnumerable<MedioPagoEntidad>, accesoDatos:\nAccesoDatosSqlServer)
+CuentaFinancieraMedioPagoEntidadDAL --> ICuentaFinancieraRepositorio -- : bool
+ICuentaFinancieraRepositorio --> CuentaFinancieraBLL -- : bool
+CuentaFinancieraBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> CuentaFinancieraBLL -- : void
+CuentaFinancieraBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> CuentaFinancieraBLL -- : void
+CuentaFinancieraBLL --> FormGestionCuentasFinancieras -- : CuentaFinanciera
+group Refrescar listado tras la operacion exitosa
+FormGestionCuentasFinancieras -> CuentaFinancieraBLL ++ : ObtenerMisCuentas()
+CuentaFinancieraBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> CuentaFinancieraBLL -- : Usuario
+CuentaFinancieraBLL -> ICuentaFinancieraRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+ICuentaFinancieraRepositorio -> CuentaFinancieraDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+CuentaFinancieraDAL --> ICuentaFinancieraRepositorio -- : List<CuentaFinanciera>
+ICuentaFinancieraRepositorio --> CuentaFinancieraBLL -- : List<CuentaFinanciera>
+CuentaFinancieraBLL --> FormGestionCuentasFinancieras -- : List<CuentaFinanciera>
+end
+FormGestionCuentasFinancieras --> Actor : muestra el mensaje «Cuenta financiera actualizada con éxito.».
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/CuentaFinancieraBLL.cs:34 CuentaFinancieraBLL.ObtenerMisCuentas
+' BLL/CuentaFinancieraBLL.cs:82 CuentaFinancieraBLL.Actualizar
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/CuentaFinancieraDAL.cs:157 CuentaFinancieraDAL.Actualizar
+' DAL/CuentaFinancieraDAL.cs:24 CuentaFinancieraDAL.ObtenerPorId
+' DAL/CuentaFinancieraDAL.cs:53 CuentaFinancieraDAL.ObtenerPorUsuario
+' DAL/CuentaFinancieraMedioPagoEntidadDAL.cs:43 CuentaFinancieraMedioPagoEntidadDAL.ReemplazarMediosPagoEntidadDeCuenta
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:27 CuentaFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:34 CuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:78 CuentaFinancieraRepositorio.Actualizar
+' REPOSITORIO/CuentaFinancieraRepositorio.cs:88 CuentaFinancieraRepositorio.ReemplazarMediosPagoEntidadDeCuenta
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:10 ICuentaFinancieraRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:16 ICuentaFinancieraRepositorio.Actualizar
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:20 ICuentaFinancieraRepositorio.ReemplazarMediosPagoEntidadDeCuenta
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:8 ICuentaFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:10 IMedioPagoEntidadRepositorio.ObtenerPorEntidadFinanciera
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionCuentasFinancieras.cs:318 FormGestionCuentasFinancieras.btnActualizarCuenta_Click
+@enduml

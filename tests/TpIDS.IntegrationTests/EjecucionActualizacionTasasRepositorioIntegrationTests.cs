@@ -95,7 +95,7 @@ namespace TpIDS.IntegrationTests
 
                 repositorio.InsertarDetalleYObtenerId(new BE.ActualizacionTasaDetalle
                 {
-                    EjecucionId = ejecucionId,
+                    Ejecucion = new BE.EjecucionActualizacionTasas { Id = ejecucionId },
                     MonedaBase = usd,
                     MonedaConversion = ars,
                     ValorAnterior = 1500.5m,
@@ -104,7 +104,7 @@ namespace TpIDS.IntegrationTests
                 });
                 repositorio.InsertarDetalleYObtenerId(new BE.ActualizacionTasaDetalle
                 {
-                    EjecucionId = ejecucionId,
+                    Ejecucion = new BE.EjecucionActualizacionTasas { Id = ejecucionId },
                     MonedaBase = ars,
                     MonedaConversion = usd,
                     ValorAnterior = 0.0007m,
@@ -113,7 +113,7 @@ namespace TpIDS.IntegrationTests
                 });
                 repositorio.InsertarDetalleYObtenerId(new BE.ActualizacionTasaDetalle
                 {
-                    EjecucionId = otraEjecucionId,
+                    Ejecucion = new BE.EjecucionActualizacionTasas { Id = otraEjecucionId },
                     MonedaBase = usd,
                     MonedaConversion = ars,
                     ValorAnterior = 1m,
@@ -121,10 +121,11 @@ namespace TpIDS.IntegrationTests
                     Estado = BE.EstadoActualizacionTasa.SaltadoSinDato
                 });
 
-                List<BE.ActualizacionTasaDetalle> detalles = repositorio.ObtenerDetallePorEjecucion(ejecucionId);
+                BE.EjecucionActualizacionTasas ejecucion = repositorio.ObtenerRecientes(10).Single(item => item.Id == ejecucionId);
+                List<BE.ActualizacionTasaDetalle> detalles = repositorio.ObtenerDetallePorEjecucion(ejecucion);
 
                 Assert.AreEqual(2, detalles.Count);
-                Assert.AreEqual(ejecucionId, detalles[0].EjecucionId);
+                Assert.AreSame(ejecucion, detalles[0].Ejecucion);
                 Assert.AreEqual("USD", detalles[0].MonedaBase.Codigo);
                 Assert.AreEqual("ARS", detalles[0].MonedaConversion.Codigo);
                 Assert.AreEqual(1500.5m, detalles[0].ValorAnterior);

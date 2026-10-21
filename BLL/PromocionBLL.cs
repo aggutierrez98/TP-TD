@@ -39,12 +39,12 @@ namespace BLL
 
         // Busqueda en memoria (el volumen es chico): texto sobre la descripcion, sin distinguir
         // mayusculas ni acentos, y/o promociones que le aplican a un comercio. Ambos con Y.
-        public List<Promocion> Buscar(string texto, int? comercioId)
+        public List<Promocion> Buscar(string texto, Comercio recibido)
         {
             Comercio comercio = null;
-            if (comercioId.HasValue)
+            if (recibido != null)
             {
-                comercio = _comercioRepositorio.ObtenerPorId(comercioId.Value);
+                comercio = _comercioRepositorio.ObtenerPorId(recibido.Id);
                 if (comercio == null)
                 {
                     throw new ExcepcionNegocio("Error.PromotionManagement.ComercioNotFound");
@@ -69,9 +69,9 @@ namespace BLL
 
         // Misma regla que el buscador por comercio: las promociones que muestra el detalle del
         // comercio son las que le aplican segun su filtro de comercios y de rubros.
-        public List<Promocion> ObtenerPorComercio(int comercioId)
+        public List<Promocion> ObtenerPorComercio(Comercio recibido)
         {
-            Comercio comercio = _comercioRepositorio.ObtenerPorId(comercioId);
+            Comercio comercio = recibido == null ? null : _comercioRepositorio.ObtenerPorId(recibido.Id);
             if (comercio == null)
             {
                 return new List<Promocion>();
@@ -125,18 +125,19 @@ namespace BLL
 
         public bool Actualizar(Promocion datos)
         {
-            Promocion promocion = Normalizar(datos);
-            promocion.Id = datos.Id;
+            Normalizar(datos);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    if (unidad.Promociones.ObtenerPorId(promocion.Id) == null)
+                    Promocion promocion = unidad.Promociones.ObtenerPorId(datos.Id);
+                    if (promocion == null)
                     {
                         throw new ExcepcionNegocio("Error.PromotionManagement.PromocionNotFound");
                     }
 
+                    CopiarEditables(datos, promocion);
                     ValidarReferencias(unidad, promocion);
 
                     if (!unidad.Promociones.Actualizar(promocion))
@@ -165,27 +166,29 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Promocion recibida)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    if (unidad.Promociones.ObtenerPorId(id) == null)
+                    Promocion promocion = recibida == null ? null : unidad.Promociones.ObtenerPorId(recibida.Id);
+                    if (promocion == null)
                     {
                         throw new ExcepcionNegocio("Error.PromotionManagement.PromocionNotFound");
                     }
 
                     // Una promocion que una notificacion o recordatorio referencia no se da de baja.
-                    if (unidad.Notificaciones.ContarPorPromocion(id) > 0)
+                    if (unidad.Notificaciones.ContarPorPromocion(promocion) > 0)
                     {
                         throw new ExcepcionNegocio("Error.PromotionManagement.PromocionInUse");
                     }
 
                     // Los filtros se borran primero: sus FK no tienen ON DELETE.
-                    ReemplazarFiltros(unidad, new Promocion { Id = id }, "Error.PromotionManagement.PromocionDeleteFailed");
+                    VaciarFiltros(promocion);
+                    ReemplazarFiltros(unidad, promocion, "Error.PromotionManagement.PromocionDeleteFailed");
 
-                    if (!unidad.Promociones.Eliminar(id))
+                    if (!unidad.Promociones.Eliminar(promocion))
                     {
                         throw new ExcepcionTecnica("Error.PromotionManagement.PromocionDeleteFailed");
                     }
@@ -210,12 +213,12 @@ namespace BLL
         }
 
         // Validaciones que no necesitan datos: se rechazan antes de abrir la unidad de trabajo.
-        // Devuelve una copia normalizada (texto recortado, ids y segmentos sin repetir).
+        // Normaliza la entidad recibida (texto recortado y referencias sin repetir).
         private static Promocion Normalizar(Promocion datos)
         {
             if (datos == null)
             {
-                throw new ArgumentNullException("datos");
+                throw new ExcepcionNegocio("Error.PromotionManagement.DescriptionRequired");
             }
 
             string descripcion = (datos.Descripcion ?? string.Empty).Trim();
@@ -239,32 +242,28 @@ namespace BLL
                 throw new ExcepcionNegocio("Error.PromotionManagement.VigenciaInvalid");
             }
 
-            Promocion promocion = new Promocion
-            {
-                Descripcion = descripcion,
-                Descuento = datos.Descuento,
-                TopeDescuento = datos.TopeDescuento,
-                VigenciaDesde = datos.VigenciaDesde.Date,
-                VigenciaHasta = datos.VigenciaHasta.Date,
-                DiasSemana = (datos.DiasSemana ?? new List<DiaSemana>()).Distinct().ToList(),
-                ComercioIds = Distintos(datos.ComercioIds),
-                RubroComercioIds = Distintos(datos.RubroComercioIds),
-                EntidadFinancieraIds = Distintos(datos.EntidadFinancieraIds),
-                MedioPagoIds = Distintos(datos.MedioPagoIds),
-                Segmentos = SegmentosDistintos(datos.Segmentos),
-                ProductoIncluidoIds = Distintos(datos.ProductoIncluidoIds),
-                ProductoExcluidoIds = Distintos(datos.ProductoExcluidoIds),
-                CategoriaIncluidaIds = Distintos(datos.CategoriaIncluidaIds),
-                CategoriaExcluidaIds = Distintos(datos.CategoriaExcluidaIds)
-            };
+            Promocion promocion = datos;
+            promocion.Descripcion = descripcion;
+            promocion.VigenciaDesde = datos.VigenciaDesde.Date;
+            promocion.VigenciaHasta = datos.VigenciaHasta.Date;
+            promocion.DiasSemana = (datos.DiasSemana ?? new List<DiaSemana>()).Distinct().ToList();
+            promocion.Comercios = Distintos(datos.Comercios, item => item.Id);
+            promocion.RubrosComercio = Distintos(datos.RubrosComercio, item => item.Id);
+            promocion.EntidadesFinancieras = Distintos(datos.EntidadesFinancieras, item => item.Id);
+            promocion.MediosPago = Distintos(datos.MediosPago, item => item.Id);
+            promocion.Segmentos = SegmentosDistintos(datos.Segmentos);
+            promocion.ProductosIncluidos = Distintos(datos.ProductosIncluidos, item => item.Id);
+            promocion.ProductosExcluidos = Distintos(datos.ProductosExcluidos, item => item.Id);
+            promocion.CategoriasIncluidas = Distintos(datos.CategoriasIncluidas, item => item.Id);
+            promocion.CategoriasExcluidas = Distintos(datos.CategoriasExcluidas, item => item.Id);
 
             // Un mismo producto o categoria no puede estar incluido y excluido a la vez.
-            if (promocion.ProductoIncluidoIds.Intersect(promocion.ProductoExcluidoIds).Any())
+            if (promocion.ProductosIncluidos.Any(incluido => promocion.ProductosExcluidos.Any(excluido => incluido.Id == excluido.Id)))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.ProductoIncludedAndExcluded");
             }
 
-            if (promocion.CategoriaIncluidaIds.Intersect(promocion.CategoriaExcluidaIds).Any())
+            if (promocion.CategoriasIncluidas.Any(incluida => promocion.CategoriasExcluidas.Any(excluida => incluida.Id == excluida.Id)))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.CategoriaIncludedAndExcluded");
             }
@@ -274,32 +273,32 @@ namespace BLL
 
         private static void ValidarReferencias(IUnidadDeTrabajo unidad, Promocion promocion)
         {
-            if (promocion.ComercioIds.Any(id => unidad.Comercios.ObtenerPorId(id) == null))
+            if (promocion.Comercios.Any(item => unidad.Comercios.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.ComercioNotFound");
             }
 
-            if (promocion.RubroComercioIds.Any(id => unidad.RubrosComercio.ObtenerPorId(id) == null))
+            if (promocion.RubrosComercio.Any(item => unidad.RubrosComercio.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.RubroNotFound");
             }
 
-            if (promocion.EntidadFinancieraIds.Any(id => unidad.EntidadesFinancieras.ObtenerPorId(id) == null))
+            if (promocion.EntidadesFinancieras.Any(item => unidad.EntidadesFinancieras.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.EntidadNotFound");
             }
 
-            if (promocion.MedioPagoIds.Any(id => unidad.MediosPago.ObtenerPorId(id) == null))
+            if (promocion.MediosPago.Any(item => unidad.MediosPago.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.MedioPagoNotFound");
             }
 
-            if (promocion.ProductoIncluidoIds.Concat(promocion.ProductoExcluidoIds).Any(id => unidad.Productos.ObtenerPorId(id) == null))
+            if (promocion.ProductosIncluidos.Concat(promocion.ProductosExcluidos).Any(item => unidad.Productos.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.ProductoNotFound");
             }
 
-            if (promocion.CategoriaIncluidaIds.Concat(promocion.CategoriaExcluidaIds).Any(id => unidad.CategoriasProducto.ObtenerPorId(id) == null))
+            if (promocion.CategoriasIncluidas.Concat(promocion.CategoriasExcluidas).Any(item => unidad.CategoriasProducto.ObtenerPorId(item.Id) == null))
             {
                 throw new ExcepcionNegocio("Error.PromotionManagement.CategoriaProductoNotFound");
             }
@@ -310,14 +309,14 @@ namespace BLL
         private static void ReemplazarFiltros(IUnidadDeTrabajo unidad, Promocion promocion, string claveFalla)
         {
             bool todoOk =
-                unidad.Promociones.ReemplazarDiasDePromocion(promocion.Id, promocion.DiasSemana)
-                && unidad.PromocionComercio.ReemplazarComerciosDePromocion(promocion.Id, promocion.ComercioIds)
-                && unidad.PromocionRubrosComercio.ReemplazarRubrosComercioDePromocion(promocion.Id, promocion.RubroComercioIds)
-                && unidad.PromocionEntidadesFinancieras.ReemplazarEntidadesFinancierasDePromocion(promocion.Id, promocion.EntidadFinancieraIds)
-                && unidad.PromocionMediosPago.ReemplazarMediosPagoDePromocion(promocion.Id, promocion.MedioPagoIds)
-                && unidad.PromocionSegmentos.ReemplazarSegmentosDePromocion(promocion.Id, promocion.Segmentos)
-                && unidad.PromocionProductos.ReemplazarProductosDePromocion(promocion.Id, promocion.ProductoIncluidoIds, promocion.ProductoExcluidoIds)
-                && unidad.PromocionCategoriasProducto.ReemplazarCategoriasProductoDePromocion(promocion.Id, promocion.CategoriaIncluidaIds, promocion.CategoriaExcluidaIds);
+                unidad.Promociones.ReemplazarDiasDePromocion(promocion, promocion.DiasSemana)
+                && unidad.PromocionComercio.ReemplazarComerciosDePromocion(promocion, promocion.Comercios)
+                && unidad.PromocionRubrosComercio.ReemplazarRubrosComercioDePromocion(promocion, promocion.RubrosComercio)
+                && unidad.PromocionEntidadesFinancieras.ReemplazarEntidadesFinancierasDePromocion(promocion, promocion.EntidadesFinancieras)
+                && unidad.PromocionMediosPago.ReemplazarMediosPagoDePromocion(promocion, promocion.MediosPago)
+                && unidad.PromocionSegmentos.ReemplazarSegmentosDePromocion(promocion, promocion.Segmentos)
+                && unidad.PromocionProductos.ReemplazarProductosDePromocion(promocion, promocion.ProductosIncluidos, promocion.ProductosExcluidos)
+                && unidad.PromocionCategoriasProducto.ReemplazarCategoriasProductoDePromocion(promocion, promocion.CategoriasIncluidas, promocion.CategoriasExcluidas);
 
             if (!todoOk)
             {
@@ -333,9 +332,42 @@ namespace BLL
                 .ToList();
         }
 
-        private static List<int> Distintos(List<int> ids)
+        private static List<T> Distintos<T>(List<T> entidades, Func<T, int> clave)
         {
-            return (ids ?? new List<int>()).Distinct().ToList();
+            return (entidades ?? new List<T>()).GroupBy(clave).Select(grupo => grupo.First()).ToList();
+        }
+
+        private static void CopiarEditables(Promocion origen, Promocion destino)
+        {
+            destino.Descripcion = origen.Descripcion;
+            destino.Descuento = origen.Descuento;
+            destino.TopeDescuento = origen.TopeDescuento;
+            destino.VigenciaDesde = origen.VigenciaDesde;
+            destino.VigenciaHasta = origen.VigenciaHasta;
+            destino.DiasSemana = origen.DiasSemana;
+            destino.Comercios = origen.Comercios;
+            destino.RubrosComercio = origen.RubrosComercio;
+            destino.EntidadesFinancieras = origen.EntidadesFinancieras;
+            destino.MediosPago = origen.MediosPago;
+            destino.Segmentos = origen.Segmentos;
+            destino.ProductosIncluidos = origen.ProductosIncluidos;
+            destino.ProductosExcluidos = origen.ProductosExcluidos;
+            destino.CategoriasIncluidas = origen.CategoriasIncluidas;
+            destino.CategoriasExcluidas = origen.CategoriasExcluidas;
+        }
+
+        private static void VaciarFiltros(Promocion promocion)
+        {
+            promocion.DiasSemana = new List<DiaSemana>();
+            promocion.Comercios = new List<Comercio>();
+            promocion.RubrosComercio = new List<RubroComercio>();
+            promocion.EntidadesFinancieras = new List<EntidadFinanciera>();
+            promocion.MediosPago = new List<MedioPago>();
+            promocion.Segmentos = new List<string>();
+            promocion.ProductosIncluidos = new List<Producto>();
+            promocion.ProductosExcluidos = new List<Producto>();
+            promocion.CategoriasIncluidas = new List<CategoriaProducto>();
+            promocion.CategoriasExcluidas = new List<CategoriaProducto>();
         }
 
         private static List<string> SegmentosDistintos(List<string> segmentos)

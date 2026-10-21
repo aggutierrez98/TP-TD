@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Globalization;
 using ABSTRACCIONES;
+using SERVICIOS;
 
 namespace BLL
 {
@@ -39,9 +40,9 @@ namespace BLL
             return false;
         }
 
-        internal ContextoAsistente CrearContexto()
+        internal IContextoAsistente CrearContexto()
         {
-            List<ReferenciaAsistente> referencias = new List<ReferenciaAsistente>();
+            List<IReferenciaAsistente> referencias = new List<IReferenciaAsistente>();
             foreach (OfertaCompra oferta in Items.SelectMany(item => item.Ofertas))
             {
                 referencias.Add(new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, oferta.Comercio));

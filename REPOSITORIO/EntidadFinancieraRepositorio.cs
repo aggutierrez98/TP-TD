@@ -47,7 +47,7 @@ namespace REPOSITORIO
                 return;
             }
 
-            entidad.MediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorEntidadFinanciera(entidad.Id, _accesoDatos);
+            entidad.MediosPagoEntidad = _medioPagoEntidadDAL.ObtenerPorEntidadFinanciera(entidad, _accesoDatos);
             foreach (MedioPagoEntidad medioPagoEntidad in entidad.MediosPagoEntidad)
             {
                 medioPagoEntidad.EntidadFinanciera = entidad;
@@ -65,9 +65,9 @@ namespace REPOSITORIO
             return _entidadFinancieraDAL.Actualizar(entidad, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(EntidadFinanciera entidad)
         {
-            return _entidadFinancieraDAL.Eliminar(id, _accesoDatos);
+            return _entidadFinancieraDAL.Eliminar(entidad, _accesoDatos);
         }
     }
 }

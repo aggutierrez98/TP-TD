@@ -17,7 +17,7 @@ namespace DAL
                 CalculoConversion = (decimal)row["CalculoConversion"],
                 FechaActualizacion = (System.DateTime)row["FechaActualizacion"],
                 EsManual = (bool)row["EsManual"],
-                ProtegidaPorUsuarioId = row["ProtegidaPorUsuarioId"] == System.DBNull.Value ? (int?)null : (int)row["ProtegidaPorUsuarioId"],
+                ProtegidaPorUsuario = row["ProtegidaPorUsuarioId"] == System.DBNull.Value ? null : new Usuario { Id = (int)row["ProtegidaPorUsuarioId"] },
                 FechaProteccion = row["FechaProteccion"] == System.DBNull.Value ? (System.DateTime?)null : (System.DateTime)row["FechaProteccion"]
             };
         }
@@ -83,7 +83,7 @@ namespace DAL
             }
         }
 
-        public TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId, AccesoDatosSqlServer accesoDatos = null)
+        public TasaConversion ObtenerPorParDeMonedas(Moneda monedaBase, Moneda monedaConversion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, MonedaBaseId, MonedaConversionId, CalculoConversion, FechaActualizacion,
@@ -98,8 +98,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@MonedaBaseId", SqlDbType.Int, monedaBaseId),
-                    accesoDatos.CreateParameter("@MonedaConversionId", SqlDbType.Int, monedaConversionId)
+                    accesoDatos.CreateParameter("@MonedaBaseId", SqlDbType.Int, monedaBase.Id),
+                    accesoDatos.CreateParameter("@MonedaConversionId", SqlDbType.Int, monedaConversion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -176,7 +176,7 @@ namespace DAL
 
         // Escritura de la actualizacion automatica: no toca EsManual y, por defensa ante una
         // carrera con la edicion del operador, no modifica una tasa que ya quedo manual.
-        public bool ActualizarValorAutomatico(int id, decimal calculoConversion, AccesoDatosSqlServer accesoDatos = null)
+        public bool ActualizarValorAutomatico(TasaConversion tasa, decimal calculoConversion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE TasaConversion
@@ -192,7 +192,7 @@ namespace DAL
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
                     accesoDatos.CreateParameter("@CalculoConversion", SqlDbType.Decimal, calculoConversion),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, tasa.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -206,7 +206,7 @@ namespace DAL
             }
         }
 
-        public bool MarcarManual(int id, int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public bool MarcarManual(TasaConversion tasa, Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE TasaConversion
@@ -222,8 +222,8 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, tasa.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -237,7 +237,7 @@ namespace DAL
             }
         }
 
-        public bool Liberar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Liberar(TasaConversion tasa, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE TasaConversion
@@ -253,7 +253,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, tasa.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -267,7 +267,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(TasaConversion tasa, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM TasaConversion
@@ -280,7 +280,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, tasa.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

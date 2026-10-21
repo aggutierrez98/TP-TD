@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace DAL
 {
@@ -47,23 +48,23 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, snapshot.UsuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, snapshot.Usuario.Id),
                     accesoDatos.CreateParameter("@FechaHora", SqlDbType.DateTime, snapshot.FechaHora),
-                    accesoDatos.CreateParameter("@ActorUsuarioId", SqlDbType.Int, snapshot.ActorUsuarioId),
+                    accesoDatos.CreateParameter("@ActorUsuarioId", SqlDbType.Int, snapshot.ActorUsuario?.Id),
                     accesoDatos.CreateParameter("@ActorUsernameSnapshot", SqlDbType.VarChar, snapshot.ActorUsernameSnapshot),
                     accesoDatos.CreateParameter("@Accion", SqlDbType.VarChar, snapshot.Accion),
                     accesoDatos.CreateParameter("@Observaciones", SqlDbType.VarChar, snapshot.Observaciones),
                     accesoDatos.CreateParameter("@Username", SqlDbType.VarChar, snapshot.Username),
                     accesoDatos.CreateParameter("@PasswordHash", SqlDbType.VarChar, snapshot.PasswordHash),
                     accesoDatos.CreateParameter("@Activo", SqlDbType.Bit, snapshot.Activo),
-                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, snapshot.IdiomaId)
+                    accesoDatos.CreateParameter("@IdiomaId", SqlDbType.Int, snapshot.Idioma?.Id)
                 };
 
                 int historialId = accesoDatos.WriteWithResult(insertHistorial, parametros);
 
-                List<int> permisos = snapshot.PermisosIds == null
+                List<int> permisos = snapshot.Permisos == null
                     ? new List<int>()
-                    : snapshot.PermisosIds.Distinct().OrderBy(item => item).ToList();
+                    : snapshot.Permisos.Select(p => p.Id).Distinct().OrderBy(item => item).ToList();
 
                 if (permisos.Count > 0)
                 {
@@ -95,7 +96,7 @@ namespace DAL
             }
         }
 
-        public List<UsuarioHistorialSnapshot> ObtenerVersiones(int usuarioId)
+        public List<UsuarioHistorialSnapshot> ObtenerVersiones(IUsuarioAutenticado usuario)
         {
             const string query = @"
                 SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
@@ -108,7 +109,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -118,7 +119,7 @@ namespace DAL
             }
         }
 
-        public UsuarioHistorialSnapshot ObtenerVersion(int historialId)
+        public UsuarioHistorialSnapshot ObtenerPorId(int id)
         {
             const string query = @"
                 SELECT HistorialId, UsuarioId, FechaHora, ActorUsuarioId, ActorUsernameSnapshot, Accion, Observaciones,
@@ -130,7 +131,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@HistorialId", SqlDbType.Int, historialId)
+                    accesoDatos.CreateParameter("@HistorialId", SqlDbType.Int, id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -149,21 +150,22 @@ namespace DAL
             return new UsuarioHistorialSnapshot
             {
                 HistorialId = historialId,
-                UsuarioId = (int)row["UsuarioId"],
+                Usuario = new UsuarioDAL().ObtenerPorId((int)row["UsuarioId"], accesoDatos),
                 FechaHora = (DateTime)row["FechaHora"],
-                ActorUsuarioId = row["ActorUsuarioId"] == DBNull.Value ? (int?)null : (int)row["ActorUsuarioId"],
+                ActorUsuario = row.IsNull("ActorUsuarioId") ? null : new UsuarioDAL().ObtenerPorId((int)row["ActorUsuarioId"], accesoDatos),
                 ActorUsernameSnapshot = row["ActorUsernameSnapshot"].ToString(),
                 Accion = row["Accion"].ToString(),
                 Observaciones = row["Observaciones"].ToString(),
                 Username = row["Username"].ToString(),
                 PasswordHash = row["PasswordHash"].ToString(),
                 Activo = (bool)row["Activo"],
-                IdiomaId = row["IdiomaId"] == DBNull.Value ? (int?)null : (int)row["IdiomaId"],
-                PermisosIds = ObtenerPermisos(historialId, accesoDatos)
+                Idioma = row.IsNull("IdiomaId") ? null : new IdiomaDAL().ObtenerPorId((int)row["IdiomaId"], accesoDatos)
+                    ?? new Idioma { Id = (int)row["IdiomaId"] },
+                Permisos = ObtenerPermisos(historialId, accesoDatos)
             };
         }
 
-        private List<int> ObtenerPermisos(int historialId, AccesoDatosSqlServer accesoDatos)
+        private List<IPermiso> ObtenerPermisos(int historialId, AccesoDatosSqlServer accesoDatos)
         {
             const string query = @"
                 SELECT PermisoId
@@ -177,8 +179,9 @@ namespace DAL
             };
 
             DataTable dataTable = accesoDatos.Read(query, parametros);
+            var catalogo = new PermisoDAL().ObtenerNodos(accesoDatos).ToDictionary(p => p.Id);
             return dataTable.Rows.Cast<DataRow>()
-                .Select(row => (int)row["PermisoId"])
+                .Select(row => catalogo.TryGetValue((int)row["PermisoId"], out IPermiso permiso) ? permiso : new PermisoSimple { Id = (int)row["PermisoId"] })
                 .ToList();
         }
     }

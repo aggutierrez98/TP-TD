@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG08-monedas/NEG08-monedas-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN33 Consultar monedas — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionMonedas" as FormGestionMonedas
+control "MonedaBLL" as MonedaBLL
+participant "MonedaRepositorio\n:IMonedaRepositorio" as IMonedaRepositorio
+participant "MonedaDAL" as MonedaDAL
+note over FormGestionMonedas : El actor desea conocer las monedas registradas en el sistema.
+Actor -> FormGestionMonedas : selecciona la opción «Monedas» del menú «Operador».
+FormGestionMonedas -> MonedaBLL ++ : ObtenerTodas()
+MonedaBLL -> IMonedaRepositorio ++ : ObtenerTodas()
+IMonedaRepositorio -> MonedaDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+MonedaDAL --> IMonedaRepositorio -- : List<Moneda>
+IMonedaRepositorio --> MonedaBLL -- : List<Moneda>
+MonedaBLL --> FormGestionMonedas -- : List<Moneda>
+FormGestionMonedas --> Actor : presenta la pantalla «Gestion de Monedas» con la sección «Monedas», que contiene el\nlistado de monedas ordenado por código
+Actor -> FormGestionMonedas : selecciona una moneda del listado.
+FormGestionMonedas --> Actor : muestra el código y el nombre de la moneda seleccionada en los campos «Codigo:» y\n«Nombre:».
+' BLL/MonedaBLL.cs:25 MonedaBLL.ObtenerTodas
+' DAL/MonedaDAL.cs:49 MonedaDAL.ObtenerTodas
+' REPOSITORIO/IMonedaRepositorio.cs:10 IMonedaRepositorio.ObtenerTodas
+' REPOSITORIO/MonedaRepositorio.cs:28 MonedaRepositorio.ObtenerTodas
+' UI/FormGestionMonedas.cs:51 FormGestionMonedas.CargarMonedas
+@enduml

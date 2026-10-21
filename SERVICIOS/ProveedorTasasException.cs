@@ -1,6 +1,7 @@
 using System;
+using ABSTRACCIONES;
 
-namespace ABSTRACCIONES
+namespace SERVICIOS
 {
     // Error tecnico del proveedor de tasas de cambio, tipado por estado. El mensaje
     // nunca incluye la clave ni la URL consultada. CodigoHttp se informa cuando hubo

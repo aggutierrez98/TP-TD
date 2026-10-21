@@ -1,0 +1,93 @@
+@startuml
+' Fuente: diagramas/NEG18-perfil-inversor/NEG18-perfil-inversor-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN77 Completar o actualizar mi perfil inversor — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario recién registrado o autenticado" as Actor
+boundary "FormPerfilInversor" as FormPerfilInversor
+control "PerfilInversorBLL" as PerfilInversorBLL
+control "CalculadorPerfilInversor" as CalculadorPerfilInversor
+participant "Sesion\n:ISesion" as ISesion
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "PerfilInversorRepositorio\n:IPerfilInversorRepositorio" as IPerfilInversorRepositorio
+participant "PerfilInversorDAL" as PerfilInversorDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormPerfilInversor : El actor desea conocer o actualizar su perfil inversor, para recibir\nrecomendaciones personales de inversión.
+Actor -> FormPerfilInversor : selecciona el botón «Completar cuestionario» (o «Volver a hacer el cuestionario») de la\npantalla «Configuración del usuario».
+FormPerfilInversor --> Actor : presenta la pantalla «Perfil inversor» con la introducción «Conozcamos tu perfil\ninversor», la indicación «10 preguntas · 3–5 minutos», el aviso de que el cuestionario es\nopcional y los botones «Comenzar cuestionario» y…
+Actor -> FormPerfilInversor : selecciona el botón «Comenzar cuestionario».
+FormPerfilInversor --> Actor : presenta la primera pregunta con el indicador «Pregunta 1 de 10», la barra de avance, sus\nopciones de respuesta y los botones «Anterior», «Siguiente» y «Cancelar».
+Actor -> FormPerfilInversor : elige una opción de respuesta y selecciona el botón «Siguiente».
+FormPerfilInversor --> Actor : presenta la pregunta siguiente. El actor repite el paso 5 hasta llegar a la décima\npregunta, donde el botón «Siguiente» se reemplaza por «Ver resultado».
+Actor -> FormPerfilInversor : elige una opción de la décima pregunta y selecciona el botón «Ver resultado».
+FormPerfilInversor -> PerfilInversorBLL ++ : EvaluarCuestionario(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>)
+PerfilInversorBLL -> CalculadorPerfilInversor ++ : Evaluar(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>)
+CalculadorPerfilInversor --> PerfilInversorBLL -- : PerfilInversor
+PerfilInversorBLL --> FormPerfilInversor -- : PerfilInversor
+FormPerfilInversor --> Actor : presenta el resultado «Tu perfil inversor: Riesgo …» con la descripción del perfil, los\nmotivos que limitan el nivel de riesgo (o la leyenda «Tu resultado combina tu capacidad\neconómica y tu tolerancia al riesgo.»), el aviso de…
+Actor -> FormPerfilInversor : selecciona el botón «Guardar perfil y continuar».
+alt Cuestionario desde Mi configuracion con sesion
+FormPerfilInversor -> PerfilInversorBLL ++ : GuardarMiPerfil(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>)
+PerfilInversorBLL -> ISesion ++ : HaySesionActiva()
+ISesion --> PerfilInversorBLL -- : bool
+PerfilInversorBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> PerfilInversorBLL -- : Usuario
+PerfilInversorBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> PerfilInversorBLL -- : Usuario
+PerfilInversorBLL -> CalculadorPerfilInversor ++ : Evaluar(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>)
+CalculadorPerfilInversor --> PerfilInversorBLL -- : PerfilInversor
+PerfilInversorBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> PerfilInversorBLL -- : IUnidadDeTrabajo
+PerfilInversorBLL -> IPerfilInversorRepositorio ++ : Guardar(perfil: PerfilInversor)
+IPerfilInversorRepositorio -> PerfilInversorDAL ++ : Guardar(perfil: PerfilInversor, acceso: AccesoDatosSqlServer)
+PerfilInversorDAL --> IPerfilInversorRepositorio -- : void
+IPerfilInversorRepositorio --> PerfilInversorBLL -- : void
+PerfilInversorBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> PerfilInversorBLL -- : void
+PerfilInversorBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> PerfilInversorBLL -- : void
+PerfilInversorBLL --> FormPerfilInversor -- : PerfilInversor
+else Cuestionario post-registro con continuacion vigente
+FormPerfilInversor -> PerfilInversorBLL ++ : GuardarPostRegistro(continuacion: ContinuacionPerfilInversor,\nversion: int, respuestas: IEnumerable<RespuestaPerfilInversor>)
+PerfilInversorBLL -> CalculadorPerfilInversor ++ : Evaluar(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>)
+CalculadorPerfilInversor --> PerfilInversorBLL -- : PerfilInversor
+PerfilInversorBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> PerfilInversorBLL -- : IUnidadDeTrabajo
+PerfilInversorBLL -> IPerfilInversorRepositorio ++ : Guardar(perfil: PerfilInversor)
+IPerfilInversorRepositorio -> PerfilInversorDAL ++ : Guardar(perfil: PerfilInversor, acceso: AccesoDatosSqlServer)
+PerfilInversorDAL --> IPerfilInversorRepositorio -- : void
+IPerfilInversorRepositorio --> PerfilInversorBLL -- : void
+PerfilInversorBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> PerfilInversorBLL -- : void
+PerfilInversorBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> PerfilInversorBLL -- : void
+PerfilInversorBLL --> FormPerfilInversor -- : PerfilInversor
+end
+FormPerfilInversor --> Actor : guarda el perfil, cierra la pantalla del cuestionario y, si el cuestionario se inició\ndesde «Configuración del usuario», actualiza allí el nivel de riesgo y la fecha de última\nactualización.
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/CalculadorPerfilInversor.cs:16 CalculadorPerfilInversor.Evaluar
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/PerfilInversorBLL.cs:22 PerfilInversorBLL.EvaluarCuestionario
+' BLL/PerfilInversorBLL.cs:47 PerfilInversorBLL.GuardarMiPerfil
+' BLL/PerfilInversorBLL.cs:53 PerfilInversorBLL.GuardarPostRegistro
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/PerfilInversorDAL.cs:44 PerfilInversorDAL.Guardar
+' REPOSITORIO/IPerfilInversorRepositorio.cs:8 IPerfilInversorRepositorio.Guardar
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/PerfilInversorRepositorio.cs:13 PerfilInversorRepositorio.Guardar
+' UI/FormPerfilInversor.cs:259 FormPerfilInversor.btnSiguiente_Click
+@enduml

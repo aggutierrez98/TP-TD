@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return recordatorio;
         }
 
-        public List<RecordatorioInversion> ObtenerPorUsuario(int usuarioId)
+        public List<RecordatorioInversion> ObtenerPorUsuario(Usuario usuario)
         {
-            List<RecordatorioInversion> recordatorios = _recordatorioInversionDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            List<RecordatorioInversion> recordatorios = _recordatorioInversionDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             recordatorios.ForEach(Hidratar);
             return recordatorios;
         }
@@ -61,9 +61,9 @@ namespace REPOSITORIO
             return _recordatorioInversionDAL.Actualizar(recordatorio, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(RecordatorioInversion recordatorio)
         {
-            return _recordatorioInversionDAL.Eliminar(id, _accesoDatos);
+            return _recordatorioInversionDAL.Eliminar(recordatorio, _accesoDatos);
         }
     }
 }

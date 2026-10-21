@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,20 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerRubroComercioIdsPorPromocion(int promocionId)
+        public List<RubroComercio> ObtenerRubrosComercioPorPromocion(Promocion promocion)
         {
-            return _promocionRubroComercioDAL.ObtenerRubroComercioIdsPorPromocion(promocionId, _accesoDatos);
+            RubroComercioRepositorio repositorio = new RubroComercioRepositorio(_accesoDatos);
+            return _promocionRubroComercioDAL.ObtenerRubrosComercioPorPromocion(promocion, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarRubrosComercioDePromocion(int promocionId, List<int> rubroComercioIds)
+        public bool ReemplazarRubrosComercioDePromocion(Promocion promocion, List<RubroComercio> rubrosComercio)
         {
-            return _promocionRubroComercioDAL.ReemplazarRubrosComercioDePromocion(promocionId, rubroComercioIds, _accesoDatos);
+            return _promocionRubroComercioDAL.ReemplazarRubrosComercioDePromocion(promocion, rubrosComercio, _accesoDatos);
         }
 
-        public int ContarPorRubroComercio(int rubroComercioId)
+        public int ContarPorRubroComercio(RubroComercio rubroComercio)
         {
-            return _promocionRubroComercioDAL.ContarPorRubroComercio(rubroComercioId, _accesoDatos);
+            return _promocionRubroComercioDAL.ContarPorRubroComercio(rubroComercio, _accesoDatos);
         }
     }
 }

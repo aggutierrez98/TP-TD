@@ -69,7 +69,7 @@ namespace TpIDS.IntegrationTests
                     Nombre = "ComercioTestRubroB"
                 });
 
-                System.Collections.Generic.List<BE.Comercio> propios = repositorio.ObtenerPorRubro(rubroComercioId);
+                System.Collections.Generic.List<BE.Comercio> propios = repositorio.ObtenerPorRubro(new BE.RubroComercio { Id = rubroComercioId });
 
                 Assert.IsTrue(propios.Any(item => item.Id == idPropio));
                 Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
@@ -132,7 +132,7 @@ namespace TpIDS.IntegrationTests
                     Nombre = "ComercioTestAEliminar"
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.Comercio { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

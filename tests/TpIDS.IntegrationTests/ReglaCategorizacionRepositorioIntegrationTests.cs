@@ -71,7 +71,7 @@ namespace TpIDS.IntegrationTests
                     PalabrasClave = "ajena"
                 });
 
-                System.Collections.Generic.List<BE.ReglaCategorizacion> propias = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.ReglaCategorizacion> propias = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propias.Any(item => item.Id == idPropia));
                 Assert.IsFalse(propias.Any(item => item.Id == idAjena));
@@ -133,7 +133,7 @@ namespace TpIDS.IntegrationTests
                     PalabrasClave = "eliminar"
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.ReglaCategorizacion { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

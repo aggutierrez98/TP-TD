@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using BE;
 using REPOSITORIO;
 
@@ -13,38 +14,42 @@ namespace BLL
     {
         private readonly IRecomendacionComprasRepositorio _repositorio;
         private readonly IZonaUsuarioRepositorio _zonas;
+        private readonly IUsuarioRepositorio _usuarios;
         private readonly ITasaConversionRepositorio _tasas;
         private readonly CoincidenciaSemanticaProductos _coincidencia;
         private readonly Func<DateTime> _ahora;
 
-        internal RecomendacionComprasBLL(IRecomendacionComprasRepositorio repositorio, IZonaUsuarioRepositorio zonas, ITasaConversionRepositorio tasas, CoincidenciaSemanticaProductos coincidencia, Func<DateTime> ahora)
+        internal RecomendacionComprasBLL(IRecomendacionComprasRepositorio repositorio, IZonaUsuarioRepositorio zonas, IUsuarioRepositorio usuarios, ITasaConversionRepositorio tasas, CoincidenciaSemanticaProductos coincidencia, Func<DateTime> ahora)
         {
             _repositorio = repositorio;
             _zonas = zonas;
+            _usuarios = usuarios;
             _tasas = tasas;
             _coincidencia = coincidencia;
             _ahora = ahora;
         }
 
-        public async Task<ResumenCompras> CalcularAsync(int usuarioId, string nombreLista, CancellationToken cancellationToken)
+        public async Task<ResumenCompras> CalcularAsync(Usuario usuario, string nombreLista, CancellationToken cancellationToken)
         {
-            // Id capturado al enviar por AsistenteFinancieroBLL, nunca un argumento del modelo.
+            // Usuario capturado al enviar por AsistenteFinancieroBLL, nunca un argumento del modelo.
             // No se vuelve a consultar la sesion despues de esperar una llamada de red.
             DateTime desde = _ahora().Date;
-            List<ItemLista> items = _repositorio.ObtenerItemsPendientesPorUsuario(usuarioId)
-                .Where(item => !item.Comprado && item.ListaDeCompras?.Usuario?.Id == usuarioId).OrderBy(item => item.Id).ToList();
+            List<ItemLista> items = _repositorio.ObtenerItemsPendientesPorUsuario(usuario)
+                .Where(item => !item.Comprado && item.ListaDeCompras?.Usuario?.Id == usuario.Id).OrderBy(item => item.Id).ToList();
             if (!string.IsNullOrWhiteSpace(nombreLista))
             {
                 List<ItemLista> seleccionados = items.Where(item => CoincidenciaLocalProductos.Normalizar(item.ListaDeCompras.Nombre) == CoincidenciaLocalProductos.Normalizar(nombreLista)).ToList();
                 if (seleccionados.Count > 0) items = seleccionados;
             }
-            List<ZonaUsuario> zonas = _zonas.ObtenerPorUsuario(usuarioId).Where(zona => zona.Usuario?.Id == usuarioId).ToList();
+            Usuario persistido = _usuarios.ObtenerPorId(usuario.Id);
+            List<ZonaUsuario> zonas = persistido == null ? new List<ZonaUsuario>()
+                : _zonas.ObtenerPorUsuario(persistido).Where(zona => zona.Usuario?.Id == usuario.Id).ToList();
             ResumenCompras resumen = new ResumenCompras { SinZonas = zonas.Count == 0, ItemsOmitidos = Math.Max(0, items.Count - ResumenCompras.MaximoItemsAnalizados) };
             items = items.Take(ResumenCompras.MaximoItemsAnalizados).ToList();
             List<Producto> productos = _repositorio.ObtenerProductosConCategoria();
             List<ComercioProducto> ofertas = _repositorio.ObtenerOfertas();
             List<Promocion> promociones = _repositorio.ObtenerPromocionesVigentesEntre(desde, desde.AddDays(6));
-            List<CuentaFinanciera> cuentas = _repositorio.ObtenerCuentasConMediosPorUsuario(usuarioId).Where(cuenta => cuenta.Usuario?.Id == usuarioId).ToList();
+            List<CuentaFinanciera> cuentas = _repositorio.ObtenerCuentasConMediosPorUsuario(usuario).Where(cuenta => cuenta.Usuario?.Id == usuario.Id).ToList();
             List<TasaConversion> tasas = _tasas.ObtenerTodas();
             Dictionary<int, List<CoincidenciaProducto>> coincidencias = items.ToDictionary(item => item.Id, item => CoincidenciaLocalProductos.Buscar(item.Descripcion, productos));
             List<ItemLista> sinCoincidencia = items.Where(item => coincidencias[item.Id].Count == 0).ToList();
@@ -65,12 +70,12 @@ namespace BLL
                         if (cercana == null) continue;
                     }
                     OfertaCompra candidata = CrearOferta(oferta, item.Cantidad, cercana, sinUbicacion, tasas);
-                    foreach (Promocion promocion in promociones.Where(p => AlcancePromocion.AplicaAComercio(p, oferta.Comercio) && AlcancePromocion.AplicaAProducto(p, oferta.Producto.Id, oferta.Producto.CategoriaProducto?.Id ?? 0)))
+                    foreach (Promocion promocion in promociones.Where(p => AlcancePromocion.AplicaAComercio(p, oferta.Comercio) && AlcancePromocion.AplicaAProducto(p, oferta.Producto)))
                     {
                         foreach (CuentaFinanciera cuenta in cuentas)
                         foreach (MedioPagoEntidad medio in cuenta.MediosPagoEntidad)
                         {
-                            if (!AlcancePromocion.AplicaAPago(promocion, cuenta.EntidadFinanciera?.Id, medio.MedioPago?.Id, medio.Segmento)) continue;
+                            if (!AlcancePromocion.AplicaAPago(promocion, cuenta.EntidadFinanciera, medio.MedioPago, medio.Segmento)) continue;
                             for (int dia = 0; dia < 7; dia++)
                             {
                                 DateTime fecha = desde.AddDays(dia);
@@ -107,13 +112,13 @@ namespace BLL
             return resumen;
         }
 
-        public IReadOnlyList<ReferenciaAsistente> ObtenerUniversoReferencias(int usuarioId)
+        public IReadOnlyList<IReferenciaAsistente> ObtenerUniversoReferencias(Usuario usuario)
         {
             // Catalogos compartidos, mas las cuentas propias. Nunca se leen cuentas de terceros.
             DateTime hoy = _ahora().Date;
             return _repositorio.ObtenerOfertas().Select(o => new ReferenciaAsistente(TipoReferenciaAsistente.Comercio, o.Comercio.Nombre))
                 .Concat(_repositorio.ObtenerPromocionesVigentesEntre(hoy, hoy.AddDays(6)).Select(p => new ReferenciaAsistente(TipoReferenciaAsistente.Promocion, p.Descripcion)))
-                .Concat(_repositorio.ObtenerCuentasConMediosPorUsuario(usuarioId).Where(c => c.Usuario?.Id == usuarioId).Select(c => new ReferenciaAsistente(TipoReferenciaAsistente.Cuenta, c.Alias))).ToList();
+                .Concat(_repositorio.ObtenerCuentasConMediosPorUsuario(usuario).Where(c => c.Usuario?.Id == usuario.Id).Select(c => new ReferenciaAsistente(TipoReferenciaAsistente.Cuenta, c.Alias))).ToList();
         }
 
         private static IOrderedEnumerable<OfertaCompra> Ordenar(IEnumerable<OfertaCompra> ofertas)

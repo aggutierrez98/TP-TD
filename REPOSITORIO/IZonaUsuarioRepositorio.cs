@@ -7,10 +7,10 @@ namespace REPOSITORIO
     {
         ZonaUsuario ObtenerPorId(int id);
 
-        List<ZonaUsuario> ObtenerPorUsuario(int usuarioId);
+        List<ZonaUsuario> ObtenerPorUsuario(Usuario usuario);
 
         int InsertarYObtenerId(ZonaUsuario zona);
 
-        bool Eliminar(int id);
+        bool Eliminar(ZonaUsuario zona);
     }
 }

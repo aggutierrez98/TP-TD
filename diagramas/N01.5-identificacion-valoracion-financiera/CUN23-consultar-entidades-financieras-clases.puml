@@ -1,0 +1,92 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN23 Consultar entidades financieras — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionEntidadesFinancieras {
+    -CargarEntidades(entidadSeleccionadaId: int?): void
+  }
+  class FormDetalleEntidadFinanciera {
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+FormGestionEntidadesFinancieras -[hidden]right-> FormDetalleEntidadFinanciera
+package "BLL" as L_BLL {
+  class EntidadFinancieraBLL {
+    +ObtenerTodas(): List<EntidadFinanciera>
+    +ObtenerMediosPagoEntidad(entidad: EntidadFinanciera): List<MedioPagoEntidad>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IEntidadFinancieraRepositorio {
+    +ObtenerTodas(): List<EntidadFinanciera>
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+  class EntidadFinancieraRepositorio {
+    +ObtenerTodas(): List<EntidadFinanciera>
+    +ObtenerPorId(id: int): EntidadFinanciera
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IEntidadFinancieraRepositorio -[hidden]right-> EntidadFinancieraRepositorio
+package "DAL" as L_DAL {
+  class EntidadFinancieraDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<EntidadFinanciera>
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): EntidadFinanciera
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class EntidadFinanciera {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class MedioPago {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+EntidadFinanciera -[hidden]right-> MedioPago
+EntidadFinanciera -[hidden]down-> MedioPagoEntidad
+EntidadFinancieraBLL ..> IEntidadFinancieraRepositorio : usa
+EntidadFinancieraRepositorio ..|> IEntidadFinancieraRepositorio
+FormDetalleEntidadFinanciera ..> EntidadFinancieraBLL : usa
+FormGestionEntidadesFinancieras ..> EntidadFinancieraBLL : usa
+EntidadFinancieraRepositorio ..> EntidadFinancieraDAL : usa
+EntidadFinancieraBLL ..> EntidadFinanciera : datos
+EntidadFinanciera --> "*" MedioPagoEntidad : MediosPagoEntidad
+MedioPagoEntidad --> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad --> MedioPago : MedioPago
+' BLL/EntidadFinancieraBLL.cs:29 EntidadFinancieraBLL.ObtenerTodas
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' DAL/EntidadFinancieraDAL.cs:19 EntidadFinancieraDAL.ObtenerPorId
+' DAL/EntidadFinancieraDAL.cs:48 EntidadFinancieraDAL.ObtenerTodas
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:27 EntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/EntidadFinancieraRepositorio.cs:35 EntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:12 IEntidadFinancieraRepositorio.ObtenerTodas
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' UI/FormGestionEntidadesFinancieras.cs:37 FormGestionEntidadesFinancieras.CargarEntidades
+@enduml

@@ -38,21 +38,6 @@ namespace SERVICIOS
         }
 
         /// <summary>
-        /// Metodo para iniciar sesion a partir del identificador y nombre de usuario.
-        /// Crea una representacion liviana del usuario autenticado para la sesion.
-        /// </summary>
-        /// <param name="usuarioId">El identificador del usuario autenticado.</param>
-        /// <param name="username">El nombre del usuario autenticado.</param>
-        public void IniciarSesion(int usuarioId, string username)
-        {
-            _usuarioActual = new UsuarioAutenticadoSesion
-            {
-                Id = usuarioId,
-                Username = username
-            };
-        }
-
-        /// <summary>
         /// Metodo para cerrar la sesion actual.
         /// Elimina la referencia al usuario autenticado en memoria.
         /// </summary>
@@ -69,16 +54,6 @@ namespace SERVICIOS
         public IUsuarioAutenticado GetUsuarioActual()
         {
             return _usuarioActual;
-        }
-
-        /// <summary>
-        /// Metodo para obtener el identificador del usuario autenticado actual.
-        /// Devuelve <see langword="null" /> cuando no hay sesion activa.
-        /// </summary>
-        /// <returns>El identificador del usuario actual.</returns>
-        public int? GetUsuarioActualId()
-        {
-            return _usuarioActual == null ? (int?)null : _usuarioActual.Id;
         }
 
         /// <summary>

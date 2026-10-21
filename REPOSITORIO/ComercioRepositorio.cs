@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return comercio;
         }
 
-        public List<Comercio> ObtenerPorRubro(int rubroComercioId)
+        public List<Comercio> ObtenerPorRubro(RubroComercio rubro)
         {
-            List<Comercio> comercios = _comercioDAL.ObtenerPorRubro(rubroComercioId, _accesoDatos);
+            List<Comercio> comercios = _comercioDAL.ObtenerPorRubro(rubro, _accesoDatos);
             comercios.ForEach(Hidratar);
             return comercios;
         }
@@ -61,9 +61,9 @@ namespace REPOSITORIO
             return _comercioDAL.Actualizar(comercio, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Comercio comercio)
         {
-            return _comercioDAL.Eliminar(id, _accesoDatos);
+            return _comercioDAL.Eliminar(comercio, _accesoDatos);
         }
     }
 }

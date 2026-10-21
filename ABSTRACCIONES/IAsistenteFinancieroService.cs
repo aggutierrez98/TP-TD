@@ -10,7 +10,7 @@ namespace ABSTRACCIONES
     // la redaccion al especialista, sin ejecutar herramientas ni consultar datos de negocio.
     public interface IAsistenteFinancieroService
     {
-        Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud);
-        Task<LlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(SolicitudAsistente solicitud, HerramientaAsistente herramienta, CancellationToken cancellationToken);
+        Task<string> ObtenerRespuestaAsync(ISolicitudAsistente solicitud);
+        Task<ILlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(ISolicitudAsistente solicitud, IHerramientaAsistente herramienta, CancellationToken cancellationToken);
     }
 }

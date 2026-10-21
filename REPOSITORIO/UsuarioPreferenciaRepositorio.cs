@@ -1,5 +1,6 @@
 using DAL;
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace REPOSITORIO
 {
@@ -19,9 +20,9 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId)
+        public UsuarioPreferencia ObtenerPorUsuario(IUsuarioAutenticado usuario)
         {
-            return _usuarioPreferenciaDAL.ObtenerPorUsuarioId(usuarioId, _accesoDatos);
+            return _usuarioPreferenciaDAL.ObtenerPorUsuario(usuario, _accesoDatos);
         }
 
         public bool Guardar(UsuarioPreferencia preferencia)
@@ -29,9 +30,9 @@ namespace REPOSITORIO
             return _usuarioPreferenciaDAL.Guardar(preferencia, _accesoDatos);
         }
 
-        public bool Guardar(int usuarioId, int? idiomaId)
+        public bool Guardar(IUsuarioAutenticado usuario, IIdioma idioma)
         {
-            return _usuarioPreferenciaDAL.Guardar(usuarioId, idiomaId, _accesoDatos);
+            return _usuarioPreferenciaDAL.Guardar(usuario, idioma, _accesoDatos);
         }
     }
 }

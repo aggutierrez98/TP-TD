@@ -41,12 +41,12 @@ namespace BLL.Tests
 
         private static SolicitudGeneracion Compras(IIdioma idioma, string pregunta = "Donde compro lo de mi lista?", int usuarioId = 7)
         {
-            return new SolicitudGeneracion { Categoria = CategoriaConsulta.Compras, UsuarioId = usuarioId, Pregunta = pregunta, Idioma = idioma };
+            return new SolicitudGeneracion { Categoria = CategoriaConsulta.Compras, Usuario = new Usuario { Id = usuarioId }, Pregunta = pregunta, Idioma = idioma };
         }
 
         private static SolicitudGeneracion Inversion(IIdioma idioma, decimal? porcentaje = null, string pregunta = "En que invierto lo que me sobra?", int usuarioId = 7)
         {
-            return new SolicitudGeneracion { Categoria = CategoriaConsulta.Inversiones, UsuarioId = usuarioId, Pregunta = pregunta, Idioma = idioma, Perfil = PerfilAsistenteTests.Perfil(), Porcentaje = porcentaje };
+            return new SolicitudGeneracion { Categoria = CategoriaConsulta.Inversiones, Usuario = new Usuario { Id = usuarioId }, Pregunta = pregunta, Idioma = idioma, Perfil = PerfilAsistenteTests.Perfil(), Porcentaje = porcentaje };
         }
 
         [TestMethod]
@@ -272,7 +272,7 @@ namespace BLL.Tests
         {
             FakeAsistenteFinancieroService servicio = new FakeAsistenteFinancieroService { NextRespuesta = "Un plazo fijo es un deposito." };
             var historial = new List<IntercambioChatbot> { new IntercambioChatbot { Pregunta = "Hola", Respuesta = "Chau" } };
-            SolicitudGeneracion s = new SolicitudGeneracion { Categoria = CategoriaConsulta.FinanzasGenerales, UsuarioId = 7, Pregunta = "Que es un plazo fijo?", Historial = historial, Idioma = Idioma("A") };
+            SolicitudGeneracion s = new SolicitudGeneracion { Categoria = CategoriaConsulta.FinanzasGenerales, Usuario = new Usuario { Id = 7 }, Pregunta = "Que es un plazo fijo?", Historial = historial, Idioma = Idioma("A") };
             ResultadoGeneracion r = await Crear(servicio, null, null).GenerarAsync(s, CancellationToken.None);
             Assert.IsTrue(r.Aceptada);
             Assert.AreEqual("Un plazo fijo es un deposito.", r.Texto);
@@ -291,7 +291,7 @@ namespace BLL.Tests
             FakeObservado observado = new FakeObservado();
             observado.CambiarIdioma(idioma);
             AsistenteFinancieroBLL chat = new AsistenteFinancieroBLL(new FakeConsultaChatbotRepositorio(), new FakeChatbotFinancieroRepositorio(), servicioChat,
-                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Compras }, new LimiteUsoAsistente(1000, () => ComprasFixture.Hoy),
+                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Compras }, new FakeLimiteUsoAsistente(1000),
                 new FakeUnidadDeTrabajoFactory(unidad), f.Sesion, new SpyBitacoraBLL(), observado, Crear(servicioChat, f, null));
             RespuestaAsistente delChat = await chat.EnviarMensajeAsync("Donde compro lo de mi lista?");
             FakeAsistenteFinancieroService servicioBatch = new FakeAsistenteFinancieroService { NextRespuesta = "Compra en Super real." };
@@ -311,7 +311,7 @@ namespace BLL.Tests
             FakeObservado observado = new FakeObservado();
             observado.CambiarIdioma(idioma);
             AsistenteFinancieroBLL chat = new AsistenteFinancieroBLL(new FakeConsultaChatbotRepositorio(), new FakeChatbotFinancieroRepositorio(), servicioChat,
-                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Inversiones }, new LimiteUsoAsistente(1000, () => f.Hoy),
+                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Inversiones }, new FakeLimiteUsoAsistente(1000),
                 new FakeUnidadDeTrabajoFactory(new FakeUnidadDeTrabajo()), sesion, new SpyBitacoraBLL(), observado, Crear(servicioChat, null, f),
                 new PerfilInversorBLLTests.RepoPerfil { Ultimo = PerfilAsistenteTests.Perfil() });
             RespuestaAsistente delChat = await chat.EnviarMensajeAsync("Quiero invertir el 20%");

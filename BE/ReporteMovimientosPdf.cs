@@ -10,12 +10,12 @@ namespace BE
     {
         private readonly byte[] logo;
 
-        public ReporteMovimientosPdf(int usuarioId, string titulo, IEnumerable<string> encabezados,
+        public ReporteMovimientosPdf(Usuario usuario, string titulo, IEnumerable<string> encabezados,
             IEnumerable<IEnumerable<string>> filas, IEnumerable<string> filtros, byte[] logo,
             DateTime fechaGeneracion, string etiquetaFechaGeneracion, string etiquetaCantidad,
             string formatoPagina, string textoContinuacion)
         {
-            UsuarioId = usuarioId;
+            Usuario = usuario;
             Titulo = titulo;
             Encabezados = encabezados == null ? null : Array.AsReadOnly(encabezados.ToArray());
             Filas = filas == null ? null : Array.AsReadOnly(filas.Select(f => f == null ? null :
@@ -29,7 +29,7 @@ namespace BE
             TextoContinuacion = textoContinuacion;
         }
 
-        public int UsuarioId { get; }
+        public Usuario Usuario { get; }
         public string Titulo { get; }
         public IReadOnlyList<string> Encabezados { get; }
         public IReadOnlyList<IReadOnlyList<string>> Filas { get; }

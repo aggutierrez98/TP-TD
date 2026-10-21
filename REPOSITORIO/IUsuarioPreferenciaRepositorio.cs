@@ -1,13 +1,14 @@
 using SERVICIOS;
+using ABSTRACCIONES;
 
 namespace REPOSITORIO
 {
     public interface IUsuarioPreferenciaRepositorio
     {
-        UsuarioPreferencia ObtenerPorUsuarioId(int usuarioId);
+        UsuarioPreferencia ObtenerPorUsuario(IUsuarioAutenticado usuario);
 
         bool Guardar(UsuarioPreferencia preferencia);
 
-        bool Guardar(int usuarioId, int? idiomaId);
+        bool Guardar(IUsuarioAutenticado usuario, IIdioma idioma);
     }
 }

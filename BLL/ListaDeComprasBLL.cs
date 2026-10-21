@@ -30,9 +30,9 @@ namespace BLL
         // si todavia no tiene, se crea automaticamente. No hay alta/gestion de multiples listas.
         public ListaDeCompras ObtenerOCrearParaUsuarioActual()
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
-            ListaDeCompras listaExistente = _listaDeComprasRepositorio.ObtenerPorUsuario(usuarioActualId).FirstOrDefault();
+            ListaDeCompras listaExistente = _listaDeComprasRepositorio.ObtenerPorUsuario(usuarioActual).FirstOrDefault();
             if (listaExistente != null)
             {
                 return listaExistente;
@@ -44,7 +44,7 @@ namespace BLL
                 {
                     ListaDeCompras nuevaLista = new ListaDeCompras
                     {
-                        Usuario = new Usuario { Id = usuarioActualId },
+                        Usuario = usuarioActual,
                         Nombre = "Mi lista de compras",
                         FechaCreacion = DateTime.Now
                     };
@@ -67,39 +67,32 @@ namespace BLL
             }
         }
 
-        public ItemLista AgregarItem(int listaId, string descripcion, int cantidad)
+        public ItemLista AgregarItem(ItemLista item)
         {
-            string descripcionNormalizada = (descripcion ?? string.Empty).Trim();
+            string descripcionNormalizada = (item?.Descripcion ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(descripcionNormalizada))
             {
                 throw new ExcepcionNegocio("Error.ShoppingList.DescriptionRequired");
             }
 
-            ValidarCantidad(cantidad);
+            ValidarCantidad(item.Cantidad);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ListaDeCompras lista = unidad.ListasDeCompras.ObtenerPorId(listaId);
-                    ValidarPropiedadLista(lista, usuarioActualId);
-
-                    ItemLista nuevoItem = new ItemLista
-                    {
-                        ListaDeCompras = new ListaDeCompras { Id = listaId },
-                        Descripcion = descripcionNormalizada,
-                        Cantidad = cantidad,
-                        Comprado = false
-                    };
-
-                    int id = unidad.ItemsLista.InsertarYObtenerId(nuevoItem);
-                    nuevoItem.Id = id;
+                    ListaDeCompras lista = item.ListaDeCompras == null ? null : unidad.ListasDeCompras.ObtenerPorId(item.ListaDeCompras.Id);
+                    ValidarPropiedadLista(lista, usuarioActual);
+                    item.ListaDeCompras = lista;
+                    item.Descripcion = descripcionNormalizada;
+                    item.Comprado = false;
+                    item.Id = unidad.ItemsLista.InsertarYObtenerId(item);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormShoppingList.Value.Activity.ItemCreation", "FormShoppingList.Value.Info.ItemCreation", "ListaDeComprasBLL", unidad);
                     unidad.Save();
-                    return nuevoItem;
+                    return item;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -112,18 +105,18 @@ namespace BLL
             }
         }
 
-        public bool ActualizarCantidad(int itemId, int cantidad)
+        public bool ActualizarCantidad(ItemLista recibido, int cantidad)
         {
             ValidarCantidad(cantidad);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ItemLista item = unidad.ItemsLista.ObtenerPorId(itemId);
-                    ValidarPropiedadItem(item, usuarioActualId);
+                    ItemLista item = recibido == null ? null : unidad.ItemsLista.ObtenerPorId(recibido.Id);
+                    ValidarPropiedadItem(item, usuarioActual);
 
                     item.Cantidad = cantidad;
                     bool actualizado = unidad.ItemsLista.Actualizar(item);
@@ -151,16 +144,16 @@ namespace BLL
             }
         }
 
-        public bool MarcarComprado(int itemId, bool comprado)
+        public bool MarcarComprado(ItemLista recibido, bool comprado)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ItemLista item = unidad.ItemsLista.ObtenerPorId(itemId);
-                    ValidarPropiedadItem(item, usuarioActualId);
+                    ItemLista item = recibido == null ? null : unidad.ItemsLista.ObtenerPorId(recibido.Id);
+                    ValidarPropiedadItem(item, usuarioActual);
 
                     item.Comprado = comprado;
                     bool actualizado = unidad.ItemsLista.Actualizar(item);
@@ -188,18 +181,18 @@ namespace BLL
             }
         }
 
-        public bool EliminarItem(int itemId)
+        public bool EliminarItem(ItemLista recibido)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ItemLista item = unidad.ItemsLista.ObtenerPorId(itemId);
-                    ValidarPropiedadItem(item, usuarioActualId);
+                    ItemLista item = recibido == null ? null : unidad.ItemsLista.ObtenerPorId(recibido.Id);
+                    ValidarPropiedadItem(item, usuarioActual);
 
-                    bool eliminado = unidad.ItemsLista.Eliminar(itemId);
+                    bool eliminado = unidad.ItemsLista.Eliminar(item);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.ShoppingList.DeleteItemFailed");
@@ -233,28 +226,28 @@ namespace BLL
         }
 
         // La lista solo puede recibir items de su dueno.
-        private static void ValidarPropiedadLista(ListaDeCompras lista, int usuarioActualId)
+        private static void ValidarPropiedadLista(ListaDeCompras lista, Usuario usuarioActual)
         {
             if (lista == null)
             {
                 throw new ExcepcionNegocio("Error.ShoppingList.NotFound");
             }
 
-            if (lista.Usuario == null || lista.Usuario.Id != usuarioActualId)
+            if (lista.Usuario == null || lista.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.ShoppingList.NotOwned");
             }
         }
 
         // Un item solo puede ser editado/eliminado por el dueno de su lista.
-        private static void ValidarPropiedadItem(ItemLista item, int usuarioActualId)
+        private static void ValidarPropiedadItem(ItemLista item, Usuario usuarioActual)
         {
             if (item == null)
             {
                 throw new ExcepcionNegocio("Error.ShoppingList.ItemNotFound");
             }
 
-            if (item.ListaDeCompras == null || item.ListaDeCompras.Usuario == null || item.ListaDeCompras.Usuario.Id != usuarioActualId)
+            if (item.ListaDeCompras == null || item.ListaDeCompras.Usuario == null || item.ListaDeCompras.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.ShoppingList.ItemNotOwned");
             }

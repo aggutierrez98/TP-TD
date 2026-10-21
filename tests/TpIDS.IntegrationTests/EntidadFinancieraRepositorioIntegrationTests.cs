@@ -112,7 +112,7 @@ namespace TpIDS.IntegrationTests
                 EntidadFinancieraRepositorio repositorio = new EntidadFinancieraRepositorio(accesoDatos);
                 int id = repositorio.InsertarYObtenerId(new BE.EntidadFinanciera { Nombre = "BancoTestAEliminar" });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.EntidadFinanciera { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

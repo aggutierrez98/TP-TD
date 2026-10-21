@@ -23,14 +23,24 @@ namespace BLL.Tests
         }
 
         [TestMethod]
-        public void ObtenerPorId_DevuelveLaEntidadDelRepositorio()
+        public void ObtenerMediosPagoEntidad_DevuelveElCatalogoDeLaEntidadDelRepositorio()
         {
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
-            EntidadFinanciera galicia = new EntidadFinanciera { Id = 1, Nombre = "Galicia" };
+            List<MedioPagoEntidad> catalogo = new List<MedioPagoEntidad> { new MedioPagoEntidad { Id = 10 } };
+            EntidadFinanciera galicia = new EntidadFinanciera { Id = 1, Nombre = "Galicia", MediosPagoEntidad = catalogo };
             fixture.EntidadRepo.Entidades.Add(1, galicia);
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            Assert.AreSame(galicia, sut.ObtenerPorId(1));
+            Assert.AreSame(catalogo, sut.ObtenerMediosPagoEntidad(new EntidadFinanciera { Id = 1 }));
+        }
+
+        [TestMethod]
+        public void ObtenerMediosPagoEntidad_EntidadInexistente_DevuelveListaVacia()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            Assert.AreEqual(0, sut.ObtenerMediosPagoEntidad(new EntidadFinanciera { Id = 99 }).Count);
         }
 
         [TestMethod]
@@ -39,7 +49,7 @@ namespace BLL.Tests
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("   "));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new EntidadFinanciera { Nombre = "   " }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.NameRequired", ex.Message);
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
@@ -51,7 +61,7 @@ namespace BLL.Tests
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            EntidadFinanciera creada = sut.Crear("  Galicia  ");
+            EntidadFinanciera creada = sut.Crear(new EntidadFinanciera { Nombre = "  Galicia  " });
 
             Assert.AreEqual("Galicia", fixture.EntidadRepo.Entidades[creada.Id].Nombre);
             Assert.AreEqual("FormFinancialEntityManagement.Value.Activity.Creation", fixture.Bitacora.Calls[0].Actividad);
@@ -65,7 +75,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.Entidades.Add(1, new EntidadFinanciera { Id = 1, Nombre = "Galicia" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("GALICIA"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new EntidadFinanciera { Nombre = "GALICIA" }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.DuplicateName", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -77,7 +87,7 @@ namespace BLL.Tests
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, "Nuevo"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new EntidadFinanciera { Id = 99, Nombre = "Nuevo" }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.NotFound", ex.Message);
         }
@@ -89,7 +99,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.Entidades.Add(1, new EntidadFinanciera { Id = 1, Nombre = "Galicia" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, "  Banco Galicia  ");
+            bool resultado = sut.Actualizar(new EntidadFinanciera { Id = 1, Nombre = "  Banco Galicia  " });
 
             Assert.IsTrue(resultado);
             Assert.AreEqual("Banco Galicia", fixture.EntidadRepo.Entidades[1].Nombre);
@@ -105,7 +115,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.Entidades.Add(2, new EntidadFinanciera { Id = 2, Nombre = "Nacion" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(2, "galicia"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new EntidadFinanciera { Id = 2, Nombre = "galicia" }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.DuplicateName", ex.Message);
         }
@@ -116,7 +126,7 @@ namespace BLL.Tests
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new EntidadFinanciera { Id = 99 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.NotFound", ex.Message);
         }
@@ -134,11 +144,11 @@ namespace BLL.Tests
             });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new EntidadFinanciera { Id = 1 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.InUse", ex.Message);
             Assert.IsTrue(fixture.EntidadRepo.Entidades.ContainsKey(1));
-            Assert.IsNull(fixture.EntidadRepo.LastDeletedId);
+            Assert.IsNull(fixture.EntidadRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -156,7 +166,7 @@ namespace BLL.Tests
             });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new EntidadFinanciera { Id = 1 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.InUse", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -170,7 +180,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new EntidadFinanciera { Id = 1 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.DeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -184,7 +194,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new EntidadFinanciera { Id = 1 }));
 
             Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -197,7 +207,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.Entidades.Add(1, new EntidadFinanciera { Id = 1, Nombre = "Galicia" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(new EntidadFinanciera { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.EntidadRepo.Entidades.ContainsKey(1));
@@ -212,7 +222,7 @@ namespace BLL.Tests
             fixture.Unidad.MedioPagoRepo.MediosPago.Add(3, new MedioPago { Id = 3, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(99, 3, "Eminent"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(new MedioPagoEntidad { EntidadFinanciera = new EntidadFinanciera { Id = 99 }, MedioPago = new MedioPago { Id = 3 }, Segmento = "Eminent" }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.NotFound", ex.Message);
         }
@@ -224,7 +234,7 @@ namespace BLL.Tests
             fixture.EntidadRepo.Entidades.Add(1, new EntidadFinanciera { Id = 1, Nombre = "Galicia" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(1, 99, "Eminent"));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(new MedioPagoEntidad { EntidadFinanciera = new EntidadFinanciera { Id = 1 }, MedioPago = new MedioPago { Id = 99 }, Segmento = "Eminent" }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.PaymentMethodNotFound", ex.Message);
         }
@@ -244,7 +254,7 @@ namespace BLL.Tests
             });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(1, 3, " eminent "));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(new MedioPagoEntidad { EntidadFinanciera = new EntidadFinanciera { Id = 1 }, MedioPago = new MedioPago { Id = 3 }, Segmento = " eminent " }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.PaymentMethodAlreadyAdded", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -258,7 +268,7 @@ namespace BLL.Tests
             fixture.Unidad.MedioPagoRepo.MediosPago.Add(3, new MedioPago { Id = 3, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            MedioPagoEntidad creado = sut.AgregarMedioPagoEntidad(1, 3, "  Eminent  ");
+            MedioPagoEntidad creado = sut.AgregarMedioPagoEntidad(new MedioPagoEntidad { EntidadFinanciera = new EntidadFinanciera { Id = 1 }, MedioPago = new MedioPago { Id = 3 }, Segmento = "  Eminent  " });
 
             MedioPagoEntidad insertado = fixture.Unidad.MedioPagoEntidadRepo.MediosPagoEntidad[creado.Id];
             Assert.AreEqual(1, insertado.EntidadFinanciera.Id);
@@ -276,7 +286,7 @@ namespace BLL.Tests
             fixture.Unidad.MedioPagoRepo.MediosPago.Add(3, new MedioPago { Id = 3, Tipo = TipoMedioPago.TarjetaDebito, Marca = "Visa" });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            MedioPagoEntidad creado = sut.AgregarMedioPagoEntidad(1, 3, "  ");
+            MedioPagoEntidad creado = sut.AgregarMedioPagoEntidad(new MedioPagoEntidad { EntidadFinanciera = new EntidadFinanciera { Id = 1 }, MedioPago = new MedioPago { Id = 3 }, Segmento = "  " });
 
             Assert.IsNull(fixture.Unidad.MedioPagoEntidadRepo.MediosPagoEntidad[creado.Id].Segmento);
         }
@@ -287,7 +297,7 @@ namespace BLL.Tests
             EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarMedioPagoEntidad(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 99 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.EntityPaymentMethodNotFound", ex.Message);
         }
@@ -305,10 +315,10 @@ namespace BLL.Tests
             fixture.Unidad.CuentaFinancieraRepo.MedioPagoEntidadIdsPorCuenta[20] = new List<int> { 10 };
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarMedioPagoEntidad(10));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 10 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.EntityPaymentMethodInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.MedioPagoEntidadRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.MedioPagoEntidadRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -325,7 +335,7 @@ namespace BLL.Tests
             fixture.Unidad.MedioPagoEntidadRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.QuitarMedioPagoEntidad(10));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 10 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.PaymentMethodRemoveFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -344,7 +354,7 @@ namespace BLL.Tests
             fixture.Unidad.MedioPagoEntidadRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.QuitarMedioPagoEntidad(10));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 10 }));
 
             Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -362,7 +372,7 @@ namespace BLL.Tests
             });
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.QuitarMedioPagoEntidad(10);
+            bool resultado = sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 10 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.MedioPagoEntidadRepo.MediosPagoEntidad.ContainsKey(10));
@@ -378,11 +388,140 @@ namespace BLL.Tests
             fixture.Unidad.PromocionEntidadFinancieraRepo.EntidadFinancieraIdsPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
             EntidadFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new EntidadFinanciera { Id = 1 }));
 
             Assert.AreEqual("Error.FinancialEntityManagement.InUse", ex.Message);
-            Assert.IsNull(fixture.EntidadRepo.LastDeletedId);
+            Assert.IsNull(fixture.EntidadRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConId()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+            EntidadFinanciera entidad = new EntidadFinanciera { Nombre = "Galicia" };
+
+            EntidadFinanciera creada = sut.Crear(entidad);
+
+            Assert.AreSame(entidad, creada);
+            Assert.IsTrue(creada.Id > 0);
+        }
+
+        [TestMethod]
+        public void Crear_EntidadNula_ThrowsExcepcionNegocioNameRequired()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+
+            Assert.AreEqual("Error.FinancialEntityManagement.NameRequired", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaElNombreSobreLaPersistida()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinanciera persistida = new EntidadFinanciera { Id = 1, Nombre = "Galicia" };
+            fixture.EntidadRepo.Entidades.Add(1, persistida);
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(new EntidadFinanciera { Id = 1, Nombre = "Banco Galicia" });
+
+            Assert.AreSame(persistida, fixture.EntidadRepo.LastUpdated);
+            Assert.AreEqual("Banco Galicia", persistida.Nombre);
+        }
+
+        [TestMethod]
+        public void Eliminar_EntidadNula_ThrowsExcepcionNegocioNotFound()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(null));
+
+            Assert.AreEqual("Error.FinancialEntityManagement.NotFound", ex.Message);
+            Assert.IsNull(fixture.EntidadRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void Eliminar_Valido_EliminaLaPersistida()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinanciera persistida = new EntidadFinanciera { Id = 1, Nombre = "Galicia" };
+            fixture.EntidadRepo.Entidades.Add(1, persistida);
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            sut.Eliminar(new EntidadFinanciera { Id = 1 });
+
+            Assert.AreSame(persistida, fixture.EntidadRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void AgregarMedioPagoEntidad_Valido_DevuelveLaMismaInstanciaConLasEntidadesPersistidas()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinanciera galicia = new EntidadFinanciera { Id = 1, Nombre = "Galicia" };
+            fixture.EntidadRepo.Entidades.Add(1, galicia);
+            MedioPago visa = new MedioPago { Id = 3, Tipo = TipoMedioPago.TarjetaCredito, Marca = "Visa" };
+            fixture.Unidad.MedioPagoRepo.MediosPago.Add(3, visa);
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+            MedioPagoEntidad medioPagoEntidad = new MedioPagoEntidad
+            {
+                EntidadFinanciera = new EntidadFinanciera { Id = 1 },
+                MedioPago = new MedioPago { Id = 3 },
+                Segmento = "Eminent"
+            };
+
+            MedioPagoEntidad creado = sut.AgregarMedioPagoEntidad(medioPagoEntidad);
+
+            Assert.AreSame(medioPagoEntidad, creado);
+            Assert.IsTrue(creado.Id > 0);
+            Assert.AreSame(galicia, creado.EntidadFinanciera);
+            Assert.AreSame(visa, creado.MedioPago);
+        }
+
+        [TestMethod]
+        public void AgregarMedioPagoEntidad_Nulo_ThrowsExcepcionNegocioNotFound()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.AgregarMedioPagoEntidad(null));
+
+            Assert.AreEqual("Error.FinancialEntityManagement.NotFound", ex.Message);
+        }
+
+        [TestMethod]
+        public void QuitarMedioPagoEntidad_Nulo_ThrowsExcepcionNegocioNotFound()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.QuitarMedioPagoEntidad(null));
+
+            Assert.AreEqual("Error.FinancialEntityManagement.EntityPaymentMethodNotFound", ex.Message);
+            Assert.IsNull(fixture.Unidad.MedioPagoEntidadRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void QuitarMedioPagoEntidad_Valido_EliminaElPersistido()
+        {
+            EntidadFinancieraFixture fixture = new EntidadFinancieraFixture();
+            MedioPagoEntidad persistido = new MedioPagoEntidad
+            {
+                Id = 10,
+                EntidadFinanciera = new EntidadFinanciera { Id = 1 },
+                MedioPago = new MedioPago { Id = 3 }
+            };
+            fixture.Unidad.MedioPagoEntidadRepo.MediosPagoEntidad.Add(10, persistido);
+            EntidadFinancieraBLL sut = fixture.CreateSut();
+
+            sut.QuitarMedioPagoEntidad(new MedioPagoEntidad { Id = 10 });
+
+            Assert.AreSame(persistido, fixture.Unidad.MedioPagoEntidadRepo.LastDeleted);
         }
 
         private sealed class EntidadFinancieraFixture

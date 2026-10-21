@@ -57,7 +57,7 @@ namespace TpIDS.IntegrationTests
                 int idPropio = InsertarMedioPagoEntidadTest(repositorio, entidadFinancieraId, medioPagoId, "Classic");
                 int idAjeno = InsertarMedioPagoEntidadTest(repositorio, otraEntidadFinancieraId, medioPagoId, "Classic");
 
-                List<BE.MedioPagoEntidad> propios = repositorio.ObtenerPorEntidadFinanciera(entidadFinancieraId);
+                List<BE.MedioPagoEntidad> propios = repositorio.ObtenerPorEntidadFinanciera(new BE.EntidadFinanciera { Id = entidadFinancieraId });
 
                 Assert.IsTrue(propios.Any(item => item.Id == idPropio && item.MedioPago.Marca == "MarcaTestMpeFiltro"));
                 Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
@@ -104,7 +104,7 @@ namespace TpIDS.IntegrationTests
                 int idPropio = InsertarMedioPagoEntidadTest(repositorio, entidadFinancieraId, medioPagoId, null);
                 int idAjeno = InsertarMedioPagoEntidadTest(repositorio, entidadFinancieraId, otroMedioPagoId, null);
 
-                List<BE.MedioPagoEntidad> resultado = repositorio.ObtenerPorMedioPago(medioPagoId);
+                List<BE.MedioPagoEntidad> resultado = repositorio.ObtenerPorMedioPago(new BE.MedioPago { Id = medioPagoId });
 
                 Assert.IsTrue(resultado.Any(item => item.Id == idPropio));
                 Assert.IsFalse(resultado.Any(item => item.Id == idAjeno));
@@ -150,7 +150,7 @@ namespace TpIDS.IntegrationTests
                 int medioPagoId = InsertarMedioPagoTest(accesoDatos, BE.TipoMedioPago.CuentaDNI, null);
                 int id = InsertarMedioPagoEntidadTest(repositorio, entidadFinancieraId, medioPagoId, null);
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(new BE.MedioPagoEntidad { Id = id });
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

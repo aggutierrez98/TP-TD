@@ -41,11 +41,11 @@ namespace BLL.Tests
 
             ConsultaChatbot insertada = fixture.Unidad.ConsultaChatbotRepo.LastInserted;
             Assert.IsNotNull(insertada);
-            Assert.AreEqual(3, insertada.UsuarioId);
+            Assert.AreEqual(3, insertada.Usuario.Id);
             Assert.AreEqual("Como ahorro mejor?", insertada.Pregunta);
             Assert.AreEqual("Para ahorrar mejor, revisa tus gastos fijos.", insertada.Respuesta);
             Assert.IsTrue(insertada.EsPregunta);
-            Assert.AreEqual(fixture.Chatbot.Chatbot.Id, insertada.ChatbotFinancieroId);
+            Assert.AreEqual(fixture.Chatbot.Chatbot.Id, insertada.ChatbotFinanciero.Id);
 
             Assert.AreEqual("OperacionInterno", fixture.Bitacora.Calls.Single().Kind);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
@@ -58,8 +58,8 @@ namespace BLL.Tests
             fixture.Unidad.ConsultaChatbotRepo.Consultas.Add(1, new ConsultaChatbot
             {
                 Id = 1,
-                ChatbotFinancieroId = 1,
-                UsuarioId = 1,
+                ChatbotFinanciero = new ChatbotFinanciero { Id = 1 },
+                Usuario = new Usuario { Id = 1 },
                 Pregunta = "Primera",
                 Respuesta = "PrimeraRespuesta",
                 Fecha = DateTime.Now.AddMinutes(-10),
@@ -68,8 +68,8 @@ namespace BLL.Tests
             fixture.Unidad.ConsultaChatbotRepo.Consultas.Add(2, new ConsultaChatbot
             {
                 Id = 2,
-                ChatbotFinancieroId = 1,
-                UsuarioId = 1,
+                ChatbotFinanciero = new ChatbotFinanciero { Id = 1 },
+                Usuario = new Usuario { Id = 1 },
                 Pregunta = "Segunda",
                 Respuesta = "SegundaRespuesta",
                 Fecha = DateTime.Now.AddMinutes(-5),
@@ -210,9 +210,9 @@ namespace BLL.Tests
         public void ObtenerHistorial_DevuelveConsultasDelUsuarioActualOrdenadasPorFecha()
         {
             AsistenteFixture fixture = new AsistenteFixture(usuarioActualId: 5);
-            fixture.ConsultaRepo.Consultas.Add(1, new ConsultaChatbot { Id = 1, UsuarioId = 5, Pregunta = "P1", Respuesta = "R1", Fecha = DateTime.Now.AddMinutes(-1), EsPregunta = true });
-            fixture.ConsultaRepo.Consultas.Add(2, new ConsultaChatbot { Id = 2, UsuarioId = 5, Pregunta = "P2", Respuesta = "R2", Fecha = DateTime.Now, EsPregunta = true });
-            fixture.ConsultaRepo.Consultas.Add(3, new ConsultaChatbot { Id = 3, UsuarioId = 99, Pregunta = "Ajena", Respuesta = "Ajena", Fecha = DateTime.Now, EsPregunta = true });
+            fixture.ConsultaRepo.Consultas.Add(1, new ConsultaChatbot { Id = 1, Usuario = new Usuario { Id = 5 }, Pregunta = "P1", Respuesta = "R1", Fecha = DateTime.Now.AddMinutes(-1), EsPregunta = true });
+            fixture.ConsultaRepo.Consultas.Add(2, new ConsultaChatbot { Id = 2, Usuario = new Usuario { Id = 5 }, Pregunta = "P2", Respuesta = "R2", Fecha = DateTime.Now, EsPregunta = true });
+            fixture.ConsultaRepo.Consultas.Add(3, new ConsultaChatbot { Id = 3, Usuario = new Usuario { Id = 99 }, Pregunta = "Ajena", Respuesta = "Ajena", Fecha = DateTime.Now, EsPregunta = true });
             AsistenteFinancieroBLL sut = fixture.CreateSut();
 
             IReadOnlyList<ConsultaChatbot> historial = sut.ObtenerHistorial();
@@ -387,8 +387,8 @@ namespace BLL.Tests
                 fixture.ConsultaRepo.Consultas.Add(i, new ConsultaChatbot
                 {
                     Id = i,
-                    ChatbotFinancieroId = 1,
-                    UsuarioId = 1,
+                    ChatbotFinanciero = new ChatbotFinanciero { Id = 1 },
+                    Usuario = new Usuario { Id = 1 },
                     Pregunta = "P" + i,
                     Respuesta = "R" + i,
                     Fecha = baseFecha.AddMinutes(i),
@@ -416,7 +416,7 @@ namespace BLL.Tests
             RespuestaAsistente respuesta = await sut.EnviarMensajeAsync("Como ahorro?");
 
             Assert.IsFalse(respuesta.EsRechazo);
-            Assert.AreEqual(2, fixture.ConsultaRepo.LastInserted.UsuarioId);
+            Assert.AreEqual(2, fixture.ConsultaRepo.LastInserted.Usuario.Id);
         }
 
         [TestMethod]
@@ -523,7 +523,7 @@ namespace BLL.Tests
                     Chatbot,
                     servicio ?? Servicio,
                     clasificador ?? Clasificador,
-                    new LimiteUsoAsistente(MaximoPorMinuto, () => Ahora),
+                    new FakeLimiteUsoAsistente(MaximoPorMinuto),
                     unidadFactory ?? UnidadFactory,
                     Sesion,
                     Bitacora,
@@ -547,11 +547,11 @@ namespace BLL.Tests
 
             public bool EsperaVencida { get; private set; }
 
-            public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId)
+            public List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario)
             {
                 LecturaIniciada.Set();
                 EsperaVencida = !_liberacion.Wait(EsperaMaxima);
-                return _interno.ObtenerPorUsuario(usuarioId);
+                return _interno.ObtenerPorUsuario(usuario);
             }
 
             public int InsertarYObtenerId(ConsultaChatbot consultaChatbot)
@@ -581,7 +581,7 @@ namespace BLL.Tests
                 _falla = falla;
             }
 
-            public List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId)
+            public List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario)
             {
                 throw _falla;
             }
@@ -629,16 +629,16 @@ namespace BLL.Tests
 
         private sealed class ServicioAsistentePendiente : IAsistenteFinancieroService
         {
-            public Task<LlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(SolicitudAsistente solicitud, HerramientaAsistente herramienta, CancellationToken cancellationToken)
+            public Task<ILlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(ISolicitudAsistente solicitud, IHerramientaAsistente herramienta, CancellationToken cancellationToken)
             {
-                return Task.FromResult<LlamadaHerramientaAsistente>(null);
+                return Task.FromResult<ILlamadaHerramientaAsistente>(null);
             }
             private readonly TaskCompletionSource<string> _respuesta =
                 new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             public ManualResetEventSlim LlamadaIniciada { get; } = new ManualResetEventSlim(false);
 
-            public Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud)
+            public Task<string> ObtenerRespuestaAsync(ISolicitudAsistente solicitud)
             {
                 LlamadaIniciada.Set();
                 return _respuesta.Task;

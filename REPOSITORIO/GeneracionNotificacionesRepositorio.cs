@@ -26,9 +26,9 @@ namespace REPOSITORIO
             return _dal.InsertarCorridaYObtenerId(corrida, _accesoDatos);
         }
 
-        public bool FinalizarCorrida(int corridaId, DateTime finUtc, int entregadas, int omitidas, int fallidas)
+        public bool FinalizarCorrida(CorridaGeneracionNotificaciones corrida, DateTime finUtc, int entregadas, int omitidas, int fallidas)
         {
-            return _dal.FinalizarCorrida(corridaId, finUtc, entregadas, omitidas, fallidas, _accesoDatos);
+            return _dal.FinalizarCorrida(corrida, finUtc, entregadas, omitidas, fallidas, _accesoDatos);
         }
 
         public int InsertarDetalleYObtenerId(DetalleGeneracionNotificacion detalle)
@@ -36,9 +36,9 @@ namespace REPOSITORIO
             return _dal.InsertarDetalleYObtenerId(detalle, _accesoDatos);
         }
 
-        public CorridaGeneracionNotificaciones ObtenerCorrida(int id)
+        public CorridaGeneracionNotificaciones ObtenerPorId(int id)
         {
-            return _dal.ObtenerCorrida(id, _accesoDatos);
+            return _dal.ObtenerPorId(id, _accesoDatos);
         }
 
         public List<CorridaGeneracionNotificaciones> ObtenerRecientes(int cantidad)
@@ -46,9 +46,25 @@ namespace REPOSITORIO
             return _dal.ObtenerRecientes(cantidad, _accesoDatos);
         }
 
-        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(int corridaId)
+        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(CorridaGeneracionNotificaciones corrida)
         {
-            return _dal.ObtenerDetallePorCorrida(corridaId, _accesoDatos);
+            List<DetalleGeneracionNotificacion> detalles = _dal.ObtenerDetallePorCorrida(corrida, _accesoDatos);
+            UsuarioRepositorio usuarios = new UsuarioRepositorio(_accesoDatos);
+            NotificacionRepositorio notificaciones = new NotificacionRepositorio(_accesoDatos);
+            RecordatorioCompraRepositorio compras = new RecordatorioCompraRepositorio(_accesoDatos);
+            RecordatorioInversionRepositorio inversiones = new RecordatorioInversionRepositorio(_accesoDatos);
+            foreach (DetalleGeneracionNotificacion detalle in detalles)
+            {
+                detalle.Usuario = usuarios.ObtenerPorId(detalle.Usuario.Id);
+                if (detalle.Notificacion != null)
+                {
+                    int id = detalle.Notificacion.Id;
+                    detalle.Notificacion = notificaciones.ObtenerPorId(id)
+                        ?? (Notificacion)compras.ObtenerPorId(id)
+                        ?? inversiones.ObtenerPorId(id);
+                }
+            }
+            return detalles;
         }
     }
 }

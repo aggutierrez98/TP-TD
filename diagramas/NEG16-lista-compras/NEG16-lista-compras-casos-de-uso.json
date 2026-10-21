@@ -1,0 +1,92 @@
+{
+  "requisito": "NEG16-lista-compras",
+  "titulo": "Lista de compras",
+  "subtitulo": "Especificaciones de casos de uso",
+  "casos_de_uso": [
+    {
+      "id_nombre": "CUN68 Consultar mi lista de compras",
+      "estado": "Implementado",
+      "descripcion": "Permite al usuario consultar los ítems de su propia lista de compras y su estado de compra.",
+      "actor_principal": "Usuario, Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada y cuenta con autorización para acceder a la lista de compras.",
+      "puntos_extension": "Permite continuar con CUN69, CUN70 y CUN71 desde la misma pantalla.",
+      "condicion": "El actor desea revisar qué debe comprar y qué ítems ya compró.",
+      "escenario_principal": [
+        "1. El actor selecciona la opción «Lista de compras» del menú «Finanzas».",
+        "2. El sistema presenta la pantalla «Lista de compras» con el listado de los ítems de la lista personal del actor, indicando para cada uno su descripción, su cantidad y si está comprado (casilla «Comprado»), y con la sección «Datos del ítem»."
+      ],
+      "flujos_alternativos": [
+        "2a. Si la lista no tiene ítems, el sistema presenta el listado vacío.",
+        "2b. Si ocurre un error al cargar la lista, el sistema muestra un mensaje de error. El caso de uso finaliza sin completar la consulta."
+      ],
+      "postcondiciones": "El actor dispone de los ítems de su lista de compras. La consulta no modifica la lista; cada actor solo visualiza su propia lista."
+    },
+    {
+      "id_nombre": "CUN69 Agregar ítem a mi lista de compras",
+      "estado": "Implementado",
+      "descripcion": "Permite al usuario agregar un ítem con su cantidad a su propia lista de compras.",
+      "actor_principal": "Usuario, Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la lista de compras y la pantalla «Lista de compras» está abierta.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea anotar un nuevo ítem que necesita comprar.",
+      "escenario_principal": [
+        "1. El actor ingresa la descripción del ítem en el campo «Descripción».",
+        "2. El actor ingresa la cantidad en el campo «Cantidad».",
+        "3. El actor selecciona la acción «Agregar ítem».",
+        "4. El sistema agrega el ítem a la lista del actor, limpia los campos «Descripción» y «Cantidad», actualiza el listado con el nuevo ítem sin marcar como comprado y muestra el mensaje «Ítem creado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "3a. Si la cantidad está vacía o no es un número entero, el sistema muestra la advertencia «Debe indicar una cantidad válida.». El ítem no se agrega.",
+        "4a. Si la descripción está vacía o contiene solo espacios, el sistema muestra la advertencia «Debe indicar una descripción para el ítem.». El ítem no se agrega.",
+        "4b. Si la cantidad no es mayor a cero, el sistema muestra la advertencia «La cantidad debe ser mayor a cero.». El ítem no se agrega.",
+        "4c. Si ocurre un error inesperado al agregar el ítem, el sistema muestra un mensaje de error. El ítem no se agrega."
+      ],
+      "postcondiciones": "El ítem queda registrado en la lista de compras del actor, con la cantidad indicada y estado de compra «no comprado»."
+    },
+    {
+      "id_nombre": "CUN70 Cambiar estado de compra de un ítem",
+      "estado": "Implementado",
+      "descripcion": "Permite al usuario marcar o desmarcar como comprado un ítem de su lista de compras.",
+      "actor_principal": "Usuario, Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la lista de compras, la pantalla «Lista de compras» está abierta y su lista tiene al menos un ítem.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor compró un ítem (o necesita volver a marcarlo como pendiente) y desea reflejarlo en su lista.",
+      "escenario_principal": [
+        "1. El actor marca o desmarca la casilla de la columna «Comprado» del ítem deseado.",
+        "2. El sistema registra el nuevo estado de compra del ítem y lo mantiene reflejado en el listado."
+      ],
+      "flujos_alternativos": [
+        "2a. Si ocurre un error al registrar el cambio, el sistema muestra un mensaje de error y recarga el listado, que vuelve a mostrar el estado de compra previo del ítem.",
+        "2b. Si el ítem ya no existe en la lista, el sistema muestra la advertencia «No se encontró el ítem indicado.» y recarga el listado."
+      ],
+      "postcondiciones": "El ítem queda con el estado de compra indicado por el actor. El cambio no muestra mensaje de confirmación y no altera la descripción ni la cantidad del ítem."
+    },
+    {
+      "id_nombre": "CUN71 Eliminar ítem de mi lista de compras",
+      "estado": "Implementado",
+      "descripcion": "Permite al usuario eliminar un ítem de su propia lista de compras.",
+      "actor_principal": "Usuario, Operador o Administrador",
+      "actor_secundario": "-",
+      "precondiciones": "El actor tiene una sesión iniciada, cuenta con autorización para acceder a la lista de compras, la pantalla «Lista de compras» está abierta y su lista tiene al menos un ítem.",
+      "puntos_extension": "No aplica.",
+      "condicion": "El actor desea quitar de su lista un ítem que ya no necesita.",
+      "escenario_principal": [
+        "1. El actor selecciona un ítem del listado.",
+        "2. El actor selecciona la acción «Eliminar ítem».",
+        "3. El sistema solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se eliminará el ítem seleccionado. ¿Desea continuar?».",
+        "4. El actor confirma la eliminación.",
+        "5. El sistema elimina el ítem, actualiza el listado sin el ítem eliminado y muestra el mensaje «Ítem eliminado con éxito.»."
+      ],
+      "flujos_alternativos": [
+        "2a. Si el actor no seleccionó ningún ítem, el sistema muestra la advertencia «Debe seleccionar un ítem.». El caso de uso finaliza sin cambios.",
+        "4a. Si el actor no confirma la eliminación, el sistema cierra el diálogo y el ítem se mantiene en la lista.",
+        "5a. Si el ítem ya no existe en la lista, el sistema muestra la advertencia «No se encontró el ítem indicado.». No se realiza ningún cambio.",
+        "5b. Si ocurre un error inesperado al eliminar el ítem, el sistema muestra un mensaje de error. El ítem se mantiene en la lista."
+      ],
+      "postcondiciones": "El ítem deja de figurar en la lista de compras del actor."
+    }
+  ]
+}

@@ -25,40 +25,34 @@ namespace BLL
             _bitacoraBLL = bitacoraBLL;
         }
 
-        public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
+        public List<Categoria> ObtenerVisiblesParaUsuarioActual()
         {
-            return _categoriaRepositorio.ObtenerVisiblesParaUsuario(usuarioId);
+            return _categoriaRepositorio.ObtenerVisiblesParaUsuario(_sesion.ObtenerUsuarioActual());
         }
 
-        public int Crear(string nombre)
+        // Devuelve la misma instancia recibida, con Id y Usuario (el de sesion) cargados.
+        public Categoria Crear(Categoria categoria)
         {
-            string nombreNormalizado = (nombre ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(nombreNormalizado))
-            {
-                throw new ExcepcionNegocio("Error.Category.NameRequired");
-            }
+            string nombreNormalizado = NormalizarNombre(categoria);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    if (unidad.Categorias.ExisteNombreEnScope(nombreNormalizado, usuarioActualId, null))
+                    if (unidad.Categorias.ExisteNombreEnScope(nombreNormalizado, usuarioActual, null))
                     {
                         throw new ExcepcionNegocio("Error.Category.NameExists");
                     }
 
-                    Categoria nuevaCategoria = new Categoria
-                    {
-                        Nombre = nombreNormalizado,
-                        Usuario = new Usuario { Id = usuarioActualId }
-                    };
+                    categoria.Nombre = nombreNormalizado;
+                    categoria.Usuario = usuarioActual;
 
-                    int id = unidad.Categorias.InsertarYObtenerId(nuevaCategoria);
+                    categoria.Id = unidad.Categorias.InsertarYObtenerId(categoria);
                     _bitacoraBLL.RegistrarOperacionInterno("FormCategories.Value.Activity.CategoryCreation", "FormCategories.Value.Info.CategoryCreation", "CategoriaBLL", unidad);
                     unidad.Save();
-                    return id;
+                    return categoria;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -71,30 +65,28 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nuevoNombre)
+        // Recibe la categoria con el nombre nuevo en Nombre. Valida la propiedad sobre
+        // la persistida (no confia en el Usuario recibido) y solo copia el Nombre.
+        public bool Actualizar(Categoria categoria)
         {
-            string nombreNormalizado = (nuevoNombre ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(nombreNormalizado))
-            {
-                throw new ExcepcionNegocio("Error.Category.NameRequired");
-            }
+            string nombreNormalizado = NormalizarNombre(categoria);
 
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Categoria categoria = unidad.Categorias.ObtenerPorId(id);
-                    ValidarPropiedad(categoria, usuarioActualId);
+                    Categoria persistida = unidad.Categorias.ObtenerPorId(categoria.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
-                    if (unidad.Categorias.ExisteNombreEnScope(nombreNormalizado, usuarioActualId, id))
+                    if (unidad.Categorias.ExisteNombreEnScope(nombreNormalizado, usuarioActual, persistida))
                     {
                         throw new ExcepcionNegocio("Error.Category.NameExists");
                     }
 
-                    categoria.Nombre = nombreNormalizado;
-                    bool actualizado = unidad.Categorias.Actualizar(categoria);
+                    persistida.Nombre = nombreNormalizado;
+                    bool actualizado = unidad.Categorias.Actualizar(persistida);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.Category.UpdateFailed");
@@ -119,18 +111,18 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Categoria categoria)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Categoria categoria = unidad.Categorias.ObtenerPorId(id);
-                    ValidarPropiedad(categoria, usuarioActualId);
+                    Categoria persistida = categoria == null ? null : unidad.Categorias.ObtenerPorId(categoria.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
-                    bool eliminado = unidad.Categorias.Eliminar(id);
+                    bool eliminado = unidad.Categorias.Eliminar(persistida);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.Category.DeleteFailed");
@@ -155,16 +147,27 @@ namespace BLL
             }
         }
 
+        private static string NormalizarNombre(Categoria categoria)
+        {
+            string nombreNormalizado = (categoria?.Nombre ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(nombreNormalizado))
+            {
+                throw new ExcepcionNegocio("Error.Category.NameRequired");
+            }
+
+            return nombreNormalizado;
+        }
+
         // Una categoria solo puede ser editada/eliminada por su dueno. Las
         // globales (Usuario null) no se pueden tocar desde esta pantalla.
-        private static void ValidarPropiedad(Categoria categoria, int usuarioActualId)
+        private static void ValidarPropiedad(Categoria categoria, Usuario usuarioActual)
         {
             if (categoria == null)
             {
                 throw new ExcepcionNegocio("Error.Category.NotFound");
             }
 
-            if (categoria.Usuario == null || categoria.Usuario.Id != usuarioActualId)
+            if (categoria.Usuario == null || categoria.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Category.NotOwned");
             }

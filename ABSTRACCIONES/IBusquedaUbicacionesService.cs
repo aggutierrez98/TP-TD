@@ -10,6 +10,6 @@ namespace ABSTRACCIONES
     // lanza OperationCanceledException.
     public interface IBusquedaUbicacionesService
     {
-        Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarAsync(ConsultaUbicacion consulta, CancellationToken cancellationToken);
+        Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarAsync(IConsultaUbicacion consulta, CancellationToken cancellationToken);
     }
 }

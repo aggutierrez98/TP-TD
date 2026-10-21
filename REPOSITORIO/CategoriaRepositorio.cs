@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return categoria;
         }
 
-        public List<Categoria> ObtenerVisiblesParaUsuario(int usuarioId)
+        public List<Categoria> ObtenerVisiblesParaUsuario(Usuario usuario)
         {
-            List<Categoria> categorias = _categoriaDAL.ObtenerVisiblesParaUsuario(usuarioId, _accesoDatos);
+            List<Categoria> categorias = _categoriaDAL.ObtenerVisiblesParaUsuario(usuario, _accesoDatos);
             categorias.ForEach(Hidratar);
             return categorias;
         }
@@ -54,14 +54,14 @@ namespace REPOSITORIO
             return _categoriaDAL.Actualizar(categoria, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Categoria categoria)
         {
-            return _categoriaDAL.Eliminar(id, _accesoDatos);
+            return _categoriaDAL.Eliminar(categoria, _accesoDatos);
         }
 
-        public bool ExisteNombreEnScope(string nombre, int? usuarioId, int? idExcluido)
+        public bool ExisteNombreEnScope(string nombre, Usuario usuario, Categoria excluida)
         {
-            return _categoriaDAL.ExisteNombreEnScope(nombre, usuarioId, idExcluido, _accesoDatos);
+            return _categoriaDAL.ExisteNombreEnScope(nombre, usuario, excluida, _accesoDatos);
         }
     }
 }

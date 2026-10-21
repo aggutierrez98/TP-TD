@@ -1,11 +1,12 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IPromocionSegmentoRepositorio
     {
-        List<string> ObtenerSegmentosPorPromocion(int promocionId);
+        List<string> ObtenerSegmentosPorPromocion(Promocion promocion);
 
-        bool ReemplazarSegmentosDePromocion(int promocionId, List<string> segmentos);
+        bool ReemplazarSegmentosDePromocion(Promocion promocion, List<string> segmentos);
     }
 }

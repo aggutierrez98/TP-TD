@@ -16,7 +16,7 @@ namespace BE
 
         public bool EsManual { get; set; }
 
-        public int? ProtegidaPorUsuarioId { get; set; }
+        public Usuario ProtegidaPorUsuario { get; set; }
 
         public DateTime? FechaProteccion { get; set; }
     }

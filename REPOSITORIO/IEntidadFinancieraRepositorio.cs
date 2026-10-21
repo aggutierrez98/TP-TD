@@ -15,6 +15,6 @@ namespace REPOSITORIO
 
         bool Actualizar(EntidadFinanciera entidad);
 
-        bool Eliminar(int id);
+        bool Eliminar(EntidadFinanciera entidad);
     }
 }

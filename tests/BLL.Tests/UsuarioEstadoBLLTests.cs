@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using ABSTRACCIONES;
 using BE;
 using BLL.Tests.TestDoubles;
 using SERVICIOS;
@@ -14,20 +15,21 @@ namespace BLL.Tests
         public void ConstruirSnapshotActualInterno_CurrentUserDataPermissionsPreferenceAndActor_ReturnsSnapshot()
         {
             UsuarioEstadoFixture fixture = new UsuarioEstadoFixture();
-            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "admin", PasswordHash = "hash", Activo = true };
+            Usuario persistido = new Usuario { Id = 1, Username = "admin", PasswordHash = "hash", Activo = true };
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = persistido;
             fixture.Unidad.UsuarioPermisoRepo.PermisosPorUsuario[1] = new List<int> { 2, 3 };
-            fixture.Unidad.UsuarioPreferenciaRepo.Preferencias[1] = new UsuarioPreferencia { UsuarioId = 1, IdiomaId = 5 };
+            fixture.Unidad.UsuarioPreferenciaRepo.Preferencias[1] = new UsuarioPreferencia { Usuario = persistido, Idioma = new Idioma { Id = 5 } };
             fixture.Sesion.IniciarSesion(new Usuario { Id = 9, Username = "actor" });
             UsuarioEstadoBLL sut = fixture.CreateSut();
 
-            UsuarioHistorialSnapshot snapshot = sut.ConstruirSnapshotActualInterno(1, "accion", "obs", fixture.Unidad);
+            UsuarioHistorialSnapshot snapshot = sut.ConstruirSnapshotActualInterno(new Usuario { Id = 1, Username = "alterado" }, "accion", "obs", fixture.Unidad);
 
-            Assert.AreEqual(1, snapshot.UsuarioId);
+            Assert.AreSame(persistido, snapshot.Usuario);
             Assert.AreEqual("admin", snapshot.Username);
             Assert.AreEqual("hash", snapshot.PasswordHash);
-            Assert.AreEqual(5, snapshot.IdiomaId);
-            CollectionAssert.AreEqual(new List<int> { 2, 3 }, snapshot.PermisosIds.ToList());
-            Assert.AreEqual(9, snapshot.ActorUsuarioId);
+            Assert.AreEqual(5, snapshot.Idioma.Id);
+            CollectionAssert.AreEqual(new List<int> { 2, 3 }, snapshot.Permisos.Select(p => p.Id).ToList());
+            Assert.AreEqual(9, snapshot.ActorUsuario.Id);
             Assert.AreEqual("actor", snapshot.ActorUsernameSnapshot);
         }
 
@@ -38,9 +40,10 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "admin", PasswordHash = "hash", Activo = true };
             UsuarioEstadoBLL sut = fixture.CreateSut();
 
-            int historialId = sut.GuardarVersionActualInterno(1, "accion", "obs", fixture.Unidad);
+            UsuarioHistorialSnapshot guardado = sut.GuardarVersionActualInterno(new Usuario { Id = 1 }, "accion", "obs", fixture.Unidad);
 
-            Assert.AreEqual(historialId, fixture.Unidad.UsuarioHistorialRepo.LastSaved.HistorialId);
+            Assert.AreSame(guardado, fixture.Unidad.UsuarioHistorialRepo.LastSaved);
+            Assert.AreEqual(guardado.HistorialId, fixture.Unidad.UsuarioHistorialRepo.LastSaved.HistorialId);
             Assert.AreEqual("accion", fixture.Unidad.UsuarioHistorialRepo.LastSaved.Accion);
         }
 
@@ -54,16 +57,16 @@ namespace BLL.Tests
                 Username = "admin",
                 PasswordHash = "old",
                 Activo = true,
-                IdiomaId = 1,
-                PermisosIds = new List<int> { 1 }
+                Idioma = new Idioma { Id = 1 },
+                Permisos = Permisos(1)
             };
             UsuarioHistorialSnapshot current = new UsuarioHistorialSnapshot
             {
                 Username = "renamed",
                 PasswordHash = "new",
                 Activo = false,
-                IdiomaId = 2,
-                PermisosIds = new List<int> { 1, 2 }
+                Idioma = new Idioma { Id = 2 },
+                Permisos = Permisos(1, 2)
             };
 
             List<ResultadoComparacionEstado> differences = sut.CompararVersiones(current, previous);
@@ -79,15 +82,16 @@ namespace BLL.Tests
         public void AplicarSnapshotInterno_UpdatesUserPermissionsAndPreferenceInsideSameUow()
         {
             UsuarioEstadoFixture fixture = new UsuarioEstadoFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "current", PasswordHash = "old", Activo = false };
             UsuarioEstadoBLL sut = fixture.CreateSut();
             UsuarioHistorialSnapshot snapshot = new UsuarioHistorialSnapshot
             {
-                UsuarioId = 1,
+                Usuario = new Usuario { Id = 1 },
                 Username = "restored",
                 PasswordHash = "hash",
                 Activo = true,
-                IdiomaId = 3,
-                PermisosIds = new List<int> { 5, 6 }
+                Idioma = new Idioma { Id = 3 },
+                Permisos = Permisos(5, 6)
             };
 
             sut.AplicarSnapshotInterno(snapshot, fixture.Unidad);
@@ -95,6 +99,21 @@ namespace BLL.Tests
             Assert.AreEqual("restored", fixture.Unidad.UsuarioRepo.Usuarios[1].Username);
             CollectionAssert.AreEqual(new List<int> { 5, 6 }, fixture.Unidad.UsuarioPermisoRepo.LastPermisos);
             Assert.AreEqual(3, fixture.Unidad.UsuarioPreferenciaRepo.LastIdiomaId);
+        }
+
+        [TestMethod]
+        public void ConstruirSnapshotActualInterno_UsuarioInexistente_ReturnsNull()
+        {
+            UsuarioEstadoFixture fixture = new UsuarioEstadoFixture();
+            UsuarioEstadoBLL sut = fixture.CreateSut();
+
+            Assert.IsNull(sut.ConstruirSnapshotActualInterno(new Usuario { Id = 7 }, "accion", "obs", fixture.Unidad));
+            Assert.IsNull(sut.ConstruirSnapshotActualInterno(null, "accion", "obs", fixture.Unidad));
+        }
+
+        private static IList<IPermiso> Permisos(params int[] ids)
+        {
+            return ids.Select(id => (IPermiso)new PermisoSimple { Id = id }).ToList();
         }
 
         private sealed class UsuarioEstadoFixture

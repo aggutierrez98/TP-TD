@@ -17,7 +17,7 @@ namespace BLL
             UsuarioHistorialRepositorio usuarioHistorialRepositorio = new UsuarioHistorialRepositorio();
             HistorialEstadosService.GetInstance().Configurar(
                 usuarioId => usuarioHistorialRepositorio.ObtenerVersiones(usuarioId),
-                historialId => usuarioHistorialRepositorio.ObtenerVersion(historialId));
+                snapshot => usuarioHistorialRepositorio.ObtenerPorId(snapshot.HistorialId));
 
             _inicializado = true;
         }

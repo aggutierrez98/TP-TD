@@ -54,7 +54,6 @@
     <Compile Include="ExcepcionNegocio.cs" />
     <Compile Include="ExcepcionTecnica.cs" />
     <Compile Include="FiltroBitacora.cs" />
-    <Compile Include="FiltroMovimiento.cs" />
     <Compile Include="GeminiChatClient.cs" />
     <Compile Include="GeminiClasificadorConsultas.cs" />
     <Compile Include="GeminiServicioEmbeddings.cs" />
@@ -89,9 +88,22 @@
     <Compile Include="TotalPorCategoria.cs" />
     <Compile Include="TotalPorMes.cs" />
     <Compile Include="Traduccion.cs" />
-    <Compile Include="UsuarioAutenticadoSesion.cs" />
     <Compile Include="UsuarioHistorialSnapshot.cs" />
     <Compile Include="UsuarioPreferencia.cs" />
+    <Compile Include="SolicitudAsistente.cs" />
+    <Compile Include="ContextoAsistente.cs" />
+    <Compile Include="ReferenciaAsistente.cs" />
+    <Compile Include="IntercambioChatbot.cs" />
+    <Compile Include="HerramientaAsistente.cs" />
+    <Compile Include="DatoMercado.cs" />
+    <Compile Include="TicketEscaneado.cs" />
+    <Compile Include="TasasCambioObtenidas.cs" />
+    <Compile Include="ConsultaUbicacion.cs" />
+    <Compile Include="ResultadoBusquedaUbicacion.cs" />
+    <Compile Include="LimitesGeograficos.cs" />
+    <Compile Include="BusquedaUbicacionException.cs" />
+    <Compile Include="ProveedorTasasException.cs" />
+    <Compile Include="LimiteUsoAsistente.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

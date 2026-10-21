@@ -34,7 +34,7 @@ namespace BLL.Tests
             fixture.AgregarEntidad(100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(100, "  ", TipoCuentaFinanciera.CajaAhorro, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Cuenta(100, "  ", TipoCuentaFinanciera.CajaAhorro, null)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.AliasRequired", ex.Message);
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
@@ -47,7 +47,7 @@ namespace BLL.Tests
             fixture.AgregarEntidad(100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(100, "Sueldo", (TipoCuentaFinanciera)99, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Cuenta(100, "Sueldo", (TipoCuentaFinanciera)99, null)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.InvalidType", ex.Message);
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
@@ -59,7 +59,7 @@ namespace BLL.Tests
             CuentaFinancieraFixture fixture = new CuentaFinancieraFixture();
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(999, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Cuenta(999, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.EntityNotFound", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -74,7 +74,9 @@ namespace BLL.Tests
             fixture.AgregarMedioPagoEntidad(11, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            CuentaFinanciera creada = sut.Crear(100, "  Sueldo  ", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 11, 10 });
+            CuentaFinanciera recibida = Cuenta(100, "  Sueldo  ", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 11, 10 });
+            CuentaFinanciera creada = sut.Crear(recibida);
+            Assert.AreSame(recibida, creada);
 
             CuentaFinanciera insertada = fixture.CuentaRepo.Cuentas[creada.Id];
             Assert.AreEqual(UsuarioActualId, insertada.Usuario.Id);
@@ -99,7 +101,7 @@ namespace BLL.Tests
             fixture.AgregarMedioPagoEntidad(20, 200);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 20 }));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 20 })));
 
             Assert.AreEqual("Error.FinancialAccountManagement.PaymentMethodNotFromEntity", ex.Message);
             Assert.AreEqual(0, fixture.CuentaRepo.Cuentas.Count);
@@ -114,7 +116,7 @@ namespace BLL.Tests
             fixture.AgregarEntidad(100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            CuentaFinanciera creada = sut.Crear(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null);
+            CuentaFinanciera creada = sut.Crear(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null));
 
             Assert.IsTrue(fixture.CuentaRepo.Cuentas.ContainsKey(creada.Id));
             List<int> contratados;
@@ -131,7 +133,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, UsuarioActualId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            CuentaFinanciera actualizada = sut.Actualizar(1, 100, "  Ahorros  ", TipoCuentaFinanciera.CuentaCorriente, null);
+            CuentaFinanciera actualizada = sut.Actualizar(Cuenta(100, "  Ahorros  ", TipoCuentaFinanciera.CuentaCorriente, null, 1));
 
             Assert.AreEqual(1, actualizada.Id);
             CuentaFinanciera guardada = fixture.CuentaRepo.Cuentas[1];
@@ -153,7 +155,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, UsuarioActualId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, 100, "   ", TipoCuentaFinanciera.CajaAhorro, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Cuenta(100, "   ", TipoCuentaFinanciera.CajaAhorro, null, 1)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.AliasRequired", ex.Message);
             Assert.AreEqual("Alias1", fixture.CuentaRepo.Cuentas[1].Alias);
@@ -172,7 +174,7 @@ namespace BLL.Tests
             fixture.CuentaRepo.MedioPagoEntidadIdsPorCuenta[1] = new List<int> { 10 };
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 11, 12, 11 });
+            sut.Actualizar(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 11, 12, 11 }, 1));
 
             CollectionAssert.AreEqual(new List<int> { 11, 12 }, fixture.CuentaRepo.MedioPagoEntidadIdsPorCuenta[1]);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
@@ -189,7 +191,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, UsuarioActualId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, 100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 20 }));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10, 20 }, 1)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.PaymentMethodNotFromEntity", ex.Message);
             Assert.AreEqual(0, fixture.CuentaRepo.ReemplazarCallCount);
@@ -206,7 +208,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, UsuarioActualId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 200, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 20 });
+            sut.Actualizar(Cuenta(200, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 20 }, 1));
 
             Assert.AreEqual(200, fixture.CuentaRepo.Cuentas[1].EntidadFinanciera.Id);
             CollectionAssert.AreEqual(new List<int> { 20 }, fixture.CuentaRepo.MedioPagoEntidadIdsPorCuenta[1]);
@@ -220,7 +222,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, UsuarioActualId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, 999, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Cuenta(999, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null, 1)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.EntityNotFound", ex.Message);
             Assert.AreEqual(100, fixture.CuentaRepo.Cuentas[1].EntidadFinanciera.Id);
@@ -236,7 +238,9 @@ namespace BLL.Tests
             existente.CredencialesCifradas = "secreto-cifrado";
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            sut.Actualizar(1, 100, "Nuevo", TipoCuentaFinanciera.CajaAhorro, null);
+            CuentaFinanciera recibida = Cuenta(100, "Nuevo", TipoCuentaFinanciera.CajaAhorro, null, 1);
+            recibida.CredencialesCifradas = "no-confiable";
+            sut.Actualizar(recibida);
 
             Assert.AreEqual("secreto-cifrado", fixture.CuentaRepo.LastUpdated.CredencialesCifradas);
         }
@@ -249,7 +253,9 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, OtroUsuarioId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, 100, "Hack", TipoCuentaFinanciera.CajaAhorro, null));
+            CuentaFinanciera recibida = Cuenta(100, "Hack", TipoCuentaFinanciera.CajaAhorro, null, 1);
+            recibida.Usuario = new Usuario { Id = UsuarioActualId };
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(recibida));
 
             Assert.AreEqual("Error.FinancialAccountManagement.NotOwned", ex.Message);
             Assert.AreEqual("Alias1", fixture.CuentaRepo.Cuentas[1].Alias);
@@ -263,7 +269,7 @@ namespace BLL.Tests
             fixture.AgregarEntidad(100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(999, 100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, null, 999)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.NotFound", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -279,7 +285,7 @@ namespace BLL.Tests
             fixture.CuentaRepo.ThrowOnReemplazar = true;
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Actualizar(1, 100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10 }));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Actualizar(Cuenta(100, "Sueldo", TipoCuentaFinanciera.CajaAhorro, new List<int> { 10 }, 1)));
 
             Assert.AreEqual("Error.FinancialAccountManagement.UpdateFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -293,7 +299,7 @@ namespace BLL.Tests
             fixture.AgregarCuenta(1, OtroUsuarioId, 100);
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new CuentaFinanciera { Id = 1, Usuario = new Usuario { Id = UsuarioActualId } }));
 
             Assert.AreEqual("Error.FinancialAccountManagement.NotOwned", ex.Message);
             Assert.IsTrue(fixture.CuentaRepo.Cuentas.ContainsKey(1));
@@ -307,13 +313,22 @@ namespace BLL.Tests
             fixture.CuentaRepo.MedioPagoEntidadIdsPorCuenta[1] = new List<int> { 10, 11 };
             CuentaFinancieraBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(fixture.CuentaRepo.Cuentas[1]);
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.CuentaRepo.Cuentas.ContainsKey(1));
             Assert.AreEqual(0, fixture.CuentaRepo.MedioPagoEntidadIdsPorCuenta[1].Count);
             Assert.AreEqual("FormFinancialAccountManagement.Value.Activity.Deletion", fixture.Bitacora.Calls[0].Actividad);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        private static CuentaFinanciera Cuenta(int entidadId, string alias, TipoCuentaFinanciera tipo, List<int> medios, int id = 0)
+        {
+            return new CuentaFinanciera
+            {
+                Id = id, EntidadFinanciera = new EntidadFinanciera { Id = entidadId }, Alias = alias, Tipo = tipo,
+                MediosPagoEntidad = medios?.Select(medio => new MedioPagoEntidad { Id = medio }).ToList()
+            };
         }
 
         private sealed class CuentaFinancieraFixture

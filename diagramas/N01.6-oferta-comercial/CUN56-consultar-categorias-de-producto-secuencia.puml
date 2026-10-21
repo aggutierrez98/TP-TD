@@ -1,0 +1,38 @@
+@startuml
+' Fuente: diagramas/NEG13-categorias-producto/NEG13-categorias-producto-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN56 Consultar categorías de producto — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionCategoriasProducto" as FormGestionCategoriasProducto
+control "CategoriaProductoBLL" as CategoriaProductoBLL
+participant "CategoriaProductoRepositorio\n:ICategoriaProductoRepositorio" as ICategoriaProductoRepositorio
+participant "CategoriaProductoDAL" as CategoriaProductoDAL
+note over FormGestionCategoriasProducto : El actor desea conocer las categorías de producto disponibles en el sistema.
+Actor -> FormGestionCategoriasProducto : selecciona la opción «Categorías de producto» del menú «Operador».
+FormGestionCategoriasProducto -> CategoriaProductoBLL ++ : ObtenerTodas()
+CategoriaProductoBLL -> ICategoriaProductoRepositorio ++ : ObtenerTodas()
+ICategoriaProductoRepositorio -> CategoriaProductoDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+CategoriaProductoDAL --> ICategoriaProductoRepositorio -- : List<CategoriaProducto>
+ICategoriaProductoRepositorio --> CategoriaProductoBLL -- : List<CategoriaProducto>
+CategoriaProductoBLL --> FormGestionCategoriasProducto -- : List<CategoriaProducto>
+FormGestionCategoriasProducto --> Actor : presenta la pantalla «Gestión de Categorías de producto» con el listado de categorías\nordenado por nombre.
+Actor -> FormGestionCategoriasProducto : selecciona una categoría del listado.
+FormGestionCategoriasProducto --> Actor : muestra el nombre de la categoría seleccionada en el campo «Nombre».
+' BLL/CategoriaProductoBLL.cs:28 CategoriaProductoBLL.ObtenerTodas
+' DAL/CategoriaProductoDAL.cs:48 CategoriaProductoDAL.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:28 CategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:10 ICategoriaProductoRepositorio.ObtenerTodas
+' UI/FormGestionCategoriasProducto.cs:32 FormGestionCategoriasProducto.CargarCategorias
+@enduml

@@ -17,14 +17,14 @@ namespace TpIDS
     // comercio (solo lectura: las genera un proceso automatico fuera de esta tanda).
     public partial class FormDetalleComercio : FormTraducibleBase
     {
-        private readonly int _comercioId;
+        private readonly Comercio _comercio;
         private readonly ProductoBLL _productoBLL = CompositionRoot.Producto;
         private readonly ComercioProductoBLL _comercioProductoBLL = CompositionRoot.ComercioProducto;
         private readonly PromocionBLL _promocionBLL = CompositionRoot.Promocion;
 
-        public FormDetalleComercio(int comercioId, string nombreComercio)
+        public FormDetalleComercio(Comercio comercio, string nombreComercio)
         {
-            _comercioId = comercioId;
+            _comercio = comercio;
             InitializeComponent();
 
             // El nombre es dato fijo del constructor, no depende del idioma: el prefijo
@@ -35,10 +35,11 @@ namespace TpIDS
             Load += FormDetalleComercio_Load;
         }
 
-        // View-models planos para bindear las grillas.
+        // View-models planos para bindear las grillas. Las grillas no autogeneran columnas,
+        // asi que la asignacion (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaProducto
         {
-            public int Id { get; set; }
+            public ComercioProducto Asignacion { get; set; }
             public int MonedaId { get; set; }
             public string Nombre { get; set; }
             public string Categoria { get; set; }
@@ -77,7 +78,7 @@ namespace TpIDS
         {
             try
             {
-                List<ComercioProducto> asignaciones = _comercioProductoBLL.ObtenerPorComercio(_comercioId);
+                List<ComercioProducto> asignaciones = _comercioProductoBLL.ObtenerPorComercio(_comercio);
 
                 dgvProductos.DataSource = null;
                 dgvProductos.DataSource = asignaciones
@@ -87,7 +88,7 @@ namespace TpIDS
 
                 if (productoSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila<FilaProducto>(dgvProductos, fila => fila.Id == productoSeleccionadoId.Value);
+                    SeleccionarFila<FilaProducto>(dgvProductos, fila => fila.Asignacion.Producto.Id == productoSeleccionadoId.Value);
                 }
             }
             catch (Exception ex)
@@ -100,7 +101,7 @@ namespace TpIDS
         {
             return new FilaProducto
             {
-                Id = asignacion.Producto.Id,
+                Asignacion = asignacion,
                 MonedaId = asignacion.Moneda?.Id ?? 0,
                 Nombre = asignacion.Producto.Nombre,
                 Categoria = asignacion.Producto.CategoriaProducto?.Nombre ?? string.Empty,
@@ -170,7 +171,13 @@ namespace TpIDS
 
             try
             {
-                _comercioProductoBLL.Asignar(_comercioId, productoSeleccionado.Id, monedaSeleccionada.Id, precioParseado);
+                _comercioProductoBLL.Asignar(new ComercioProducto
+                {
+                    Comercio = _comercio,
+                    Producto = productoSeleccionado,
+                    Moneda = monedaSeleccionada,
+                    Precio = precioParseado
+                });
                 LimpiarFormularioProducto();
                 CargarProductos(productoSeleccionado.Id);
                 UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoAssigned");
@@ -197,10 +204,11 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = _comercioProductoBLL.ActualizarPrecio(_comercioId, fila.Id, precioParseado);
+                fila.Asignacion.Precio = precioParseado;
+                bool actualizado = _comercioProductoBLL.ActualizarPrecio(fila.Asignacion);
                 if (actualizado)
                 {
-                    CargarProductos(fila.Id);
+                    CargarProductos(fila.Asignacion.Producto.Id);
                     UiDialogHelper.MostrarInfo("FormMerchantDetail.Success.ProductoUpdated");
                 }
             }
@@ -231,7 +239,7 @@ namespace TpIDS
 
             try
             {
-                bool quitado = _comercioProductoBLL.Quitar(_comercioId, fila.Id);
+                bool quitado = _comercioProductoBLL.Quitar(fila.Asignacion);
                 if (quitado)
                 {
                     LimpiarFormularioProducto();
@@ -254,7 +262,7 @@ namespace TpIDS
 
             if (ObtenerFilaSeleccionada(dgvProductos, out FilaProducto fila))
             {
-                SeleccionarEnCombo(cmbProductoCatalogo, item => item is Producto producto && producto.Id == fila.Id);
+                SeleccionarEnCombo(cmbProductoCatalogo, item => item is Producto producto && producto.Id == fila.Asignacion.Producto.Id);
                 SeleccionarEnCombo(cmbMonedaProducto, item => item is Moneda moneda && moneda.Id == fila.MonedaId);
                 txtbPrecioProducto.Text = fila.Precio.ToString(CultureInfo.InvariantCulture);
 
@@ -298,7 +306,7 @@ namespace TpIDS
         {
             try
             {
-                List<Promocion> promociones = _promocionBLL.ObtenerPorComercio(_comercioId);
+                List<Promocion> promociones = _promocionBLL.ObtenerPorComercio(_comercio);
 
                 dgvPromociones.DataSource = null;
                 dgvPromociones.DataSource = promociones.Select(ProyectarFilaPromocion).ToList();

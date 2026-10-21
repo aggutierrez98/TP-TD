@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class PromocionProductoDAL
     {
-        public List<int> ObtenerProductoIdsPorPromocion(int promocionId, bool excluidos, AccesoDatosSqlServer accesoDatos = null)
+        public List<Producto> ObtenerProductosPorPromocion(Promocion promocion, bool excluidos, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT ProductoId
@@ -22,13 +23,13 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId),
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id),
                     accesoDatos.CreateParameter("@Excluido", SqlDbType.Bit, excluidos)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["ProductoId"])
+                    .Select(row => new Producto { Id = (int)row["ProductoId"] })
                     .ToList();
             }
             finally
@@ -42,7 +43,7 @@ namespace DAL
 
         // Un mismo elemento no puede ir incluido y excluido a la vez: la PK (PromocionId, ProductoId)
         // rechaza el segundo INSERT y la transaccion completa se revierte.
-        public bool ReemplazarProductosDePromocion(int promocionId, List<int> incluidos, List<int> excluidos, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarProductosDePromocion(Promocion promocion, List<Producto> incluidos, List<Producto> excluidos, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
@@ -51,7 +52,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 string query = @"
@@ -64,7 +65,7 @@ namespace DAL
                         INSERT INTO PromocionProducto (PromocionId, ProductoId, Excluido)
                         VALUES (@PromocionId, @IncluidoId{0}, 0);", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@IncluidoId" + i, SqlDbType.Int, incluidos[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@IncluidoId" + i, SqlDbType.Int, incluidos[i].Id));
                 }
 
                 for (int i = 0; i < excluidos.Count; i++)
@@ -73,7 +74,7 @@ namespace DAL
                         INSERT INTO PromocionProducto (PromocionId, ProductoId, Excluido)
                         VALUES (@PromocionId, @ExcluidoId{0}, 1);", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@ExcluidoId" + i, SqlDbType.Int, excluidos[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@ExcluidoId" + i, SqlDbType.Int, excluidos[i].Id));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
@@ -87,7 +88,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorProducto(int productoId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorProducto(Producto producto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -101,7 +102,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, productoId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, producto.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

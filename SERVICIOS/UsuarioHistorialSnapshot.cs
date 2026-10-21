@@ -8,16 +8,16 @@ namespace SERVICIOS
     {
         public UsuarioHistorialSnapshot()
         {
-            PermisosIds = new List<int>();
+            Permisos = new List<IPermiso>();
         }
 
         public int HistorialId { get; set; }
 
-        public int UsuarioId { get; set; }
+        public IUsuarioAutenticado Usuario { get; set; }
 
         public DateTime FechaHora { get; set; }
 
-        public int? ActorUsuarioId { get; set; }
+        public IUsuarioAutenticado ActorUsuario { get; set; }
 
         public string ActorUsernameSnapshot { get; set; }
 
@@ -31,8 +31,8 @@ namespace SERVICIOS
 
         public bool Activo { get; set; }
 
-        public int? IdiomaId { get; set; }
+        public IIdioma Idioma { get; set; }
 
-        public IList<int> PermisosIds { get; set; }
+        public IList<IPermiso> Permisos { get; set; }
     }
 }

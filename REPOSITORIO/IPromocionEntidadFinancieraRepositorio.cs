@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IPromocionEntidadFinancieraRepositorio
     {
-        List<int> ObtenerEntidadFinancieraIdsPorPromocion(int promocionId);
+        List<EntidadFinanciera> ObtenerEntidadesFinancierasPorPromocion(Promocion promocion);
 
-        bool ReemplazarEntidadesFinancierasDePromocion(int promocionId, List<int> entidadFinancieraIds);
+        bool ReemplazarEntidadesFinancierasDePromocion(Promocion promocion, List<EntidadFinanciera> entidadesFinancieras);
 
-        int ContarPorEntidadFinanciera(int entidadFinancieraId);
+        int ContarPorEntidadFinanciera(EntidadFinanciera entidadFinanciera);
     }
 }

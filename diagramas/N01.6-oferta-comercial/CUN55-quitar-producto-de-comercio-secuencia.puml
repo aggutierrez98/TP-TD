@@ -1,0 +1,75 @@
+@startuml
+' Fuente: diagramas/NEG12-productos-de-comercio/NEG12-productos-de-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN55 Quitar producto de comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormDetalleComercio" as FormDetalleComercio
+control "ComercioProductoBLL" as ComercioProductoBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ComercioProductoRepositorio\n:IComercioProductoRepositorio" as IComercioProductoRepositorio
+participant "ComercioProductoDAL" as ComercioProductoDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormDetalleComercio : El actor desea que un comercio deje de vender un producto.
+Actor -> FormDetalleComercio : selecciona un producto del listado de productos del comercio.
+Actor -> FormDetalleComercio : selecciona la acción «Quitar».
+FormDetalleComercio --> Actor : solicita confirmación mediante el diálogo «Confirmar baja del producto» con el mensaje «Se\nquitará el producto '<nombre>' de este comercio. El producto seguirá existiendo en el\ncatálogo. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormDetalleComercio : confirma la acción.
+FormDetalleComercio -> ComercioProductoBLL ++ : Quitar(asignacion: ComercioProducto)
+ComercioProductoBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ComercioProductoBLL -- : IUnidadDeTrabajo
+ComercioProductoBLL -> IComercioProductoRepositorio ++ : ObtenerPorComercioYProducto(comercio: Comercio, producto:\nProducto)
+IComercioProductoRepositorio -> ComercioProductoDAL ++ : ObtenerPorComercioYProducto(comercio: Comercio, producto:\nProducto, accesoDatos: AccesoDatosSqlServer)
+ComercioProductoDAL --> IComercioProductoRepositorio -- : ComercioProducto
+IComercioProductoRepositorio --> ComercioProductoBLL -- : ComercioProducto
+ComercioProductoBLL -> IComercioProductoRepositorio ++ : Eliminar(comercioProducto: ComercioProducto)
+IComercioProductoRepositorio -> ComercioProductoDAL ++ : Eliminar(comercioProducto: ComercioProducto, accesoDatos:\nAccesoDatosSqlServer)
+ComercioProductoDAL --> IComercioProductoRepositorio -- : bool
+IComercioProductoRepositorio --> ComercioProductoBLL -- : bool
+ComercioProductoBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ComercioProductoBLL -- : void
+ComercioProductoBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ComercioProductoBLL -- : void
+ComercioProductoBLL --> FormDetalleComercio -- : bool
+group Refrescar listado tras la operacion exitosa
+FormDetalleComercio -> ComercioProductoBLL ++ : ObtenerPorComercio(comercio: Comercio)
+ComercioProductoBLL -> IComercioProductoRepositorio ++ : ObtenerPorComercio(comercio: Comercio)
+IComercioProductoRepositorio -> ComercioProductoDAL ++ : ObtenerPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer)
+ComercioProductoDAL --> IComercioProductoRepositorio -- : List<ComercioProducto>
+IComercioProductoRepositorio --> ComercioProductoBLL -- : List<ComercioProducto>
+ComercioProductoBLL --> FormDetalleComercio -- : List<ComercioProducto>
+end
+FormDetalleComercio --> Actor : quita el producto del comercio, limpia el formulario, actualiza el listado sin ese\nproducto e informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormDetalleComercio : Cancelar la operacion
+FormDetalleComercio --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ComercioProductoBLL.cs:149 ComercioProductoBLL.Quitar
+' BLL/ComercioProductoBLL.cs:33 ComercioProductoBLL.ObtenerPorComercio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' DAL/ComercioProductoDAL.cs:148 ComercioProductoDAL.Eliminar
+' DAL/ComercioProductoDAL.cs:21 ComercioProductoDAL.ObtenerPorComercio
+' DAL/ComercioProductoDAL.cs:58 ComercioProductoDAL.ObtenerPorComercioYProducto
+' REPOSITORIO/ComercioProductoRepositorio.cs:23 ComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/ComercioProductoRepositorio.cs:30 ComercioProductoRepositorio.ObtenerPorComercioYProducto
+' REPOSITORIO/ComercioProductoRepositorio.cs:59 ComercioProductoRepositorio.Eliminar
+' REPOSITORIO/IComercioProductoRepositorio.cs:11 IComercioProductoRepositorio.ObtenerPorComercioYProducto
+' REPOSITORIO/IComercioProductoRepositorio.cs:18 IComercioProductoRepositorio.Eliminar
+' REPOSITORIO/IComercioProductoRepositorio.cs:8 IComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormDetalleComercio.cs:221 FormDetalleComercio.btnQuitarProducto_Click
+@enduml

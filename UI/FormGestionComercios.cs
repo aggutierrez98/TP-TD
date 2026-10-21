@@ -30,10 +30,11 @@ namespace TpIDS
             Load += FormGestionComercios_Load;
         }
 
-        // View-models planos para bindear las grillas.
+        // View-models planos para bindear las grillas. Las grillas no autogeneran columnas,
+        // asi que la entidad que se pasa al BLL (Comercio, RubroComercio) no se muestra.
         private sealed class FilaComercio
         {
-            public int Id { get; set; }
+            public Comercio Comercio { get; set; }
             public string Nombre { get; set; }
             public string Rubro { get; set; }
             public string Direccion { get; set; }
@@ -45,7 +46,7 @@ namespace TpIDS
 
         private sealed class FilaRubro
         {
-            public int Id { get; set; }
+            public RubroComercio RubroComercio { get; set; }
             public string Nombre { get; set; }
         }
 
@@ -72,7 +73,7 @@ namespace TpIDS
 
                 if (comercioSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila<FilaComercio>(dgvComercios, fila => fila.Id == comercioSeleccionadoId.Value);
+                    SeleccionarFila<FilaComercio>(dgvComercios, fila => fila.Comercio.Id == comercioSeleccionadoId.Value);
                 }
             }
             catch (Exception ex)
@@ -85,7 +86,7 @@ namespace TpIDS
         {
             return new FilaComercio
             {
-                Id = comercio.Id,
+                Comercio = comercio,
                 Nombre = comercio.Nombre,
                 Rubro = comercio.RubroComercio?.Nombre ?? string.Empty,
                 Direccion = comercio.Direccion,
@@ -106,14 +107,16 @@ namespace TpIDS
 
             try
             {
-                Comercio creado = comercioBLL.Crear(
-                    txtbNombreComercio.Text,
-                    rubroSeleccionado.Id,
-                    txtbDireccionComercio.Text,
-                    txtbLocalidadComercio.Text,
-                    txtbProvinciaComercio.Text,
-                    _latitudSeleccionada,
-                    _longitudSeleccionada);
+                Comercio creado = comercioBLL.Crear(new Comercio
+                {
+                    Nombre = txtbNombreComercio.Text,
+                    RubroComercio = rubroSeleccionado,
+                    Direccion = txtbDireccionComercio.Text,
+                    Localidad = txtbLocalidadComercio.Text,
+                    Provincia = txtbProvinciaComercio.Text,
+                    Latitud = _latitudSeleccionada,
+                    Longitud = _longitudSeleccionada
+                });
                 LimpiarFormularioComercio();
                 CargarComercios(creado.Id);
                 UiDialogHelper.MostrarInfo("FormMerchantManagement.Success.ComercioCreated");
@@ -140,18 +143,17 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = comercioBLL.Actualizar(
-                    fila.Id,
-                    txtbNombreComercio.Text,
-                    rubroSeleccionado.Id,
-                    txtbDireccionComercio.Text,
-                    txtbLocalidadComercio.Text,
-                    txtbProvinciaComercio.Text,
-                    _latitudSeleccionada,
-                    _longitudSeleccionada);
+                fila.Comercio.Nombre = txtbNombreComercio.Text;
+                fila.Comercio.RubroComercio = rubroSeleccionado;
+                fila.Comercio.Direccion = txtbDireccionComercio.Text;
+                fila.Comercio.Localidad = txtbLocalidadComercio.Text;
+                fila.Comercio.Provincia = txtbProvinciaComercio.Text;
+                fila.Comercio.Latitud = _latitudSeleccionada;
+                fila.Comercio.Longitud = _longitudSeleccionada;
+                bool actualizado = comercioBLL.Actualizar(fila.Comercio);
                 if (actualizado)
                 {
-                    CargarComercios(fila.Id);
+                    CargarComercios(fila.Comercio.Id);
                     UiDialogHelper.MostrarInfo("FormMerchantManagement.Success.ComercioUpdated");
                 }
             }
@@ -182,7 +184,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = comercioBLL.Eliminar(fila.Id);
+                bool eliminado = comercioBLL.Eliminar(fila.Comercio);
                 if (eliminado)
                 {
                     LimpiarFormularioComercio();
@@ -204,7 +206,7 @@ namespace TpIDS
                 return;
             }
 
-            using (FormDetalleComercio formDetalle = new FormDetalleComercio(fila.Id, fila.Nombre))
+            using (FormDetalleComercio formDetalle = new FormDetalleComercio(fila.Comercio, fila.Nombre))
             {
                 formDetalle.ShowDialog(this);
             }
@@ -293,7 +295,7 @@ namespace TpIDS
 
                 if (rubroSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila<FilaRubro>(dgvRubros, fila => fila.Id == rubroSeleccionadoId.Value);
+                    SeleccionarFila<FilaRubro>(dgvRubros, fila => fila.RubroComercio.Id == rubroSeleccionadoId.Value);
                 }
             }
             catch (Exception ex)
@@ -304,14 +306,14 @@ namespace TpIDS
 
         private static FilaRubro ProyectarFilaRubro(RubroComercio rubro)
         {
-            return new FilaRubro { Id = rubro.Id, Nombre = rubro.Nombre };
+            return new FilaRubro { RubroComercio = rubro, Nombre = rubro.Nombre };
         }
 
         private void btnAgregarRubro_Click(object sender, EventArgs e)
         {
             try
             {
-                RubroComercio creado = rubroComercioBLL.Crear(txtbNombreRubro.Text);
+                RubroComercio creado = rubroComercioBLL.Crear(new RubroComercio { Nombre = txtbNombreRubro.Text });
                 txtbNombreRubro.Clear();
                 CargarRubros(creado.Id);
                 CargarComercios(null);
@@ -331,18 +333,23 @@ namespace TpIDS
                 return;
             }
 
+            // El rubro de la fila es el mismo objeto que muestra el combo de comercios:
+            // si el BLL rechaza el cambio se restaura el nombre para no mostrar uno no guardado.
+            string nombreAnterior = fila.RubroComercio.Nombre;
             try
             {
-                bool actualizado = rubroComercioBLL.Actualizar(fila.Id, txtbNombreRubro.Text);
+                fila.RubroComercio.Nombre = txtbNombreRubro.Text;
+                bool actualizado = rubroComercioBLL.Actualizar(fila.RubroComercio);
                 if (actualizado)
                 {
-                    CargarRubros(fila.Id);
+                    CargarRubros(fila.RubroComercio.Id);
                     CargarComercios(null);
                     UiDialogHelper.MostrarInfo("FormMerchantManagement.Success.RubroUpdated");
                 }
             }
             catch (Exception ex)
             {
+                fila.RubroComercio.Nombre = nombreAnterior;
                 UiExceptionHandler.Mostrar(ex, "Edicion de rubro de comercio");
             }
         }
@@ -368,7 +375,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = rubroComercioBLL.Eliminar(fila.Id);
+                bool eliminado = rubroComercioBLL.Eliminar(fila.RubroComercio);
                 if (eliminado)
                 {
                     txtbNombreRubro.Clear();

@@ -47,7 +47,7 @@ namespace TpIDS
             timerNotificaciones = new Timer(components) { Interval = 30000 };
             timerNotificaciones.Tick += timerNotificaciones_Tick;
             actualizadorNotificaciones = new ActualizadorContadorNotificaciones(
-                () => IsDisposed || Disposing ? null : sesion.GetUsuarioActualId(),
+                () => IsDisposed || Disposing ? null : sesion.GetUsuarioActual()?.Id,
                 () => Task.Run(() => notificacionBLL.ContarPersonalesNoLeidas()),
                 cantidad => { contadorNoLeidas = cantidad; ActualizarBadgeNotificaciones(); },
                 ex => Trace.TraceError("Error al actualizar contador de notificaciones: {0}", ex));

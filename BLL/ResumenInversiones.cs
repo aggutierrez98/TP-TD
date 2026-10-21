@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using ABSTRACCIONES;
+using SERVICIOS;
 using BE;
 
 namespace BLL
@@ -31,24 +32,24 @@ namespace BLL
         public int? MaximoDiasHabilesDisponibilidad { get; set; }
         public List<string> CandidatosSinCompatibilidad { get; set; } = new List<string>();
         public List<InstrumentoInversion> Instrumentos { get; set; } = new List<InstrumentoInversion>();
-        public DatoMercado Inflacion { get; set; }
+        public IDatoMercado Inflacion { get; set; }
         public List<string> FuentesFaltantes { get; set; } = new List<string>();
         [System.Text.Json.Serialization.JsonIgnore]
-        public List<ReferenciaAsistente> UniversoReferencias { get; set; } = new List<ReferenciaAsistente>();
+        public List<IReferenciaAsistente> UniversoReferencias { get; set; } = new List<IReferenciaAsistente>();
 
-        internal ContextoAsistente CrearContexto()
+        internal IContextoAsistente CrearContexto()
         {
             var referencias = Instrumentos.Select(i => Referencia(i.Dato)).ToList();
             if (Inflacion != null) referencias.Add(Referencia(Inflacion));
             return new ContextoAsistente(JsonSerializer.Serialize(this), referencias);
         }
 
-        internal static ReferenciaAsistente Referencia(DatoMercado dato) => new ReferenciaAsistente(TipoReferenciaAsistente.Instrumento, dato.Nombre, dato.Tipo == "CEDEAR" || dato.Tipo == "Accion");
+        internal static IReferenciaAsistente Referencia(IDatoMercado dato) => new ReferenciaAsistente(TipoReferenciaAsistente.Instrumento, dato.Nombre, dato.Tipo == "CEDEAR" || dato.Tipo == "Accion");
     }
 
     internal sealed class InstrumentoInversion
     {
-        public DatoMercado Dato { get; set; }
+        public IDatoMercado Dato { get; set; }
         public decimal? Rendimiento30Dias { get; set; }
     }
 }

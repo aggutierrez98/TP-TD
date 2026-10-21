@@ -49,7 +49,7 @@ namespace TpIDS.IntegrationTests
                     Usuario = new BE.Usuario { Id = usuarioId }
                 });
 
-                BE.Dashboard obtenido = repositorio.ObtenerPorUsuario(usuarioId);
+                BE.Dashboard obtenido = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsNotNull(obtenido);
                 Assert.AreEqual(id, obtenido.Id);
@@ -68,7 +68,7 @@ namespace TpIDS.IntegrationTests
                 DashboardRepositorio repositorio = new DashboardRepositorio(accesoDatos);
                 int otroUsuarioId = new UsuarioDAL().ObtenerPorUsername("admin", accesoDatos).Id;
 
-                BE.Dashboard obtenido = repositorio.ObtenerPorUsuario(otroUsuarioId);
+                BE.Dashboard obtenido = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = otroUsuarioId });
 
                 Assert.IsNull(obtenido);
 
@@ -89,7 +89,7 @@ namespace TpIDS.IntegrationTests
                     Usuario = new BE.Usuario { Id = usuarioId }
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));

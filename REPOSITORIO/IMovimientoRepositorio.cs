@@ -10,24 +10,24 @@ namespace REPOSITORIO
     {
         Movimiento ObtenerPorId(int id);
 
-        List<Movimiento> ObtenerPorUsuario(int usuarioId, FiltroMovimiento filtro);
+        List<Movimiento> ObtenerPorUsuario(Usuario usuario, FiltroMovimiento filtro);
 
-        List<TotalPorCategoria> ObtenerTotalesPorCategoria(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
+        List<TotalPorCategoria> ObtenerTotalesPorCategoria(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta);
 
-        List<TotalPorComercio> ObtenerTotalesPorComercio(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
+        List<TotalPorComercio> ObtenerTotalesPorComercio(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta);
 
-        List<TotalPorDia> ObtenerTotalesPorDia(int usuarioId, TipoMovimiento tipo, DateTime desde, DateTime hasta);
+        List<TotalPorDia> ObtenerTotalesPorDia(Usuario usuario, TipoMovimiento tipo, DateTime desde, DateTime hasta);
 
-        List<TotalPorMes> ObtenerTotalesPorMes(int usuarioId, DateTime desde, DateTime hasta);
+        List<TotalPorMes> ObtenerTotalesPorMes(Usuario usuario, DateTime desde, DateTime hasta);
 
-        ResumenMovimientos ObtenerResumen(int usuarioId, DateTime desde, DateTime hasta);
+        ResumenMovimientos ObtenerResumen(Usuario usuario, DateTime desde, DateTime hasta);
 
         int InsertarYObtenerId(Movimiento movimiento);
 
         bool Actualizar(Movimiento movimiento);
 
-        bool Eliminar(int id);
+        bool Eliminar(Movimiento movimiento);
 
-        int ContarPorComercio(int comercioId);
+        int ContarPorComercio(Comercio comercio);
     }
 }

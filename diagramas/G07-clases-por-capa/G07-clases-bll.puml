@@ -1,160 +1,852 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa BLL
-
+title G07 - Diagrama de clases por capa - BLL
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "BLL (reglas de negocio + composicion)" {
-
-  class CompositionRoot <<static>> {
-    +Inicializar() : void
-    +Usuario : UsuarioBLL
-    +Permiso : PermisoBLL
-    +Idioma : IdiomaBLL
-    +Integridad : IntegridadBLL
-    +GestorBitacora : BitacoraBLL
-    +Categoria : CategoriaBLL
-    +Movimiento : MovimientoBLL
-    +Backup : BackupBLL
-    +Sesion : ISesion
-    +Autorizacion : IAutorizacion
-    +ServicioIdioma : IObservado
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'BLL/AsistenteFinancieroBLL.cs
+  class "AsistenteFinancieroBLL" as BLL_AsistenteFinancieroBLL {
+    ~RechazoFueraDeAlcance : string
+    ~RechazoLimiteDeUso : string
+    ~RechazoRespuestaNoConfiable : string
+    ~MaximoIntercambiosHistorial : int
+    ~AsistenteFinancieroBLL(consultaChatbotRepositorio : IConsultaChatbotRepositorio, chatbotFinancieroRepositorio\n: IChatbotFinancieroRepositorio, asistenteFinancieroService : IAsistenteFinancieroService,\nclasificadorConsultas : IClasificadorConsultas, limiteUso : ILimiteUsoAsistente, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL : IBitacoraBLL, idioma : IObservado, generador :\nIGeneradorRecomendaciones, perfilesInversor : IPerfilInversorRepositorio)
+    ~ObtenerHistorial() : IReadOnlyList<ConsultaChatbot>
+    ~EnviarMensajeAsync(pregunta : string) : Task<RespuestaAsistente>
   }
-
-  class UsuarioBLL {
-    +Login(usuario : Usuario, passwordRaw : string) : Usuario
-    +DesbloquearUsuario(id : int) : bool
-    +Registrar(usuario : Usuario, passwordRaw : string) : bool
-    +CerrarSesionActual() : void
-    +ObtenerTodos() : List<Usuario>
-    +Actualizar(...) : bool
-    +Eliminar(id : int) : bool
-    +ObtenerHistorialEstados(usuarioId : int) : List<UsuarioHistorialSnapshot>
-    +ObtenerVersionHistorial(historialId : int) : UsuarioHistorialSnapshot
-    +ObtenerDiferenciasConVersionAnterior(historialId : int) : List<ResultadoComparacionEstado>
-    +RestaurarVersion(historialId : int) : bool
+  'BLL/CoincidenciaLocalProductos.cs
+  class "CoincidenciaLocalProductos" as BLL_CoincidenciaLocalProductos {
+    ~UmbralLocal : double
+    ~MaximoProductosPorItem : int
+    ~SimilitudMinimaPalabra : double
+    ~Buscar(descripcionItem : string, productos : IEnumerable<Producto>) : List<CoincidenciaProducto>
+    ~Similitud(descripcionItem : string, textoProducto : string) : double
+    ~Normalizar(texto : string) : string
+    ~JaroWinkler(primera : string, segunda : string) : double
   }
-  class PermisoBLL {
-    +ObtenerCatalogo() : List<IPermiso>
-    +GuardarCatalogo(raices : List<IPermiso>) : void
-    +ObtenerPermisoIdsDeUsuario(usuarioId : int) : List<int>
-    +GuardarPermisosUsuario(usuarioId : int, permisosId : List<int>) : void
-    +ObtenerPermisosDirectosUsuario(usuarioId : int) : List<IPermiso>
+  'BLL/CoincidenciaProducto.cs
+  class "CoincidenciaProducto" as BLL_CoincidenciaProducto {
+    ~CoincidenciaProducto(producto : Producto, puntaje : double, esSemantica : bool)
+    ~Producto : Producto
+    ~Puntaje : double
+    ~EsSemantica : bool
   }
-  class IdiomaBLL {
-    +CrearIdioma(nombre : string) : int
-    +ActualizarIdioma(...) : bool
-    +EliminarIdioma(idiomaId : int) : bool
-    +GuardarTraduccion(idiomaId : int, key : string, valor : string) : void
-    +ImportarJson(...) : void
-    +ExportarJson(...) : void
-    +GuardarPreferencia(usuarioId : int, idiomaId : int) : bool
+  'BLL/CoincidenciaSemanticaProductos.cs
+  class "CoincidenciaSemanticaProductos" as BLL_CoincidenciaSemanticaProductos {
+    ~UmbralSemantico : double
+    ~LimiteTextosPorConsulta : int
+    ~CoincidenciaSemanticaProductos(servicio : IServicioEmbeddings, repositorio : IProductoEmbeddingRepositorio,\nunidades : IUnidadDeTrabajoFactory, ahora : Func<DateTime>)
+    ~BuscarAsync(items : IEnumerable<ItemLista>, productos : IEnumerable<Producto>, cancellationToken :\nCancellationToken) : Task<Dictionary<int, List<CoincidenciaProducto>>>
+    ~Coseno(primero : float[], segundo : float[]) : double
   }
-  class UsuarioEstadoBLL {
-    +GuardarVersionActual(...) : int
-    +ObtenerHistorial(usuarioId : int) : List<UsuarioHistorialSnapshot>
-    +CompararVersiones(...) : List<ResultadoComparacionEstado>
+  'BLL/ExtractorPorcentajeInversion.cs
+  enum "EstadoPorcentaje" as BLL_EstadoPorcentaje {
+    Ausente
+    Valido
+    Invalido
   }
-  class IntegridadBLL {
+  'BLL/ExtractorPorcentajeInversion.cs
+  class "ExtractorPorcentajeInversion" as BLL_ExtractorPorcentajeInversion {
+    ~Extraer(llamada : ILlamadaHerramientaAsistente, nombreHerramienta : string) : ResultadoPorcentaje
+  }
+  'BLL/GeneracionNotificacionesBLL.cs
+  class "GeneracionNotificacionesBLL" as BLL_GeneracionNotificacionesBLL {
+    ~TamanoPagina : int
+    ~ClavePlantillaMovimientos : string
+    ~ErrorCorrida : string
+    ~MotivoYaEntregada : string
+    ~MotivoCuentaInactiva : string
+    ~MotivoUsuarioInexistente : string
+    ~MotivoMovimientosRegistrados : string
+    ~MotivoSinPendientes : string
+    ~MotivoSinPerfil : string
+    ~MotivoPerfilCambiado : string
+    ~MotivoIntervaloNoCumplido : string
+    ~MotivoNivelInsuficiente : string
+    ~MotivoSinAlternativas : string
+    ~MotivoFalloLectura : string
+    ~MotivoFalloGeneracion : string
+    ~MotivoRespuestaNoConfiable : string
+    ~MotivoFalloEntrega : string
+    ~GeneracionNotificacionesBLL(unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, generador :\nIGeneradorRecomendaciones, inversiones : IRecomendacionInversionesBLL, idiomaBLL : IIdiomaBLL, ahora :\nFunc<DateTime>)
+    ~EjecutarAsync(cancellationToken : CancellationToken) : Task<ResultadoCorridaNotificaciones>
+  }
+  'BLL/GeneradorRecomendaciones.cs
+  class "GeneradorRecomendaciones" as BLL_GeneradorRecomendaciones {
+    ~ClavePreguntaCompras : string
+    ~ClavePreguntaInversiones : string
+    ~GeneradorRecomendaciones(servicio : IAsistenteFinancieroService, validador : ValidadorRespuestaAsistente,\ncompras : IRecomendacionComprasBLL, inversiones : IRecomendacionInversionesBLL)
+    ~ComprasDisponible : bool
+    ~InversionesDisponible : bool
+    ~GenerarAsync(solicitud : SolicitudGeneracion, cancellationToken : CancellationToken) :\nTask<ResultadoGeneracion>
+  }
+  'BLL/GeneradorRecomendaciones.cs
+  interface "IGeneradorRecomendaciones" as BLL_IGeneradorRecomendaciones {
+    +ComprasDisponible : bool
+    +InversionesDisponible : bool
+    +GenerarAsync(solicitud : SolicitudGeneracion, cancellationToken : CancellationToken) :\nTask<ResultadoGeneracion>
+  }
+  'BLL/ContratosInternosBLL.cs
+  interface "IRecomendacionComprasBLL" as BLL_IRecomendacionComprasBLL {
+    +CalcularAsync(usuario : Usuario, nombreLista : string, cancellationToken :\nSystem.Threading.CancellationToken) : System.Threading.Tasks.Task<ResumenCompras>
+    +ObtenerUniversoReferencias(usuario : Usuario) : IReadOnlyList<IReferenciaAsistente>
+  }
+  'BLL/ContratosInternosBLL.cs
+  interface "IRecomendacionInversionesBLL" as BLL_IRecomendacionInversionesBLL {
+    +CalcularAsync(usuario : Usuario, porcentaje : decimal?, cancellationToken :\nSystem.Threading.CancellationToken, perfil : PerfilInversor) : System.Threading.Tasks.Task<ResumenInversiones>
+    +CalcularSaldo(usuario : Usuario, porcentaje : decimal?) : ResumenInversiones
+  }
+  'BLL/ResumenInversiones.cs
+  class "InstrumentoInversion" as BLL_InstrumentoInversion {
+    ~Dato : IDatoMercado
+    ~Rendimiento30Dias : decimal?
+  }
+  'BLL/ResumenInversiones.cs
+  enum "NivelInversion" as BLL_NivelInversion {
+    Negativo
+    Ajustado
+    Comodo
+    Alto
+  }
+  'BLL/PrefiltroConsultasAsistente.cs
+  class "PrefiltroConsultasAsistente" as BLL_PrefiltroConsultasAsistente {
+    ~LargoMaximo : int
+    ~PatronesInyeccion : string[]
+    ~PatronesTemaExcluido : string[]
+    ~Evaluar(pregunta : string) : ResultadoPrefiltro
+    ~Normalizar(texto : string) : string
+  }
+  'BLL/RecomendacionComprasBLL.cs
+  class "RecomendacionComprasBLL" as BLL_RecomendacionComprasBLL {
+    ~RecomendacionComprasBLL(repositorio : IRecomendacionComprasRepositorio, zonas : IZonaUsuarioRepositorio,\nusuarios : IUsuarioRepositorio, tasas : ITasaConversionRepositorio, coincidencia :\nCoincidenciaSemanticaProductos, ahora : Func<DateTime>)
+    ~CalcularAsync(usuario : Usuario, nombreLista : string, cancellationToken : CancellationToken) :\nTask<ResumenCompras>
+    ~ObtenerUniversoReferencias(usuario : Usuario) : IReadOnlyList<IReferenciaAsistente>
+  }
+  'BLL/RecomendacionInversionesBLL.cs
+  class "RecomendacionInversionesBLL" as BLL_RecomendacionInversionesBLL {
+    ~RecomendacionInversionesBLL(movimientos : IMovimientoRepositorio, usuarios : IUsuarioRepositorio, ahora :\nFunc<DateTime>, argentina : IProveedorArgentinaDatos, data912 : IProveedorMercadoData912, cripto :\nIProveedorCriptoYa)
+    ~CalcularAsync(usuario : Usuario, porcentaje : decimal?, cancellationToken : CancellationToken, perfil :\nPerfilInversor) : Task<ResumenInversiones>
+    ~CalcularSaldo(usuario : Usuario, porcentaje : decimal?) : ResumenInversiones
+  }
+  'BLL/RespuestaAsistente.cs
+  class "RespuestaAsistente" as BLL_RespuestaAsistente {
+    ~Texto : string
+    ~ClaveRechazo : string
+    ~EsRechazo : bool
+    ~Respondida(texto : string) : RespuestaAsistente
+    ~Rechazada(claveRechazo : string) : RespuestaAsistente
+  }
+  'BLL/GeneradorRecomendaciones.cs
+  class "ResultadoGeneracion" as BLL_ResultadoGeneracion {
+    ~Aceptada : bool
+    ~SinAlternativas : bool
+    ~Texto : string
+    ~Valida(texto : string) : ResultadoGeneracion
+    ~NoConfiable() : ResultadoGeneracion
+    ~SinCandidatos() : ResultadoGeneracion
+  }
+  'BLL/ExtractorPorcentajeInversion.cs
+  class "ResultadoPorcentaje" as BLL_ResultadoPorcentaje {
+    ~Ausente : ResultadoPorcentaje
+    ~Invalido : ResultadoPorcentaje
+    ~Estado : EstadoPorcentaje
+    ~Valor : decimal?
+    ~DeValor(valor : decimal) : ResultadoPorcentaje
+  }
+  'BLL/PrefiltroConsultasAsistente.cs
+  enum "ResultadoPrefiltro" as BLL_ResultadoPrefiltro {
+    Admitida
+    DemasiadoLarga
+    Inyeccion
+    TemaExcluido
+  }
+  'BLL/ResumenCompras.cs
+  class "ResumenCompras" as BLL_ResumenCompras {
+    ~MaximoItemsAnalizados : int
+    ~SinZonas : bool
+    ~ItemsOmitidos : int
+    ~Items : List<ItemCompra>
+    ~TieneFechasNoPermitidas(respuesta : string) : bool
+    ~CrearContexto() : IContextoAsistente
+  }
+  'BLL/ResumenInversiones.cs
+  class "ResumenInversiones" as BLL_ResumenInversiones {
+    ~SaldoMensual : decimal
+    ~GastoMensual : decimal
+    ~Porcentaje : decimal?
+    ~Monto : decimal?
+    ~Moneda : string
+    ~Nivel : NivelInversion
+    ~Perfil : NivelRiesgoInversor
+    ~RiesgoEfectivo : NivelRiesgoInversor?
+    ~FechaPerfilUtc : DateTime
+    ~VersionPerfil : int
+    ~MaximoMesesInmovilizacion : int
+    ~MaximoDiasHabilesDisponibilidad : int?
+    ~CandidatosSinCompatibilidad : List<string>
+    ~Instrumentos : List<InstrumentoInversion>
+    ~Inflacion : IDatoMercado
+    ~FuentesFaltantes : List<string>
+    ~UniversoReferencias : List<IReferenciaAsistente>
+    ~CrearContexto() : IContextoAsistente
+    ~Referencia(dato : IDatoMercado) : IReferenciaAsistente
+  }
+  'BLL/GeneradorRecomendaciones.cs
+  class "SolicitudGeneracion" as BLL_SolicitudGeneracion {
+    ~Categoria : CategoriaConsulta
+    ~Usuario : Usuario
+    ~Pregunta : string
+    ~Historial : IReadOnlyList<IIntercambioChatbot>
+    ~Idioma : IIdioma
+    ~NombreLista : string
+    ~Perfil : PerfilInversor
+    ~Porcentaje : decimal?
+    ~OmitirSiSinAlternativas : bool
+  }
+  'BLL/ValidadorRespuestaAsistente.cs
+  class "ValidadorRespuestaAsistente" as BLL_ValidadorRespuestaAsistente {
+    ~Validar(respuesta : string, universo : IEnumerable<IReferenciaAsistente>, contexto : IContextoAsistente) :\nResultadoValidacionRespuesta
+  }
+}
+package "Comercios y promociones" as P1 {
+  'BLL/AlcancePromocion.cs
+  class "AlcancePromocion" as BLL_AlcancePromocion {
+    ~AplicaAComercio(promocion : Promocion, comercio : Comercio) : bool
+    ~FiltrarPorComercio(promociones : IEnumerable<Promocion>, comercio : Comercio) : List<Promocion>
+    ~AplicaAPago(promocion : Promocion, entidadFinanciera : EntidadFinanciera, medioPago : MedioPago, segmento :\nstring) : bool
+    ~AplicaAProducto(promocion : Promocion, producto : Producto) : bool
+    ~Vigente(promocion : Promocion, fecha : DateTime) : bool
+  }
+  'BLL/CategoriaProductoBLL.cs
+  class "CategoriaProductoBLL" as BLL_CategoriaProductoBLL {
+    ~CategoriaProductoBLL(categoriaProductoRepositorio : ICategoriaProductoRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodas() : List<CategoriaProducto>
+    ~Crear(categoria : CategoriaProducto) : CategoriaProducto
+    ~Actualizar(categoria : CategoriaProducto) : bool
+    ~Eliminar(categoria : CategoriaProducto) : bool
+  }
+  'BLL/ComercioBLL.cs
+  class "ComercioBLL" as BLL_ComercioBLL {
+    ~ComercioBLL(comercioRepositorio : IComercioRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nbitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodos() : List<Comercio>
+    ~Crear(comercio : Comercio) : Comercio
+    ~Actualizar(comercio : Comercio) : bool
+    ~Eliminar(comercio : Comercio) : bool
+  }
+  'BLL/ComercioProductoBLL.cs
+  class "ComercioProductoBLL" as BLL_ComercioProductoBLL {
+    ~ComercioProductoBLL(comercioProductoRepositorio : IComercioProductoRepositorio, monedaRepositorio :\nIMonedaRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerPorComercio(comercio : Comercio) : List<ComercioProducto>
+    ~ObtenerMonedas() : List<Moneda>
+    ~Asignar(asignacion : ComercioProducto) : ComercioProducto
+    ~ActualizarPrecio(asignacion : ComercioProducto) : bool
+    ~Quitar(asignacion : ComercioProducto) : bool
+  }
+  'BLL/ProductoBLL.cs
+  class "ProductoBLL" as BLL_ProductoBLL {
+    ~ProductoBLL(productoRepositorio : IProductoRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nbitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodos() : List<Producto>
+    ~Crear(producto : Producto) : Producto
+    ~Actualizar(producto : Producto) : bool
+    ~Eliminar(producto : Producto) : bool
+  }
+  'BLL/PromocionBLL.cs
+  class "PromocionBLL" as BLL_PromocionBLL {
+    ~PromocionBLL(promocionRepositorio : IPromocionRepositorio, comercioRepositorio : IComercioRepositorio,\nmedioPagoRepositorio : IMedioPagoRepositorio, medioPagoEntidadRepositorio : IMedioPagoEntidadRepositorio,\nunidadDeTrabajoFactory : IUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL)
+    ~Buscar(texto : string, recibido : Comercio) : List<Promocion>
+    ~ObtenerPorComercio(recibido : Comercio) : List<Promocion>
+    ~ObtenerMediosPago() : List<MedioPago>
+    ~ObtenerSegmentosDisponibles() : List<string>
+    ~Crear(datos : Promocion) : Promocion
+    ~Actualizar(datos : Promocion) : bool
+    ~Eliminar(recibida : Promocion) : bool
+  }
+  'BLL/ResumenCompras.cs
+  class "PromocionCompra" as BLL_PromocionCompra {
+    ~Descripcion : string
+    ~Fecha : DateTime
+    ~Porcentaje : decimal
+    ~TopeArs : decimal?
+    ~MedioPago : string
+    ~TipoMedioPago : string
+    ~Segmento : string
+    ~Cuenta : string
+    ~Ahorro : decimal?
+    ~PrecioFinal : decimal?
+  }
+  'BLL/RubroComercioBLL.cs
+  class "RubroComercioBLL" as BLL_RubroComercioBLL {
+    ~RubroComercioBLL(rubroComercioRepositorio : IRubroComercioRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodas() : List<RubroComercio>
+    ~Crear(rubro : RubroComercio) : RubroComercio
+    ~Actualizar(rubro : RubroComercio) : bool
+    ~Eliminar(rubro : RubroComercio) : bool
+  }
+}
+package "Finanzas personales" as P2 {
+  'BLL/CategoriaBLL.cs
+  class "CategoriaBLL" as BLL_CategoriaBLL {
+    ~CategoriaBLL(categoriaRepositorio : ICategoriaRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nsesion : ISesion, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerVisiblesParaUsuarioActual() : List<Categoria>
+    ~Crear(categoria : Categoria) : Categoria
+    ~Actualizar(categoria : Categoria) : bool
+    ~Eliminar(categoria : Categoria) : bool
+  }
+  'BLL/CuentaFinancieraBLL.cs
+  class "CuentaFinancieraBLL" as BLL_CuentaFinancieraBLL {
+    ~CuentaFinancieraBLL(cuentaFinancieraRepositorio : ICuentaFinancieraRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerMisCuentas() : List<CuentaFinanciera>
+    ~Crear(cuenta : CuentaFinanciera) : CuentaFinanciera
+    ~Actualizar(cuenta : CuentaFinanciera) : CuentaFinanciera
+    ~Eliminar(cuenta : CuentaFinanciera) : bool
+  }
+  'BLL/DashboardBLL.cs
+  class "DashboardBLL" as BLL_DashboardBLL {
+    ~DashboardBLL(dashboardRepositorio : IDashboardRepositorio, tarjetaDashboardRepositorio :\nITarjetaDashboardRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL\n: IBitacoraBLL)
+    ~ObtenerOCrearDashboardActual() : Dashboard
+    ~AgregarTarjeta(tipo : TipoTarjetaDashboard) : TarjetaDashboard
+    ~QuitarTarjeta(tarjeta : TarjetaDashboard) : bool
+    ~ObtenerTiposDisponibles() : IReadOnlyList<TipoTarjetaDashboard>
+  }
+  'BLL/EntidadFinancieraBLL.cs
+  class "EntidadFinancieraBLL" as BLL_EntidadFinancieraBLL {
+    ~EntidadFinancieraBLL(entidadFinancieraRepositorio : IEntidadFinancieraRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodas() : List<EntidadFinanciera>
+    ~ObtenerMediosPagoEntidad(entidad : EntidadFinanciera) : List<MedioPagoEntidad>
+    ~Crear(entidad : EntidadFinanciera) : EntidadFinanciera
+    ~Actualizar(entidad : EntidadFinanciera) : bool
+    ~Eliminar(entidad : EntidadFinanciera) : bool
+    ~AgregarMedioPagoEntidad(medioPagoEntidad : MedioPagoEntidad) : MedioPagoEntidad
+    ~QuitarMedioPagoEntidad(medioPagoEntidad : MedioPagoEntidad) : bool
+  }
+  'BLL/ListaDeComprasBLL.cs
+  class "ListaDeComprasBLL" as BLL_ListaDeComprasBLL {
+    ~ListaDeComprasBLL(listaDeComprasRepositorio : IListaDeComprasRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerOCrearParaUsuarioActual() : ListaDeCompras
+    ~AgregarItem(item : ItemLista) : ItemLista
+    ~ActualizarCantidad(recibido : ItemLista, cantidad : int) : bool
+    ~MarcarComprado(recibido : ItemLista, comprado : bool) : bool
+    ~EliminarItem(recibido : ItemLista) : bool
+  }
+  'BLL/MedioPagoBLL.cs
+  class "MedioPagoBLL" as BLL_MedioPagoBLL {
+    ~MedioPagoBLL(medioPagoRepositorio : IMedioPagoRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nbitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodos() : List<MedioPago>
+    ~Crear(medioPago : MedioPago) : MedioPago
+    ~Actualizar(medioPago : MedioPago) : bool
+    ~Eliminar(medioPago : MedioPago) : bool
+  }
+  'BLL/MovimientoBLL.cs
+  class "MovimientoBLL" as BLL_MovimientoBLL {
+    ~MovimientoBLL(movimientoRepositorio : IMovimientoRepositorio, categoriaRepositorio : ICategoriaRepositorio,\ncomercioRepositorio : IComercioRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion :\nISesion, bitacoraBLL : IBitacoraBLL, escaneoTicketService : IEscaneoTicketService, reportePdfService :\nIReporteTabularPdfService)
+    ~ExportarPdf(reporte : ReporteMovimientosPdf) : byte[]
+    ~ObtenerParaUsuarioActual(filtro : FiltroMovimiento) : List<Movimiento>
+    ~ObtenerTotalesPorCategoria(tipo : TipoMovimiento, desde : DateTime, hasta : DateTime) :\nList<TotalPorCategoria>
+    ~ObtenerGastoPorComercio(desde : DateTime, hasta : DateTime, cantidad : int) : GastoPorComercio
+    ~ObtenerGastoAcumuladoMensual(hoy : DateTime) : GastoAcumuladoMensual
+    ~ObtenerTotalesPorMes(desde : DateTime, hasta : DateTime) : List<TotalPorMes>
+    ~ObtenerResumenBalance(desde : DateTime, hasta : DateTime) : ResumenMovimientos
+    ~EscanearBorradorAsync(imagenBytes : byte[]) : Task<EscaneoBorradorResultado>
+    ~Crear(movimiento : Movimiento) : Movimiento
+    ~Actualizar(movimiento : Movimiento) : bool
+    ~Eliminar(movimiento : Movimiento) : bool
+  }
+  'BLL/ReglaCategorizacionBLL.cs
+  class "ReglaCategorizacionBLL" as BLL_ReglaCategorizacionBLL {
+    ~ReglaCategorizacionBLL(reglaRepositorio : IReglaCategorizacionRepositorio, comercioReglaRepositorio :\nIComercioReglaCategorizacionRepositorio, categoriaRepositorio : ICategoriaRepositorio, comercioRepositorio :\nIComercioRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL :\nIBitacoraBLL)
+    ~ObtenerParaUsuarioActual() : List<ReglaCategorizacion>
+    ~ObtenerComerciosPorRegla(regla : ReglaCategorizacion) : List<Comercio>
+    ~Crear(regla : ReglaCategorizacion, comercios : IEnumerable<Comercio>) : ReglaCategorizacion
+    ~Actualizar(regla : ReglaCategorizacion, comercios : IEnumerable<Comercio>) : bool
+    ~Eliminar(regla : ReglaCategorizacion) : bool
+    ~SugerirCategoria(descripcion : string, comercio : Comercio) : Categoria
+    ~NormalizarTexto(texto : string) : string
+  }
+}
+package "Idiomas y presentacion" as P3 {
+  'BLL/ContratosInternosBLL.cs
+  interface "IIdiomaBLL" as BLL_IIdiomaBLL {
+    +AplicarIdiomaSesionUsuario(usuario : Usuario) : void
+    +ObtenerIdiomaParaUsuario(usuario : Usuario) : Idioma
+  }
+  'BLL/IdiomaBLL.cs
+  class "IdiomaBLL" as BLL_IdiomaBLL {
+    ~IdiomaBLL(idiomaRepositorio : IIdiomaRepositorio, usuarioPreferenciaRepositorio :\nIUsuarioPreferenciaRepositorio, traduccionRepositorio : ITraduccionRepositorio, idiomaCatalogoService :\nIdiomaCatalogoService, usuarioEstadoBLL : IUsuarioEstadoBLL, bitacoraBLL : IBitacoraBLL,\nunidadDeTrabajoFactory : IUnidadDeTrabajoFactory, servicioIdioma : IObservado, sesion : ISesion)
+    ~InicializarAplicacion() : void
+    ~ObtenerIdiomas() : List<Idioma>
+    ~ObtenerIdioma(idioma : Idioma) : Idioma
+    ~ObtenerIdiomaDefault() : Idioma
+    ~AplicarIdiomaSesionUsuario(usuario : Usuario) : void
+    ~GuardarPreferencia(recibida : Idioma) : bool
+    ~CrearIdioma(idioma : Idioma) : Idioma
+    ~HacerIdiomaDefault(recibida : Idioma) : bool
+    ~ActualizarIdioma(recibida : Idioma) : bool
+    ~EliminarIdioma(recibida : Idioma) : bool
+    ~GuardarTraduccion(traduccion : Traduccion) : void
+    ~EliminarTraduccion(recibida : Traduccion) : bool
+    ~ImportarJson(idioma : Idioma, rutaArchivo : string) : void
+    ~ExportarJson(recibida : Idioma, rutaArchivo : string) : void
+    ~ObtenerIdiomaParaUsuario(usuario : Usuario) : Idioma
+  }
+}
+package "Infraestructura" as P4 {
+  'BLL/CompositionRoot.cs
+  class "CompositionRoot" as BLL_CompositionRoot {
+    ~Inicializar() : void
+    ~Sesion : ISesion
+    ~PerfilInversor : PerfilInversorBLL
+    ~Bitacora : IBitacora
+    ~Autorizacion : IAutorizacion
+    ~PasswordHasher : IPasswordHasher
+    ~IntegridadService : IIntegridadService
+    ~ServicioIdioma : IObservado
+    ~EscaneoTicket : IEscaneoTicketService
+    ~AsistenteFinancieroService : IAsistenteFinancieroService
+    ~ClasificadorConsultas : IClasificadorConsultas
+    ~BusquedaUbicaciones : IBusquedaUbicacionesService
+    ~Usuario : UsuarioBLL
+    ~Permiso : PermisoBLL
+    ~Idioma : IdiomaBLL
+    ~Integridad : IntegridadBLL
+    ~GestorBitacora : BitacoraBLL
+    ~Categoria : CategoriaBLL
+    ~Comercio : ComercioBLL
+    ~RubroComercio : RubroComercioBLL
+    ~MedioPago : MedioPagoBLL
+    ~EntidadFinanciera : EntidadFinancieraBLL
+    ~CuentaFinanciera : CuentaFinancieraBLL
+    ~ZonaUsuario : ZonaUsuarioBLL
+    ~CategoriaProducto : CategoriaProductoBLL
+    ~Producto : ProductoBLL
+    ~ComercioProducto : ComercioProductoBLL
+    ~Promocion : PromocionBLL
+    ~Moneda : MonedaBLL
+    ~TasaConversion : TasaConversionBLL
+    ~ActualizacionTasas : ActualizacionTasasBLL
+    ~Movimiento : MovimientoBLL
+    ~Dashboard : DashboardBLL
+    ~ReglaCategorizacion : ReglaCategorizacionBLL
+    ~AsistenteFinanciero : AsistenteFinancieroBLL
+    ~ListaDeCompras : ListaDeComprasBLL
+    ~GeneracionNotificaciones : GeneracionNotificacionesBLL
+    ~Notificacion : NotificacionBLL
+    ~Backup : BackupBLL
+  }
+  'BLL/MovimientoBLL.cs
+  class "EscaneoBorradorResultado" as BLL_EscaneoBorradorResultado {
+    ~Borrador : Movimiento
+    ~TextoCrudo : string
+  }
+  'BLL/InicializadorAplicacionBLL.cs
+  class "InicializadorAplicacionBLL" as BLL_InicializadorAplicacionBLL {
+    ~Inicializar() : void
+  }
+  'BLL/ResumenCompras.cs
+  class "ItemCompra" as BLL_ItemCompra {
+    ~Descripcion : string
+    ~Cantidad : int
+    ~NoEncontrado : bool
+    ~Ofertas : List<OfertaCompra>
+  }
+  'BLL/ManejadorExcepcionesBLL.cs
+  class "ManejadorExcepcionesBLL" as BLL_ManejadorExcepcionesBLL {
+    ~ObtenerMensajeUsuarioKey(exception : Exception, actividad : string) : string
+    ~RegistrarExcepcionTecnica(exception : Exception, actividad : string, origen : string) : void
+  }
+  'BLL/ResumenCompras.cs
+  class "OfertaCompra" as BLL_OfertaCompra {
+    ~ComercioId : int
+    ~Producto : string
+    ~Comercio : string
+    ~PrecioUnitario : decimal
+    ~Importe : decimal
+    ~Moneda : string
+    ~Zona : string
+    ~DistanciaMetros : int?
+    ~SinUbicacionFisica : bool
+    ~SinTasa : bool
+    ~TasaAArs : decimal?
+    ~FechaTasa : DateTime?
+    ~PrecioFinalArs : decimal?
+    ~Promociones : List<PromocionCompra>
+  }
+  'BLL/ValidadorRespuestaAsistente.cs
+  enum "ResultadoValidacionRespuesta" as BLL_ResultadoValidacionRespuesta {
+    Valida
+    RespuestaVacia
+    BloqueDeCodigo
+    ReferenciaNoPermitida
+  }
+}
+package "Monedas y tasas" as P5 {
+  'BLL/ActualizacionTasasBLL.cs
+  class "ActualizacionTasasBLL" as BLL_ActualizacionTasasBLL {
+    ~ActualizacionTasasBLL(unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, proveedorTasasCambio :\nIProveedorTasasCambio, reloj : Func<DateTime>)
+    ~LimiteMensualDeRequests : int
+    ~ObtenerUltimasEjecuciones(cantidad : int) : List<EjecucionActualizacionTasas>
+    ~ObtenerDetalleDeEjecucion(ejecucion : EjecucionActualizacionTasas) : List<ActualizacionTasaDetalle>
+    ~ObtenerRequestsConsumidasDelMes() : int
+    ~EjecutarAsync(origen : OrigenActualizacionTasas, cancellationToken : CancellationToken) :\nTask<ResultadoEjecucionActualizacionTasas>
+  }
+  'BLL/MonedaBLL.cs
+  class "MonedaBLL" as BLL_MonedaBLL {
+    ~MonedaBLL(monedaRepositorio : IMonedaRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nbitacoraBLL : IBitacoraBLL)
+    ~ObtenerTodas() : List<Moneda>
+    ~Crear(moneda : Moneda) : Moneda
+    ~Actualizar(moneda : Moneda) : bool
+    ~Eliminar(moneda : Moneda) : bool
+  }
+  'BLL/TasaConversionBLL.cs
+  class "TasaConversionBLL" as BLL_TasaConversionBLL {
+    ~TasaConversionBLL(tasaConversionRepositorio : ITasaConversionRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL, sesion : ISesion)
+    ~Liberar(recibida : TasaConversion) : bool
+    ~ObtenerTodas() : List<TasaConversion>
+    ~Crear(tasa : TasaConversion) : TasaConversion
+    ~Actualizar(recibida : TasaConversion) : bool
+    ~Eliminar(recibida : TasaConversion) : bool
+  }
+}
+package "Notificaciones" as P6 {
+  'BLL/NotificacionBLL.cs
+  class "NotificacionBLL" as BLL_NotificacionBLL {
+    ~MaximoMensajeManual : int
+    ~BuscarPersonales(filtro : FiltroNotificacion, pagina : int) : PaginaNotificaciones
+    ~ContarPersonalesNoLeidas() : int
+    ~LeerPersonal(recibida : Notificacion) : Notificacion
+    ~MarcarPersonalLeida(notificacion : Notificacion) : void
+    ~NotificacionBLL(notificacionRepositorio : INotificacionRepositorio, recordatorioCompraRepositorio :\nIRecordatorioCompraRepositorio, recordatorioInversionRepositorio : IRecordatorioInversionRepositorio,\nunidadDeTrabajoFactory : IUnidadDeTrabajoFactory, bitacoraBLL : IBitacoraBLL, sesion : ISesion)
+    ~ObtenerTodas() : List<Notificacion>
+    ~CrearManual(recibida : Notificacion) : Notificacion
+    ~MarcarLeida(recibida : Notificacion, leida : bool) : bool
+    ~Eliminar(recibida : Notificacion) : bool
+  }
+  'BLL/GeneracionNotificacionesBLL.cs
+  class "ResultadoCorridaNotificaciones" as BLL_ResultadoCorridaNotificaciones {
+    ~Corrida : CorridaGeneracionNotificaciones
+    ~Jornada : DateTime
+    ~AntesDelHorario : bool
+    ~Cancelada : bool
+    ~Entregadas : int
+    ~Omitidas : int
+    ~Fallidas : int
+  }
+}
+package "Perfil inversor" as P7 {
+  'BLL/CalculadorPerfilInversor.cs
+  class "CalculadorPerfilInversor" as BLL_CalculadorPerfilInversor {
+    ~Version : int
+    ~CantidadesOpciones : int[]
+    ~Preguntas : IReadOnlyList<PreguntaPerfilInversor>
+    ~Evaluar(version : int, respuestas : IEnumerable<RespuestaPerfilInversor>) : PerfilInversor
+    ~ClasificarPuntaje(puntaje : decimal) : NivelRiesgoInversor
+  }
+  'BLL/ContinuacionPerfilInversor.cs
+  class "ContinuacionPerfilInversor" as BLL_ContinuacionPerfilInversor {
+    ~Usuario : Usuario
+    ~CreadaUtc : DateTime
+    ~Sincronizacion : object
+    ~Finalizada : bool
+    ~ContinuacionPerfilInversor(usuario : Usuario, creadaUtc : DateTime)
+  }
+  'BLL/PerfilInversorBLL.cs
+  class "PerfilInversorBLL" as BLL_PerfilInversorBLL {
+    ~VersionCuestionario : int
+    ~ObtenerPreguntas() : IReadOnlyList<PreguntaPerfilInversor>
+    ~ObtenerCantidadOpciones(pregunta : PreguntaPerfilInversor) : int
+    ~EvaluarCuestionario(version : int, respuestas : IEnumerable<RespuestaPerfilInversor>) : PerfilInversor
+    ~PerfilInversorBLL(repositorio : IPerfilInversorRepositorio, unidades : IUnidadDeTrabajoFactory, sesion :\nISesion, bitacora : IBitacoraBLL, ahoraUtc : Func<DateTime>)
+    ~ObtenerMiPerfil() : PerfilInversor
+    ~GuardarMiPerfil(version : int, respuestas : IEnumerable<RespuestaPerfilInversor>) : PerfilInversor
+    ~GuardarPostRegistro(continuacion : ContinuacionPerfilInversor, version : int, respuestas :\nIEnumerable<RespuestaPerfilInversor>) : PerfilInversor
+    ~CancelarPostRegistro(continuacion : ContinuacionPerfilInversor) : void
+  }
+}
+package "Ubicacion y zonas" as P8 {
+  'BLL/DistanciaGeografica.cs
+  class "DistanciaGeografica" as BLL_DistanciaGeografica {
+    ~RadioTerrestreMetros : double
+    ~CalcularMetros(latitudOrigen : decimal, longitudOrigen : decimal, latitudDestino : decimal, longitudDestino :\ndecimal) : double
+  }
+  'BLL/DistanciaZonaUsuario.cs
+  class "DistanciaZonaUsuario" as BLL_DistanciaZonaUsuario {
+    ~DistanciaZonaUsuario(zona : ZonaUsuario, distanciaMetros : double)
+    ~Zona : ZonaUsuario
+    ~DistanciaMetros : double
+    ~EstaDentroDelRadio : bool
+  }
+  'BLL/ZonaUsuarioBLL.cs
+  class "ZonaUsuarioBLL" as BLL_ZonaUsuarioBLL {
+    ~MaximoZonasPorUsuario : int
+    ~LongitudMaximaNombre : int
+    ~RadioMinimoMetros : int
+    ~RadioMaximoMetros : int
+    ~RadioPorDefectoMetros : int
+    ~PasoRadioMetros : int
+    ~ZonaUsuarioBLL(zonaUsuarioRepositorio : IZonaUsuarioRepositorio, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory, sesion : ISesion, bitacoraBLL : IBitacoraBLL)
+    ~ObtenerMisZonas() : List<ZonaUsuario>
+    ~Crear(nombre : string, latitud : decimal?, longitud : decimal?, radioMetros : int) : ZonaUsuario
+    ~Eliminar(recibida : ZonaUsuario) : bool
+    ~CalcularDistanciasAMisZonas(latitud : decimal, longitud : decimal) : List<DistanciaZonaUsuario>
+    ~ObtenerZonaMasCercana(latitud : decimal, longitud : decimal) : DistanciaZonaUsuario
+    ~ObtenerZonaQueContiene(latitud : decimal, longitud : decimal) : DistanciaZonaUsuario
+    ~CalcularDistancias(zonas : IEnumerable<ZonaUsuario>, latitud : decimal, longitud : decimal) :\nList<DistanciaZonaUsuario>
+  }
+}
+package "Usuarios y auditoria" as P9 {
+  'BLL/BackupBLL.cs
+  class "BackupBLL" as BLL_BackupBLL {
+    ~BackupBLL(backupRepositorio : IBackupRepositorio, bitacoraBLL : IBitacoraBLL)
+    ~CrearBackup(rutaArchivo : string) : void
+    ~RestaurarBackup(rutaArchivo : string) : void
+  }
+  'BLL/BitacoraBLL.cs
+  class "BitacoraBLL" as BLL_BitacoraBLL {
+    ~BitacoraBLL(bitacoraRepositorio : IBitacoraRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory,\nsesion : ISesion)
+    ~Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    ~RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    ~RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    ~RegistrarExcepcionTecnica(actividad : string, exception : Exception, origen : string) : void
+    ~RegistrarOperacionInterno(actividad : string, informacion : string, origen : string, unidad :\nIUnidadDeTrabajo) : void
+    ~RegistrarFalloNegocioInterno(actividad : string, informacion : string, origen : string, unidad :\nIUnidadDeTrabajo) : void
+    ~ConsultarBitacora(filtro : IFiltroBitacora) : IList<IEventoBitacora>
+  }
+  'BLL/ContratosInternosBLL.cs
+  interface "IBitacoraBLL" as BLL_IBitacoraBLL {
+    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+    +RegistrarOperacion(actividad : string, informacion : string, origen : string) : void
+    +RegistrarFalloNegocio(actividad : string, informacion : string, origen : string) : void
+    +RegistrarOperacionInterno(actividad : string, informacion : string, origen : string, unidad :\nIUnidadDeTrabajo) : void
+    +RegistrarFalloNegocioInterno(actividad : string, informacion : string, origen : string, unidad :\nIUnidadDeTrabajo) : void
+  }
+  'BLL/ContratosInternosBLL.cs
+  interface "IIntegridadBLL" as BLL_IIntegridadBLL {
     +CalcularDVH<T>(entidad : T) : string
+    +RecalcularDVVInterno(tabla : string, listaDVH : IEnumerable<string>, unidad : IUnidadDeTrabajo) : void
+    +ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) :\nvoid
     +ValidarIntegridadGlobal() : void
   }
-  class BitacoraBLL {
-    +Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
-    +RegistrarOperacion(...) : void
-    +RegistrarExcepcionTecnica(...) : void
+  'BLL/ContratosInternosBLL.cs
+  interface "IPasswordHashService" as BLL_IPasswordHashService {
+    +HashPassword(passwordRaw : string) : string
+    +VerifyPassword(passwordRaw : string, passwordHash : string) : bool
   }
-  class CategoriaBLL {
-    +ObtenerVisiblesParaUsuario(usuarioId : int) : List<Categoria>
-    +Crear(nombre : string) : int
-    +Actualizar(id : int, nuevoNombre : string) : bool
-    +Eliminar(id : int) : bool
+  'BLL/ContratosInternosBLL.cs
+  interface "IPermisoBLL" as BLL_IPermisoBLL {
+    +ObtenerPermisosDirectosUsuario(usuario : Usuario) : List<IPermiso>
+    +AsignarPerfilBasicoInterno(usuario : Usuario, unidad : IUnidadDeTrabajo) : void
+    +GuardarPermisosUsuarioInterno(usuario : Usuario, permisos : List<IPermiso>, unidad : IUnidadDeTrabajo) : void
+    +ValidarPuedeEliminarUsuario(usuario : Usuario, unidad : IUnidadDeTrabajo) : void
   }
-  class MovimientoBLL {
-    +ObtenerPorUsuario(usuarioId : int, filtro : FiltroMovimiento) : List<Movimiento>
-    +Crear(categoriaId : int, tipo : TipoMovimiento, monto : decimal, fecha : DateTime, descripcion : string) : int
-    +Actualizar(...) : bool
-    +Eliminar(id : int) : bool
+  'BLL/ContratosInternosBLL.cs
+  interface "IUsuarioEstadoBLL" as BLL_IUsuarioEstadoBLL {
+    +GuardarVersionActual(usuario : Usuario, accion : string, observaciones : string) : UsuarioHistorialSnapshot
+    +GuardarVersionActualInterno(usuario : Usuario, accion : string, observaciones : string, unidad :\nIUnidadDeTrabajo) : UsuarioHistorialSnapshot
+    +ObtenerHistorial(usuario : Usuario) : List<UsuarioHistorialSnapshot>
+    +ObtenerVersion(snapshot : IUsuarioSnapshot) : UsuarioHistorialSnapshot
+    +CompararVersiones(versionActual : UsuarioHistorialSnapshot, versionAnterior : UsuarioHistorialSnapshot) :\nList<ResultadoComparacionEstado>
+    +AplicarSnapshotInterno(snapshot : UsuarioHistorialSnapshot, unidad : IUnidadDeTrabajo) : void
   }
-  class BackupBLL {
-    +CrearBackup(rutaArchivo : string) : void
-    +RestaurarBackup(rutaArchivo : string) : void
+  'BLL/InicializacionHistorialBLL.cs
+  class "InicializacionHistorialBLL" as BLL_InicializacionHistorialBLL {
+    ~Inicializar() : void
   }
-  class PasswordHashService <<internal>>
-  class ManejadorExcepcionesBLL <<static>>
-  class InicializadorAplicacionBLL <<static>>
-  class InicializacionHistorialBLL <<static>>
-
-  package "Contratos internos" {
-    interface IBitacoraBLL
-    interface IPermisoBLL
-    interface IIdiomaBLL
-    interface IUsuarioEstadoBLL
-    interface IIntegridadBLL
-    interface IPasswordHashService
+  'BLL/IntegridadBLL.cs
+  class "IntegridadBLL" as BLL_IntegridadBLL {
+    ~IntegridadBLL(integridadService : IIntegridadService, integridadRepositorio : IIntegridadRepositorio,\nusuarioRepositorio : IUsuarioRepositorio, bitacoraBLL : IBitacoraBLL, unidadDeTrabajoFactory :\nIUnidadDeTrabajoFactory)
+    ~CalcularDVH<T>(entidad : T) : string
+    ~RecalcularDVVInterno(tabla : string, listaDVH : IEnumerable<string>, unidad : IUnidadDeTrabajo) : void
+    ~ActualizarDVVInterno(tabla : string, dvhAnterior : string, dvhNuevo : string, unidad : IUnidadDeTrabajo) :\nvoid
+    ~ValidarIntegridadGlobal() : void
+  }
+  'BLL/PasswordHashService.cs
+  class "PasswordHashService" as BLL_PasswordHashService {
+    ~PasswordHashService()
+    ~HashPassword(passwordRaw : string) : string
+    ~VerifyPassword(passwordRaw : string, passwordHash : string) : bool
+  }
+  'BLL/PermisoBLL.cs
+  class "PermisoBLL" as BLL_PermisoBLL {
+    ~PermisoBLL(permisoRepositorio : IPermisoRepositorio, usuarioPermisoRepositorio : IUsuarioPermisoRepositorio,\npermisoService : PermisoService, usuarioRepositorio : IUsuarioRepositorio, usuarioEstadoBLL :\nIUsuarioEstadoBLL, bitacoraBLL : IBitacoraBLL, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion :\nISesion, autorizacion : IAutorizacion)
+    ~ObtenerCatalogo() : List<IPermiso>
+    ~GuardarCatalogo(raices : List<IPermiso>) : void
+    ~ObtenerPermisosDeUsuario(usuario : Usuario) : List<IPermiso>
+    ~GuardarPermisosUsuario(recibida : Usuario, permisos : List<IPermiso>) : void
+    ~ObtenerPermisosDirectosUsuario(usuario : Usuario) : List<IPermiso>
+    ~AsignarPerfilBasicoInterno(usuario : Usuario, unidad : IUnidadDeTrabajo) : void
+    ~GuardarPermisosUsuarioInterno(usuario : Usuario, permisos : List<IPermiso>, unidad : IUnidadDeTrabajo) : void
+    ~ValidarPuedeEliminarUsuario(usuario : Usuario, unidad : IUnidadDeTrabajo) : void
+  }
+  'BLL/SesionUsuarioExtensiones.cs
+  class "SesionUsuarioExtensiones" as BLL_SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion : ISesion) : Usuario
+  }
+  'BLL/UsuarioBLL.cs
+  class "UsuarioBLL" as BLL_UsuarioBLL {
+    ~UsuarioBLL(usuarioRepositorio : IUsuarioRepositorio, passwordHasher : IPasswordHashService, idiomaBLL :\nIIdiomaBLL, permisoBLL : IPermisoBLL, usuarioEstadoBLL : IUsuarioEstadoBLL, integridadBLL : IIntegridadBLL,\nbitacoraBLL : IBitacoraBLL, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion : ISesion, autorizacion :\nIAutorizacion)
+    ~Login(usuarioEntidad : BE.Usuario, passwordRaw : string) : Usuario
+    ~DesbloquearUsuario(recibida : Usuario) : bool
+    ~CerrarSesionActual() : void
+    ~Registrar(usuario : Usuario, passwordRaw : string) : Usuario
+    ~RegistrarParaOnboarding(usuario : Usuario, passwordRaw : string) : ContinuacionPerfilInversor
+    ~ObtenerTodos() : List<Usuario>
+    ~Actualizar(recibida : Usuario, nuevaPasswordRaw : string) : bool
+    ~Eliminar(recibida : Usuario) : bool
+    ~ObtenerHistorialEstados(usuario : Usuario) : List<UsuarioHistorialSnapshot>
+    ~ObtenerVersionHistorial(snapshot : IUsuarioSnapshot) : UsuarioHistorialSnapshot
+    ~ObtenerDiferenciasConVersionAnterior(recibida : IUsuarioSnapshot) : List<ResultadoComparacionEstado>
+    ~RestaurarVersion(recibida : IUsuarioSnapshot) : bool
+  }
+  'BLL/UsuarioEstadoBLL.cs
+  class "UsuarioEstadoBLL" as BLL_UsuarioEstadoBLL {
+    ~UsuarioEstadoBLL(usuarioRepositorio : IUsuarioRepositorio, usuarioPermisoRepositorio :\nIUsuarioPermisoRepositorio, usuarioPreferenciaRepositorio : IUsuarioPreferenciaRepositorio, permisoRepositorio\n: IPermisoRepositorio, unidadDeTrabajoFactory : IUnidadDeTrabajoFactory, sesion : ISesion)
+    ~ConstruirSnapshotActualInterno(recibida : Usuario, accion : string, observaciones : string, unidad :\nIUnidadDeTrabajo) : UsuarioHistorialSnapshot
+    ~GuardarVersionActual(usuario : Usuario, accion : string, observaciones : string) : UsuarioHistorialSnapshot
+    ~GuardarVersionActualInterno(usuario : Usuario, accion : string, observaciones : string, unidad :\nIUnidadDeTrabajo) : UsuarioHistorialSnapshot
+    ~ObtenerHistorial(usuario : Usuario) : List<UsuarioHistorialSnapshot>
+    ~ObtenerVersion(snapshot : IUsuarioSnapshot) : UsuarioHistorialSnapshot
+    ~CompararVersiones(versionActual : UsuarioHistorialSnapshot, versionAnterior : UsuarioHistorialSnapshot) :\nList<ResultadoComparacionEstado>
+    ~AplicarSnapshotInterno(snapshot : UsuarioHistorialSnapshot, unidad : IUnidadDeTrabajo) : void
   }
 }
 
-CompositionRoot ..> UsuarioBLL : <<instantiates>>
-CompositionRoot ..> PermisoBLL : <<instantiates>>
-CompositionRoot ..> IdiomaBLL : <<instantiates>>
-CompositionRoot ..> IntegridadBLL : <<instantiates>>
-CompositionRoot ..> BitacoraBLL : <<instantiates>>
-CompositionRoot ..> UsuarioEstadoBLL : <<instantiates>>
-CompositionRoot ..> CategoriaBLL : <<instantiates>>
-CompositionRoot ..> MovimientoBLL : <<instantiates>>
-CompositionRoot ..> BackupBLL : <<instantiates>>
+BLL_AsistenteFinancieroBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_AsistenteFinancieroBLL --> BLL_IGeneradorRecomendaciones : _generador
+BLL_BackupBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_BitacoraBLL ..|> BLL_IBitacoraBLL
+BLL_CategoriaBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_CategoriaProductoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_ComercioBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_ComercioProductoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_CompositionRoot --> "*" BLL_ListaDeComprasBLL : ListaDeCompras
+BLL_CompositionRoot --> "*" BLL_ListaDeComprasBLL : _listaDeComprasBLL
+BLL_CompositionRoot --> BLL_ActualizacionTasasBLL : ActualizacionTasas
+BLL_CompositionRoot --> BLL_ActualizacionTasasBLL : _actualizacionTasasBLL
+BLL_CompositionRoot --> BLL_AsistenteFinancieroBLL : AsistenteFinanciero
+BLL_CompositionRoot --> BLL_AsistenteFinancieroBLL : _asistenteFinancieroBLL
+BLL_CompositionRoot --> BLL_BackupBLL : Backup
+BLL_CompositionRoot --> BLL_BackupBLL : _backupBLL
+BLL_CompositionRoot --> BLL_BitacoraBLL : GestorBitacora
+BLL_CompositionRoot --> BLL_BitacoraBLL : _bitacoraBLL
+BLL_CompositionRoot --> BLL_CategoriaBLL : Categoria
+BLL_CompositionRoot --> BLL_CategoriaBLL : _categoriaBLL
+BLL_CompositionRoot --> BLL_CategoriaProductoBLL : CategoriaProducto
+BLL_CompositionRoot --> BLL_CategoriaProductoBLL : _categoriaProductoBLL
+BLL_CompositionRoot --> BLL_ComercioBLL : Comercio
+BLL_CompositionRoot --> BLL_ComercioBLL : _comercioBLL
+BLL_CompositionRoot --> BLL_ComercioProductoBLL : ComercioProducto
+BLL_CompositionRoot --> BLL_ComercioProductoBLL : _comercioProductoBLL
+BLL_CompositionRoot --> BLL_CuentaFinancieraBLL : CuentaFinanciera
+BLL_CompositionRoot --> BLL_CuentaFinancieraBLL : _cuentaFinancieraBLL
+BLL_CompositionRoot --> BLL_DashboardBLL : Dashboard
+BLL_CompositionRoot --> BLL_DashboardBLL : _dashboardBLL
+BLL_CompositionRoot --> BLL_EntidadFinancieraBLL : EntidadFinanciera
+BLL_CompositionRoot --> BLL_EntidadFinancieraBLL : _entidadFinancieraBLL
+BLL_CompositionRoot --> BLL_GeneracionNotificacionesBLL : GeneracionNotificaciones
+BLL_CompositionRoot --> BLL_GeneracionNotificacionesBLL : _generacionNotificacionesBLL
+BLL_CompositionRoot --> BLL_GeneradorRecomendaciones : _generadorRecomendaciones
+BLL_CompositionRoot --> BLL_IdiomaBLL : Idioma
+BLL_CompositionRoot --> BLL_IdiomaBLL : _idiomaBLL
+BLL_CompositionRoot --> BLL_IntegridadBLL : Integridad
+BLL_CompositionRoot --> BLL_IntegridadBLL : _integridadBLL
+BLL_CompositionRoot --> BLL_MedioPagoBLL : MedioPago
+BLL_CompositionRoot --> BLL_MedioPagoBLL : _medioPagoBLL
+BLL_CompositionRoot --> BLL_MonedaBLL : Moneda
+BLL_CompositionRoot --> BLL_MonedaBLL : _monedaBLL
+BLL_CompositionRoot --> BLL_MovimientoBLL : Movimiento
+BLL_CompositionRoot --> BLL_MovimientoBLL : _movimientoBLL
+BLL_CompositionRoot --> BLL_NotificacionBLL : Notificacion
+BLL_CompositionRoot --> BLL_NotificacionBLL : _notificacionBLL
+BLL_CompositionRoot --> BLL_PerfilInversorBLL : PerfilInversor
+BLL_CompositionRoot --> BLL_PerfilInversorBLL : _perfilInversorBLL
+BLL_CompositionRoot --> BLL_PermisoBLL : Permiso
+BLL_CompositionRoot --> BLL_PermisoBLL : _permisoBLL
+BLL_CompositionRoot --> BLL_ProductoBLL : Producto
+BLL_CompositionRoot --> BLL_ProductoBLL : _productoBLL
+BLL_CompositionRoot --> BLL_PromocionBLL : Promocion
+BLL_CompositionRoot --> BLL_PromocionBLL : _promocionBLL
+BLL_CompositionRoot --> BLL_RecomendacionComprasBLL : _recomendacionComprasBLL
+BLL_CompositionRoot --> BLL_RecomendacionInversionesBLL : _recomendacionInversionesBLL
+BLL_CompositionRoot --> BLL_ReglaCategorizacionBLL : ReglaCategorizacion
+BLL_CompositionRoot --> BLL_ReglaCategorizacionBLL : _reglaCategorizacionBLL
+BLL_CompositionRoot --> BLL_RubroComercioBLL : RubroComercio
+BLL_CompositionRoot --> BLL_RubroComercioBLL : _rubroComercioBLL
+BLL_CompositionRoot --> BLL_TasaConversionBLL : TasaConversion
+BLL_CompositionRoot --> BLL_TasaConversionBLL : _tasaConversionBLL
+BLL_CompositionRoot --> BLL_UsuarioBLL : Usuario
+BLL_CompositionRoot --> BLL_UsuarioBLL : _usuarioBLL
+BLL_CompositionRoot --> BLL_UsuarioEstadoBLL : _usuarioEstadoBLL
+BLL_CompositionRoot --> BLL_ZonaUsuarioBLL : ZonaUsuario
+BLL_CompositionRoot --> BLL_ZonaUsuarioBLL : _zonaUsuarioBLL
+BLL_CuentaFinancieraBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_DashboardBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_EntidadFinancieraBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_GeneracionNotificacionesBLL --> BLL_IGeneradorRecomendaciones : _generador
+BLL_GeneracionNotificacionesBLL --> BLL_IIdiomaBLL : _idiomaBLL
+BLL_GeneracionNotificacionesBLL --> BLL_IRecomendacionInversionesBLL : _inversiones
+BLL_GeneradorRecomendaciones --> BLL_IRecomendacionComprasBLL : _compras
+BLL_GeneradorRecomendaciones --> BLL_IRecomendacionInversionesBLL : _inversiones
+BLL_GeneradorRecomendaciones --> BLL_ValidadorRespuestaAsistente : _validador
+BLL_GeneradorRecomendaciones ..|> BLL_IGeneradorRecomendaciones
+BLL_IdiomaBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_IdiomaBLL --> BLL_IUsuarioEstadoBLL : _usuarioEstadoBLL
+BLL_IdiomaBLL ..|> BLL_IIdiomaBLL
+BLL_IntegridadBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_IntegridadBLL ..|> BLL_IIntegridadBLL
+BLL_ItemCompra --> "*" BLL_OfertaCompra : Ofertas
+BLL_ListaDeComprasBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_MedioPagoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_MonedaBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_MovimientoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_NotificacionBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_OfertaCompra --> "*" BLL_PromocionCompra : Promociones
+BLL_PasswordHashService ..|> BLL_IPasswordHashService
+BLL_PerfilInversorBLL --> BLL_IBitacoraBLL : _bitacora
+BLL_PermisoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_PermisoBLL --> BLL_IUsuarioEstadoBLL : _usuarioEstadoBLL
+BLL_PermisoBLL ..|> BLL_IPermisoBLL
+BLL_ProductoBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_PromocionBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_RecomendacionComprasBLL --> BLL_CoincidenciaSemanticaProductos : _coincidencia
+BLL_RecomendacionComprasBLL ..|> BLL_IRecomendacionComprasBLL
+BLL_RecomendacionInversionesBLL ..|> BLL_IRecomendacionInversionesBLL
+BLL_ReglaCategorizacionBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_ResumenCompras --> "*" BLL_ItemCompra : Items
+BLL_ResumenInversiones --> "*" BLL_InstrumentoInversion : Instrumentos
+BLL_RubroComercioBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_TasaConversionBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_UsuarioBLL --> BLL_IBitacoraBLL : _bitacoraBLL
+BLL_UsuarioBLL --> BLL_IIdiomaBLL : _idiomaBLL
+BLL_UsuarioBLL --> BLL_IIntegridadBLL : _integridadBLL
+BLL_UsuarioBLL --> BLL_IPasswordHashService : _passwordHasher
+BLL_UsuarioBLL --> BLL_IPermisoBLL : _permisoBLL
+BLL_UsuarioBLL --> BLL_IUsuarioEstadoBLL : _usuarioEstadoBLL
+BLL_UsuarioEstadoBLL ..|> BLL_IUsuarioEstadoBLL
+BLL_ZonaUsuarioBLL --> BLL_IBitacoraBLL : _bitacoraBLL
 
-BitacoraBLL ..|> IBitacoraBLL
-PermisoBLL ..|> IPermisoBLL
-IdiomaBLL ..|> IIdiomaBLL
-UsuarioEstadoBLL ..|> IUsuarioEstadoBLL
-IntegridadBLL ..|> IIntegridadBLL
-PasswordHashService ..|> IPasswordHashService
-
-UsuarioBLL ..> IPermisoBLL
-UsuarioBLL ..> IIdiomaBLL
-UsuarioBLL ..> IUsuarioEstadoBLL
-UsuarioBLL ..> IIntegridadBLL
-UsuarioBLL ..> IBitacoraBLL
-UsuarioBLL ..> IPasswordHashService
-CategoriaBLL ..> IBitacoraBLL
-MovimientoBLL ..> IBitacoraBLL
-BackupBLL ..> IBitacoraBLL
-
-' --- Quiebres de layout (edges ocultos, no representan relaciones reales) ---
-' Fuerzan una grilla de 3 columnas en las clases de servicio, en los
-' utilitarios y en los contratos, en vez de una sola fila muy ancha,
-' para que el diagrama entre en una hoja A4/Word sin quedar ilegible.
-
-UsuarioBLL -[hidden]right-> PermisoBLL
-PermisoBLL -[hidden]right-> IdiomaBLL
-
-UsuarioEstadoBLL -[hidden]right-> IntegridadBLL
-IntegridadBLL -[hidden]right-> BitacoraBLL
-
-CategoriaBLL -[hidden]right-> MovimientoBLL
-MovimientoBLL -[hidden]right-> BackupBLL
-
-PasswordHashService -[hidden]right-> ManejadorExcepcionesBLL
-
-InicializadorAplicacionBLL -[hidden]right-> InicializacionHistorialBLL
-
-CompositionRoot -[hidden]down-> UsuarioBLL
-UsuarioBLL -[hidden]down-> UsuarioEstadoBLL
-UsuarioEstadoBLL -[hidden]down-> CategoriaBLL
-CategoriaBLL -[hidden]down-> PasswordHashService
-PasswordHashService -[hidden]down-> InicializadorAplicacionBLL
-
-IBitacoraBLL -[hidden]right-> IPermisoBLL
-IPermisoBLL -[hidden]right-> IIdiomaBLL
-IUsuarioEstadoBLL -[hidden]right-> IIntegridadBLL
-IIntegridadBLL -[hidden]right-> IPasswordHashService
-IBitacoraBLL -[hidden]down-> IUsuarioEstadoBLL
-
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
+P7 -[hidden]right-> P8
+P5 -[hidden]down-> P8
+P6 -[hidden]down-> P9
 @enduml

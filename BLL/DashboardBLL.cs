@@ -34,9 +34,9 @@ namespace BLL
         // vacio. Cada card del Dashboard vive en TarjetaDashboard (AgregarTarjeta).
         public Dashboard ObtenerOCrearDashboardActual()
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
-            Dashboard dashboard = _dashboardRepositorio.ObtenerPorUsuario(usuarioActualId);
+            Dashboard dashboard = _dashboardRepositorio.ObtenerPorUsuario(usuarioActual);
             if (dashboard != null)
             {
                 return dashboard;
@@ -48,7 +48,7 @@ namespace BLL
                 {
                     Dashboard nuevoDashboard = new Dashboard
                     {
-                        Usuario = new Usuario { Id = usuarioActualId },
+                        Usuario = usuarioActual,
                         Tarjetas = new List<TarjetaDashboard>()
                     };
 
@@ -121,18 +121,18 @@ namespace BLL
             }
         }
 
-        public bool QuitarTarjeta(int tarjetaId)
+        public bool QuitarTarjeta(TarjetaDashboard tarjeta)
         {
-            int usuarioActualId = _sesion.GetUsuarioActualId().Value;
+            Usuario usuarioActual = _sesion.ObtenerUsuarioActual();
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    TarjetaDashboard tarjeta = unidad.TarjetasDashboard.ObtenerPorId(tarjetaId);
-                    ValidarPropiedad(tarjeta, usuarioActualId);
+                    TarjetaDashboard persistida = tarjeta == null ? null : unidad.TarjetasDashboard.ObtenerPorId(tarjeta.Id);
+                    ValidarPropiedad(persistida, usuarioActual);
 
-                    bool eliminada = unidad.TarjetasDashboard.Eliminar(tarjetaId);
+                    bool eliminada = unidad.TarjetasDashboard.Eliminar(persistida);
                     if (!eliminada)
                     {
                         throw new ExcepcionTecnica("Error.Dashboard.CardDeleteFailed");
@@ -176,14 +176,14 @@ namespace BLL
         }
 
         // Una tarjeta solo puede ser quitada por el dueno del Dashboard al que pertenece.
-        private static void ValidarPropiedad(TarjetaDashboard tarjeta, int usuarioActualId)
+        private static void ValidarPropiedad(TarjetaDashboard tarjeta, Usuario usuarioActual)
         {
             if (tarjeta == null)
             {
                 throw new ExcepcionNegocio("Error.Dashboard.TarjetaNotFound");
             }
 
-            if (tarjeta.Dashboard == null || tarjeta.Dashboard.Usuario == null || tarjeta.Dashboard.Usuario.Id != usuarioActualId)
+            if (tarjeta.Dashboard == null || tarjeta.Dashboard.Usuario == null || tarjeta.Dashboard.Usuario.Id != usuarioActual.Id)
             {
                 throw new ExcepcionNegocio("Error.Dashboard.TarjetaNotOwned");
             }

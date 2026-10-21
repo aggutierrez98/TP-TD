@@ -1,5 +1,4 @@
 using System;
-using System.Configuration;
 using ABSTRACCIONES;
 using REPOSITORIO;
 
@@ -145,11 +144,11 @@ namespace BLL
                 _bitacoraBLL);
 
             _recomendacionComprasBLL = new RecomendacionComprasBLL(
-                new RecomendacionComprasRepositorio(), new ZonaUsuarioRepositorio(), new TasaConversionRepositorio(),
+                new RecomendacionComprasRepositorio(), new ZonaUsuarioRepositorio(), new UsuarioRepositorio(), new TasaConversionRepositorio(),
                 new CoincidenciaSemanticaProductos(_servicioEmbeddings, new ProductoEmbeddingRepositorio(), uow, () => DateTime.Now),
                 () => DateTime.Now);
 
-            _recomendacionInversionesBLL = new RecomendacionInversionesBLL(new MovimientoRepositorio(), () => DateTime.Now,
+            _recomendacionInversionesBLL = new RecomendacionInversionesBLL(new MovimientoRepositorio(), new UsuarioRepositorio(), () => DateTime.Now,
                 _proveedorArgentinaDatos, _proveedorData912, _proveedorCriptoYa);
 
             // Colaborador sin sesion compartido por el chat y la generacion automatica.
@@ -162,9 +161,7 @@ namespace BLL
                 _asistenteFinancieroService,
                 _clasificadorConsultas,
                 // Una sola instancia: la ventana de uso por usuario vive en memoria de este proceso.
-                new LimiteUsoAsistente(
-                    LimiteUsoAsistente.InterpretarMaximoConfigurado(ConfigurationManager.AppSettings[LimiteUsoAsistente.ClaveConfiguracion]),
-                    () => DateTime.Now),
+                new SERVICIOS.LimiteUsoAsistente(),
                 uow,
                 _sesion,
                 _bitacoraBLL,
@@ -205,7 +202,8 @@ namespace BLL
                 _usuarioEstadoBLL,
                 _bitacoraBLL,
                 uow,
-                _servicioIdioma);
+                _servicioIdioma,
+                _sesion);
 
             // Proceso automatico diario: sin sesion; el idioma es el de cada destinatario.
             _generacionNotificacionesBLL = new GeneracionNotificacionesBLL(

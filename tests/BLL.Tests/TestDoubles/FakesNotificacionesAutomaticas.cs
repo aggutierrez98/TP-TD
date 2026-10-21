@@ -21,10 +21,10 @@ namespace BLL.Tests.TestDoubles
             return corrida.Id;
         }
 
-        public bool FinalizarCorrida(int corridaId, DateTime finUtc, int entregadas, int omitidas, int fallidas)
+        public bool FinalizarCorrida(CorridaGeneracionNotificaciones recibida, DateTime finUtc, int entregadas, int omitidas, int fallidas)
         {
             CorridaGeneracionNotificaciones corrida;
-            if (!Corridas.TryGetValue(corridaId, out corrida))
+            if (!Corridas.TryGetValue(recibida.Id, out corrida))
             {
                 return false;
             }
@@ -43,7 +43,7 @@ namespace BLL.Tests.TestDoubles
             return detalle.Id;
         }
 
-        public CorridaGeneracionNotificaciones ObtenerCorrida(int id)
+        public CorridaGeneracionNotificaciones ObtenerPorId(int id)
         {
             CorridaGeneracionNotificaciones corrida;
             return Corridas.TryGetValue(id, out corrida) ? corrida : null;
@@ -54,9 +54,9 @@ namespace BLL.Tests.TestDoubles
             return Corridas.Values.OrderByDescending(item => item.InicioUtc).Take(cantidad).ToList();
         }
 
-        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(int corridaId)
+        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(CorridaGeneracionNotificaciones corrida)
         {
-            return Detalles.Where(item => item.CorridaId == corridaId).ToList();
+            return Detalles.Where(item => item.Corrida.Id == corrida.Id).ToList();
         }
     }
 }

@@ -27,25 +27,23 @@ namespace BLL
             return _monedaRepositorio.ObtenerTodas();
         }
 
-        public Moneda Crear(string codigo, string nombre)
+        // Devuelve la misma instancia recibida, normalizada y con Id cargado.
+        public Moneda Crear(Moneda moneda)
         {
-            string codigoNormalizado = NormalizarCodigo(codigo);
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string codigoNormalizado = NormalizarCodigo(moneda?.Codigo);
+            string nombreNormalizado = NormalizarNombre(moneda?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Moneda nuevaMoneda = new Moneda
-                    {
-                        Codigo = codigoNormalizado,
-                        Nombre = nombreNormalizado
-                    };
+                    moneda.Codigo = codigoNormalizado;
+                    moneda.Nombre = nombreNormalizado;
 
-                    nuevaMoneda.Id = unidad.Monedas.InsertarYObtenerId(nuevaMoneda);
+                    moneda.Id = unidad.Monedas.InsertarYObtenerId(moneda);
                     _bitacoraBLL.RegistrarOperacionInterno("FormCurrencyManagement.Value.Activity.MonedaCreation", "FormCurrencyManagement.Value.Info.MonedaCreation", "MonedaBLL", unidad);
                     unidad.Save();
-                    return nuevaMoneda;
+                    return moneda;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -58,25 +56,26 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string codigo, string nombre)
+        // Recibe la moneda con los valores nuevos y los copia sobre la persistida.
+        public bool Actualizar(Moneda moneda)
         {
-            string codigoNormalizado = NormalizarCodigo(codigo);
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string codigoNormalizado = NormalizarCodigo(moneda?.Codigo);
+            string nombreNormalizado = NormalizarNombre(moneda?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Moneda moneda = unidad.Monedas.ObtenerPorId(id);
-                    if (moneda == null)
+                    Moneda persistida = unidad.Monedas.ObtenerPorId(moneda.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.CurrencyManagement.MonedaNotFound");
                     }
 
-                    moneda.Codigo = codigoNormalizado;
-                    moneda.Nombre = nombreNormalizado;
+                    persistida.Codigo = codigoNormalizado;
+                    persistida.Nombre = nombreNormalizado;
 
-                    if (!unidad.Monedas.Actualizar(moneda))
+                    if (!unidad.Monedas.Actualizar(persistida))
                     {
                         throw new ExcepcionTecnica("Error.CurrencyManagement.MonedaUpdateFailed");
                     }
@@ -100,19 +99,19 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Moneda moneda)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Moneda moneda = unidad.Monedas.ObtenerPorId(id);
-                    if (moneda == null)
+                    Moneda persistida = moneda == null ? null : unidad.Monedas.ObtenerPorId(moneda.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.CurrencyManagement.MonedaNotFound");
                     }
 
-                    if (!unidad.Monedas.Eliminar(id))
+                    if (!unidad.Monedas.Eliminar(persistida))
                     {
                         throw new ExcepcionTecnica("Error.CurrencyManagement.MonedaDeleteFailed");
                     }

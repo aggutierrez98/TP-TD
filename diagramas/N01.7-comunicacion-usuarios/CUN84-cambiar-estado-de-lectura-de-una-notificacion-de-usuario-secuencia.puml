@@ -1,0 +1,77 @@
+@startuml
+' Fuente: diagramas/NEG20-notificaciones/NEG20-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN84 Cambiar estado de lectura de una notificación de usuario — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionNotificaciones" as FormGestionNotificaciones
+control "NotificacionBLL" as NotificacionBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "NotificacionRepositorio\n:INotificacionRepositorio" as INotificacionRepositorio
+participant "NotificacionDAL" as NotificacionDAL
+participant "RecordatorioCompraRepositorio\n:IRecordatorioCompraRepositorio" as IRecordatorioCompraRepositorio
+participant "RecordatorioInversionRepositorio\n:IRecordatorioInversionRepositorio" as IRecordatorioInversionRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormGestionNotificaciones : El actor desea corregir el estado de lectura de una notificación.
+Actor -> FormGestionNotificaciones : marca o desmarca la casilla de la columna «Leída» de la notificación deseada.
+FormGestionNotificaciones -> NotificacionBLL ++ : MarcarLeida(recibida: Notificacion, leida: bool)
+NotificacionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> NotificacionBLL -- : IUnidadDeTrabajo
+NotificacionBLL -> INotificacionRepositorio ++ : ObtenerPorId(id: int)
+INotificacionRepositorio -> NotificacionDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : Notificacion
+INotificacionRepositorio --> NotificacionBLL -- : Notificacion
+alt notificacion != null
+NotificacionBLL -> INotificacionRepositorio ++ : Actualizar(notificacion: Notificacion)
+INotificacionRepositorio -> NotificacionDAL ++ : Actualizar(notificacion: Notificacion, accesoDatos:\nAccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : bool
+INotificacionRepositorio --> NotificacionBLL -- : bool
+else caso contrario
+NotificacionBLL -> IRecordatorioCompraRepositorio ++ : ObtenerPorId(id: int)
+IRecordatorioCompraRepositorio --> NotificacionBLL -- : RecordatorioCompra
+alt recordatorioCompra != null
+NotificacionBLL -> IRecordatorioCompraRepositorio ++ : Actualizar(recordatorio: RecordatorioCompra)
+IRecordatorioCompraRepositorio --> NotificacionBLL -- : bool
+else caso contrario
+NotificacionBLL -> IRecordatorioInversionRepositorio ++ : ObtenerPorId(id: int)
+IRecordatorioInversionRepositorio --> NotificacionBLL -- : RecordatorioInversion
+opt recordatorioInversion != null
+NotificacionBLL -> IRecordatorioInversionRepositorio ++ : Actualizar(recordatorio: RecordatorioInversion)
+IRecordatorioInversionRepositorio --> NotificacionBLL -- : bool
+end
+end
+end
+NotificacionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> NotificacionBLL -- : void
+NotificacionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> NotificacionBLL -- : void
+NotificacionBLL --> FormGestionNotificaciones -- : bool
+FormGestionNotificaciones --> Actor : registra el nuevo estado de lectura de la notificación y lo conserva en el listado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/NotificacionBLL.cs:156 NotificacionBLL.MarcarLeida
+' DAL/NotificacionDAL.cs:219 NotificacionDAL.ObtenerPorId
+' DAL/NotificacionDAL.cs:347 NotificacionDAL.Actualizar
+' REPOSITORIO/INotificacionRepositorio.cs:17 INotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/INotificacionRepositorio.cs:25 INotificacionRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:16 IRecordatorioCompraRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:8 IRecordatorioCompraRepositorio.ObtenerPorId
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:16 IRecordatorioInversionRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:8 IRecordatorioInversionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/NotificacionRepositorio.cs:46 NotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/NotificacionRepositorio.cs:87 NotificacionRepositorio.Actualizar
+' UI/FormGestionNotificaciones.cs:164 FormGestionNotificaciones.dgvNotificaciones_CellValueChanged
+@enduml

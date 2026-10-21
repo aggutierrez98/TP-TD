@@ -134,8 +134,8 @@ namespace BLL.Tests
             Assert.AreEqual("recomendar_inversion", servicio.UltimaHerramienta.Nombre);
             Assert.DoesNotContain("usuario", servicio.UltimaHerramienta.ParametrosJson);
             Assert.Contains("\"Monto\":100", servicio.LastSolicitud.Contexto.DatosJson);
-            Assert.AreEqual(7, f.Repo.LastObtenerTotalesPorMesArgs.Item1);
-            Assert.AreEqual(7, unidad.ConsultaChatbotRepo.LastInserted.UsuarioId);
+            Assert.AreEqual(7, f.Repo.LastObtenerTotalesPorMesArgs.Item1.Id);
+            Assert.AreEqual(7, unidad.ConsultaChatbotRepo.LastInserted.Usuario.Id);
             Assert.AreEqual(r.Texto, unidad.ConsultaChatbotRepo.LastInserted.Respuesta);
             Assert.EndsWith("Educational information.", r.Texto);
         }
@@ -178,7 +178,7 @@ namespace BLL.Tests
                 new Traduccion { Palabra = new Palabra { Key = "Assistant.Investment.Disclaimer" }, Valor = "Educational information." }
             } });
             return new AsistenteFinancieroBLL(new FakeConsultaChatbotRepositorio(), new FakeChatbotFinancieroRepositorio(), servicio,
-                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Inversiones }, new LimiteUsoAsistente(1000, () => f.Hoy),
+                new FakeClasificadorConsultas { NextCategoria = CategoriaConsulta.Inversiones }, new FakeLimiteUsoAsistente(1000),
                 new FakeUnidadDeTrabajoFactory(unidad), sesion, new SpyBitacoraBLL(), idioma,
                 new GeneradorRecomendaciones(servicio, new ValidadorRespuestaAsistente(), null, f.Crear()),
                 new PerfilInversorBLLTests.RepoPerfil { Ultimo = sinPerfil ? null : PerfilAsistenteTests.Perfil() });

@@ -26,7 +26,7 @@ namespace TpIDS.IntegrationTests
                 var repositorio = new NotificacionRepositorio(acceso);
                 int user = Usuario(acceso, "user");
                 int admin = Usuario(acceso, "admin");
-                Assert.IsFalse(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Movimientos, Jornada));
+                Assert.IsFalse(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Movimientos, Jornada));
 
                 repositorio.InsertarYObtenerId(new Notificacion
                 {
@@ -34,11 +34,11 @@ namespace TpIDS.IntegrationTests
                     TipoAutomatico = TipoNotificacionAutomatica.Movimientos, FechaJornada = Jornada
                 });
 
-                Assert.IsTrue(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Movimientos, Jornada));
-                Assert.IsTrue(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Movimientos, Jornada.AddHours(9)), "La jornada es una fecha, sin hora.");
-                Assert.IsFalse(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Movimientos, Jornada.AddDays(1)));
-                Assert.IsFalse(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Compras, Jornada));
-                Assert.IsFalse(repositorio.ExisteAutomatica(admin, TipoNotificacionAutomatica.Movimientos, Jornada));
+                Assert.IsTrue(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Movimientos, Jornada));
+                Assert.IsTrue(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Movimientos, Jornada.AddHours(9)), "La jornada es una fecha, sin hora.");
+                Assert.IsFalse(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Movimientos, Jornada.AddDays(1)));
+                Assert.IsFalse(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Compras, Jornada));
+                Assert.IsFalse(repositorio.ExisteAutomatica(new BE.Usuario { Id = admin }, TipoNotificacionAutomatica.Movimientos, Jornada));
                 acceso.RollbackTransactionScope();
             }
         }
@@ -55,7 +55,7 @@ namespace TpIDS.IntegrationTests
                 {
                     Usuario = new BE.Usuario { Id = user }, Mensaje = "ejemplo", Fecha = Jornada.AddHours(7), ClaveEjemplo = "Demo.Inversiones"
                 });
-                Assert.IsFalse(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Inversiones, Jornada), "Un ejemplo no es una entrega automatica.");
+                Assert.IsFalse(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Inversiones, Jornada), "Un ejemplo no es una entrega automatica.");
 
                 new RecordatorioInversionRepositorio(acceso).InsertarYObtenerId(new RecordatorioInversion
                 {
@@ -63,13 +63,13 @@ namespace TpIDS.IntegrationTests
                     TipoAutomatico = TipoNotificacionAutomatica.Inversiones, FechaJornada = Jornada
                 });
 
-                Assert.IsTrue(repositorio.ExisteAutomatica(user, TipoNotificacionAutomatica.Inversiones, Jornada));
+                Assert.IsTrue(repositorio.ExisteAutomatica(new BE.Usuario { Id = user }, TipoNotificacionAutomatica.Inversiones, Jornada));
                 acceso.RollbackTransactionScope();
             }
         }
 
         [TestMethod]
-        public void ObtenerIdsActivosDespuesDe_PaginaPorIdAscendenteYExcluyeInactivas()
+        public void ObtenerActivosDespuesDe_PaginaPorIdAscendenteYExcluyeInactivas()
         {
             using (AccesoDatosSqlServer acceso = new AccesoDatosSqlServer())
             {
@@ -77,20 +77,21 @@ namespace TpIDS.IntegrationTests
                 var repositorio = new UsuarioRepositorio(acceso);
                 int user = Usuario(acceso, "user");
                 int admin = Usuario(acceso, "admin");
-                List<int> todosActivos = repositorio.ObtenerIdsActivosDespuesDe(0, 1000);
-                Assert.IsTrue(todosActivos.Contains(user) && todosActivos.Contains(admin));
-                CollectionAssert.AreEqual(todosActivos.OrderBy(id => id).ToList(), todosActivos);
+                List<BE.Usuario> todosActivos = repositorio.ObtenerActivosDespuesDe(null, 1000);
+                Assert.IsTrue(todosActivos.Any(u => u.Id == user) && todosActivos.Any(u => u.Id == admin));
+                CollectionAssert.AreEqual(todosActivos.OrderBy(u => u.Id).ToList(), todosActivos);
+                Assert.IsTrue(todosActivos.All(u => !string.IsNullOrWhiteSpace(u.Username)));
 
                 // Paginacion por clave: la pagina siguiente empieza despues del ultimo Id visto.
-                List<int> primera = repositorio.ObtenerIdsActivosDespuesDe(0, 1);
-                List<int> segunda = repositorio.ObtenerIdsActivosDespuesDe(primera[0], 1);
+                List<BE.Usuario> primera = repositorio.ObtenerActivosDespuesDe(null, 1);
+                List<BE.Usuario> segunda = repositorio.ObtenerActivosDespuesDe(primera[0], 1);
                 Assert.AreEqual(1, primera.Count);
-                Assert.AreEqual(todosActivos[0], primera[0]);
-                Assert.AreEqual(todosActivos[1], segunda[0]);
-                Assert.IsEmpty(repositorio.ObtenerIdsActivosDespuesDe(todosActivos.Last(), 10));
+                Assert.AreEqual(todosActivos[0].Id, primera[0].Id);
+                Assert.AreEqual(todosActivos[1].Id, segunda[0].Id);
+                Assert.IsEmpty(repositorio.ObtenerActivosDespuesDe(todosActivos.Last(), 10));
 
                 acceso.Write("UPDATE Usuarios SET Activo = 0 WHERE Id = @Id", new List<System.Data.SqlClient.SqlParameter> { acceso.CreateParameter("@Id", System.Data.SqlDbType.Int, admin) });
-                Assert.IsFalse(repositorio.ObtenerIdsActivosDespuesDe(0, 1000).Contains(admin));
+                Assert.IsFalse(repositorio.ObtenerActivosDespuesDe(null, 1000).Any(u => u.Id == admin));
                 acceso.RollbackTransactionScope();
             }
         }

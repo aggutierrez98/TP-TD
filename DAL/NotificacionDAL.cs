@@ -7,14 +7,14 @@ namespace DAL
 {
     public class NotificacionDAL
     {
-        public Notificacion ObtenerPersonal(int id, int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public Notificacion ObtenerPersonal(Notificacion notificacion, Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
             try
             {
                 var tabla = accesoDatos.Read("SELECT * FROM Notificacion WHERE Id = @Id AND UsuarioId = @UsuarioId",
-                    new List<SqlParameter> { accesoDatos.CreateParameter("@Id", SqlDbType.Int, id), accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                    new List<SqlParameter> { accesoDatos.CreateParameter("@Id", SqlDbType.Int, notificacion.Id), accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) });
                 return tabla.Rows.Count == 0 ? null : MapPersonal(tabla.Rows[0]);
             }
             finally { if (dispose) accesoDatos.Dispose(); }
@@ -24,7 +24,7 @@ namespace DAL
         // leida; los ejemplos de laboratorio y los recordatorios manuales no tienen TipoAutomatico).
         // Notificacion.Fecha es la hora local del equipo que la entrego; se informa en UTC para medir
         // 7 * 24 horas. Si el usuario elimina la notificacion, el intervalo se reinicia por si solo.
-        public System.DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public System.DateTime? ObtenerFechaUltimaAutomaticaInversionUtc(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT MAX(Fecha) AS Ultima
@@ -35,7 +35,7 @@ namespace DAL
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
             try
             {
-                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) });
                 object ultima = tabla.Rows[0]["Ultima"];
                 return ultima == System.DBNull.Value
                     ? (System.DateTime?)null
@@ -48,7 +48,7 @@ namespace DAL
         // del llamador: serializa entregas concurrentes por usuario sin bloquear a otros usuarios.
         // Solo tiene sentido dentro de una unidad de trabajo; sin ella la transaccion propia de la
         // llamada termina enseguida y el bloqueo se libera.
-        public bool BloquearUsuarioParaEntrega(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public bool BloquearUsuarioParaEntrega(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -59,7 +59,7 @@ namespace DAL
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
             try
             {
-                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) });
+                DataTable tabla = accesoDatos.Read(query, new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) });
                 return (int)tabla.Rows[0]["Total"] > 0;
             }
             finally { if (dispose) accesoDatos.Dispose(); }
@@ -67,7 +67,7 @@ namespace DAL
 
         // Respalda la deduplicacion previa; el UNIQUE filtrado (UsuarioId, TipoAutomatico, FechaJornada)
         // es la garantia final. Los ejemplos de laboratorio no tienen TipoAutomatico y nunca coinciden.
-        public bool ExisteAutomatica(int usuarioId, TipoNotificacionAutomatica tipo, System.DateTime jornada, AccesoDatosSqlServer accesoDatos = null)
+        public bool ExisteAutomatica(Usuario usuario, TipoNotificacionAutomatica tipo, System.DateTime jornada, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -80,7 +80,7 @@ namespace DAL
             {
                 DataTable tabla = accesoDatos.Read(query, new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Tipo", SqlDbType.VarChar, tipo.ToString()),
                     accesoDatos.CreateParameter("@Jornada", SqlDbType.Date, jornada.Date)
                 });
@@ -89,19 +89,19 @@ namespace DAL
             finally { if (dispose) accesoDatos.Dispose(); }
         }
 
-        public bool MarcarPersonalLeida(int id, int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public bool MarcarPersonalLeida(Notificacion notificacion, Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
             try
             {
                 return accesoDatos.Write("UPDATE Notificacion SET Leida = 1 WHERE Id = @Id AND UsuarioId = @UsuarioId AND Leida = 0",
-                    new List<SqlParameter> { accesoDatos.CreateParameter("@Id", SqlDbType.Int, id), accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) }) > 0;
+                    new List<SqlParameter> { accesoDatos.CreateParameter("@Id", SqlDbType.Int, notificacion.Id), accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) }) > 0;
             }
             finally { if (dispose) accesoDatos.Dispose(); }
         }
 
-        public PaginaNotificaciones ObtenerPaginaPersonal(int usuarioId, FiltroNotificacion filtro, int pagina, AccesoDatosSqlServer accesoDatos = null)
+        public PaginaNotificaciones ObtenerPaginaPersonal(Usuario usuario, FiltroNotificacion filtro, int pagina, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DECLARE @Ids TABLE (Id INT PRIMARY KEY, Fecha DATETIME);
@@ -125,7 +125,7 @@ namespace DAL
                 System.DateTime? hasta = filtro.FechaHasta.HasValue && filtro.FechaHasta.Value.Date < System.DateTime.MaxValue.Date
                     ? filtro.FechaHasta.Value.Date.AddDays(1) : (System.DateTime?)null;
                 var tabla = accesoDatos.Read(query, new List<SqlParameter> {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id),
                     accesoDatos.CreateParameter("@Desde", SqlDbType.DateTime, filtro.FechaDesde?.Date),
                     accesoDatos.CreateParameter("@Hasta", SqlDbType.DateTime, hasta),
                     accesoDatos.CreateParameter("@Pagina", SqlDbType.Int, pagina) });
@@ -137,14 +137,14 @@ namespace DAL
             finally { if (dispose) accesoDatos.Dispose(); }
         }
 
-        public int ContarNoLeidas(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarNoLeidas(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
             try
             {
                 return (int)accesoDatos.Read("SELECT COUNT(*) AS Total FROM Notificacion WHERE UsuarioId = @UsuarioId AND Leida = 0",
-                    new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId) }).Rows[0]["Total"];
+                    new List<SqlParameter> { accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id) }).Rows[0]["Total"];
             }
             finally { if (dispose) accesoDatos.Dispose(); }
         }
@@ -187,7 +187,7 @@ namespace DAL
         }
 
         // Cuenta cualquier fila de Notificacion (notificacion o recordatorio) que referencia a la promocion.
-        public int ContarPorPromocion(int promocionId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorPromocion(Promocion promocion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -201,7 +201,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocionId)
+                    accesoDatos.CreateParameter("@PromocionId", SqlDbType.Int, promocion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -245,7 +245,7 @@ namespace DAL
             }
         }
 
-        public List<Notificacion> ObtenerPorUsuario(int usuarioId, AccesoDatosSqlServer accesoDatos = null)
+        public List<Notificacion> ObtenerPorUsuario(Usuario usuario, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT Id, UsuarioId, Mensaje, Fecha, Leida, " + MetadataNotificacionDAL.Columnas + @"
@@ -260,7 +260,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuarioId)
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, usuario.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
@@ -377,7 +377,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(Notificacion notificacion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Notificacion
@@ -390,7 +390,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, notificacion.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;

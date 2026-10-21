@@ -32,7 +32,10 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios.Add(5, new Usuario { Id = 5, Username = "destino" });
             NotificacionBLL sut = fixture.CreateSut();
 
-            Notificacion resultado = sut.CrearManual(5, "  Hola usuario  ");
+            var recibida = new Notificacion { Usuario = fixture.Unidad.UsuarioRepo.Usuarios[5], Mensaje = "  Hola usuario  " };
+            Notificacion resultado = sut.CrearManual(recibida);
+            Assert.AreSame(recibida, resultado);
+            Assert.AreSame(fixture.Unidad.UsuarioRepo.Usuarios[5], resultado.Usuario);
 
             Notificacion insertada = fixture.NotificacionRepo.Notificaciones[resultado.Id];
             Assert.AreEqual("Hola usuario", insertada.Mensaje);
@@ -48,7 +51,7 @@ namespace BLL.Tests
             NotificacionFixture fixture = new NotificacionFixture();
             NotificacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(999, "Hola"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(new Notificacion { Usuario = new Usuario { Id = 999 }, Mensaje = "Hola" }));
         }
 
         [TestMethod]
@@ -58,7 +61,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios.Add(5, new Usuario { Id = 5, Username = "destino" });
             NotificacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(5, "   "));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(new Notificacion { Usuario = fixture.Unidad.UsuarioRepo.Usuarios[5], Mensaje = "   " }));
         }
 
         [TestMethod]
@@ -69,7 +72,7 @@ namespace BLL.Tests
             NotificacionBLL sut = fixture.CreateSut();
             string mensaje = new string('a', NotificacionBLL.MaximoMensajeManual);
 
-            Notificacion resultado = sut.CrearManual(5, mensaje);
+            Notificacion resultado = sut.CrearManual(new Notificacion { Usuario = fixture.Unidad.UsuarioRepo.Usuarios[5], Mensaje = mensaje });
 
             Assert.AreEqual(300, NotificacionBLL.MaximoMensajeManual);
             Assert.AreEqual(mensaje, fixture.NotificacionRepo.Notificaciones[resultado.Id].Mensaje);
@@ -82,7 +85,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios.Add(5, new Usuario { Id = 5, Username = "destino" });
             NotificacionBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(5, new string('a', NotificacionBLL.MaximoMensajeManual + 1)));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.CrearManual(new Notificacion { Usuario = fixture.Unidad.UsuarioRepo.Usuarios[5], Mensaje = new string('a', NotificacionBLL.MaximoMensajeManual + 1) }));
 
             Assert.AreEqual("Error.Notification.MessageTooLong", ex.Message);
             Assert.IsEmpty(fixture.NotificacionRepo.Notificaciones);
@@ -96,7 +99,7 @@ namespace BLL.Tests
             fixture.NotificacionRepo.Notificaciones.Add(1, new Notificacion { Id = 1, Usuario = new Usuario { Id = 1 }, Mensaje = "N1", Fecha = DateTime.Now, Leida = false });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.MarcarLeida(1, true);
+            bool resultado = sut.MarcarLeida(fixture.NotificacionRepo.Notificaciones[1], true);
 
             Assert.IsTrue(resultado);
             Assert.IsTrue(fixture.NotificacionRepo.Notificaciones[1].Leida);
@@ -111,7 +114,7 @@ namespace BLL.Tests
             fixture.RecordatorioCompraRepo.Recordatorios.Add(2, new RecordatorioCompra { Id = 2, Usuario = new Usuario { Id = 1 }, Mensaje = "RC1", Fecha = DateTime.Now, Leida = false });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.MarcarLeida(2, true);
+            bool resultado = sut.MarcarLeida(fixture.RecordatorioCompraRepo.Recordatorios[2], true);
 
             Assert.IsTrue(resultado);
             Assert.IsTrue(fixture.RecordatorioCompraRepo.Recordatorios[2].Leida);
@@ -126,7 +129,7 @@ namespace BLL.Tests
             fixture.RecordatorioInversionRepo.Recordatorios.Add(3, new RecordatorioInversion { Id = 3, Usuario = new Usuario { Id = 1 }, Mensaje = "RI1", Fecha = DateTime.Now, Leida = false });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.MarcarLeida(3, true);
+            bool resultado = sut.MarcarLeida(fixture.RecordatorioInversionRepo.Recordatorios[3], true);
 
             Assert.IsTrue(resultado);
             Assert.IsTrue(fixture.RecordatorioInversionRepo.Recordatorios[3].Leida);
@@ -140,7 +143,7 @@ namespace BLL.Tests
             NotificacionFixture fixture = new NotificacionFixture();
             NotificacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.MarcarLeida(999, true));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.MarcarLeida(new Notificacion { Id = 999 }, true));
         }
 
         [TestMethod]
@@ -150,7 +153,7 @@ namespace BLL.Tests
             fixture.NotificacionRepo.Notificaciones.Add(1, new Notificacion { Id = 1, Usuario = new Usuario { Id = 1 }, Mensaje = "N1", Fecha = DateTime.Now });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(fixture.NotificacionRepo.Notificaciones[1]);
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.NotificacionRepo.Notificaciones.ContainsKey(1));
@@ -165,7 +168,7 @@ namespace BLL.Tests
             fixture.RecordatorioCompraRepo.Recordatorios.Add(2, new RecordatorioCompra { Id = 2, Usuario = new Usuario { Id = 1 }, Mensaje = "RC1", Fecha = DateTime.Now });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(2);
+            bool resultado = sut.Eliminar(fixture.RecordatorioCompraRepo.Recordatorios[2]);
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.RecordatorioCompraRepo.Recordatorios.ContainsKey(2));
@@ -179,7 +182,7 @@ namespace BLL.Tests
             fixture.RecordatorioInversionRepo.Recordatorios.Add(3, new RecordatorioInversion { Id = 3, Usuario = new Usuario { Id = 1 }, Mensaje = "RI1", Fecha = DateTime.Now });
             NotificacionBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(3);
+            bool resultado = sut.Eliminar(fixture.RecordatorioInversionRepo.Recordatorios[3]);
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.RecordatorioInversionRepo.Recordatorios.ContainsKey(3));
@@ -192,7 +195,7 @@ namespace BLL.Tests
             NotificacionFixture fixture = new NotificacionFixture();
             NotificacionBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(999));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Notificacion { Id = 999 }));
         }
 
         private sealed class NotificacionFixture
@@ -254,10 +257,10 @@ namespace BLL.Tests
             n.Id = 1; n.Usuario = new Usuario { Id = 5 }; n.Mensaje = "Mensaje completo";
             f.NotificacionRepo.Notificaciones[1] = n;
             var sut = f.CreateSut();
-            Assert.IsTrue(sut.LeerPersonal(1).Leida);
+            Assert.IsTrue(sut.LeerPersonal(n).Leida);
             Assert.IsTrue(f.Unidad.SaveCalled);
             Assert.AreEqual(1, f.Bitacora.Calls.Count);
-            sut.MarcarPersonalLeida(1);
+            sut.MarcarPersonalLeida(n);
             Assert.AreEqual(1, f.Bitacora.Calls.Count);
             Assert.AreEqual(0, sut.ContarPersonalesNoLeidas());
         }
@@ -268,11 +271,11 @@ namespace BLL.Tests
             var f = new NotificacionFixture();
             f.Sesion.IniciarSesion(new Usuario { Id = 5 });
             f.NotificacionRepo.Notificaciones[1] = new Notificacion { Id = 1, Usuario = new Usuario { Id = 7 } };
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().LeerPersonal(1));
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().MarcarPersonalLeida(999));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().LeerPersonal(f.NotificacionRepo.Notificaciones[1]));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => f.CreateSut().MarcarPersonalLeida(new Notificacion { Id = 999 }));
             f.NotificacionRepo.Notificaciones[1].Usuario.Id = 5;
             f.NotificacionRepo.ActualizarResult = false;
-            Assert.ThrowsExactly<ExcepcionTecnica>(() => f.CreateSut().LeerPersonal(1));
+            Assert.ThrowsExactly<ExcepcionTecnica>(() => f.CreateSut().LeerPersonal(f.NotificacionRepo.Notificaciones[1]));
             Assert.IsFalse(f.NotificacionRepo.Notificaciones[1].Leida);
             Assert.IsFalse(f.Unidad.SaveCalled);
             Assert.AreEqual(0, f.Bitacora.Calls.Count);

@@ -15,12 +15,12 @@ namespace SERVICIOS
     // existente, pero permite capturar el caso de forma especifica en el arranque.
     public class ExcepcionIntegridad : ExcepcionTecnica
     {
-        public ExcepcionIntegridad(TipoFalloIntegridad tipo, string tabla, int? registroId, string messageKey)
+        public ExcepcionIntegridad(TipoFalloIntegridad tipo, string tabla, ABSTRACCIONES.IIntegrable registro, string messageKey)
             : base(messageKey)
         {
             Tipo = tipo;
             Tabla = tabla;
-            RegistroId = registroId;
+            Registro = registro;
         }
 
         // Naturaleza del fallo (horizontal o vertical).
@@ -29,7 +29,7 @@ namespace SERVICIOS
         // Tabla/entidad afectada.
         public string Tabla { get; }
 
-        // Identificador de la fila afectada cuando el fallo es horizontal.
-        public int? RegistroId { get; }
+        // Registro afectado cuando el fallo es horizontal.
+        public ABSTRACCIONES.IIntegrable Registro { get; }
     }
 }

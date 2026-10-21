@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using BE;
 using DAL;
 
 namespace REPOSITORIO
@@ -19,19 +21,20 @@ namespace REPOSITORIO
             _accesoDatos = accesoDatos;
         }
 
-        public List<int> ObtenerProductoIdsPorPromocion(int promocionId, bool excluidos)
+        public List<Producto> ObtenerProductosPorPromocion(Promocion promocion, bool excluidos)
         {
-            return _dal.ObtenerProductoIdsPorPromocion(promocionId, excluidos, _accesoDatos);
+            ProductoRepositorio repositorio = new ProductoRepositorio(_accesoDatos);
+            return _dal.ObtenerProductosPorPromocion(promocion, excluidos, _accesoDatos).Select(item => repositorio.ObtenerPorId(item.Id)).ToList();
         }
 
-        public bool ReemplazarProductosDePromocion(int promocionId, List<int> incluidos, List<int> excluidos)
+        public bool ReemplazarProductosDePromocion(Promocion promocion, List<Producto> incluidos, List<Producto> excluidos)
         {
-            return _dal.ReemplazarProductosDePromocion(promocionId, incluidos ?? new List<int>(), excluidos ?? new List<int>(), _accesoDatos);
+            return _dal.ReemplazarProductosDePromocion(promocion, incluidos ?? new List<Producto>(), excluidos ?? new List<Producto>(), _accesoDatos);
         }
 
-        public int ContarPorProducto(int productoId)
+        public int ContarPorProducto(Producto producto)
         {
-            return _dal.ContarPorProducto(productoId, _accesoDatos);
+            return _dal.ContarPorProducto(producto, _accesoDatos);
         }
     }
 }

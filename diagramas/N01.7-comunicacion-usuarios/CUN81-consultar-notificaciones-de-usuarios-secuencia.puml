@@ -1,0 +1,45 @@
+@startuml
+' Fuente: diagramas/NEG20-notificaciones/NEG20-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN81 Consultar notificaciones de usuarios — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionNotificaciones" as FormGestionNotificaciones
+control "NotificacionBLL" as NotificacionBLL
+participant "NotificacionRepositorio\n:INotificacionRepositorio" as INotificacionRepositorio
+participant "NotificacionDAL" as NotificacionDAL
+participant "RecordatorioCompraRepositorio\n:IRecordatorioCompraRepositorio" as IRecordatorioCompraRepositorio
+participant "RecordatorioInversionRepositorio\n:IRecordatorioInversionRepositorio" as IRecordatorioInversionRepositorio
+note over FormGestionNotificaciones : El actor desea revisar las notificaciones emitidas a los usuarios del sistema.
+Actor -> FormGestionNotificaciones : selecciona la opción «Notificaciones» del menú «Operador».
+FormGestionNotificaciones -> NotificacionBLL ++ : ObtenerTodas()
+NotificacionBLL -> INotificacionRepositorio ++ : ObtenerTodas()
+INotificacionRepositorio -> NotificacionDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : List<Notificacion>
+INotificacionRepositorio --> NotificacionBLL -- : List<Notificacion>
+NotificacionBLL -> IRecordatorioCompraRepositorio ++ : ObtenerTodas()
+IRecordatorioCompraRepositorio --> NotificacionBLL -- : List<RecordatorioCompra>
+NotificacionBLL -> IRecordatorioInversionRepositorio ++ : ObtenerTodas()
+IRecordatorioInversionRepositorio --> NotificacionBLL -- : List<RecordatorioInversion>
+NotificacionBLL --> FormGestionNotificaciones -- : List<Notificacion>
+FormGestionNotificaciones --> Actor : presenta la pantalla «Gestión de Notificaciones» con el listado de todas las\nnotificaciones, ordenadas de la más reciente a la más antigua, y
+Actor -> FormGestionNotificaciones : revisa el listado.
+' BLL/NotificacionBLL.cs:94 NotificacionBLL.ObtenerTodas
+' DAL/NotificacionDAL.cs:284 NotificacionDAL.ObtenerTodas
+' REPOSITORIO/INotificacionRepositorio.cs:21 INotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:12 IRecordatorioCompraRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:12 IRecordatorioInversionRepositorio.ObtenerTodas
+' REPOSITORIO/NotificacionRepositorio.cs:60 NotificacionRepositorio.ObtenerTodas
+' UI/FormGestionNotificaciones.cs:61 FormGestionNotificaciones.CargarNotificaciones
+@enduml

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 
 namespace TpIDS
 {
@@ -24,7 +25,7 @@ namespace TpIDS
 
     internal sealed class ResultadoCoordinado
     {
-        private ResultadoCoordinado(TipoResultadoBusqueda tipo, IReadOnlyList<ResultadoBusquedaUbicacion> coincidencias, EstadoBusquedaUbicacion? estado)
+        private ResultadoCoordinado(TipoResultadoBusqueda tipo, IReadOnlyList<IResultadoBusquedaUbicacion> coincidencias, EstadoBusquedaUbicacion? estado)
         {
             Tipo = tipo;
             Coincidencias = coincidencias;
@@ -33,7 +34,7 @@ namespace TpIDS
 
         public TipoResultadoBusqueda Tipo { get; }
 
-        public IReadOnlyList<ResultadoBusquedaUbicacion> Coincidencias { get; }
+        public IReadOnlyList<IResultadoBusquedaUbicacion> Coincidencias { get; }
 
         public EstadoBusquedaUbicacion? Estado { get; }
 
@@ -42,7 +43,7 @@ namespace TpIDS
             return new ResultadoCoordinado(tipo, null, null);
         }
 
-        public static ResultadoCoordinado ConCoincidencias(IReadOnlyList<ResultadoBusquedaUbicacion> coincidencias)
+        public static ResultadoCoordinado ConCoincidencias(IReadOnlyList<IResultadoBusquedaUbicacion> coincidencias)
         {
             return new ResultadoCoordinado(TipoResultadoBusqueda.Coincidencias, coincidencias, null);
         }
@@ -74,7 +75,7 @@ namespace TpIDS
 
         public int Version => _version;
 
-        public async Task<ResultadoCoordinado> BuscarAsync(ConsultaUbicacion consulta)
+        public async Task<ResultadoCoordinado> BuscarAsync(IConsultaUbicacion consulta)
         {
             if (_detenido || EnCurso || _servicio == null)
             {
@@ -87,7 +88,7 @@ namespace TpIDS
             EnCurso = true;
             try
             {
-                IReadOnlyList<ResultadoBusquedaUbicacion> lista = await _servicio.BuscarAsync(consulta, cancelacion.Token);
+                IReadOnlyList<IResultadoBusquedaUbicacion> lista = await _servicio.BuscarAsync(consulta, cancelacion.Token);
                 if (version != _version)
                 {
                     return ResultadoCoordinado.De(TipoResultadoBusqueda.Descartada);

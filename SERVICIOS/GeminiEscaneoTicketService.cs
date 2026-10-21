@@ -27,7 +27,7 @@ namespace SERVICIOS
             "Si no podes determinar con confianza el monto o la fecha, devolve null en ese campo " +
             "en vez de inventar un valor.";
 
-        public async Task<TicketEscaneado> EscanearTicketAsync(byte[] imagenBytes)
+        public async Task<ITicketEscaneado> EscanearTicketAsync(byte[] imagenBytes)
         {
             if (imagenBytes == null || imagenBytes.Length == 0)
             {

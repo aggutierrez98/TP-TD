@@ -4,7 +4,7 @@ namespace ABSTRACCIONES
 {
     // Contrato del motor matematico de digitos verificadores (T07).
     // El motor descubre por reflexion las propiedades marcadas con
-    // DigitoVerificadorAttribute, por lo que es aplicable a cualquier entidad.
+    // IDigitoVerificador, por lo que es aplicable a cualquier entidad.
     public interface IIntegridadService
     {
         // Calcula el digito verificador horizontal (DVH) de una entidad.

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ABSTRACCIONES;
+using SERVICIOS;
 using BE;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -27,7 +28,7 @@ namespace BLL.Tests
         public async Task CalcularAsync_CruceDePerfilYSaldo_NuncaElevaRiesgo(int gasto, NivelRiesgoInversor perfil, string esperado)
         {
             var f = new InversionFixture(gasto);
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(perfil));
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(perfil));
             Assert.AreEqual(esperado, r.RiesgoEfectivo?.ToString());
             Assert.AreEqual(perfil, r.Perfil);
             if (esperado == null) Assert.IsEmpty(r.Instrumentos);
@@ -60,15 +61,15 @@ namespace BLL.Tests
         {
             var f = new InversionFixture(500);
             var p = PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo);
-            p.Respuestas.Single(x => x.PreguntaId == 2).OpcionId = horizonte;
-            p.Respuestas.Single(x => x.PreguntaId == 3).OpcionId = liquidez;
+            p.Respuestas.Single(x => x.Pregunta.Id == 2).OpcionId = horizonte;
+            p.Respuestas.Single(x => x.Pregunta.Id == 3).OpcionId = liquidez;
             f.Mercado.Fondos = new System.Collections.Generic.List<DatoMercado>
             {
                 new DatoMercado { Nombre = "Fondo verificable", Tipo = "FCI mercadoDinero", Vcp = 100, Fecha = f.Hoy,
                     MesesInmovilizacion = meses, DiasHabilesDisponibilidad = dias, RequierePreaviso = false, RequierePermanencia = false,
                     FuenteCondiciones = "Fixture verificable v1" }
             };
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, p);
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, p);
             Assert.AreEqual(permitido, r.Instrumentos.Any(x => x.Dato.Nombre == "Fondo verificable"));
             if (horizonte == "A" || liquidez != "C") Assert.DoesNotContain("plazos", f.Mercado.Llamadas);
         }
@@ -82,7 +83,7 @@ namespace BLL.Tests
         {
             var f = new InversionFixture(500);
             var p = PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo);
-            p.Respuestas.Single(x => x.PreguntaId == 3).OpcionId = "A";
+            p.Respuestas.Single(x => x.Pregunta.Id == 3).OpcionId = "A";
             var d = new DatoMercado { Nombre = "Fondo dudoso", Tipo = "FCI mercadoDinero", Vcp = 100, Fecha = f.Hoy,
                 MesesInmovilizacion = 0, DiasHabilesDisponibilidad = 0, RequierePreaviso = false, RequierePermanencia = false, FuenteCondiciones = "Fixture v1" };
             if (caso == "metadatos") d.DiasHabilesDisponibilidad = null;
@@ -90,7 +91,7 @@ namespace BLL.Tests
             if (caso == "permanencia") d.RequierePermanencia = true;
             if (caso == "procedencia") d.FuenteCondiciones = null;
             f.Mercado.Fondos = new System.Collections.Generic.List<DatoMercado> { d };
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, p);
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, p);
             Assert.IsFalse(r.Instrumentos.Any(x => x.Dato.Nombre == "Fondo dudoso"));
             Assert.Contains("Fondo dudoso", r.CandidatosSinCompatibilidad);
         }
@@ -100,7 +101,7 @@ namespace BLL.Tests
         {
             var f = new InversionFixture(500);
             f.Mercado.FallaTodo = true;
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
             Assert.IsEmpty(r.Instrumentos);
             Assert.DoesNotContain("acciones", f.Mercado.Llamadas);
             Assert.DoesNotContain("BTC", f.Mercado.Llamadas);
@@ -122,7 +123,7 @@ namespace BLL.Tests
             {
                 new DatoMercado { Nombre = "Sin condiciones", Tipo = "FCI mercadoDinero", Fecha = f.Hoy, Vcp = 100 }
             };
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
             Assert.Contains("Sin condiciones", r.CandidatosSinCompatibilidad);
             Assert.IsFalse(r.CrearContexto().ReferenciasPermitidas.Any(x => x.Nombre == "Sin condiciones"));
         }
@@ -140,7 +141,7 @@ namespace BLL.Tests
                     MesesInmovilizacion = 0, DiasHabilesDisponibilidad = 2, RequierePreaviso = false, RequierePermanencia = false,
                     FuenteCondiciones = "Fixture calendario v1", FechaDisponibilidadMaxima = caso == 0 ? (DateTime?)null : caso == 1 ? f.Hoy.AddDays(4) : f.Hoy.AddMonths(37) }
             };
-            var r = await f.Crear().CalcularAsync(7, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
+            var r = await f.Crear().CalcularAsync(new Usuario { Id = 7 }, 20, CancellationToken.None, PerfilAsistenteTests.Perfil(NivelRiesgoInversor.Bajo));
             Assert.AreEqual(esperado, r.Instrumentos.Any(x => x.Dato.Nombre == "Rescate con calendario"));
         }
     }

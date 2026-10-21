@@ -20,7 +20,6 @@ namespace TpIDS
 
         private readonly MovimientoBLL movimientoBLL = CompositionRoot.Movimiento;
         private readonly CategoriaBLL categoriaBLL = CompositionRoot.Categoria;
-        private readonly ISesion sesion = CompositionRoot.Sesion;
 
         private List<Movimiento> movimientosFiltrados = new List<Movimiento>();
         private Dictionary<int, string> nombresCategoria = new Dictionary<int, string>();
@@ -86,7 +85,6 @@ namespace TpIDS
         {
             try
             {
-                int usuarioActualId = sesion.GetUsuarioActualId().Value;
                 DateTime desde = dtpDesdeBalance.Value.Date;
                 DateTime hasta = dtpHastaBalance.Value.Date;
 
@@ -98,9 +96,9 @@ namespace TpIDS
                     Texto = string.IsNullOrWhiteSpace(txtbBuscarBalance.Text) ? null : txtbBuscarBalance.Text.Trim()
                 };
 
-                movimientosFiltrados = movimientoBLL.ObtenerPorUsuario(usuarioActualId, filtro);
+                movimientosFiltrados = movimientoBLL.ObtenerParaUsuarioActual(filtro);
                 nombresCategoria = categoriaBLL
-                    .ObtenerVisiblesParaUsuario(usuarioActualId)
+                    .ObtenerVisiblesParaUsuarioActual()
                     .ToDictionary(item => item.Id, item => item.Nombre);
 
                 paginaActual = 0;

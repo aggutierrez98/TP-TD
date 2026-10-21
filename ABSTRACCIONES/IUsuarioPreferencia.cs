@@ -2,8 +2,8 @@ namespace ABSTRACCIONES
 {
     public interface IUsuarioPreferencia
     {
-        int UsuarioId { get; set; }
+        IUsuarioAutenticado Usuario { get; set; }
 
-        int IdiomaId { get; set; }
+        IIdioma Idioma { get; set; }
     }
 }

@@ -11,7 +11,7 @@ namespace TpIDS
     public partial class FormListaDeCompras : FormTraducibleBase
     {
         private readonly ListaDeComprasBLL listaDeComprasBLL = CompositionRoot.ListaDeCompras;
-        private int listaActualId;
+        private ListaDeCompras listaActual;
         private bool actualizandoGrid;
 
         public FormListaDeCompras()
@@ -30,7 +30,7 @@ namespace TpIDS
         // View-model plano para la grilla.
         private sealed class FilaItemLista
         {
-            public int Id { get; set; }
+            public ItemLista Item { get; set; }
             public string Descripcion { get; set; }
             public int Cantidad { get; set; }
             public bool Comprado { get; set; }
@@ -41,7 +41,7 @@ namespace TpIDS
             try
             {
                 ListaDeCompras lista = listaDeComprasBLL.ObtenerOCrearParaUsuarioActual();
-                listaActualId = lista.Id;
+                listaActual = lista;
 
                 actualizandoGrid = true;
                 try
@@ -50,7 +50,7 @@ namespace TpIDS
                     dgvItems.DataSource = lista.ItemsLista
                         .Select(item => new FilaItemLista
                         {
-                            Id = item.Id,
+                            Item = item,
                             Descripcion = item.Descripcion,
                             Cantidad = item.Cantidad,
                             Comprado = item.Comprado
@@ -80,7 +80,7 @@ namespace TpIDS
 
             try
             {
-                listaDeComprasBLL.AgregarItem(listaActualId, descripcion, cantidad);
+                listaDeComprasBLL.AgregarItem(new ItemLista { ListaDeCompras = listaActual, Descripcion = descripcion, Cantidad = cantidad });
                 LimpiarEdicion();
                 CargarLista();
                 UiDialogHelper.MostrarInfo("FormShoppingList.Success.ItemCreated");
@@ -111,7 +111,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = listaDeComprasBLL.EliminarItem(fila.Id);
+                bool eliminado = listaDeComprasBLL.EliminarItem(fila.Item);
                 if (eliminado)
                 {
                     CargarLista();
@@ -151,7 +151,7 @@ namespace TpIDS
 
             try
             {
-                listaDeComprasBLL.MarcarComprado(fila.Id, fila.Comprado);
+                listaDeComprasBLL.MarcarComprado(fila.Item, fila.Comprado);
             }
             catch (Exception ex)
             {

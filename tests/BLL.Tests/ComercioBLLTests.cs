@@ -15,7 +15,7 @@ namespace BLL.Tests
             ComercioFixture fixture = new ComercioFixture();
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("   ", 1, null, null, null, null, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new Comercio { Nombre = "   ", RubroComercio = new RubroComercio { Id = 1 }, Direccion = null, Localidad = null, Provincia = null, Latitud = null, Longitud = null }));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -25,7 +25,7 @@ namespace BLL.Tests
             ComercioFixture fixture = new ComercioFixture();
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Dia", 99, null, null, null, null, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new Comercio { Nombre = "Dia", RubroComercio = new RubroComercio { Id = 99 }, Direccion = null, Localidad = null, Provincia = null, Latitud = null, Longitud = null }));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -36,7 +36,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
             ComercioBLL sut = fixture.CreateSut();
 
-            Comercio creado = sut.Crear("  Dia  ", 1, "  Av. Siempre Viva 123  ", "  CABA  ", "  Buenos Aires  ", -34.6037m, -58.3816m);
+            Comercio creado = sut.Crear(new Comercio { Nombre = "  Dia  ", RubroComercio = new RubroComercio { Id = 1 }, Direccion = "  Av. Siempre Viva 123  ", Localidad = "  CABA  ", Provincia = "  Buenos Aires  ", Latitud = -34.6037m, Longitud = -58.3816m });
 
             Comercio insertado = fixture.Unidad.ComercioRepo.Comercios[creado.Id];
             Assert.AreEqual("Dia", insertado.Nombre);
@@ -57,7 +57,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
             ComercioBLL sut = fixture.CreateSut();
 
-            Comercio creado = sut.Crear("Dia", 1, "   ", "   ", "   ", null, null);
+            Comercio creado = sut.Crear(new Comercio { Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 }, Direccion = "   ", Localidad = "   ", Provincia = "   ", Latitud = null, Longitud = null });
 
             Comercio insertado = fixture.Unidad.ComercioRepo.Comercios[creado.Id];
             Assert.IsNull(insertado.Direccion);
@@ -74,7 +74,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Dia", 1, null, null, null, -34.6037m, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new Comercio { Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 }, Direccion = null, Localidad = null, Provincia = null, Latitud = -34.6037m, Longitud = null }));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -85,7 +85,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("Dia", 1, null, null, null, null, -58.3816m));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new Comercio { Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 }, Direccion = null, Localidad = null, Provincia = null, Latitud = null, Longitud = -58.3816m }));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -95,7 +95,7 @@ namespace BLL.Tests
             ComercioFixture fixture = new ComercioFixture();
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, "Nuevo", 1, null, null, null, null, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new Comercio { Id = 99, Nombre = "Nuevo", RubroComercio = new RubroComercio { Id = 1 }, Direccion = null, Localidad = null, Provincia = null, Latitud = null, Longitud = null }));
         }
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, "Nuevo", 99, null, null, null, null, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new Comercio { Id = 1, Nombre = "Nuevo", RubroComercio = new RubroComercio { Id = 99 }, Direccion = null, Localidad = null, Provincia = null, Latitud = null, Longitud = null }));
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, "Nuevo", 1, null, null, null, -34.6037m, null));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new Comercio { Id = 1, Nombre = "Nuevo", RubroComercio = new RubroComercio { Id = 1 }, Direccion = null, Localidad = null, Provincia = null, Latitud = -34.6037m, Longitud = null }));
         }
 
         [TestMethod]
@@ -126,7 +126,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Viejo", RubroComercio = new RubroComercio { Id = 1 } });
             ComercioBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, "  Nuevo Nombre  ", 2, "  Av. Corrientes 1234  ", "  CABA  ", "  Buenos Aires  ", -34.6m, -58.4m);
+            bool resultado = sut.Actualizar(new Comercio { Id = 1, Nombre = "  Nuevo Nombre  ", RubroComercio = new RubroComercio { Id = 2 }, Direccion = "  Av. Corrientes 1234  ", Localidad = "  CABA  ", Provincia = "  Buenos Aires  ", Latitud = -34.6m, Longitud = -58.4m });
 
             Assert.IsTrue(resultado);
             Comercio actualizado = fixture.Unidad.ComercioRepo.Comercios[1];
@@ -147,7 +147,7 @@ namespace BLL.Tests
             ComercioFixture fixture = new ComercioFixture();
             ComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Comercio { Id = 99 }));
         }
 
         [TestMethod]
@@ -164,10 +164,10 @@ namespace BLL.Tests
             });
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -179,10 +179,10 @@ namespace BLL.Tests
             fixture.Unidad.MovimientoRepo.Movimientos.Add(30, new Movimiento { Id = 30, Comercio = new Comercio { Id = 1 } });
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -194,10 +194,10 @@ namespace BLL.Tests
             fixture.Unidad.PromocionComercioRepo.PromocionIdsPorComercio[1] = new List<int> { 7 };
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -209,10 +209,10 @@ namespace BLL.Tests
             fixture.Unidad.ComercioReglaCategorizacionRepo.ComerciosPorRegla[4] = new List<int> { 1 };
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.ComercioInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.ComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -224,7 +224,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.ComercioDeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -238,7 +238,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
             ComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new Comercio { Id = 1 }));
 
             Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -251,7 +251,7 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(1, new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             ComercioBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(new Comercio { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.ComercioRepo.Comercios.ContainsKey(1));
@@ -270,6 +270,87 @@ namespace BLL.Tests
             List<Comercio> todos = sut.ObtenerTodos();
 
             Assert.AreEqual(2, todos.Count);
+        }
+
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConIdYRubroPersistido()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            RubroComercio rubroPersistido = new RubroComercio { Id = 1, Nombre = "Supermercado" };
+            fixture.Unidad.RubroComercioRepo.Rubros.Add(1, rubroPersistido);
+            ComercioBLL sut = fixture.CreateSut();
+            Comercio comercio = new Comercio { Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } };
+
+            Comercio creado = sut.Crear(comercio);
+
+            Assert.AreSame(comercio, creado);
+            Assert.IsTrue(creado.Id > 0);
+            Assert.AreSame(rubroPersistido, creado.RubroComercio);
+        }
+
+        [TestMethod]
+        public void Crear_ComercioNulo_ThrowsExcepcionNegocioNameRequired()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioNameRequired", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Crear_SinRubro_ThrowsExcepcionNegocioRubroNotFound()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new Comercio { Nombre = "Dia" }));
+
+            Assert.AreEqual("Error.MerchantManagement.RubroNotFound", ex.Message);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaLosCamposSobreElPersistidoConElRubroPersistido()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            RubroComercio rubroPersistido = new RubroComercio { Id = 2, Nombre = "Farmacia" };
+            fixture.Unidad.RubroComercioRepo.Rubros.Add(2, rubroPersistido);
+            Comercio persistido = new Comercio { Id = 1, Nombre = "Viejo", RubroComercio = new RubroComercio { Id = 1 } };
+            fixture.ComercioRepo.Comercios.Add(1, persistido);
+            ComercioBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(new Comercio { Id = 1, Nombre = "Nuevo", RubroComercio = new RubroComercio { Id = 2 } });
+
+            Assert.AreSame(persistido, fixture.ComercioRepo.LastUpdated);
+            Assert.AreEqual("Nuevo", persistido.Nombre);
+            Assert.AreSame(rubroPersistido, persistido.RubroComercio);
+        }
+
+        [TestMethod]
+        public void Eliminar_ComercioNulo_ThrowsExcepcionNegocioNotFound()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            ComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(null));
+
+            Assert.AreEqual("Error.MerchantManagement.ComercioNotFound", ex.Message);
+            Assert.IsNull(fixture.ComercioRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void Eliminar_Valido_EliminaElPersistido()
+        {
+            ComercioFixture fixture = new ComercioFixture();
+            Comercio persistido = new Comercio { Id = 1, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } };
+            fixture.ComercioRepo.Comercios.Add(1, persistido);
+            ComercioBLL sut = fixture.CreateSut();
+
+            sut.Eliminar(new Comercio { Id = 1 });
+
+            Assert.AreSame(persistido, fixture.ComercioRepo.LastDeleted);
         }
 
         private sealed class ComercioFixture

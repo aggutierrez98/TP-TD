@@ -1,0 +1,130 @@
+@startuml
+' Fuente: diagramas/NEG09-tasas-conversion/NEG09-tasas-conversion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN42 Consultar historial de actualizaciones de tasas — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormActualizacionTasas {
+    -Refrescar(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ActualizacionTasasBLL {
+    +ObtenerUltimasEjecuciones(cantidad: int): List<EjecucionActualizacionTasas>
+    +ObtenerRequestsConsumidasDelMes(): int
+    +ObtenerDetalleDeEjecucion(ejecucion: EjecucionActualizacionTasas):\nList<ActualizacionTasaDetalle>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IEjecucionActualizacionTasasRepositorio {
+    +ObtenerRecientes(cantidad: int): List<EjecucionActualizacionTasas>
+    +ContarRequestsDelMes(referencia: DateTime): int
+    +ObtenerDetallePorEjecucion(ejecucion: EjecucionActualizacionTasas):\nList<ActualizacionTasaDetalle>
+  }
+  class EjecucionActualizacionTasasRepositorio {
+    +ObtenerRecientes(cantidad: int): List<EjecucionActualizacionTasas>
+    +ContarRequestsDelMes(referencia: DateTime): int
+    +ObtenerDetallePorEjecucion(ejecucion: EjecucionActualizacionTasas):\nList<ActualizacionTasaDetalle>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IEjecucionActualizacionTasasRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> EjecucionActualizacionTasasRepositorio
+package "DAL" as L_DAL {
+  class EjecucionActualizacionTasasDAL {
+    +ObtenerRecientes(cantidad: int, accesoDatos: AccesoDatosSqlServer):\nList<EjecucionActualizacionTasas>
+    +ContarRequestsDelMes(referencia: DateTime, accesoDatos: AccesoDatosSqlServer): int
+    +ObtenerDetallePorEjecucion(ejecucion: EjecucionActualizacionTasas, accesoDatos:\nAccesoDatosSqlServer): List<ActualizacionTasaDetalle>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class ActualizacionTasaDetalle {
+    +Id: int
+    +Ejecucion: EjecucionActualizacionTasas
+    +MonedaBase: Moneda
+    +MonedaConversion: Moneda
+    +ValorAnterior: decimal
+    +ValorNuevo: decimal?
+    +Estado: EstadoActualizacionTasa
+  }
+  class EjecucionActualizacionTasas {
+    +Id: int
+    +FechaInicio: DateTime
+    +Origen: OrigenActualizacionTasas
+    +Resultado: ResultadoActualizacionTasas
+    +ConsumioRequest: bool
+    +Mensaje: string
+    +Detalles: List<ActualizacionTasaDetalle>
+  }
+  enum EstadoActualizacionTasa {
+    Actualizado
+    SaltadoManual
+    SaltadoSinDato
+  }
+  class Moneda {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  enum OrigenActualizacionTasas {
+    Programada
+    Manual
+  }
+  enum ResultadoActualizacionTasas {
+    Exitosa
+    Fallida
+    Omitida
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ActualizacionTasaDetalle -[hidden]right-> EjecucionActualizacionTasas
+ActualizacionTasaDetalle -[hidden]down-> EstadoActualizacionTasa
+EstadoActualizacionTasa -[hidden]right-> Moneda
+EstadoActualizacionTasa -[hidden]down-> OrigenActualizacionTasas
+OrigenActualizacionTasas -[hidden]right-> ResultadoActualizacionTasas
+ActualizacionTasasBLL ..> IEjecucionActualizacionTasasRepositorio : usa
+ActualizacionTasasBLL ..> IUnidadDeTrabajoFactory : usa
+EjecucionActualizacionTasasRepositorio ..|> IEjecucionActualizacionTasasRepositorio
+FormActualizacionTasas ..> ActualizacionTasasBLL : usa
+EjecucionActualizacionTasasRepositorio ..> EjecucionActualizacionTasasDAL : usa
+ActualizacionTasasBLL ..> EjecucionActualizacionTasas : datos
+ActualizacionTasaDetalle --> EjecucionActualizacionTasas : Ejecucion
+ActualizacionTasaDetalle --> Moneda : MonedaBase
+ActualizacionTasaDetalle --> Moneda : MonedaConversion
+ActualizacionTasaDetalle --> EstadoActualizacionTasa : Estado
+EjecucionActualizacionTasas --> OrigenActualizacionTasas : Origen
+EjecucionActualizacionTasas --> ResultadoActualizacionTasas : Resultado
+EjecucionActualizacionTasas --> "*" ActualizacionTasaDetalle : Detalles
+' BLL/ActualizacionTasasBLL.cs:43 ActualizacionTasasBLL.ObtenerUltimasEjecuciones
+' BLL/ActualizacionTasasBLL.cs:48 ActualizacionTasasBLL.ObtenerDetalleDeEjecucion
+' BLL/ActualizacionTasasBLL.cs:54 ActualizacionTasasBLL.ObtenerRequestsConsumidasDelMes
+' DAL/EjecucionActualizacionTasasDAL.cs:108 EjecucionActualizacionTasasDAL.ObtenerRecientes
+' DAL/EjecucionActualizacionTasasDAL.cs:143 EjecucionActualizacionTasasDAL.ObtenerDetallePorEjecucion
+' DAL/EjecucionActualizacionTasasDAL.cs:208 EjecucionActualizacionTasasDAL.ContarRequestsDelMes
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:34 EjecucionActualizacionTasasRepositorio.ObtenerRecientes
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:39 EjecucionActualizacionTasasRepositorio.ObtenerDetallePorEjecucion
+' REPOSITORIO/EjecucionActualizacionTasasRepositorio.cs:62 EjecucionActualizacionTasasRepositorio.ContarRequestsDelMes
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:13 IEjecucionActualizacionTasasRepositorio.ObtenerRecientes
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:15 IEjecucionActualizacionTasasRepositorio.ObtenerDetallePorEjecucion
+' REPOSITORIO/IEjecucionActualizacionTasasRepositorio.cs:21 IEjecucionActualizacionTasasRepositorio.ContarRequestsDelMes
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormActualizacionTasas.cs:61 FormActualizacionTasas.Refrescar
+@enduml

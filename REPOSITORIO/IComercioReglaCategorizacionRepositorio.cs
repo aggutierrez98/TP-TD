@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IComercioReglaCategorizacionRepositorio
     {
-        List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId);
+        List<Comercio> ObtenerComerciosPorReglaCategorizacion(ReglaCategorizacion reglaCategorizacion);
 
-        bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds);
+        bool ReemplazarComerciosDeReglaCategorizacion(ReglaCategorizacion reglaCategorizacion, IEnumerable<Comercio> comercios);
 
-        int ContarPorComercio(int comercioId);
+        int ContarPorComercio(Comercio comercio);
     }
 }

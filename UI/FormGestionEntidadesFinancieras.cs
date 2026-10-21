@@ -21,10 +21,11 @@ namespace TpIDS
             Load += FormGestionEntidadesFinancieras_Load;
         }
 
-        // View-model plano para bindear la grilla.
+        // View-model plano para bindear la grilla. La grilla no autogenera columnas, asi que
+        // EntidadFinanciera (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaEntidadFinanciera
         {
-            public int Id { get; set; }
+            public EntidadFinanciera EntidadFinanciera { get; set; }
             public string Nombre { get; set; }
         }
 
@@ -43,12 +44,12 @@ namespace TpIDS
 
                 dgvEntidadesFinancieras.DataSource = null;
                 dgvEntidadesFinancieras.DataSource = entidades
-                    .Select(item => new FilaEntidadFinanciera { Id = item.Id, Nombre = item.Nombre })
+                    .Select(item => new FilaEntidadFinanciera { EntidadFinanciera = item, Nombre = item.Nombre })
                     .ToList();
 
                 if (entidadSeleccionadaId.HasValue)
                 {
-                    SeleccionarFila<FilaEntidadFinanciera>(dgvEntidadesFinancieras, fila => fila.Id == entidadSeleccionadaId.Value);
+                    SeleccionarFila<FilaEntidadFinanciera>(dgvEntidadesFinancieras, fila => fila.EntidadFinanciera.Id == entidadSeleccionadaId.Value);
                 }
                 else
                 {
@@ -66,7 +67,7 @@ namespace TpIDS
         {
             try
             {
-                EntidadFinanciera creada = entidadFinancieraBLL.Crear(txtbNombreEntidadFinanciera.Text);
+                EntidadFinanciera creada = entidadFinancieraBLL.Crear(new EntidadFinanciera { Nombre = txtbNombreEntidadFinanciera.Text });
                 txtbNombreEntidadFinanciera.Clear();
                 CargarEntidades(creada.Id);
                 UiDialogHelper.MostrarInfo("FormFinancialEntityManagement.Success.Created");
@@ -87,10 +88,11 @@ namespace TpIDS
 
             try
             {
-                bool actualizada = entidadFinancieraBLL.Actualizar(fila.Id, txtbNombreEntidadFinanciera.Text);
+                fila.EntidadFinanciera.Nombre = txtbNombreEntidadFinanciera.Text;
+                bool actualizada = entidadFinancieraBLL.Actualizar(fila.EntidadFinanciera);
                 if (actualizada)
                 {
-                    CargarEntidades(fila.Id);
+                    CargarEntidades(fila.EntidadFinanciera.Id);
                     UiDialogHelper.MostrarInfo("FormFinancialEntityManagement.Success.Updated");
                 }
             }
@@ -121,7 +123,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminada = entidadFinancieraBLL.Eliminar(fila.Id);
+                bool eliminada = entidadFinancieraBLL.Eliminar(fila.EntidadFinanciera);
                 if (eliminada)
                 {
                     txtbNombreEntidadFinanciera.Clear();
@@ -143,7 +145,7 @@ namespace TpIDS
                 return;
             }
 
-            using (FormDetalleEntidadFinanciera formDetalle = new FormDetalleEntidadFinanciera(fila.Id, fila.Nombre))
+            using (FormDetalleEntidadFinanciera formDetalle = new FormDetalleEntidadFinanciera(fila.EntidadFinanciera, fila.Nombre))
             {
                 formDetalle.ShowDialog(this);
             }

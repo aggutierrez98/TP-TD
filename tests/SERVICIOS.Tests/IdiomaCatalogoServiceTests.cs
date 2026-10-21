@@ -31,7 +31,7 @@ namespace SERVICIOS.Tests
         {
             Idioma[] idiomas = { new Idioma { Id = 1, Nombre = "Espanol" } };
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => _service.ValidarNombreDuplicado(idiomas, "espanol", 2));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => _service.ValidarNombreDuplicado(idiomas, "espanol", new Idioma { Id = 2 }));
         }
 
         [TestMethod]
@@ -39,7 +39,7 @@ namespace SERVICIOS.Tests
         {
             Idioma[] idiomas = { new Idioma { Id = 1, Nombre = "Espanol" } };
 
-            _service.ValidarNombreDuplicado(idiomas, "espanol", 1);
+            _service.ValidarNombreDuplicado(idiomas, "espanol", idiomas[0]);
         }
 
         [TestMethod]

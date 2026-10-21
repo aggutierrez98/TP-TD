@@ -84,7 +84,7 @@ namespace BLL.Tests
         {
             var f = new Fixture();
             f.Perfiles.Ultimo = Perfil();
-            f.Historial.Consultas[1] = new ConsultaChatbot { Id = 1, UsuarioId = 7, Pregunta = "Invertir", Respuesta = "Compra BTC", Fecha = DateTime.Now };
+            f.Historial.Consultas[1] = new ConsultaChatbot { Id = 1, Usuario = new Usuario { Id = 7 }, Pregunta = "Invertir", Respuesta = "Compra BTC", Fecha = DateTime.Now };
             f.Servicio.AlExtraerHerramienta = () =>
             {
                 f.Sesion.CerrarSesion();
@@ -98,7 +98,7 @@ namespace BLL.Tests
             Assert.Contains("\"Perfil\":\"Alto\"", f.Servicio.LastSolicitud.Contexto.DatosJson);
             Assert.Contains("\"Porcentaje\":20", f.Servicio.LastSolicitud.Contexto.DatosJson);
             Assert.Contains("\"Monto\":100", f.Servicio.LastSolicitud.Contexto.DatosJson);
-            Assert.AreEqual(7, f.Unidad.ConsultaChatbotRepo.LastInserted.UsuarioId);
+            Assert.AreEqual(7, f.Unidad.ConsultaChatbotRepo.LastInserted.Usuario.Id);
             f.Sesion.CerrarSesion();
             f.Sesion.IniciarSesion(new Usuario { Id = 7 });
             f.Servicio.AlExtraerHerramienta = null;
@@ -118,7 +118,7 @@ namespace BLL.Tests
 
             Assert.IsFalse(r.EsRechazo);
             Assert.AreEqual(1, f.Unidad.SaveCallCount);
-            Assert.AreEqual(7, f.Unidad.ConsultaChatbotRepo.LastInserted.UsuarioId);
+            Assert.AreEqual(7, f.Unidad.ConsultaChatbotRepo.LastInserted.Usuario.Id);
             Assert.IsEmpty(f.Unidad.NotificacionRepo.Llamadas);
             Assert.IsEmpty(f.Unidad.NotificacionRepo.Notificaciones);
         }
@@ -126,7 +126,7 @@ namespace BLL.Tests
         internal static PerfilInversor Perfil(NivelRiesgoInversor nivel = NivelRiesgoInversor.Alto)
         {
             var perfil = CalculadorPerfilInversor.Evaluar(1, CalculadorPerfilInversorTests.Respuestas("CDCDCCDDDC"));
-            perfil.UsuarioId = 7;
+            perfil.Usuario = new Usuario { Id = 7 };
             perfil.NivelRiesgo = nivel;
             perfil.FechaEvaluacionUtc = new DateTime(2026, 10, 20, 0, 0, 0, DateTimeKind.Utc);
             return perfil;
@@ -154,7 +154,7 @@ namespace BLL.Tests
                     new Traduccion { Palabra = new Palabra { Key = "Assistant.Investment.InvalidPercentage" }, Valor = "Enter a valid percentage." }
                 } });
                 return new AsistenteFinancieroBLL(Historial, new FakeChatbotFinancieroRepositorio(), Servicio, Clasificador,
-                    new LimiteUsoAsistente(100, () => DateTime.Now),
+                    new FakeLimiteUsoAsistente(100),
                     new FakeUnidadDeTrabajoFactory(Unidad), Sesion, new SpyBitacoraBLL(), idioma,
                     new GeneradorRecomendaciones(Servicio, new ValidadorRespuestaAsistente(), null, Inversion.Crear()), Perfiles);
             }

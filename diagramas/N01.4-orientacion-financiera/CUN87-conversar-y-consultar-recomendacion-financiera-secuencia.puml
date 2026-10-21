@@ -1,0 +1,161 @@
+@startuml
+' Fuente: diagramas/NEG22-asistente-financiero/NEG22-asistente-financiero-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN87 Conversar y consultar recomendación financiera — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormAsistentePersonal" as FormAsistentePersonal
+control "AsistenteFinancieroBLL" as AsistenteFinancieroBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "ConsultaChatbotRepositorio\n:IConsultaChatbotRepositorio" as IConsultaChatbotRepositorio
+participant "ConsultaChatbotDAL" as ConsultaChatbotDAL
+participant "LimiteUsoAsistente\n:ILimiteUsoAsistente" as ILimiteUsoAsistente
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+control "PrefiltroConsultasAsistente" as PrefiltroConsultasAsistente
+participant "GeminiClasificadorConsultas\n:IClasificadorConsultas" as IClasificadorConsultas
+participant "GeminiAsistenteFinancieroService\n:IAsistenteFinancieroService" as IAsistenteFinancieroService
+participant "PerfilInversorRepositorio\n:IPerfilInversorRepositorio" as IPerfilInversorRepositorio
+control "ExtractorPorcentajeInversion" as ExtractorPorcentajeInversion
+control "GeneradorRecomendaciones\n:IGeneradorRecomendaciones" as IGeneradorRecomendaciones
+control "RecomendacionComprasBLL\n:IRecomendacionComprasBLL" as IRecomendacionComprasBLL
+control "RecomendacionInversionesBLL\n:IRecomendacionInversionesBLL" as IRecomendacionInversionesBLL
+control "ValidadorRespuestaAsistente" as ValidadorRespuestaAsistente
+participant "ChatbotFinancieroRepositorio\n:IChatbotFinancieroRepositorio" as IChatbotFinancieroRepositorio
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormAsistentePersonal : El actor desea consultar una duda o pedir una recomendación sobre sus finanzas\npersonales.
+Actor -> FormAsistentePersonal : selecciona la opción «Chatear con el asistente» del menú «Asistente Personal».
+FormAsistentePersonal -> AsistenteFinancieroBLL ++ : ObtenerHistorial()
+AsistenteFinancieroBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> AsistenteFinancieroBLL -- : Usuario
+AsistenteFinancieroBLL -> IConsultaChatbotRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IConsultaChatbotRepositorio -> ConsultaChatbotDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ConsultaChatbotDAL --> IConsultaChatbotRepositorio -- : List<ConsultaChatbot>
+IConsultaChatbotRepositorio --> AsistenteFinancieroBLL -- : List<ConsultaChatbot>
+AsistenteFinancieroBLL --> FormAsistentePersonal -- : IReadOnlyList<ConsultaChatbot>
+FormAsistentePersonal --> Actor : presenta la pantalla «Asistente Personal» con el historial de la conversación (cada\nmensaje precedido por la hora y por «Vos» o «Asistente»), el campo «Tu mensaje:» y el\nbotón «Enviar».
+Actor -> FormAsistentePersonal : escribe su consulta en el campo «Tu mensaje:» y selecciona el botón «Enviar» (o presiona\nEnter).
+FormAsistentePersonal --> Actor : Deshabilitar controles y mostrar espera.
+FormAsistentePersonal -> AsistenteFinancieroBLL ++ : EnviarMensajeAsync(pregunta: string)
+note over AsistenteFinancieroBLL : Validar texto; capturar usuario de sesion.\nProcesar fuera del hilo UI con Task.Run; esperar HTTP con await.
+AsistenteFinancieroBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> AsistenteFinancieroBLL -- : Usuario
+AsistenteFinancieroBLL -> ILimiteUsoAsistente ++ : IntentarConsumir(usuario: IUsuarioAutenticado)
+ILimiteUsoAsistente --> AsistenteFinancieroBLL -- : bool
+alt Limite excedido
+AsistenteFinancieroBLL -> IBitacoraBLL ++ : RegistrarFalloNegocio(actividad: string, informacion: string,\norigen: string)
+IBitacoraBLL --> AsistenteFinancieroBLL -- : void
+else Cupo disponible
+AsistenteFinancieroBLL -> PrefiltroConsultasAsistente ++ : Evaluar(pregunta: string)
+PrefiltroConsultasAsistente --> AsistenteFinancieroBLL -- : ResultadoPrefiltro
+alt Prefiltro rechaza
+AsistenteFinancieroBLL -> IBitacoraBLL ++ : RegistrarFalloNegocio(actividad: string, informacion: string,\norigen: string)
+IBitacoraBLL --> AsistenteFinancieroBLL -- : void
+note over AsistenteFinancieroBLL : Devolver texto fijo de rechazo; no guardar ConsultaChatbot.
+else Pregunta admitida por controles locales
+AsistenteFinancieroBLL -> IConsultaChatbotRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IConsultaChatbotRepositorio -> ConsultaChatbotDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ConsultaChatbotDAL --> IConsultaChatbotRepositorio -- : List<ConsultaChatbot>
+IConsultaChatbotRepositorio --> AsistenteFinancieroBLL -- : List<ConsultaChatbot>
+AsistenteFinancieroBLL -> IClasificadorConsultas ++ : ClasificarAsync(pregunta: string, cancellationToken:\nCancellationToken)
+IClasificadorConsultas --> AsistenteFinancieroBLL -- : Task<CategoriaConsulta>
+alt Clasificacion falla o categoria fuera de alcance
+AsistenteFinancieroBLL -> IBitacoraBLL ++ : RegistrarFalloNegocio(actividad: string, informacion: string,\norigen: string)
+IBitacoraBLL --> AsistenteFinancieroBLL -- : void
+else Categoria admitida
+alt Compras: extraer nombre de lista opcional
+AsistenteFinancieroBLL -> IAsistenteFinancieroService ++ : ObtenerLlamadaHerramientaAsync(solicitud: ISolicitudAsistente,\nherramienta: IHerramientaAsistente, cancellationToken:\nCancellationToken)
+IAsistenteFinancieroService --> AsistenteFinancieroBLL -- : Task<ILlamadaHerramientaAsistente>
+else Inversiones: leer perfil antes de extraer porcentaje
+AsistenteFinancieroBLL -> IPerfilInversorRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IPerfilInversorRepositorio --> AsistenteFinancieroBLL -- : PerfilInversor
+opt Perfil existente
+AsistenteFinancieroBLL -> IAsistenteFinancieroService ++ : ObtenerLlamadaHerramientaAsync(solicitud: ISolicitudAsistente,\nherramienta: IHerramientaAsistente, cancellationToken:\nCancellationToken)
+IAsistenteFinancieroService --> AsistenteFinancieroBLL -- : Task<ILlamadaHerramientaAsistente>
+AsistenteFinancieroBLL -> ExtractorPorcentajeInversion ++ : Extraer(llamada: ILlamadaHerramientaAsistente,\nnombreHerramienta: string)
+ExtractorPorcentajeInversion --> AsistenteFinancieroBLL -- : ResultadoPorcentaje
+end
+else Finanzas generales: sin herramienta de extraccion
+end
+alt Sin perfil inversor o porcentaje invalido
+note over AsistenteFinancieroBLL : Preparar invitacion al perfil o correccion fija.\nSin consultar mercado; guardar la respuesta fija admitida.
+else Datos suficientes para responder
+AsistenteFinancieroBLL -> IGeneradorRecomendaciones ++ : GenerarAsync(solicitud: SolicitudGeneracion, cancellationToken:\nCancellationToken)
+alt Compras
+IGeneradorRecomendaciones -> IRecomendacionComprasBLL ++ : CalcularAsync(usuario: Usuario, nombreLista: string,\ncancellationToken: System.Threading.CancellationToken)
+IRecomendacionComprasBLL --> IGeneradorRecomendaciones -- : System.Threading.Tasks.Task<ResumenCompras>
+IGeneradorRecomendaciones -> IRecomendacionComprasBLL ++ : ObtenerUniversoReferencias(usuario: Usuario)
+IRecomendacionComprasBLL --> IGeneradorRecomendaciones -- : IReadOnlyList<IReferenciaAsistente>
+else Inversiones
+IGeneradorRecomendaciones -> IRecomendacionInversionesBLL ++ : CalcularAsync(usuario: Usuario, porcentaje: decimal?,\ncancellationToken: System.Threading.CancellationToken, perfil:\nPerfilInversor)
+IRecomendacionInversionesBLL --> IGeneradorRecomendaciones -- : System.Threading.Tasks.Task<ResumenInversiones>
+note over IGeneradorRecomendaciones : Resumen actual cerrado; excluir historial previo de inversiones.\nRiesgo efectivo, horizonte y liquidez se resuelven en codigo.
+else Finanzas generales
+end
+IGeneradorRecomendaciones -> IAsistenteFinancieroService ++ : ObtenerRespuestaAsync(solicitud: ISolicitudAsistente)
+IAsistenteFinancieroService --> IGeneradorRecomendaciones -- : Task<string>
+IGeneradorRecomendaciones -> ValidadorRespuestaAsistente ++ : Validar(respuesta: string, universo:\nIEnumerable<IReferenciaAsistente>, contexto: IContextoAsistente)
+ValidadorRespuestaAsistente --> IGeneradorRecomendaciones -- : ResultadoValidacionRespuesta
+IGeneradorRecomendaciones --> AsistenteFinancieroBLL -- : Task<ResultadoGeneracion>
+end
+alt Salida no confiable
+AsistenteFinancieroBLL -> IBitacoraBLL ++ : RegistrarFalloNegocio(actividad: string, informacion: string,\norigen: string)
+IBitacoraBLL --> AsistenteFinancieroBLL -- : void
+else Respuesta admitida o mensaje fijo valido
+AsistenteFinancieroBLL -> IChatbotFinancieroRepositorio ++ : ObtenerUnico()
+IChatbotFinancieroRepositorio --> AsistenteFinancieroBLL -- : ChatbotFinanciero
+AsistenteFinancieroBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> AsistenteFinancieroBLL -- : IUnidadDeTrabajo
+AsistenteFinancieroBLL -> IConsultaChatbotRepositorio ++ : InsertarYObtenerId(consultaChatbot: ConsultaChatbot)
+IConsultaChatbotRepositorio -> ConsultaChatbotDAL ++ : InsertarYObtenerId(consultaChatbot: ConsultaChatbot,\naccesoDatos: AccesoDatosSqlServer)
+ConsultaChatbotDAL --> IConsultaChatbotRepositorio -- : int
+IConsultaChatbotRepositorio --> AsistenteFinancieroBLL -- : int
+AsistenteFinancieroBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> AsistenteFinancieroBLL -- : void
+AsistenteFinancieroBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> AsistenteFinancieroBLL -- : void
+end
+end
+end
+end
+AsistenteFinancieroBLL --> FormAsistentePersonal -- : Task<RespuestaAsistente>
+FormAsistentePersonal --> Actor : agrega al historial la consulta del actor y la respuesta del asistente, con la hora de\ncada mensaje, desplaza el historial hasta el último mensaje, limpia el campo «Tu\nmensaje:», vuelve a habilitar los controles y coloca el foco…
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:13 IAsistenteFinancieroService.ObtenerRespuestaAsync
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:14 IAsistenteFinancieroService.ObtenerLlamadaHerramientaAsync
+' ABSTRACCIONES/IClasificadorConsultas.cs:12 IClasificadorConsultas.ClasificarAsync
+' ABSTRACCIONES/ILimiteUsoAsistente.cs:7 ILimiteUsoAsistente.IntentarConsumir
+' BLL/AsistenteFinancieroBLL.cs:85 AsistenteFinancieroBLL.ObtenerHistorial
+' BLL/AsistenteFinancieroBLL.cs:93 AsistenteFinancieroBLL.EnviarMensajeAsync
+' BLL/ContratosInternosBLL.cs:11 IRecomendacionInversionesBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:19 IRecomendacionComprasBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:20 IRecomendacionComprasBLL.ObtenerUniversoReferencias
+' BLL/ContratosInternosBLL.cs:29 IBitacoraBLL.RegistrarFalloNegocio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ExtractorPorcentajeInversion.cs:35 ExtractorPorcentajeInversion.Extraer
+' BLL/GeneradorRecomendaciones.cs:18 IGeneradorRecomendaciones.GenerarAsync
+' BLL/PrefiltroConsultasAsistente.cs:53 PrefiltroConsultasAsistente.Evaluar
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ValidadorRespuestaAsistente.cs:29 ValidadorRespuestaAsistente.Validar
+' DAL/ConsultaChatbotDAL.cs:25 ConsultaChatbotDAL.ObtenerPorUsuario
+' DAL/ConsultaChatbotDAL.cs:61 ConsultaChatbotDAL.InsertarYObtenerId
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:23 ConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:28 ConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IChatbotFinancieroRepositorio.cs:7 IChatbotFinancieroRepositorio.ObtenerUnico
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:10 IConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:8 IConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IPerfilInversorRepositorio.cs:7 IPerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormAsistentePersonal.cs:61 FormAsistentePersonal.btnEnviarMensajeAsistente_Click
+@enduml

@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IPromocionMedioPagoRepositorio
     {
-        List<int> ObtenerMedioPagoIdsPorPromocion(int promocionId);
+        List<MedioPago> ObtenerMediosPagoPorPromocion(Promocion promocion);
 
-        bool ReemplazarMediosPagoDePromocion(int promocionId, List<int> medioPagoIds);
+        bool ReemplazarMediosPagoDePromocion(Promocion promocion, List<MedioPago> mediosPago);
 
-        int ContarPorMedioPago(int medioPagoId);
+        int ContarPorMedioPago(MedioPago medioPago);
     }
 }

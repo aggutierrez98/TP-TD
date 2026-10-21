@@ -1,13 +1,14 @@
 using System.Collections.Generic;
+using BE;
 
 namespace REPOSITORIO
 {
     public interface IPromocionComercioRepositorio
     {
-        List<int> ObtenerComercioIdsPorPromocion(int promocionId);
+        List<Comercio> ObtenerComerciosPorPromocion(Promocion promocion);
 
-        List<int> ObtenerPromocionIdsPorComercio(int comercioId);
+        List<Promocion> ObtenerPromocionesPorComercio(Comercio comercio);
 
-        bool ReemplazarComerciosDePromocion(int promocionId, List<int> comercioIds);
+        bool ReemplazarComerciosDePromocion(Promocion promocion, List<Comercio> comercios);
     }
 }

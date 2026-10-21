@@ -44,7 +44,7 @@ namespace SERVICIOS.Tests
             ManejadorHttpFalso manejador = new ManejadorHttpFalso(() => Json(JsonValido));
             OpenExchangeRatesProveedor proveedor = Crear(manejador);
 
-            TasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
+            ITasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
 
             Assert.AreEqual("USD", resultado.MonedaBase);
             Assert.AreEqual(DateTimeOffset.FromUnixTimeSeconds(1449877801).UtcDateTime, resultado.FechaFuenteUtc);
@@ -59,7 +59,7 @@ namespace SERVICIOS.Tests
             ManejadorHttpFalso manejador = new ManejadorHttpFalso(() => Json(JsonValido));
             OpenExchangeRatesProveedor proveedor = Crear(manejador);
 
-            TasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
+            ITasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
 
             Assert.AreEqual(1513.930812345678m, resultado.Tasas["ARS"]);
         }
@@ -88,7 +88,7 @@ namespace SERVICIOS.Tests
             ManejadorHttpFalso manejador = new ManejadorHttpFalso(() => Json(json));
             OpenExchangeRatesProveedor proveedor = Crear(manejador);
 
-            TasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
+            ITasasCambioObtenidas resultado = await proveedor.ObtenerTasasAsync(CancellationToken.None);
 
             Assert.IsNull(resultado.FechaFuenteUtc);
             Assert.AreEqual(1500.5m, resultado.Tasas["ARS"]);
@@ -227,7 +227,7 @@ namespace SERVICIOS.Tests
 
             using (CancellationTokenSource cts = new CancellationTokenSource())
             {
-                Task<TasasCambioObtenidas> tarea = proveedor.ObtenerTasasAsync(cts.Token);
+                Task<ITasasCambioObtenidas> tarea = proveedor.ObtenerTasasAsync(cts.Token);
                 await enviada.Task;
                 cts.Cancel();
 

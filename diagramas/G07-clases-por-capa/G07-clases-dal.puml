@@ -1,49 +1,457 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa DAL
-
+title G07 - Diagrama de clases por capa - DAL
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "DAL (acceso a datos SQL Server)" {
-
-  class AccesoDatosSqlServer <<IDisposable>> {
-    +CreateParameter(name : string, dbType : SqlDbType, value : object) : SqlParameter
-    +Read(sql : string, parameters : List<SqlParameter> = null) : DataTable
-    +Write(sql : string, parameters : List<SqlParameter> = null) : int
-    +WriteWithResult(sql : string, parameters : List<SqlParameter> = null) : int
-    +BeginTransactionScope() : void
-    +CommitTransactionScope() : void
-    +RollbackTransactionScope() : void
-    +Dispose() : void
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'DAL/ChatbotFinancieroDAL.cs
+  class "ChatbotFinancieroDAL" as DAL_ChatbotFinancieroDAL {
+    ~ObtenerUnico(accesoDatos : AccesoDatosSqlServer) : ChatbotFinanciero
   }
-
-  class UsuarioDAL
-  class UsuarioPermisoDAL
-  class UsuarioPreferenciaDAL
-  class UsuarioHistorialDAL
-  class PermisoDAL
-  class IdiomaDAL
-  class IntegridadDAL
-  class BitacoraDAL
-  class CategoriaDAL
-  class MovimientoDAL
-  class BackupDAL
+  'DAL/ConsultaChatbotDAL.cs
+  class "ConsultaChatbotDAL" as DAL_ConsultaChatbotDAL {
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<ConsultaChatbot>
+    ~InsertarYObtenerId(consultaChatbot : ConsultaChatbot, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/GeneracionNotificacionesDAL.cs
+  class "GeneracionNotificacionesDAL" as DAL_GeneracionNotificacionesDAL {
+    ~InsertarCorridaYObtenerId(corrida : CorridaGeneracionNotificaciones, accesoDatos : AccesoDatosSqlServer) :\nint
+    ~FinalizarCorrida(corrida : CorridaGeneracionNotificaciones, finUtc : DateTime, entregadas : int, omitidas :\nint, fallidas : int, accesoDatos : AccesoDatosSqlServer) : bool
+    ~InsertarDetalleYObtenerId(detalle : DetalleGeneracionNotificacion, accesoDatos : AccesoDatosSqlServer) : int
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : CorridaGeneracionNotificaciones
+    ~ObtenerRecientes(cantidad : int, accesoDatos : AccesoDatosSqlServer) : List<CorridaGeneracionNotificaciones>
+    ~ObtenerDetallePorCorrida(corrida : CorridaGeneracionNotificaciones, accesoDatos : AccesoDatosSqlServer) :\nList<DetalleGeneracionNotificacion>
+  }
+  'DAL/ProductoEmbeddingDAL.cs
+  class "ProductoEmbeddingDAL" as DAL_ProductoEmbeddingDAL {
+    ~ObtenerTodos(accesoDatos : AccesoDatosSqlServer) : List<ProductoEmbedding>
+    ~Guardar(embedding : ProductoEmbedding, accesoDatos : AccesoDatosSqlServer) : void
+    ~AVectorABytes(vector : float[]) : byte[]
+    ~ABytesAVector(bytes : byte[]) : float[]
+  }
+  'DAL/RecomendacionComprasDAL.cs
+  class "RecomendacionComprasDAL" as DAL_RecomendacionComprasDAL {
+    ~ObtenerItemsPendientesPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<ItemLista>
+    ~ObtenerProductosConCategoria(accesoDatos : AccesoDatosSqlServer) : List<Producto>
+    ~ObtenerOfertas(accesoDatos : AccesoDatosSqlServer) : List<ComercioProducto>
+    ~ObtenerPromocionesVigentesEntre(desde : DateTime, hasta : DateTime, accesoDatos : AccesoDatosSqlServer) :\nList<Promocion>
+    ~ObtenerCuentasConMediosPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) :\nList<CuentaFinanciera>
+  }
+}
+package "Comercios y promociones" as P1 {
+  'DAL/CategoriaProductoDAL.cs
+  class "CategoriaProductoDAL" as DAL_CategoriaProductoDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : CategoriaProducto
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<CategoriaProducto>
+    ~InsertarYObtenerId(categoria : CategoriaProducto, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(categoria : CategoriaProducto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(categoria : CategoriaProducto, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/ComercioDAL.cs
+  class "ComercioDAL" as DAL_ComercioDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Comercio
+    ~ObtenerPorRubro(rubro : RubroComercio, accesoDatos : AccesoDatosSqlServer) : List<Comercio>
+    ~ObtenerTodos(accesoDatos : AccesoDatosSqlServer) : List<Comercio>
+    ~InsertarYObtenerId(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/ComercioProductoDAL.cs
+  class "ComercioProductoDAL" as DAL_ComercioProductoDAL {
+    ~ObtenerPorComercio(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : List<ComercioProducto>
+    ~ObtenerPorComercioYProducto(comercio : Comercio, producto : Producto, accesoDatos : AccesoDatosSqlServer) :\nComercioProducto
+    ~Insertar(comercioProducto : ComercioProducto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ActualizarPrecio(comercioProducto : ComercioProducto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(comercioProducto : ComercioProducto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorProducto(producto : Producto, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/ComercioReglaCategorizacionDAL.cs
+  class "ComercioReglaCategorizacionDAL" as DAL_ComercioReglaCategorizacionDAL {
+    ~ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion, accesoDatos :\nAccesoDatosSqlServer) : List<Comercio>
+    ~ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion : ReglaCategorizacion, comercios :\nIEnumerable<Comercio>, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorComercio(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/ProductoDAL.cs
+  class "ProductoDAL" as DAL_ProductoDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Producto
+    ~ObtenerTodos(accesoDatos : AccesoDatosSqlServer) : List<Producto>
+    ~InsertarYObtenerId(producto : Producto, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(producto : Producto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(producto : Producto, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorCategoria(categoria : CategoriaProducto, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionCategoriaProductoDAL.cs
+  class "PromocionCategoriaProductoDAL" as DAL_PromocionCategoriaProductoDAL {
+    ~ObtenerCategoriasProductoPorPromocion(promocion : Promocion, excluidos : bool, accesoDatos :\nAccesoDatosSqlServer) : List<CategoriaProducto>
+    ~ReemplazarCategoriasProductoDePromocion(promocion : Promocion, incluidos : List<CategoriaProducto>, excluidos\n: List<CategoriaProducto>, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorCategoriaProducto(categoriaProducto : CategoriaProducto, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionComercioDAL.cs
+  class "PromocionComercioDAL" as DAL_PromocionComercioDAL {
+    ~ObtenerComerciosPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : List<Comercio>
+    ~ObtenerPromocionesPorComercio(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : List<Promocion>
+    ~ReemplazarComerciosDePromocion(promocion : Promocion, comercios : List<Comercio>, accesoDatos :\nAccesoDatosSqlServer) : bool
+  }
+  'DAL/PromocionDAL.cs
+  class "PromocionDAL" as DAL_PromocionDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Promocion
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<Promocion>
+    ~InsertarYObtenerId(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/PromocionDiaSemanaDAL.cs
+  class "PromocionDiaSemanaDAL" as DAL_PromocionDiaSemanaDAL {
+    ~ObtenerDiasPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : List<DiaSemana>
+    ~ReemplazarDiasDePromocion(promocion : Promocion, dias : List<DiaSemana>, accesoDatos : AccesoDatosSqlServer)\n: bool
+  }
+  'DAL/PromocionEntidadFinancieraDAL.cs
+  class "PromocionEntidadFinancieraDAL" as DAL_PromocionEntidadFinancieraDAL {
+    ~ObtenerEntidadesFinancierasPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) :\nList<EntidadFinanciera>
+    ~ReemplazarEntidadesFinancierasDePromocion(promocion : Promocion, entidadesFinancieras :\nList<EntidadFinanciera>, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorEntidadFinanciera(entidadFinanciera : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionMedioPagoDAL.cs
+  class "PromocionMedioPagoDAL" as DAL_PromocionMedioPagoDAL {
+    ~ObtenerMediosPagoPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : List<MedioPago>
+    ~ReemplazarMediosPagoDePromocion(promocion : Promocion, mediosPago : List<MedioPago>, accesoDatos :\nAccesoDatosSqlServer) : bool
+    ~ContarPorMedioPago(medioPago : MedioPago, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionProductoDAL.cs
+  class "PromocionProductoDAL" as DAL_PromocionProductoDAL {
+    ~ObtenerProductosPorPromocion(promocion : Promocion, excluidos : bool, accesoDatos : AccesoDatosSqlServer) :\nList<Producto>
+    ~ReemplazarProductosDePromocion(promocion : Promocion, incluidos : List<Producto>, excluidos : List<Producto>,\naccesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorProducto(producto : Producto, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionRubroComercioDAL.cs
+  class "PromocionRubroComercioDAL" as DAL_PromocionRubroComercioDAL {
+    ~ObtenerRubrosComercioPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) :\nList<RubroComercio>
+    ~ReemplazarRubrosComercioDePromocion(promocion : Promocion, rubrosComercio : List<RubroComercio>, accesoDatos\n: AccesoDatosSqlServer) : bool
+    ~ContarPorRubroComercio(rubroComercio : RubroComercio, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/PromocionSegmentoDAL.cs
+  class "PromocionSegmentoDAL" as DAL_PromocionSegmentoDAL {
+    ~ObtenerSegmentosPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : List<string>
+    ~ReemplazarSegmentosDePromocion(promocion : Promocion, segmentos : List<string>, accesoDatos :\nAccesoDatosSqlServer) : bool
+  }
+  'DAL/RubroComercioDAL.cs
+  class "RubroComercioDAL" as DAL_RubroComercioDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : RubroComercio
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<RubroComercio>
+    ~InsertarYObtenerId(rubro : RubroComercio, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(rubro : RubroComercio, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(rubro : RubroComercio, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Finanzas personales" as P2 {
+  'DAL/CategoriaDAL.cs
+  class "CategoriaDAL" as DAL_CategoriaDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Categoria
+    ~ObtenerVisiblesParaUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<Categoria>
+    ~InsertarYObtenerId(categoria : Categoria, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(categoria : Categoria, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(categoria : Categoria, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ExisteNombreEnScope(nombre : string, usuario : Usuario, excluida : Categoria, accesoDatos :\nAccesoDatosSqlServer) : bool
+  }
+  'DAL/CuentaFinancieraDAL.cs
+  class "CuentaFinancieraDAL" as DAL_CuentaFinancieraDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : CuentaFinanciera
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<CuentaFinanciera>
+    ~ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) :\nList<CuentaFinanciera>
+    ~InsertarYObtenerId(cuenta : CuentaFinanciera, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(cuenta : CuentaFinanciera, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(cuenta : CuentaFinanciera, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/CuentaFinancieraMedioPagoEntidadDAL.cs
+  class "CuentaFinancieraMedioPagoEntidadDAL" as DAL_CuentaFinancieraMedioPagoEntidadDAL {
+    ~ObtenerMediosPagoEntidadPorCuenta(cuenta : CuentaFinanciera, accesoDatos : AccesoDatosSqlServer) :\nList<MedioPagoEntidad>
+    ~ReemplazarMediosPagoEntidadDeCuenta(cuenta : CuentaFinanciera, medios : IEnumerable<MedioPagoEntidad>,\naccesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorMedioPagoEntidad(medio : MedioPagoEntidad, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/DashboardDAL.cs
+  class "DashboardDAL" as DAL_DashboardDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Dashboard
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : Dashboard
+    ~InsertarYObtenerId(dashboard : Dashboard, accesoDatos : AccesoDatosSqlServer) : int
+    ~Eliminar(dashboard : Dashboard, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/EntidadFinancieraDAL.cs
+  class "EntidadFinancieraDAL" as DAL_EntidadFinancieraDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : EntidadFinanciera
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<EntidadFinanciera>
+    ~InsertarYObtenerId(entidad : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(entidad : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(entidad : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/ItemListaDAL.cs
+  class "ItemListaDAL" as DAL_ItemListaDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : ItemLista
+    ~ObtenerPorListaDeCompras(lista : ListaDeCompras, accesoDatos : AccesoDatosSqlServer) : List<ItemLista>
+    ~InsertarYObtenerId(itemLista : ItemLista, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(itemLista : ItemLista, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(item : ItemLista, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/ListaDeComprasDAL.cs
+  class "ListaDeComprasDAL" as DAL_ListaDeComprasDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : ListaDeCompras
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<ListaDeCompras>
+    ~InsertarYObtenerId(listaDeCompras : ListaDeCompras, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(listaDeCompras : ListaDeCompras, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(lista : ListaDeCompras, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/MedioPagoDAL.cs
+  class "MedioPagoDAL" as DAL_MedioPagoDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : MedioPago
+    ~ObtenerTodos(accesoDatos : AccesoDatosSqlServer) : List<MedioPago>
+    ~InsertarYObtenerId(medioPago : MedioPago, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(medioPago : MedioPago, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(medioPago : MedioPago, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/MedioPagoEntidadDAL.cs
+  class "MedioPagoEntidadDAL" as DAL_MedioPagoEntidadDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : MedioPagoEntidad
+    ~ObtenerPorEntidadFinanciera(entidad : EntidadFinanciera, accesoDatos : AccesoDatosSqlServer) :\nList<MedioPagoEntidad>
+    ~ObtenerPorMedioPago(medioPago : MedioPago, accesoDatos : AccesoDatosSqlServer) : List<MedioPagoEntidad>
+    ~ObtenerSegmentosDistintos(accesoDatos : AccesoDatosSqlServer) : List<string>
+    ~InsertarYObtenerId(medioPagoEntidad : MedioPagoEntidad, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(medioPagoEntidad : MedioPagoEntidad, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(medioPagoEntidad : MedioPagoEntidad, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/MovimientoDAL.cs
+  class "MovimientoDAL" as DAL_MovimientoDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Movimiento
+    ~ObtenerPorUsuario(usuario : Usuario, filtro : FiltroMovimiento, accesoDatos : AccesoDatosSqlServer) :\nList<Movimiento>
+    ~ObtenerTotalesPorCategoria(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime,\naccesoDatos : AccesoDatosSqlServer) : List<TotalPorCategoria>
+    ~ObtenerTotalesPorComercio(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime,\naccesoDatos : AccesoDatosSqlServer) : List<TotalPorComercio>
+    ~ObtenerTotalesPorDia(usuario : Usuario, tipo : TipoMovimiento, desde : DateTime, hasta : DateTime,\naccesoDatos : AccesoDatosSqlServer) : List<TotalPorDia>
+    ~ObtenerTotalesPorMes(usuario : Usuario, desde : DateTime, hasta : DateTime, accesoDatos :\nAccesoDatosSqlServer) : List<TotalPorMes>
+    ~ObtenerResumen(usuario : Usuario, desde : DateTime, hasta : DateTime, accesoDatos : AccesoDatosSqlServer) :\nResumenMovimientos
+    ~InsertarYObtenerId(movimiento : Movimiento, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(movimiento : Movimiento, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(movimiento : Movimiento, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ContarPorComercio(comercio : Comercio, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/ReglaCategorizacionDAL.cs
+  class "ReglaCategorizacionDAL" as DAL_ReglaCategorizacionDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : ReglaCategorizacion
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<ReglaCategorizacion>
+    ~InsertarYObtenerId(reglaCategorizacion : ReglaCategorizacion, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(reglaCategorizacion : ReglaCategorizacion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(reglaCategorizacion : ReglaCategorizacion, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/TarjetaDashboardDAL.cs
+  class "TarjetaDashboardDAL" as DAL_TarjetaDashboardDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : TarjetaDashboard
+    ~ObtenerPorDashboard(dashboard : Dashboard, accesoDatos : AccesoDatosSqlServer) : List<TarjetaDashboard>
+    ~InsertarYObtenerId(tarjeta : TarjetaDashboard, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(tarjeta : TarjetaDashboard, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(tarjeta : TarjetaDashboard, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Idiomas y presentacion" as P3 {
+  'DAL/IdiomaDAL.cs
+  class "IdiomaDAL" as DAL_IdiomaDAL {
+    ~ObtenerIdiomas(accesoDatos : AccesoDatosSqlServer) : List<Idioma>
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Idioma
+    ~ObtenerIdiomaDefault(accesoDatos : AccesoDatosSqlServer) : Idioma
+    ~InsertarIdioma(idioma : Idioma, accesoDatos : AccesoDatosSqlServer) : int
+    ~ActualizarIdioma(idioma : Idioma, accesoDatos : AccesoDatosSqlServer) : bool
+    ~EliminarIdioma(idioma : Idioma, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ConsolidarIdioma(origen : Idioma, destino : Idioma, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ObtenerPalabraPorKey(key : string, accesoDatos : AccesoDatosSqlServer) : Palabra
+    ~GuardarTraduccion(traduccion : Traduccion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~EliminarTraduccion(traduccion : Traduccion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~SwitchearIdiomaDefault(idioma : Idioma, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Infraestructura" as P4 {
+  'DAL/AccesoDatosSqlServer.cs
+  class "AccesoDatosSqlServer" as DAL_AccesoDatosSqlServer {
+    ~AccesoDatosSqlServer()
+    ~CreateParameter(name : string, dbType : SqlDbType, value : object) : SqlParameter
+    ~Write(sql : string, parameters : List<SqlParameter>) : int
+    ~WriteWithResult(sql : string, parameters : List<SqlParameter>) : int
+    ~Read(sql : string, parameters : List<SqlParameter>) : DataTable
+    ~BeginTransactionScope() : void
+    ~CommitTransactionScope() : void
+    ~RollbackTransactionScope() : void
+  }
+}
+package "Monedas y tasas" as P5 {
+  'DAL/EjecucionActualizacionTasasDAL.cs
+  class "EjecucionActualizacionTasasDAL" as DAL_EjecucionActualizacionTasasDAL {
+    ~InsertarYObtenerId(ejecucion : EjecucionActualizacionTasas, accesoDatos : AccesoDatosSqlServer) : int
+    ~InsertarDetalleYObtenerId(detalle : ActualizacionTasaDetalle, accesoDatos : AccesoDatosSqlServer) : int
+    ~ObtenerRecientes(cantidad : int, accesoDatos : AccesoDatosSqlServer) : List<EjecucionActualizacionTasas>
+    ~ObtenerDetallePorEjecucion(ejecucion : EjecucionActualizacionTasas, accesoDatos : AccesoDatosSqlServer) :\nList<ActualizacionTasaDetalle>
+    ~ObtenerUltimaExitosa(conBloqueo : bool, accesoDatos : AccesoDatosSqlServer) : EjecucionActualizacionTasas
+    ~ContarRequestsDelMes(referencia : DateTime, accesoDatos : AccesoDatosSqlServer) : int
+  }
+  'DAL/MonedaDAL.cs
+  class "MonedaDAL" as DAL_MonedaDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Moneda
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<Moneda>
+    ~InsertarYObtenerId(moneda : Moneda, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(moneda : Moneda, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(moneda : Moneda, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/TasaConversionDAL.cs
+  class "TasaConversionDAL" as DAL_TasaConversionDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : TasaConversion
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<TasaConversion>
+    ~ObtenerPorParDeMonedas(monedaBase : Moneda, monedaConversion : Moneda, accesoDatos : AccesoDatosSqlServer) :\nTasaConversion
+    ~InsertarYObtenerId(tasa : TasaConversion, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(tasa : TasaConversion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ActualizarValorAutomatico(tasa : TasaConversion, calculoConversion : decimal, accesoDatos :\nAccesoDatosSqlServer) : bool
+    ~MarcarManual(tasa : TasaConversion, usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Liberar(tasa : TasaConversion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(tasa : TasaConversion, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Notificaciones" as P6 {
+  'DAL/MetadataNotificacionDAL.cs
+  class "MetadataNotificacionDAL" as DAL_MetadataNotificacionDAL {
+    ~Columnas : string
+    ~Leer(row : DataRow, notificacion : Notificacion) : void
+    ~AgregarParametros(accesoDatos : AccesoDatosSqlServer, parametros : List<SqlParameter>, notificacion :\nNotificacion) : void
+  }
+  'DAL/NotificacionDAL.cs
+  class "NotificacionDAL" as DAL_NotificacionDAL {
+    ~ObtenerPersonal(notificacion : Notificacion, usuario : Usuario, accesoDatos : AccesoDatosSqlServer) :\nNotificacion
+    ~ObtenerFechaUltimaAutomaticaInversionUtc(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) :\nSystem.DateTime?
+    ~BloquearUsuarioParaEntrega(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ExisteAutomatica(usuario : Usuario, tipo : TipoNotificacionAutomatica, jornada : System.DateTime, accesoDatos\n: AccesoDatosSqlServer) : bool
+    ~MarcarPersonalLeida(notificacion : Notificacion, usuario : Usuario, accesoDatos : AccesoDatosSqlServer) :\nbool
+    ~ObtenerPaginaPersonal(usuario : Usuario, filtro : FiltroNotificacion, pagina : int, accesoDatos :\nAccesoDatosSqlServer) : PaginaNotificaciones
+    ~ContarNoLeidas(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : int
+    ~ContarPorPromocion(promocion : Promocion, accesoDatos : AccesoDatosSqlServer) : int
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Notificacion
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<Notificacion>
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<Notificacion>
+    ~InsertarYObtenerId(notificacion : Notificacion, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(notificacion : Notificacion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(notificacion : Notificacion, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/RecordatorioCompraDAL.cs
+  class "RecordatorioCompraDAL" as DAL_RecordatorioCompraDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : RecordatorioCompra
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<RecordatorioCompra>
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<RecordatorioCompra>
+    ~InsertarYObtenerId(recordatorio : RecordatorioCompra, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(recordatorio : RecordatorioCompra, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(recordatorio : RecordatorioCompra, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/RecordatorioInversionDAL.cs
+  class "RecordatorioInversionDAL" as DAL_RecordatorioInversionDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : RecordatorioInversion
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<RecordatorioInversion>
+    ~ObtenerTodas(accesoDatos : AccesoDatosSqlServer) : List<RecordatorioInversion>
+    ~InsertarYObtenerId(recordatorio : RecordatorioInversion, accesoDatos : AccesoDatosSqlServer) : int
+    ~Actualizar(recordatorio : RecordatorioInversion, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Eliminar(recordatorio : RecordatorioInversion, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Perfil inversor" as P7 {
+  'DAL/PerfilInversorDAL.cs
+  class "PerfilInversorDAL" as DAL_PerfilInversorDAL {
+    ~ObtenerPorUsuario(usuario : Usuario, acceso : AccesoDatosSqlServer) : PerfilInversor
+    ~Guardar(perfil : PerfilInversor, acceso : AccesoDatosSqlServer) : void
+  }
+}
+package "Ubicacion y zonas" as P8 {
+  'DAL/ZonaUsuarioDAL.cs
+  class "ZonaUsuarioDAL" as DAL_ZonaUsuarioDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : ZonaUsuario
+    ~ObtenerPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<ZonaUsuario>
+    ~InsertarYObtenerId(zona : ZonaUsuario, accesoDatos : AccesoDatosSqlServer) : int
+    ~Eliminar(zona : ZonaUsuario, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+}
+package "Usuarios y auditoria" as P9 {
+  'DAL/BackupDAL.cs
+  class "BackupDAL" as DAL_BackupDAL {
+    ~CrearBackup(rutaArchivo : string) : void
+    ~RestaurarBackup(rutaArchivo : string) : void
+  }
+  'DAL/BitacoraDAL.cs
+  class "BitacoraDAL" as DAL_BitacoraDAL {
+    ~Guardar(evento : EventoBitacora, accesoDatos : AccesoDatosSqlServer) : int
+    ~Buscar(filtro : FiltroBitacora) : List<EventoBitacora>
+  }
+  'DAL/IntegridadDAL.cs
+  class "IntegridadDAL" as DAL_IntegridadDAL {
+    ~ObtenerDVV(nombreTabla : string, accesoDatos : AccesoDatosSqlServer) : string
+    ~GuardarDVV(nombreTabla : string, valor : string, accesoDatos : AccesoDatosSqlServer) : void
+  }
+  'DAL/PermisoDAL.cs
+  class "PermisoDAL" as DAL_PermisoDAL {
+    ~ObtenerNodos(accesoDatos : AccesoDatosSqlServer) : List<IPermiso>
+    ~ObtenerRelaciones(accesoDatos : AccesoDatosSqlServer) : List<Tuple<int, int>>
+    ~Guardar(permiso : IPermiso, accesoDatos : AccesoDatosSqlServer) : int
+    ~ReemplazarRelaciones(relaciones : List<Tuple<int, int>>, accesoDatos : AccesoDatosSqlServer) : bool
+    ~EliminarPermisos(permisos : List<IPermiso>, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ObtenerPorNombre(nombre : string, accesoDatos : AccesoDatosSqlServer) : IPermiso
+  }
+  'DAL/UsuarioDAL.cs
+  class "UsuarioDAL" as DAL_UsuarioDAL {
+    ~ObtenerPorId(id : int, accesoDatos : AccesoDatosSqlServer) : Usuario
+    ~ObtenerPorUsername(username : string, accesoDatos : AccesoDatosSqlServer) : Usuario
+    ~InsertarYObtenerId(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : int
+    ~Insertar(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ObtenerActivosDespuesDe(ultimo : Usuario, cantidad : int, accesoDatos : AccesoDatosSqlServer) : List<Usuario>
+    ~ObtenerTodos() : List<Usuario>
+    ~ObtenerTodos(accesoDatos : AccesoDatosSqlServer) : List<Usuario>
+    ~Actualizar(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ActualizarEstadoBloqueo(usuario : Usuario, intentosFallidos : int, bloqueado : bool, bloqueadoHasta :\nDateTime?, dvh : string, accesoDatos : AccesoDatosSqlServer) : bool
+    ~ActualizarDVH(usuario : Usuario, dvh : string, accesoDatos : AccesoDatosSqlServer) : bool
+    ~GuardarEstadoCompleto(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Desactivar(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+    ~EliminarFisicamente(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : bool
+  }
+  'DAL/UsuarioHistorialDAL.cs
+  class "UsuarioHistorialDAL" as DAL_UsuarioHistorialDAL {
+    ~GuardarVersion(snapshot : UsuarioHistorialSnapshot, accesoDatos : AccesoDatosSqlServer) : int
+    ~ObtenerVersiones(usuario : IUsuarioAutenticado) : List<UsuarioHistorialSnapshot>
+    ~ObtenerPorId(id : int) : UsuarioHistorialSnapshot
+  }
+  'DAL/UsuarioPermisoDAL.cs
+  class "UsuarioPermisoDAL" as DAL_UsuarioPermisoDAL {
+    ~ObtenerPermisosPorUsuario(usuario : Usuario, accesoDatos : AccesoDatosSqlServer) : List<IPermiso>
+    ~ReemplazarPermisosUsuario(usuario : Usuario, permisos : List<IPermiso>, accesoDatos : AccesoDatosSqlServer) :\nbool
+  }
+  'DAL/UsuarioPreferenciaDAL.cs
+  class "UsuarioPreferenciaDAL" as DAL_UsuarioPreferenciaDAL {
+    ~ObtenerPorUsuario(usuario : IUsuarioAutenticado, accesoDatos : AccesoDatosSqlServer) : UsuarioPreferencia
+    ~Guardar(preferencia : UsuarioPreferencia, accesoDatos : AccesoDatosSqlServer) : bool
+    ~Guardar(usuario : IUsuarioAutenticado, idioma : IIdioma, accesoDatos : AccesoDatosSqlServer) : bool
+  }
 }
 
-UsuarioDAL --> AccesoDatosSqlServer
-UsuarioPermisoDAL --> AccesoDatosSqlServer
-UsuarioPreferenciaDAL --> AccesoDatosSqlServer
-UsuarioHistorialDAL --> AccesoDatosSqlServer
-PermisoDAL --> AccesoDatosSqlServer
-IdiomaDAL --> AccesoDatosSqlServer
-IntegridadDAL --> AccesoDatosSqlServer
-BitacoraDAL --> AccesoDatosSqlServer
-CategoriaDAL --> AccesoDatosSqlServer
-MovimientoDAL --> AccesoDatosSqlServer
 
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
+P7 -[hidden]right-> P8
+P5 -[hidden]down-> P8
+P6 -[hidden]down-> P9
 @enduml

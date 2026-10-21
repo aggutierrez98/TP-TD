@@ -77,18 +77,18 @@ namespace TpIDS
             try
             {
                 DateTime fecha = DateTime.Now;
-                // Sin ConfigureAwait(false): la continuacion debe volver al hilo de UI.
                 RespuestaAsistente respuesta = await asistenteBLL.EnviarMensajeAsync(pregunta);
+              
                 if (!FormularioDisponible)
                 {
                     return;
                 }
 
-                // Un rechazo no es un error: se muestra como mensaje del asistente, con el
-                // texto fijo del catalogo en el idioma activo, sin dialogo.
+                // Casos de rechazo si el usuario no cumple las condiciones del rag
                 string textoRespuesta = respuesta.EsRechazo
                     ? UiDialogHelper.Traducir(respuesta.ClaveRechazo)
                     : respuesta.Texto;
+
                 AgregarIntercambioAlHistorial(pregunta, textoRespuesta, fecha);
                 txtbMensajeAsistente.Clear();
             }

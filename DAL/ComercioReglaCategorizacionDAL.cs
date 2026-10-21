@@ -2,12 +2,14 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using BE;
 
 namespace DAL
 {
     public class ComercioReglaCategorizacionDAL
     {
-        public List<int> ObtenerComercioIdsPorReglaCategorizacion(int reglaCategorizacionId, AccesoDatosSqlServer accesoDatos = null)
+        // Devuelve los comercios con solo el Id; REPOSITORIO los hidrata.
+        public List<Comercio> ObtenerComerciosPorReglaCategorizacion(ReglaCategorizacion reglaCategorizacion, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT ComercioId
@@ -22,12 +24,12 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ReglaCategorizacionId", SqlDbType.Int, reglaCategorizacionId)
+                    accesoDatos.CreateParameter("@ReglaCategorizacionId", SqlDbType.Int, reglaCategorizacion.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);
                 return dataTable.Rows.Cast<DataRow>()
-                    .Select(row => (int)row["ComercioId"])
+                    .Select(row => new Comercio { Id = (int)row["ComercioId"] })
                     .ToList();
             }
             finally
@@ -39,8 +41,9 @@ namespace DAL
             }
         }
 
-        public bool ReemplazarComerciosDeReglaCategorizacion(int reglaCategorizacionId, List<int> comercioIds, AccesoDatosSqlServer accesoDatos = null)
+        public bool ReemplazarComerciosDeReglaCategorizacion(ReglaCategorizacion reglaCategorizacion, IEnumerable<Comercio> comercios, AccesoDatosSqlServer accesoDatos = null)
         {
+            List<Comercio> comerciosAAsociar = comercios.ToList();
             bool dispose = accesoDatos == null;
             accesoDatos = accesoDatos ?? new AccesoDatosSqlServer();
 
@@ -48,20 +51,20 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@ReglaCategorizacionId", SqlDbType.Int, reglaCategorizacionId)
+                    accesoDatos.CreateParameter("@ReglaCategorizacionId", SqlDbType.Int, reglaCategorizacion.Id)
                 };
 
                 string query = @"
                     DELETE FROM ComercioReglaCategorizacion
                     WHERE ReglaCategorizacionId = @ReglaCategorizacionId;";
 
-                for (int i = 0; i < comercioIds.Count; i++)
+                for (int i = 0; i < comerciosAAsociar.Count; i++)
                 {
                     query += string.Format(@"
                         INSERT INTO ComercioReglaCategorizacion (ReglaCategorizacionId, ComercioId)
                         VALUES (@ReglaCategorizacionId, @ComercioId{0});", i);
 
-                    parametros.Add(accesoDatos.CreateParameter("@ComercioId" + i, SqlDbType.Int, comercioIds[i]));
+                    parametros.Add(accesoDatos.CreateParameter("@ComercioId" + i, SqlDbType.Int, comerciosAAsociar[i].Id));
                 }
 
                 return accesoDatos.Write(query, parametros) >= 0;
@@ -75,7 +78,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorComercio(int comercioId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorComercio(Comercio comercio, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -89,7 +92,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercioId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, comercio.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

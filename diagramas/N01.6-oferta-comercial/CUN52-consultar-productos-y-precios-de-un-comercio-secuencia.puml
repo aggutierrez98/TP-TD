@@ -1,0 +1,55 @@
+@startuml
+' Fuente: diagramas/NEG12-productos-de-comercio/NEG12-productos-de-comercio-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN52 Consultar productos y precios de un comercio — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormDetalleComercio" as FormDetalleComercio
+control "ComercioProductoBLL" as ComercioProductoBLL
+participant "ComercioProductoRepositorio\n:IComercioProductoRepositorio" as IComercioProductoRepositorio
+participant "ComercioProductoDAL" as ComercioProductoDAL
+control "PromocionBLL" as PromocionBLL
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "PromocionRepositorio\n:IPromocionRepositorio" as IPromocionRepositorio
+control "AlcancePromocion" as AlcancePromocion
+note over FormDetalleComercio : El actor desea conocer qué productos vende un comercio y a qué precio.
+Actor -> FormDetalleComercio : selecciona un comercio del listado de la pantalla «Gestión de Comercios».
+Actor -> FormDetalleComercio : selecciona la acción «Ver detalle».
+FormDetalleComercio -> ComercioProductoBLL ++ : ObtenerPorComercio(comercio: Comercio)
+ComercioProductoBLL -> IComercioProductoRepositorio ++ : ObtenerPorComercio(comercio: Comercio)
+IComercioProductoRepositorio -> ComercioProductoDAL ++ : ObtenerPorComercio(comercio: Comercio, accesoDatos:\nAccesoDatosSqlServer)
+ComercioProductoDAL --> IComercioProductoRepositorio -- : List<ComercioProducto>
+IComercioProductoRepositorio --> ComercioProductoBLL -- : List<ComercioProducto>
+ComercioProductoBLL --> FormDetalleComercio -- : List<ComercioProducto>
+FormDetalleComercio -> PromocionBLL ++ : ObtenerPorComercio(recibido: Comercio)
+PromocionBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio --> PromocionBLL -- : Comercio
+PromocionBLL -> IPromocionRepositorio ++ : ObtenerTodas()
+IPromocionRepositorio --> PromocionBLL -- : List<Promocion>
+PromocionBLL -> AlcancePromocion ++ : FiltrarPorComercio(promociones: IEnumerable<Promocion>,\ncomercio: Comercio)
+AlcancePromocion --> PromocionBLL -- : List<Promocion>
+PromocionBLL --> FormDetalleComercio -- : List<Promocion>
+FormDetalleComercio --> Actor : abre la ventana modal «Detalle del comercio», que muestra el nombre del comercio junto a\n«Comercio:», la sección «Productos» con el listado de productos del comercio ordenado por\nnombre
+Actor -> FormDetalleComercio : selecciona un producto del listado.
+FormDetalleComercio --> Actor : carga en los campos «Producto», «Moneda» y «Precio» los datos del producto seleccionado y\ndeshabilita los campos «Producto» y «Moneda», dejando editable solo el precio.
+' BLL/AlcancePromocion.cs:23 AlcancePromocion.FiltrarPorComercio
+' BLL/ComercioProductoBLL.cs:33 ComercioProductoBLL.ObtenerPorComercio
+' BLL/PromocionBLL.cs:72 PromocionBLL.ObtenerPorComercio
+' DAL/ComercioProductoDAL.cs:21 ComercioProductoDAL.ObtenerPorComercio
+' REPOSITORIO/ComercioProductoRepositorio.cs:23 ComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioProductoRepositorio.cs:8 IComercioProductoRepositorio.ObtenerPorComercio
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionRepositorio.cs:10 IPromocionRepositorio.ObtenerTodas
+' UI/FormDetalleComercio.cs:77 FormDetalleComercio.CargarProductos
+@enduml

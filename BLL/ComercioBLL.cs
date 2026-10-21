@@ -29,38 +29,29 @@ namespace BLL
             return _comercioRepositorio.ObtenerTodos();
         }
 
-        public Comercio Crear(string nombre, int rubroComercioId, string direccion, string localidad, string provincia, decimal? latitud, decimal? longitud)
+        // Devuelve la misma instancia recibida, normalizada, con el rubro persistido y el Id cargado.
+        public Comercio Crear(Comercio comercio)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
-            ValidarCoordenadas(latitud, longitud);
+            string nombreNormalizado = NormalizarNombre(comercio?.Nombre);
+            ValidarCoordenadas(comercio.Latitud, comercio.Longitud);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    RubroComercio rubro = unidad.RubrosComercio.ObtenerPorId(rubroComercioId);
-                    if (rubro == null)
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
-                    }
+                    RubroComercio rubro = ObtenerRubroPersistido(unidad, comercio.RubroComercio);
 
-                    Comercio nuevoComercio = new Comercio
-                    {
-                        RubroComercio = rubro,
-                        Nombre = nombreNormalizado,
-                        Direccion = NormalizarTexto(direccion),
-                        Localidad = NormalizarTexto(localidad),
-                        Provincia = NormalizarTexto(provincia),
-                        Latitud = latitud,
-                        Longitud = longitud
-                    };
+                    comercio.RubroComercio = rubro;
+                    comercio.Nombre = nombreNormalizado;
+                    comercio.Direccion = NormalizarTexto(comercio.Direccion);
+                    comercio.Localidad = NormalizarTexto(comercio.Localidad);
+                    comercio.Provincia = NormalizarTexto(comercio.Provincia);
 
-                    int id = unidad.Comercios.InsertarYObtenerId(nuevoComercio);
-                    nuevoComercio.Id = id;
+                    comercio.Id = unidad.Comercios.InsertarYObtenerId(comercio);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormMerchantManagement.Value.Activity.ComercioCreation", "FormMerchantManagement.Value.Info.ComercioCreation", "ComercioBLL", unidad);
                     unidad.Save();
-                    return nuevoComercio;
+                    return comercio;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -73,36 +64,33 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre, int rubroComercioId, string direccion, string localidad, string provincia, decimal? latitud, decimal? longitud)
+        // Recibe el comercio con los valores nuevos y los copia sobre el persistido.
+        public bool Actualizar(Comercio comercio)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
-            ValidarCoordenadas(latitud, longitud);
+            string nombreNormalizado = NormalizarNombre(comercio?.Nombre);
+            ValidarCoordenadas(comercio.Latitud, comercio.Longitud);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Comercio comercio = unidad.Comercios.ObtenerPorId(id);
-                    if (comercio == null)
+                    Comercio persistido = unidad.Comercios.ObtenerPorId(comercio.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ComercioNotFound");
                     }
 
-                    RubroComercio rubro = unidad.RubrosComercio.ObtenerPorId(rubroComercioId);
-                    if (rubro == null)
-                    {
-                        throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
-                    }
+                    RubroComercio rubro = ObtenerRubroPersistido(unidad, comercio.RubroComercio);
 
-                    comercio.Nombre = nombreNormalizado;
-                    comercio.RubroComercio = rubro;
-                    comercio.Direccion = NormalizarTexto(direccion);
-                    comercio.Localidad = NormalizarTexto(localidad);
-                    comercio.Provincia = NormalizarTexto(provincia);
-                    comercio.Latitud = latitud;
-                    comercio.Longitud = longitud;
+                    persistido.Nombre = nombreNormalizado;
+                    persistido.RubroComercio = rubro;
+                    persistido.Direccion = NormalizarTexto(comercio.Direccion);
+                    persistido.Localidad = NormalizarTexto(comercio.Localidad);
+                    persistido.Provincia = NormalizarTexto(comercio.Provincia);
+                    persistido.Latitud = comercio.Latitud;
+                    persistido.Longitud = comercio.Longitud;
 
-                    bool actualizado = unidad.Comercios.Actualizar(comercio);
+                    bool actualizado = unidad.Comercios.Actualizar(persistido);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.ComercioUpdateFailed");
@@ -127,29 +115,29 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(Comercio comercio)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    Comercio comercio = unidad.Comercios.ObtenerPorId(id);
-                    if (comercio == null)
+                    Comercio persistido = comercio == null ? null : unidad.Comercios.ObtenerPorId(comercio.Id);
+                    if (persistido == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ComercioNotFound");
                     }
 
                     // Un comercio no se borra mientras algo lo referencie (hay que soltar esas
                     // referencias primero): productos asignados, movimientos, promociones y reglas.
-                    if (unidad.ComercioProductos.ObtenerPorComercio(id).Count > 0
-                        || unidad.Movimientos.ContarPorComercio(id) > 0
-                        || unidad.PromocionComercio.ObtenerPromocionIdsPorComercio(id).Count > 0
-                        || unidad.ComercioReglaCategorizacion.ContarPorComercio(id) > 0)
+                    if (unidad.ComercioProductos.ObtenerPorComercio(persistido).Count > 0
+                        || unidad.Movimientos.ContarPorComercio(persistido) > 0
+                        || unidad.PromocionComercio.ObtenerPromocionesPorComercio(persistido).Count > 0
+                        || unidad.ComercioReglaCategorizacion.ContarPorComercio(persistido) > 0)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.ComercioInUse");
                     }
 
-                    bool eliminado = unidad.Comercios.Eliminar(id);
+                    bool eliminado = unidad.Comercios.Eliminar(persistido);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.ComercioDeleteFailed");
@@ -172,6 +160,18 @@ namespace BLL
                     throw new ExcepcionTecnica("Error.MerchantManagement.ComercioDeleteFailed", ex);
                 }
             }
+        }
+
+        // Relee el rubro recibido: el comercio queda con la entidad persistida, no con la recibida.
+        private static RubroComercio ObtenerRubroPersistido(IUnidadDeTrabajo unidad, RubroComercio rubro)
+        {
+            RubroComercio persistido = rubro == null ? null : unidad.RubrosComercio.ObtenerPorId(rubro.Id);
+            if (persistido == null)
+            {
+                throw new ExcepcionNegocio("Error.MerchantManagement.RubroNotFound");
+            }
+
+            return persistido;
         }
 
         private static string NormalizarNombre(string nombre)

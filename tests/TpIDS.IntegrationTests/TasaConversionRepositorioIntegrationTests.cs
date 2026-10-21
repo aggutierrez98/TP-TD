@@ -23,7 +23,7 @@ namespace TpIDS.IntegrationTests
 
                 BE.Moneda pesoArgentino = monedaRepositorio.ObtenerTodas().Single(item => item.Codigo == "ARS");
                 BE.Moneda dolarEstadounidense = monedaRepositorio.ObtenerTodas().Single(item => item.Codigo == "USD");
-                BE.TasaConversion tasa = tasaRepositorio.ObtenerPorParDeMonedas(dolarEstadounidense.Id, pesoArgentino.Id);
+                BE.TasaConversion tasa = tasaRepositorio.ObtenerPorParDeMonedas(dolarEstadounidense, pesoArgentino);
 
                 Assert.AreEqual("Peso Argentino", pesoArgentino.Nombre);
                 Assert.AreEqual("Dólar Estadounidense", dolarEstadounidense.Nombre);
@@ -81,8 +81,8 @@ namespace TpIDS.IntegrationTests
                     CalculoConversion = 900.5m
                 });
 
-                BE.TasaConversion obtenida = repositorio.ObtenerPorParDeMonedas(monedaBaseId, monedaConversionId);
-                BE.TasaConversion inexistente = repositorio.ObtenerPorParDeMonedas(monedaBaseId, otraMonedaId);
+                BE.TasaConversion obtenida = repositorio.ObtenerPorParDeMonedas(new BE.Moneda { Id = monedaBaseId }, new BE.Moneda { Id = monedaConversionId });
+                BE.TasaConversion inexistente = repositorio.ObtenerPorParDeMonedas(new BE.Moneda { Id = monedaBaseId }, new BE.Moneda { Id = otraMonedaId });
 
                 Assert.IsNotNull(obtenida);
                 Assert.AreEqual(id, obtenida.Id);
@@ -139,7 +139,7 @@ namespace TpIDS.IntegrationTests
                     CalculoConversion = 50m
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
@@ -160,7 +160,7 @@ namespace TpIDS.IntegrationTests
                 BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
 
                 Assert.IsFalse(obtenida.EsManual);
-                Assert.IsNull(obtenida.ProtegidaPorUsuarioId);
+                Assert.IsNull(obtenida.ProtegidaPorUsuario);
                 Assert.IsNull(obtenida.FechaProteccion);
 
                 accesoDatos.RollbackTransactionScope();
@@ -178,12 +178,13 @@ namespace TpIDS.IntegrationTests
                 int usuarioId = ObtenerUsuarioIdTest(accesoDatos);
                 DateTime antes = DateTime.Now.AddMinutes(-1);
 
-                bool marcada = repositorio.MarcarManual(id, usuarioId);
+                bool marcada = repositorio.MarcarManual(repositorio.ObtenerPorId(id), new BE.Usuario { Id = usuarioId });
 
                 BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
                 Assert.IsTrue(marcada);
                 Assert.IsTrue(obtenida.EsManual);
-                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuarioId);
+                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuario.Id);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(obtenida.ProtegidaPorUsuario.Username));
                 Assert.IsNotNull(obtenida.FechaProteccion);
                 Assert.IsTrue(obtenida.FechaProteccion.Value >= antes);
 
@@ -199,8 +200,8 @@ namespace TpIDS.IntegrationTests
                 accesoDatos.BeginTransactionScope();
                 TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
 
-                Assert.IsFalse(repositorio.MarcarManual(int.MaxValue, ObtenerUsuarioIdTest(accesoDatos)));
-                Assert.IsFalse(repositorio.Liberar(int.MaxValue));
+                Assert.IsFalse(repositorio.MarcarManual(new BE.TasaConversion { Id = int.MaxValue }, new BE.Usuario { Id = ObtenerUsuarioIdTest(accesoDatos) }));
+                Assert.IsFalse(repositorio.Liberar(new BE.TasaConversion { Id = int.MaxValue }));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -214,14 +215,14 @@ namespace TpIDS.IntegrationTests
                 accesoDatos.BeginTransactionScope();
                 TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
                 int id = InsertarTasaTest(accesoDatos, repositorio, "TD5", "TD6", 10m);
-                repositorio.MarcarManual(id, ObtenerUsuarioIdTest(accesoDatos));
+                repositorio.MarcarManual(repositorio.ObtenerPorId(id), new BE.Usuario { Id = ObtenerUsuarioIdTest(accesoDatos) });
 
-                bool liberada = repositorio.Liberar(id);
+                bool liberada = repositorio.Liberar(repositorio.ObtenerPorId(id));
 
                 BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
                 Assert.IsTrue(liberada);
                 Assert.IsFalse(obtenida.EsManual);
-                Assert.IsNull(obtenida.ProtegidaPorUsuarioId);
+                Assert.IsNull(obtenida.ProtegidaPorUsuario);
                 Assert.IsNull(obtenida.FechaProteccion);
 
                 accesoDatos.RollbackTransactionScope();
@@ -238,7 +239,7 @@ namespace TpIDS.IntegrationTests
                 int id = InsertarTasaTest(accesoDatos, repositorio, "TD7", "TD8", 10m);
                 DateTime antes = DateTime.Now.AddMinutes(-1);
 
-                bool actualizada = repositorio.ActualizarValorAutomatico(id, 1234.567891m);
+                bool actualizada = repositorio.ActualizarValorAutomatico(repositorio.ObtenerPorId(id), 1234.567891m);
 
                 BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
                 Assert.IsTrue(actualizada);
@@ -259,15 +260,15 @@ namespace TpIDS.IntegrationTests
                 TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
                 int id = InsertarTasaTest(accesoDatos, repositorio, "TD9", "TE1", 10m);
                 int usuarioId = ObtenerUsuarioIdTest(accesoDatos);
-                repositorio.MarcarManual(id, usuarioId);
+                repositorio.MarcarManual(repositorio.ObtenerPorId(id), new BE.Usuario { Id = usuarioId });
 
-                bool actualizada = repositorio.ActualizarValorAutomatico(id, 999m);
+                bool actualizada = repositorio.ActualizarValorAutomatico(repositorio.ObtenerPorId(id), 999m);
 
                 BE.TasaConversion obtenida = repositorio.ObtenerPorId(id);
                 Assert.IsFalse(actualizada);
                 Assert.AreEqual(10m, obtenida.CalculoConversion);
                 Assert.IsTrue(obtenida.EsManual);
-                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuarioId);
+                Assert.AreEqual(usuarioId, obtenida.ProtegidaPorUsuario.Id);
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -282,7 +283,7 @@ namespace TpIDS.IntegrationTests
                 TasaConversionRepositorio repositorio = new TasaConversionRepositorio(accesoDatos);
                 int idManual = InsertarTasaTest(accesoDatos, repositorio, "TE2", "TE3", 10m);
                 int idAutomatica = InsertarTasaTest(accesoDatos, repositorio, "TE4", "TE5", 20m);
-                repositorio.MarcarManual(idManual, ObtenerUsuarioIdTest(accesoDatos));
+                repositorio.MarcarManual(repositorio.ObtenerPorId(idManual), new BE.Usuario { Id = ObtenerUsuarioIdTest(accesoDatos) });
 
                 var tasas = repositorio.ObtenerTodas();
 

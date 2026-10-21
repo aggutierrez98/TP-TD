@@ -1,0 +1,138 @@
+@startuml
+' Fuente: diagramas/NEG20-notificaciones/NEG20-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN81 Consultar notificaciones de usuarios — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionNotificaciones {
+    -CargarNotificaciones(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class NotificacionBLL {
+    +ObtenerTodas(): List<Notificacion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface INotificacionRepositorio {
+    +ObtenerTodas(): List<Notificacion>
+  }
+  class NotificacionRepositorio {
+    +ObtenerTodas(): List<Notificacion>
+  }
+  class "RecordatorioCompraRepositorio" as IRecordatorioCompraRepositorio <<IRecordatorioCompraRepositorio>> {
+    +ObtenerTodas(): List<RecordatorioCompra>
+  }
+  class "RecordatorioInversionRepositorio" as IRecordatorioInversionRepositorio <<IRecordatorioInversionRepositorio>> {
+    +ObtenerTodas(): List<RecordatorioInversion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+INotificacionRepositorio -[hidden]right-> NotificacionRepositorio
+INotificacionRepositorio -[hidden]down-> IRecordatorioCompraRepositorio
+IRecordatorioCompraRepositorio -[hidden]right-> IRecordatorioInversionRepositorio
+package "DAL" as L_DAL {
+  class NotificacionDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<Notificacion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class ItemLista {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class Notificacion {
+    +Id: int
+    +Usuario: Usuario
+    +Mensaje: string
+    +Fecha: DateTime
+    +Leida: bool
+    +TipoAutomatico: TipoNotificacionAutomatica?
+    +FechaJornada: DateTime?
+    +ClaveEjemplo: string
+  }
+  class Promocion {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RecordatorioCompra {
+    +ItemLista: ItemLista
+    +Promocion: Promocion
+    +FechaVencimiento: DateTime?
+  }
+  class RecordatorioInversion {
+  }
+  enum TipoNotificacionAutomatica {
+    Compras
+    Inversiones
+    Movimientos
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ItemLista -[hidden]right-> Notificacion
+ItemLista -[hidden]down-> Promocion
+Promocion -[hidden]right-> RecordatorioCompra
+Promocion -[hidden]down-> RecordatorioInversion
+RecordatorioInversion -[hidden]right-> TipoNotificacionAutomatica
+RecordatorioInversion -[hidden]down-> Usuario
+FormGestionNotificaciones ..> NotificacionBLL : usa
+NotificacionRepositorio ..> NotificacionDAL : usa
+NotificacionBLL ..> INotificacionRepositorio : usa
+NotificacionBLL ..> IRecordatorioCompraRepositorio : usa
+NotificacionBLL ..> IRecordatorioInversionRepositorio : usa
+NotificacionRepositorio ..|> INotificacionRepositorio
+NotificacionBLL ..> Notificacion : datos
+Notificacion --> Usuario : Usuario
+Notificacion --> TipoNotificacionAutomatica : TipoAutomatico
+RecordatorioCompra --> ItemLista : ItemLista
+RecordatorioCompra --> Promocion : Promocion
+' BLL/NotificacionBLL.cs:94 NotificacionBLL.ObtenerTodas
+' DAL/NotificacionDAL.cs:284 NotificacionDAL.ObtenerTodas
+' REPOSITORIO/INotificacionRepositorio.cs:21 INotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:12 IRecordatorioCompraRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:12 IRecordatorioInversionRepositorio.ObtenerTodas
+' REPOSITORIO/NotificacionRepositorio.cs:60 NotificacionRepositorio.ObtenerTodas
+' UI/FormGestionNotificaciones.cs:61 FormGestionNotificaciones.CargarNotificaciones
+@enduml

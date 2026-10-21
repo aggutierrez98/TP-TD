@@ -30,23 +30,23 @@ namespace BLL
             return _categoriaProductoRepositorio.ObtenerTodas();
         }
 
-        public CategoriaProducto Crear(string nombre)
+        // Devuelve la misma instancia recibida, con el nombre normalizado y el Id cargado.
+        public CategoriaProducto Crear(CategoriaProducto categoria)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(categoria?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    ValidarNombreUnico(unidad, 0, nombreNormalizado);
-                    CategoriaProducto nuevaCategoria = new CategoriaProducto { Nombre = nombreNormalizado };
+                    ValidarNombreUnico(unidad, null, nombreNormalizado);
 
-                    int id = unidad.CategoriasProducto.InsertarYObtenerId(nuevaCategoria);
-                    nuevaCategoria.Id = id;
+                    categoria.Nombre = nombreNormalizado;
+                    categoria.Id = unidad.CategoriasProducto.InsertarYObtenerId(categoria);
 
                     _bitacoraBLL.RegistrarOperacionInterno("FormProductCategoryManagement.Value.Activity.Creation", "FormProductCategoryManagement.Value.Info.Creation", "CategoriaProductoBLL", unidad);
                     unidad.Save();
-                    return nuevaCategoria;
+                    return categoria;
                 }
                 catch (ExcepcionNegocio)
                 {
@@ -59,23 +59,24 @@ namespace BLL
             }
         }
 
-        public bool Actualizar(int id, string nombre)
+        // Recibe la categoria con el nombre nuevo y lo copia sobre la persistida.
+        public bool Actualizar(CategoriaProducto categoria)
         {
-            string nombreNormalizado = NormalizarNombre(nombre);
+            string nombreNormalizado = NormalizarNombre(categoria?.Nombre);
 
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    CategoriaProducto categoria = unidad.CategoriasProducto.ObtenerPorId(id);
-                    if (categoria == null)
+                    CategoriaProducto persistida = unidad.CategoriasProducto.ObtenerPorId(categoria.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
                     }
 
-                    ValidarNombreUnico(unidad, id, nombreNormalizado);
-                    categoria.Nombre = nombreNormalizado;
-                    bool actualizado = unidad.CategoriasProducto.Actualizar(categoria);
+                    ValidarNombreUnico(unidad, persistida, nombreNormalizado);
+                    persistida.Nombre = nombreNormalizado;
+                    bool actualizado = unidad.CategoriasProducto.Actualizar(persistida);
                     if (!actualizado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.CategoriaProductoUpdateFailed");
@@ -100,25 +101,25 @@ namespace BLL
             }
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(CategoriaProducto categoria)
         {
             using (IUnidadDeTrabajo unidad = _unidadDeTrabajoFactory.Crear())
             {
                 try
                 {
-                    CategoriaProducto categoria = unidad.CategoriasProducto.ObtenerPorId(id);
-                    if (categoria == null)
+                    CategoriaProducto persistida = categoria == null ? null : unidad.CategoriasProducto.ObtenerPorId(categoria.Id);
+                    if (persistida == null)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoNotFound");
                     }
 
-                    if (unidad.Productos.ContarPorCategoria(id) > 0
-                        || unidad.PromocionCategoriasProducto.ContarPorCategoriaProducto(id) > 0)
+                    if (unidad.Productos.ContarPorCategoria(persistida) > 0
+                        || unidad.PromocionCategoriasProducto.ContarPorCategoriaProducto(persistida) > 0)
                     {
                         throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoInUse");
                     }
 
-                    bool eliminado = unidad.CategoriasProducto.Eliminar(id);
+                    bool eliminado = unidad.CategoriasProducto.Eliminar(persistida);
                     if (!eliminado)
                     {
                         throw new ExcepcionTecnica("Error.MerchantManagement.CategoriaProductoDeleteFailed");
@@ -143,10 +144,12 @@ namespace BLL
             }
         }
 
-        private static void ValidarNombreUnico(IUnidadDeTrabajo unidad, int id, string nombre)
+        // excluida null = alta (sin exclusion).
+        private static void ValidarNombreUnico(IUnidadDeTrabajo unidad, CategoriaProducto excluida, string nombre)
         {
+            int idExcluido = excluida?.Id ?? 0;
             if (unidad.CategoriasProducto.ObtenerTodas().Any(categoria =>
-                categoria.Id != id && string.Equals(categoria.Nombre, nombre, StringComparison.OrdinalIgnoreCase)))
+                categoria.Id != idExcluido && string.Equals(categoria.Nombre, nombre, StringComparison.OrdinalIgnoreCase)))
             {
                 throw new ExcepcionNegocio("Error.MerchantManagement.CategoriaProductoDuplicateName");
             }

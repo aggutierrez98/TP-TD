@@ -16,13 +16,13 @@ namespace TpIDS
     // se quita y se vuelve a agregar.
     public partial class FormDetalleEntidadFinanciera : FormTraducibleBase
     {
-        private readonly int _entidadFinancieraId;
+        private readonly EntidadFinanciera _entidadFinanciera;
         private readonly EntidadFinancieraBLL _entidadFinancieraBLL = CompositionRoot.EntidadFinanciera;
         private readonly MedioPagoBLL _medioPagoBLL = CompositionRoot.MedioPago;
 
-        public FormDetalleEntidadFinanciera(int entidadFinancieraId, string nombreEntidad)
+        public FormDetalleEntidadFinanciera(EntidadFinanciera entidadFinanciera, string nombreEntidad)
         {
-            _entidadFinancieraId = entidadFinancieraId;
+            _entidadFinanciera = entidadFinanciera;
             InitializeComponent();
 
             // El nombre es dato fijo del constructor (igual criterio que FormDetalleComercio).
@@ -32,9 +32,11 @@ namespace TpIDS
         }
 
         // View-model plano para la grilla. Tipo queda como enum y se traduce en CellFormatting.
+        // La grilla no autogenera columnas, asi que MedioPagoEntidad (la entidad que se pasa al
+        // BLL) no se muestra.
         private sealed class FilaMedioPagoEntidad
         {
-            public int Id { get; set; }
+            public MedioPagoEntidad MedioPagoEntidad { get; set; }
             public TipoMedioPago Tipo { get; set; }
             public string Marca { get; set; }
             public string Segmento { get; set; }
@@ -90,8 +92,7 @@ namespace TpIDS
         {
             try
             {
-                EntidadFinanciera entidad = _entidadFinancieraBLL.ObtenerPorId(_entidadFinancieraId);
-                List<MedioPagoEntidad> mediosPagoEntidad = entidad?.MediosPagoEntidad ?? new List<MedioPagoEntidad>();
+                List<MedioPagoEntidad> mediosPagoEntidad = _entidadFinancieraBLL.ObtenerMediosPagoEntidad(_entidadFinanciera);
 
                 dgvMediosPagoEntidad.DataSource = null;
                 dgvMediosPagoEntidad.DataSource = mediosPagoEntidad
@@ -101,7 +102,7 @@ namespace TpIDS
                     .ThenBy(item => item.Segmento)
                     .Select(item => new FilaMedioPagoEntidad
                     {
-                        Id = item.Id,
+                        MedioPagoEntidad = item,
                         Tipo = item.MedioPago.Tipo,
                         Marca = item.MedioPago.Marca,
                         Segmento = item.Segmento
@@ -110,7 +111,7 @@ namespace TpIDS
 
                 if (medioPagoEntidadSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila<FilaMedioPagoEntidad>(dgvMediosPagoEntidad, fila => fila.Id == medioPagoEntidadSeleccionadoId.Value);
+                    SeleccionarFila<FilaMedioPagoEntidad>(dgvMediosPagoEntidad, fila => fila.MedioPagoEntidad.Id == medioPagoEntidadSeleccionadoId.Value);
                 }
                 else
                 {
@@ -134,10 +135,12 @@ namespace TpIDS
 
             try
             {
-                MedioPagoEntidad creado = _entidadFinancieraBLL.AgregarMedioPagoEntidad(
-                    _entidadFinancieraId,
-                    opcion.MedioPago.Id,
-                    txtbSegmentoMedioPagoEntidad.Text);
+                MedioPagoEntidad creado = _entidadFinancieraBLL.AgregarMedioPagoEntidad(new MedioPagoEntidad
+                {
+                    EntidadFinanciera = _entidadFinanciera,
+                    MedioPago = opcion.MedioPago,
+                    Segmento = txtbSegmentoMedioPagoEntidad.Text
+                });
                 cmbMedioPagoEntidad.SelectedIndex = -1;
                 txtbSegmentoMedioPagoEntidad.Clear();
                 CargarMediosPagoEntidad(creado.Id);
@@ -169,7 +172,7 @@ namespace TpIDS
 
             try
             {
-                bool quitado = _entidadFinancieraBLL.QuitarMedioPagoEntidad(fila.Id);
+                bool quitado = _entidadFinancieraBLL.QuitarMedioPagoEntidad(fila.MedioPagoEntidad);
                 if (quitado)
                 {
                     CargarMediosPagoEntidad(null);

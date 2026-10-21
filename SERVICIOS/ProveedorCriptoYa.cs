@@ -12,7 +12,7 @@ namespace SERVICIOS
         private readonly ClienteMercadoPublico _cliente;
         public ProveedorCriptoYa() : this(new HttpClientHandler(), TimeSpan.FromSeconds(8), () => DateTime.UtcNow) { }
         internal ProveedorCriptoYa(HttpMessageHandler handler, TimeSpan timeout, Func<DateTime> ahora) { _cliente = new ClienteMercadoPublico(handler, timeout, ahora, TimeSpan.FromMinutes(15)); }
-        public Task<IReadOnlyList<DatoMercado>> ObtenerPreciosAsync(string moneda, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<IDatoMercado>> ObtenerPreciosAsync(string moneda, CancellationToken cancellationToken)
         {
             if (moneda != "BTC" && moneda != "ETH" && moneda != "USDT") throw new ArgumentException("Moneda no admitida.", nameof(moneda));
             return _cliente.ObtenerAsync("https://criptoya.com/api/" + moneda.ToLowerInvariant() + "/ars/1", raiz =>

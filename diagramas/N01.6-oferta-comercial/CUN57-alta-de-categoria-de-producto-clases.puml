@@ -1,0 +1,89 @@
+@startuml
+' Fuente: diagramas/NEG13-categorias-producto/NEG13-categorias-producto-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN57 Alta de categoría de producto — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionCategoriasProducto {
+    -btnAgregarCategoriaProducto_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class CategoriaProductoBLL {
+    +Crear(categoria: CategoriaProducto): CategoriaProducto
+    +ObtenerTodas(): List<CategoriaProducto>
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProductoBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface ICategoriaProductoRepositorio {
+    +ObtenerTodas(): List<CategoriaProducto>
+    +InsertarYObtenerId(categoria: CategoriaProducto): int
+  }
+  class CategoriaProductoRepositorio {
+    +ObtenerTodas(): List<CategoriaProducto>
+    +InsertarYObtenerId(categoria: CategoriaProducto): int
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> ICategoriaProductoRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> CategoriaProductoRepositorio
+CategoriaProductoRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class CategoriaProductoDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<CategoriaProducto>
+    +InsertarYObtenerId(categoria: CategoriaProducto, accesoDatos: AccesoDatosSqlServer):\nint
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class CategoriaProducto {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProductoBLL ..> IBitacoraBLL : usa
+CategoriaProductoBLL ..> ICategoriaProductoRepositorio : usa
+CategoriaProductoBLL ..> IUnidadDeTrabajo : usa
+CategoriaProductoBLL ..> IUnidadDeTrabajoFactory : usa
+CategoriaProductoRepositorio ..|> ICategoriaProductoRepositorio
+FormGestionCategoriasProducto ..> CategoriaProductoBLL : usa
+CategoriaProductoRepositorio ..> CategoriaProductoDAL : usa
+CategoriaProductoBLL ..> CategoriaProducto : datos
+' BLL/CategoriaProductoBLL.cs:28 CategoriaProductoBLL.ObtenerTodas
+' BLL/CategoriaProductoBLL.cs:34 CategoriaProductoBLL.Crear
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' DAL/CategoriaProductoDAL.cs:48 CategoriaProductoDAL.ObtenerTodas
+' DAL/CategoriaProductoDAL.cs:78 CategoriaProductoDAL.InsertarYObtenerId
+' REPOSITORIO/CategoriaProductoRepositorio.cs:28 CategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/CategoriaProductoRepositorio.cs:33 CategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:10 ICategoriaProductoRepositorio.ObtenerTodas
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:12 ICategoriaProductoRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' UI/FormGestionCategoriasProducto.cs:61 FormGestionCategoriasProducto.btnAgregarCategoriaProducto_Click
+@enduml

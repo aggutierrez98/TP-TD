@@ -12,7 +12,7 @@ namespace REPOSITORIO
 
         List<EjecucionActualizacionTasas> ObtenerRecientes(int cantidad);
 
-        List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(int ejecucionId);
+        List<ActualizacionTasaDetalle> ObtenerDetallePorEjecucion(EjecucionActualizacionTasas ejecucion);
 
         EjecucionActualizacionTasas ObtenerUltimaExitosa();
 

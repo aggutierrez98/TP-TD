@@ -7,12 +7,12 @@ namespace REPOSITORIO
     {
         ListaDeCompras ObtenerPorId(int id);
 
-        List<ListaDeCompras> ObtenerPorUsuario(int usuarioId);
+        List<ListaDeCompras> ObtenerPorUsuario(Usuario usuario);
 
         int InsertarYObtenerId(ListaDeCompras listaDeCompras);
 
         bool Actualizar(ListaDeCompras listaDeCompras);
 
-        bool Eliminar(int id);
+        bool Eliminar(ListaDeCompras lista);
     }
 }

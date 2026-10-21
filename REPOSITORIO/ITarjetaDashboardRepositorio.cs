@@ -7,12 +7,12 @@ namespace REPOSITORIO
     {
         TarjetaDashboard ObtenerPorId(int id);
 
-        List<TarjetaDashboard> ObtenerPorDashboard(int dashboardId);
+        List<TarjetaDashboard> ObtenerPorDashboard(Dashboard dashboard);
 
         int InsertarYObtenerId(TarjetaDashboard tarjeta);
 
         bool Actualizar(TarjetaDashboard tarjeta);
 
-        bool Eliminar(int id);
+        bool Eliminar(TarjetaDashboard tarjeta);
     }
 }

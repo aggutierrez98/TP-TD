@@ -32,18 +32,18 @@ namespace DAL
             };
         }
 
-        private DetalleGeneracionNotificacion MapDetalle(DataRow row)
+        private DetalleGeneracionNotificacion MapDetalle(DataRow row, CorridaGeneracionNotificaciones corrida)
         {
             return new DetalleGeneracionNotificacion
             {
                 Id = (int)row["Id"],
-                CorridaId = (int)row["CorridaId"],
-                UsuarioId = (int)row["UsuarioId"],
+                Corrida = corrida,
+                Usuario = new Usuario { Id = (int)row["UsuarioId"] },
                 Tipo = (TipoNotificacionAutomatica)Enum.Parse(typeof(TipoNotificacionAutomatica), (string)row["TipoAutomatico"]),
                 Jornada = (DateTime)row["Jornada"],
                 Resultado = (ResultadoGeneracionNotificacion)Enum.Parse(typeof(ResultadoGeneracionNotificacion), (string)row["Resultado"]),
                 Motivo = row.IsNull("Motivo") ? null : (string)row["Motivo"],
-                NotificacionId = row.IsNull("NotificacionId") ? (int?)null : (int)row["NotificacionId"],
+                Notificacion = row.IsNull("NotificacionId") ? null : new Notificacion { Id = (int)row["NotificacionId"] },
                 FechaUtc = Utc(row["FechaUtc"])
             };
         }
@@ -75,7 +75,7 @@ namespace DAL
             }
         }
 
-        public bool FinalizarCorrida(int corridaId, DateTime finUtc, int entregadas, int omitidas, int fallidas, AccesoDatosSqlServer accesoDatos = null)
+        public bool FinalizarCorrida(CorridaGeneracionNotificaciones corrida, DateTime finUtc, int entregadas, int omitidas, int fallidas, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 UPDATE CorridaGeneracionNotificaciones
@@ -93,7 +93,7 @@ namespace DAL
                     accesoDatos.CreateParameter("@Entregadas", SqlDbType.Int, entregadas),
                     accesoDatos.CreateParameter("@Omitidas", SqlDbType.Int, omitidas),
                     accesoDatos.CreateParameter("@Fallidas", SqlDbType.Int, fallidas),
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, corridaId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, corrida.Id)
                 }) > 0;
             }
             finally
@@ -119,13 +119,13 @@ namespace DAL
             {
                 return accesoDatos.WriteWithResult(query, new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@CorridaId", SqlDbType.Int, detalle.CorridaId),
-                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, detalle.UsuarioId),
+                    accesoDatos.CreateParameter("@CorridaId", SqlDbType.Int, detalle.Corrida.Id),
+                    accesoDatos.CreateParameter("@UsuarioId", SqlDbType.Int, detalle.Usuario.Id),
                     accesoDatos.CreateParameter("@TipoAutomatico", SqlDbType.VarChar, detalle.Tipo.ToString()),
                     accesoDatos.CreateParameter("@Jornada", SqlDbType.Date, detalle.Jornada),
                     accesoDatos.CreateParameter("@Resultado", SqlDbType.VarChar, detalle.Resultado.ToString()),
                     accesoDatos.CreateParameter("@Motivo", SqlDbType.VarChar, detalle.Motivo),
-                    accesoDatos.CreateParameter("@NotificacionId", SqlDbType.Int, detalle.NotificacionId),
+                    accesoDatos.CreateParameter("@NotificacionId", SqlDbType.Int, detalle.Notificacion?.Id),
                     accesoDatos.CreateParameter("@FechaUtc", SqlDbType.DateTime2, detalle.FechaUtc)
                 });
             }
@@ -138,7 +138,7 @@ namespace DAL
             }
         }
 
-        public CorridaGeneracionNotificaciones ObtenerCorrida(int id, AccesoDatosSqlServer accesoDatos = null)
+        public CorridaGeneracionNotificaciones ObtenerPorId(int id, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT " + ColumnasCorrida + @"
@@ -198,7 +198,7 @@ namespace DAL
             }
         }
 
-        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(int corridaId, AccesoDatosSqlServer accesoDatos = null)
+        public List<DetalleGeneracionNotificacion> ObtenerDetallePorCorrida(CorridaGeneracionNotificaciones corrida, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT " + ColumnasDetalle + @"
@@ -213,12 +213,12 @@ namespace DAL
             {
                 DataTable dataTable = accesoDatos.Read(query, new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@CorridaId", SqlDbType.Int, corridaId)
+                    accesoDatos.CreateParameter("@CorridaId", SqlDbType.Int, corrida.Id)
                 });
                 List<DetalleGeneracionNotificacion> detalles = new List<DetalleGeneracionNotificacion>();
                 foreach (DataRow row in dataTable.Rows)
                 {
-                    detalles.Add(MapDetalle(row));
+                    detalles.Add(MapDetalle(row, corrida));
                 }
 
                 return detalles;

@@ -1,0 +1,91 @@
+@startuml
+' Fuente: diagramas/NEG16-lista-compras/NEG16-lista-compras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN71 Eliminar ítem de mi lista de compras — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormListaDeCompras" as FormListaDeCompras
+control "ListaDeComprasBLL" as ListaDeComprasBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ItemListaRepositorio\n:IItemListaRepositorio" as IItemListaRepositorio
+participant "ItemListaDAL" as ItemListaDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+participant "ListaDeComprasRepositorio\n:IListaDeComprasRepositorio" as IListaDeComprasRepositorio
+note over FormListaDeCompras : El actor desea quitar de su lista un ítem que ya no necesita.
+Actor -> FormListaDeCompras : selecciona un ítem del listado.
+Actor -> FormListaDeCompras : selecciona la acción «Eliminar ítem».
+FormListaDeCompras --> Actor : solicita confirmación mediante el diálogo «Confirmar eliminación» con el mensaje «Se\neliminará el ítem seleccionado. ¿Desea continuar?».
+alt El actor confirma la operacion
+Actor -> FormListaDeCompras : confirma la eliminación.
+FormListaDeCompras -> ListaDeComprasBLL ++ : EliminarItem(recibido: ItemLista)
+ListaDeComprasBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ListaDeComprasBLL -- : Usuario
+ListaDeComprasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ListaDeComprasBLL -- : IUnidadDeTrabajo
+ListaDeComprasBLL -> IItemListaRepositorio ++ : ObtenerPorId(id: int)
+IItemListaRepositorio -> ItemListaDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ItemListaDAL --> IItemListaRepositorio -- : ItemLista
+IItemListaRepositorio --> ListaDeComprasBLL -- : ItemLista
+ListaDeComprasBLL -> IItemListaRepositorio ++ : Eliminar(item: ItemLista)
+IItemListaRepositorio -> ItemListaDAL ++ : Eliminar(item: ItemLista, accesoDatos: AccesoDatosSqlServer)
+ItemListaDAL --> IItemListaRepositorio -- : bool
+IItemListaRepositorio --> ListaDeComprasBLL -- : bool
+ListaDeComprasBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ListaDeComprasBLL -- : void
+ListaDeComprasBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ListaDeComprasBLL -- : void
+ListaDeComprasBLL --> FormListaDeCompras -- : bool
+group Refrescar listado tras la operacion exitosa
+FormListaDeCompras -> ListaDeComprasBLL ++ : ObtenerOCrearParaUsuarioActual()
+ListaDeComprasBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ListaDeComprasBLL -- : Usuario
+ListaDeComprasBLL -> IListaDeComprasRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IListaDeComprasRepositorio --> ListaDeComprasBLL -- : List<ListaDeCompras>
+alt Ya existe para el usuario
+note over ListaDeComprasBLL : Reutilizar la entidad persistida; no insertar otra.
+else No existe
+ListaDeComprasBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ListaDeComprasBLL -- : IUnidadDeTrabajo
+ListaDeComprasBLL -> IListaDeComprasRepositorio ++ : InsertarYObtenerId(listaDeCompras: ListaDeCompras)
+IListaDeComprasRepositorio --> ListaDeComprasBLL -- : int
+ListaDeComprasBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ListaDeComprasBLL -- : void
+ListaDeComprasBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ListaDeComprasBLL -- : void
+end
+ListaDeComprasBLL --> FormListaDeCompras -- : ListaDeCompras
+end
+FormListaDeCompras --> Actor : elimina el ítem, actualiza el listado sin el ítem eliminado e informa el resultado.
+else El actor cancela la confirmacion
+Actor -> FormListaDeCompras : Cancelar la operacion
+FormListaDeCompras --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ListaDeComprasBLL.cs:184 ListaDeComprasBLL.EliminarItem
+' BLL/ListaDeComprasBLL.cs:31 ListaDeComprasBLL.ObtenerOCrearParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ItemListaDAL.cs:151 ItemListaDAL.Eliminar
+' DAL/ItemListaDAL.cs:22 ItemListaDAL.ObtenerPorId
+' REPOSITORIO/IItemListaRepositorio.cs:16 IItemListaRepositorio.Eliminar
+' REPOSITORIO/IItemListaRepositorio.cs:8 IItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/IListaDeComprasRepositorio.cs:10 IListaDeComprasRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IListaDeComprasRepositorio.cs:12 IListaDeComprasRepositorio.InsertarYObtenerId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ItemListaRepositorio.cs:23 ItemListaRepositorio.ObtenerPorId
+' REPOSITORIO/ItemListaRepositorio.cs:57 ItemListaRepositorio.Eliminar
+' UI/FormListaDeCompras.cs:94 FormListaDeCompras.btnEliminarItem_Click
+@enduml

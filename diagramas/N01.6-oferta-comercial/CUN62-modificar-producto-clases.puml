@@ -1,0 +1,108 @@
+@startuml
+' Fuente: diagramas/NEG14-catalogo-productos/NEG14-catalogo-productos-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN62 Modificar producto — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionProductos {
+    -btnActualizarProducto_Click(sender: object, e: EventArgs): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class ProductoBLL {
+    +Actualizar(producto: Producto): bool
+    +ObtenerTodos(): List<Producto>
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ProductoBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IProductoRepositorio {
+    +ObtenerPorId(id: int): Producto
+    +Actualizar(producto: Producto): bool
+    +ObtenerTodos(): List<Producto>
+  }
+  class ProductoRepositorio {
+    +ObtenerPorId(id: int): Producto
+    +Actualizar(producto: Producto): bool
+    +ObtenerTodos(): List<Producto>
+  }
+  class "CategoriaProductoRepositorio" as ICategoriaProductoRepositorio <<ICategoriaProductoRepositorio>> {
+    +ObtenerPorId(id: int): CategoriaProducto
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> IProductoRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> ProductoRepositorio
+ProductoRepositorio -[hidden]right-> ICategoriaProductoRepositorio
+ProductoRepositorio -[hidden]down-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class ProductoDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Producto
+    +Actualizar(producto: Producto, accesoDatos: AccesoDatosSqlServer): bool
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer): List<Producto>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class CategoriaProducto {
+    +Id: int
+    +Nombre: string
+  }
+  class Producto {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProducto -[hidden]right-> Producto
+FormGestionProductos ..> ProductoBLL : usa
+ProductoRepositorio ..> ProductoDAL : usa
+ProductoBLL ..> IBitacoraBLL : usa
+ProductoBLL ..> ICategoriaProductoRepositorio : usa
+ProductoBLL ..> IProductoRepositorio : usa
+ProductoBLL ..> IUnidadDeTrabajo : usa
+ProductoBLL ..> IUnidadDeTrabajoFactory : usa
+ProductoRepositorio ..|> IProductoRepositorio
+ProductoBLL ..> Producto : datos
+Producto --> CategoriaProducto : CategoriaProducto
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ProductoBLL.cs:28 ProductoBLL.ObtenerTodos
+' BLL/ProductoBLL.cs:66 ProductoBLL.Actualizar
+' DAL/ProductoDAL.cs:108 ProductoDAL.Actualizar
+' DAL/ProductoDAL.cs:20 ProductoDAL.ObtenerPorId
+' DAL/ProductoDAL.cs:49 ProductoDAL.ObtenerTodos
+' REPOSITORIO/ICategoriaProductoRepositorio.cs:8 ICategoriaProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IProductoRepositorio.cs:10 IProductoRepositorio.ObtenerTodos
+' REPOSITORIO/IProductoRepositorio.cs:14 IProductoRepositorio.Actualizar
+' REPOSITORIO/IProductoRepositorio.cs:8 IProductoRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ProductoRepositorio.cs:23 ProductoRepositorio.ObtenerPorId
+' REPOSITORIO/ProductoRepositorio.cs:30 ProductoRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoRepositorio.cs:52 ProductoRepositorio.Actualizar
+' UI/FormGestionProductos.cs:118 FormGestionProductos.btnActualizarProducto_Click
+@enduml

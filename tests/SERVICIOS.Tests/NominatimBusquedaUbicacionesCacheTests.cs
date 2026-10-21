@@ -31,7 +31,7 @@ namespace SERVICIOS.Tests
             }
 
             // Avanza un segundo antes para no depender de la espera de separacion.
-            public async Task<IReadOnlyList<ResultadoBusquedaUbicacion>> BuscarAsync(string texto, string idioma = "es", LimitesGeograficos zona = null)
+            public async Task<IReadOnlyList<IResultadoBusquedaUbicacion>> BuscarAsync(string texto, string idioma = "es", ILimitesGeograficos zona = null)
             {
                 Reloj.Avanzar(UnSegundo);
                 return await Servicio.BuscarAsync(new ConsultaUbicacion(texto, idioma, zona), CancellationToken.None);
@@ -51,8 +51,8 @@ namespace SERVICIOS.Tests
         {
             Escenario e = new Escenario();
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> primera = await e.BuscarAsync("Obelisco");
-            IReadOnlyList<ResultadoBusquedaUbicacion> segunda = await e.BuscarAsync("Obelisco");
+            IReadOnlyList<IResultadoBusquedaUbicacion> primera = await e.BuscarAsync("Obelisco");
+            IReadOnlyList<IResultadoBusquedaUbicacion> segunda = await e.BuscarAsync("Obelisco");
 
             Assert.AreEqual(1, e.Manejador.CantidadPeticiones);
             Assert.AreEqual(1, segunda.Count);
@@ -66,7 +66,7 @@ namespace SERVICIOS.Tests
             Escenario e = new Escenario((p, ct) => Task.FromResult(BusquedaUbicacionesPruebas.RespuestaXml(BusquedaUbicacionesPruebas.XmlVacio)));
 
             await e.BuscarAsync("Lugar inexistente");
-            IReadOnlyList<ResultadoBusquedaUbicacion> repetida = await e.BuscarAsync("Lugar inexistente");
+            IReadOnlyList<IResultadoBusquedaUbicacion> repetida = await e.BuscarAsync("Lugar inexistente");
 
             Assert.AreEqual(1, e.Manejador.CantidadPeticiones);
             Assert.AreEqual(0, repetida.Count);
@@ -115,10 +115,10 @@ namespace SERVICIOS.Tests
         public async Task BuscarAsync_ViewboxDistintoONormalizado_SeDiferenciaSoloPorLaZonaEfectiva()
         {
             Escenario e = new Escenario();
-            LimitesGeograficos zona = new LimitesGeograficos(-34.7, -58.5, -34.5, -58.3);
-            LimitesGeograficos zonaCasiIgual = new LimitesGeograficos(-34.70001, -58.50001, -34.50001, -58.30001);
-            LimitesGeograficos otraZona = new LimitesGeograficos(-31.5, -64.3, -31.3, -64.1);
-            LimitesGeograficos zonaNoRepresentable = new LimitesGeograficos(-10, 170, 10, -170);
+            ILimitesGeograficos zona = new LimitesGeograficos(-34.7, -58.5, -34.5, -58.3);
+            ILimitesGeograficos zonaCasiIgual = new LimitesGeograficos(-34.70001, -58.50001, -34.50001, -58.30001);
+            ILimitesGeograficos otraZona = new LimitesGeograficos(-31.5, -64.3, -31.3, -64.1);
+            ILimitesGeograficos zonaNoRepresentable = new LimitesGeograficos(-10, 170, 10, -170);
 
             await e.BuscarAsync("Obelisco", "es", zona);
             await e.BuscarAsync("Obelisco", "es", zonaCasiIgual);
@@ -205,7 +205,7 @@ namespace SERVICIOS.Tests
 
             await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => e.BuscarAsync("Obelisco"));
             await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => e.BuscarAsync("Obelisco"));
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await e.BuscarAsync("Obelisco");
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await e.BuscarAsync("Obelisco");
 
             Assert.AreEqual(1, resultados.Count);
             Assert.AreEqual(3, e.Manejador.CantidadPeticiones);
@@ -230,13 +230,13 @@ namespace SERVICIOS.Tests
 
             using (CancellationTokenSource cts = new CancellationTokenSource())
             {
-                Task<IReadOnlyList<ResultadoBusquedaUbicacion>> cancelada = e.Servicio.BuscarAsync(new ConsultaUbicacion("Obelisco", "es", null), cts.Token);
+                Task<IReadOnlyList<IResultadoBusquedaUbicacion>> cancelada = e.Servicio.BuscarAsync(new ConsultaUbicacion("Obelisco", "es", null), cts.Token);
                 await enviada.Task;
                 cts.Cancel();
                 await Assert.ThrowsAsync<OperationCanceledException>(() => cancelada);
             }
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> resultados = await e.BuscarAsync("Obelisco");
+            IReadOnlyList<IResultadoBusquedaUbicacion> resultados = await e.BuscarAsync("Obelisco");
 
             Assert.AreEqual(1, resultados.Count);
             Assert.AreEqual(2, e.Manejador.CantidadPeticiones);
@@ -254,15 +254,15 @@ namespace SERVICIOS.Tests
                 await liberar.Task;
                 return await ResponderConEcoDelTexto(p, ct);
             });
-            ConsultaUbicacion consulta = new ConsultaUbicacion("Obelisco", "es", null);
+            IConsultaUbicacion consulta = new ConsultaUbicacion("Obelisco", "es", null);
 
-            Task<IReadOnlyList<ResultadoBusquedaUbicacion>> a = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
+            Task<IReadOnlyList<IResultadoBusquedaUbicacion>> a = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
             await primeraEnVuelo.Task;
-            Task<IReadOnlyList<ResultadoBusquedaUbicacion>> b = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
-            Task<IReadOnlyList<ResultadoBusquedaUbicacion>> c = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
+            Task<IReadOnlyList<IResultadoBusquedaUbicacion>> b = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
+            Task<IReadOnlyList<IResultadoBusquedaUbicacion>> c = e.Servicio.BuscarAsync(consulta, CancellationToken.None);
             await Task.Yield();
             liberar.SetResult(true);
-            IReadOnlyList<ResultadoBusquedaUbicacion>[] todas = await Task.WhenAll(a, b, c);
+            IReadOnlyList<IResultadoBusquedaUbicacion>[] todas = await Task.WhenAll(a, b, c);
 
             Assert.AreEqual(1, e.Manejador.CantidadPeticiones);
             Assert.IsTrue(todas.All(r => r.Count == 1 && r[0].Descripcion == "Obelisco"));
@@ -285,7 +285,7 @@ namespace SERVICIOS.Tests
             await e.BuscarAsync("guardada");
             await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => e.BuscarAsync("rechazada"));
 
-            IReadOnlyList<ResultadoBusquedaUbicacion> desdeCache = await e.BuscarAsync("guardada");
+            IReadOnlyList<IResultadoBusquedaUbicacion> desdeCache = await e.BuscarAsync("guardada");
             BusquedaUbicacionException sinCache = await Assert.ThrowsExactlyAsync<BusquedaUbicacionException>(() => e.BuscarAsync("nueva"));
 
             Assert.AreEqual(1, desdeCache.Count);

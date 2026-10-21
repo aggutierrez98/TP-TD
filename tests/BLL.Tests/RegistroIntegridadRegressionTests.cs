@@ -22,9 +22,9 @@ namespace BLL.Tests
         {
             RegistroIntegridadFixture fixture = new RegistroIntegridadFixture();
 
-            bool registrado = fixture.Usuario.Registrar(new Usuario { Username = "nuevo" }, "pwd");
+            Usuario registrado = fixture.Usuario.Registrar(new Usuario { Username = "nuevo" }, "pwd");
 
-            Assert.IsTrue(registrado);
+            Assert.IsNotNull(registrado);
 
             // El DVH persistido debe corresponder al Id real asignado en el alta,
             // no a Id=0.

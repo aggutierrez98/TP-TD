@@ -27,9 +27,9 @@ namespace REPOSITORIO
             return reglaCategorizacion;
         }
 
-        public List<ReglaCategorizacion> ObtenerPorUsuario(int usuarioId)
+        public List<ReglaCategorizacion> ObtenerPorUsuario(Usuario usuario)
         {
-            List<ReglaCategorizacion> reglas = _reglaCategorizacionDAL.ObtenerPorUsuario(usuarioId, _accesoDatos);
+            List<ReglaCategorizacion> reglas = _reglaCategorizacionDAL.ObtenerPorUsuario(usuario, _accesoDatos);
             reglas.ForEach(Hidratar);
             return reglas;
         }
@@ -55,9 +55,9 @@ namespace REPOSITORIO
             return _reglaCategorizacionDAL.Actualizar(reglaCategorizacion, _accesoDatos);
         }
 
-        public bool Eliminar(int id)
+        public bool Eliminar(ReglaCategorizacion reglaCategorizacion)
         {
-            return _reglaCategorizacionDAL.Eliminar(id, _accesoDatos);
+            return _reglaCategorizacionDAL.Eliminar(reglaCategorizacion, _accesoDatos);
         }
     }
 }

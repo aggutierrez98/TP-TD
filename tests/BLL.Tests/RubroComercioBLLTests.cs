@@ -15,7 +15,7 @@ namespace BLL.Tests
             RubroComercioFixture fixture = new RubroComercioFixture();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear("   "));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(new RubroComercio { Nombre = "   " }));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -25,7 +25,7 @@ namespace BLL.Tests
             RubroComercioFixture fixture = new RubroComercioFixture();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            RubroComercio creado = sut.Crear("  Supermercado  ");
+            RubroComercio creado = sut.Crear(new RubroComercio { Nombre = "  Supermercado  " });
 
             RubroComercio insertado = fixture.Unidad.RubroComercioRepo.Rubros[creado.Id];
             Assert.AreEqual("Supermercado", insertado.Nombre);
@@ -39,7 +39,7 @@ namespace BLL.Tests
             RubroComercioFixture fixture = new RubroComercioFixture();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(99, "Nuevo"));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new RubroComercio { Id = 99, Nombre = "Nuevo" }));
         }
 
         [TestMethod]
@@ -49,7 +49,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Viejo" });
             RubroComercioBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Actualizar(1, "  Nuevo Rubro  ");
+            bool resultado = sut.Actualizar(new RubroComercio { Id = 1, Nombre = "  Nuevo Rubro  " });
 
             Assert.IsTrue(resultado);
             Assert.AreEqual("Nuevo Rubro", fixture.Unidad.RubroComercioRepo.Rubros[1].Nombre);
@@ -63,7 +63,7 @@ namespace BLL.Tests
             RubroComercioFixture fixture = new RubroComercioFixture();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new RubroComercio { Id = 99 }));
         }
 
         [TestMethod]
@@ -74,8 +74,8 @@ namespace BLL.Tests
             fixture.Unidad.ComercioRepo.Comercios.Add(10, new Comercio { Id = 10, Nombre = "Dia", RubroComercio = new RubroComercio { Id = 1 } });
             RubroComercioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
-            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeletedId);
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new RubroComercio { Id = 1 }));
+            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -87,7 +87,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForanea();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new RubroComercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.RubroDeleteFailed", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -101,7 +101,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.ExcepcionEnEliminar = FakeSqlExceptionFactory.CrearViolacionForaneaEnvuelta();
             RubroComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(1));
+            ExcepcionTecnica ex = Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.Eliminar(new RubroComercio { Id = 1 }));
 
             Assert.AreEqual("Error.Technical.SqlFailure", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -114,7 +114,7 @@ namespace BLL.Tests
             fixture.Unidad.RubroComercioRepo.Rubros.Add(1, new RubroComercio { Id = 1, Nombre = "Supermercado" });
             RubroComercioBLL sut = fixture.CreateSut();
 
-            bool resultado = sut.Eliminar(1);
+            bool resultado = sut.Eliminar(new RubroComercio { Id = 1 });
 
             Assert.IsTrue(resultado);
             Assert.IsFalse(fixture.Unidad.RubroComercioRepo.Rubros.ContainsKey(1));
@@ -143,11 +143,75 @@ namespace BLL.Tests
             fixture.Unidad.PromocionRubroComercioRepo.RubroComercioIdsPorPromocion[7] = new System.Collections.Generic.List<int> { 1 };
             RubroComercioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new RubroComercio { Id = 1 }));
 
             Assert.AreEqual("Error.MerchantManagement.RubroInUse", ex.Message);
-            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeletedId);
+            Assert.IsNull(fixture.Unidad.RubroComercioRepo.LastDeleted);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Crear_Valido_DevuelveLaMismaInstanciaConId()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            RubroComercioBLL sut = fixture.CreateSut();
+            RubroComercio rubro = new RubroComercio { Nombre = "Nuevo" };
+
+            RubroComercio creado = sut.Crear(rubro);
+
+            Assert.AreSame(rubro, creado);
+            Assert.IsTrue(creado.Id > 0);
+        }
+
+        [TestMethod]
+        public void Crear_RubroComercioNulo_ThrowsExcepcionNegocioNameRequired()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Crear(null));
+
+            Assert.AreEqual("Error.MerchantManagement.RubroNameRequired", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_Valido_CopiaElNombreSobreElPersistido()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            RubroComercio persistido = new RubroComercio { Id = 1, Nombre = "Viejo" };
+            fixture.RubroComercioRepo.Rubros.Add(1, persistido);
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(new RubroComercio { Id = 1, Nombre = "Nuevo" });
+
+            Assert.AreSame(persistido, fixture.RubroComercioRepo.LastUpdated);
+            Assert.AreEqual("Nuevo", persistido.Nombre);
+        }
+
+        [TestMethod]
+        public void Eliminar_RubroComercioNulo_ThrowsExcepcionNegocioNotFound()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(null));
+
+            Assert.AreEqual("Error.MerchantManagement.RubroNotFound", ex.Message);
+            Assert.IsNull(fixture.RubroComercioRepo.LastDeleted);
+        }
+
+        [TestMethod]
+        public void Eliminar_Valido_EliminaElPersistido()
+        {
+            RubroComercioFixture fixture = new RubroComercioFixture();
+            RubroComercio persistido = new RubroComercio { Id = 1, Nombre = "Existente" };
+            fixture.RubroComercioRepo.Rubros.Add(1, persistido);
+            RubroComercioBLL sut = fixture.CreateSut();
+
+            sut.Eliminar(new RubroComercio { Id = 1 });
+
+            Assert.AreSame(persistido, fixture.RubroComercioRepo.LastDeleted);
         }
 
         private sealed class RubroComercioFixture

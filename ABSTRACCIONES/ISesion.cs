@@ -8,8 +8,6 @@ namespace ABSTRACCIONES
 
         IUsuarioAutenticado GetUsuarioActual();
 
-        int? GetUsuarioActualId();
-
         string GetUsuarioActualNombre();
 
         void ActualizarUsuarioActualNombre(string username);

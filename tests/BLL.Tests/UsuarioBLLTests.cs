@@ -220,7 +220,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", DVH = "old-dvh", IntentosFallidos = 5, Bloqueado = true, BloqueadoHasta = null };
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.DesbloquearUsuario(2);
+            bool result = sut.DesbloquearUsuario(new Usuario { Id = 2 });
 
             Assert.IsTrue(result);
             Tuple<int, int, bool, DateTime?, string> update = fixture.Unidad.UsuarioRepo.LastEstadoBloqueoUpdate;
@@ -240,7 +240,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", DVH = "old-dvh", IntentosFallidos = 4, Bloqueado = true, BloqueadoHasta = DateTime.Now.AddMinutes(5) };
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.DesbloquearUsuario(2);
+            bool result = sut.DesbloquearUsuario(new Usuario { Id = 2 });
 
             Assert.IsTrue(result);
             Tuple<int, int, bool, DateTime?, string> update = fixture.Unidad.UsuarioRepo.LastEstadoBloqueoUpdate;
@@ -257,7 +257,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", Bloqueado = false };
             UsuarioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(2));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(new Usuario { Id = 2 }));
 
             Assert.AreEqual("Error.User.NotLocked", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -269,7 +269,7 @@ namespace BLL.Tests
             UsuarioFixture fixture = new UsuarioFixture();
             UsuarioBLL sut = fixture.CreateSut();
 
-            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(99));
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(new Usuario { Id = 99 }));
 
             Assert.AreEqual("Error.User.NotFound", ex.Message);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
@@ -283,7 +283,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.ThrowOnActualizarEstadoBloqueo = true;
             UsuarioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.DesbloquearUsuario(2));
+            Assert.ThrowsExactly<ExcepcionTecnica>(() => sut.DesbloquearUsuario(new Usuario { Id = 2 }));
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
@@ -335,9 +335,13 @@ namespace BLL.Tests
             UsuarioFixture fixture = new UsuarioFixture();
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.Registrar(new Usuario { Username = " nuevo " }, " pwd ");
+            Usuario entrada = new Usuario { Username = " nuevo " };
 
-            Assert.IsTrue(result);
+            Usuario result = sut.Registrar(entrada, " pwd ");
+
+            Assert.AreSame(entrada, result);
+            Assert.AreSame(fixture.Unidad.UsuarioRepo.LastInserted, result);
+            Assert.IsTrue(result.Id > 0);
             Assert.AreEqual("pwd", fixture.PasswordHasher.LastHashInput);
             Assert.AreEqual("nuevo", fixture.Unidad.UsuarioRepo.LastInserted.Username);
             Assert.AreEqual("HASH:pwd", fixture.Unidad.UsuarioRepo.LastInserted.PasswordHash);
@@ -354,13 +358,17 @@ namespace BLL.Tests
         public void RegistrarParaOnboarding_AltaConfirmada_ContinuacionPropietarioFijoSinSesionNiCredenciales()
         {
             var fixture = new UsuarioFixture();
+            fixture.Unidad.UsuarioRepo.CopiarAlLeer = true;
             var entrada = new Usuario { Id = 999, Username = " nuevo " };
             var continuacion = fixture.CreateSut().RegistrarParaOnboarding(entrada, "secreto");
             Assert.IsNotNull(continuacion);
-            Assert.AreEqual(fixture.Unidad.UsuarioRepo.LastInserted.Id, continuacion.UsuarioId);
-            Assert.AreNotEqual(999, continuacion.UsuarioId);
+            int idInsertado = fixture.Unidad.UsuarioRepo.LastInserted.Id;
+            Assert.AreEqual(idInsertado, continuacion.Usuario.Id);
+            Assert.AreNotEqual(999, continuacion.Usuario.Id);
+            // El alta guarda la misma instancia recibida: alterarla despues no mueve al propietario.
             entrada.Id = 123;
-            Assert.AreEqual(fixture.Unidad.UsuarioRepo.LastInserted.Id, continuacion.UsuarioId);
+            Assert.AreEqual(idInsertado, continuacion.Usuario.Id);
+            Assert.AreNotSame(entrada, continuacion.Usuario);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
             Assert.IsFalse(fixture.Sesion.HaySesionActiva());
             Assert.IsEmpty(typeof(ContinuacionPerfilInversor).GetConstructors());
@@ -401,7 +409,7 @@ namespace BLL.Tests
             UsuarioFixture fixture = new UsuarioFixture();
             UsuarioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(1, " ", null, true));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(new Usuario { Id = 1, Username = " ", Activo = true }, null));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
         }
 
@@ -413,7 +421,7 @@ namespace BLL.Tests
             fixture.Sesion.IniciarSesion(new Usuario { Id = 1, Username = "admin" });
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.Actualizar(1, "renamed", "newpwd", true);
+            bool result = sut.Actualizar(new Usuario { Id = 1, Username = "renamed", Activo = true }, "newpwd");
 
             Assert.IsTrue(result);
             Assert.AreEqual("HASH:newpwd", fixture.Unidad.UsuarioRepo.LastUpdated.PasswordHash);
@@ -431,7 +439,7 @@ namespace BLL.Tests
             fixture.Sesion.IniciarSesion(new Usuario { Id = 1, Username = "admin" });
             UsuarioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(1));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Usuario { Id = 1 }));
             Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
             Assert.AreEqual("FalloNegocio", fixture.Bitacora.Calls.Single().Kind);
         }
@@ -443,7 +451,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", DVH = "old-dvh" };
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.Eliminar(2);
+            bool result = sut.Eliminar(new Usuario { Id = 2 });
 
             Assert.IsTrue(result);
             Assert.AreEqual(2, fixture.Unidad.UsuarioRepo.LastDeletedId);
@@ -459,7 +467,7 @@ namespace BLL.Tests
             fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", DVH = "old-dvh" };
             UsuarioBLL sut = fixture.CreateSut();
 
-            sut.Eliminar(2);
+            sut.Eliminar(new Usuario { Id = 2 });
 
             Assert.AreEqual(2, fixture.Permiso.ValidarPuedeEliminarUsuarioId);
         }
@@ -472,7 +480,7 @@ namespace BLL.Tests
             fixture.Permiso.ThrowOnValidarPuedeEliminarUsuario = true;
             UsuarioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(2));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(new Usuario { Id = 2 }));
             Assert.IsNull(fixture.Unidad.UsuarioRepo.LastDeletedId);
             Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
@@ -483,7 +491,7 @@ namespace BLL.Tests
             UsuarioFixture fixture = new UsuarioFixture();
             UsuarioBLL sut = fixture.CreateSut();
 
-            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.RestaurarVersion(99));
+            Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.RestaurarVersion(new UsuarioHistorialSnapshot { HistorialId = 99 }));
         }
 
         [TestMethod]
@@ -492,15 +500,95 @@ namespace BLL.Tests
             UsuarioFixture fixture = new UsuarioFixture();
             fixture.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "restored", Activo = true };
             fixture.Unidad.UsuarioRepo.Usuarios[1] = new Usuario { Id = 1, Username = "current", PasswordHash = "old", Activo = true, DVH = "old-dvh" };
-            fixture.UsuarioEstado.Versiones[5] = new UsuarioHistorialSnapshot { HistorialId = 5, UsuarioId = 1, Username = "restored", PasswordHash = "new", Activo = true };
+            fixture.UsuarioEstado.Versiones[5] = new UsuarioHistorialSnapshot { HistorialId = 5, Usuario = new Usuario { Id = 1 }, Username = "restored", PasswordHash = "new", Activo = true };
             UsuarioBLL sut = fixture.CreateSut();
 
-            bool result = sut.RestaurarVersion(5);
+            bool result = sut.RestaurarVersion(new UsuarioHistorialSnapshot { HistorialId = 5, Username = "alterado" });
 
             Assert.IsTrue(result);
             Assert.AreEqual(1, fixture.UsuarioEstado.AplicarSnapshotUsuarioId);
             Assert.AreEqual("old-dvh", fixture.Integridad.ActualizarDvvCalls.Single().Item2);
             Assert.IsTrue(fixture.Unidad.SaveCalled);
+        }
+
+        [TestMethod]
+        public void Actualizar_UsuarioNulo_ThrowsExcepcionNegocioAndDoesNotCreateUow()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            UsuarioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Actualizar(null, "pwd"));
+
+            Assert.AreEqual("Error.User.NotFound", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Actualizar_UsuarioRecibidoAlterado_CopiaSoloCamposEditablesSobreElPersistido()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            Usuario persistido = new Usuario { Id = 1, Username = "admin", PasswordHash = "old", Activo = true, DVH = "old-dvh", IntentosFallidos = 2 };
+            fixture.Unidad.UsuarioRepo.Usuarios[1] = persistido;
+            UsuarioBLL sut = fixture.CreateSut();
+
+            sut.Actualizar(new Usuario { Id = 1, Username = "renamed", Activo = true, PasswordHash = "alterado", IntentosFallidos = 0, Bloqueado = true }, null);
+
+            Assert.AreSame(persistido, fixture.Unidad.UsuarioRepo.LastUpdated);
+            Assert.AreEqual("renamed", persistido.Username);
+            Assert.AreEqual("old", persistido.PasswordHash);
+            Assert.AreEqual(2, persistido.IntentosFallidos);
+            Assert.IsFalse(persistido.Bloqueado);
+            Assert.AreSame(persistido, fixture.UsuarioEstado.GuardarUsuario);
+        }
+
+        [TestMethod]
+        public void Eliminar_UsuarioNulo_ThrowsExcepcionNegocioAndDoesNotCreateUow()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            UsuarioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.Eliminar(null));
+
+            Assert.AreEqual("Error.User.NotFound", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void Eliminar_UsuarioRecibidoAlterado_EliminaElPersistidoConSuDvh()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", DVH = "old-dvh" };
+            UsuarioBLL sut = fixture.CreateSut();
+
+            sut.Eliminar(new Usuario { Id = 2, Username = "alterado", DVH = "alterado" });
+
+            Assert.AreEqual(2, fixture.Unidad.UsuarioRepo.LastDeletedId);
+            Assert.AreEqual("old-dvh", fixture.Integridad.ActualizarDvvCalls.Single().Item2);
+        }
+
+        [TestMethod]
+        public void DesbloquearUsuario_UsuarioNulo_ThrowsExcepcionNegocioAndDoesNotCreateUow()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            UsuarioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(null));
+
+            Assert.AreEqual("Error.User.NotFound", ex.Message);
+            Assert.AreEqual(0, fixture.UnidadFactory.CrearCallCount);
+        }
+
+        [TestMethod]
+        public void DesbloquearUsuario_UsuarioRecibidoBloqueadoPeroPersistidoNo_ValidaSobreElPersistido()
+        {
+            UsuarioFixture fixture = new UsuarioFixture();
+            fixture.Unidad.UsuarioRepo.Usuarios[2] = new Usuario { Id = 2, Username = "user", Bloqueado = false };
+            UsuarioBLL sut = fixture.CreateSut();
+
+            ExcepcionNegocio ex = Assert.ThrowsExactly<ExcepcionNegocio>(() => sut.DesbloquearUsuario(new Usuario { Id = 2, Bloqueado = true }));
+
+            Assert.AreEqual("Error.User.NotLocked", ex.Message);
+            Assert.IsFalse(fixture.Unidad.SaveCalled);
         }
 
         private sealed class UsuarioFixture

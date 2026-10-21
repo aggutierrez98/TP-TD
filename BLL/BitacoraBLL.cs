@@ -103,7 +103,7 @@ namespace BLL
             return new EventoBitacora
             {
                 FechaHora = DateTime.Now,
-                UsuarioId = _sesion.GetUsuarioActualId(),
+                UsuarioId = _sesion.HaySesionActiva() ? _sesion.ObtenerUsuarioActual().Id : (int?)null,
                 UsernameSnapshot = _sesion.GetUsuarioActualNombre(),
                 Actividad = actividad,
                 Informacion = informacion,

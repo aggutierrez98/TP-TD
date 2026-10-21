@@ -5,7 +5,7 @@ namespace REPOSITORIO
 {
     public interface IConsultaChatbotRepositorio
     {
-        List<ConsultaChatbot> ObtenerPorUsuario(int usuarioId);
+        List<ConsultaChatbot> ObtenerPorUsuario(Usuario usuario);
 
         int InsertarYObtenerId(ConsultaChatbot consultaChatbot);
     }

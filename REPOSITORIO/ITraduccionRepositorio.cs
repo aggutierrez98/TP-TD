@@ -1,11 +1,12 @@
 namespace REPOSITORIO
 {
+    using SERVICIOS;
     public interface ITraduccionRepositorio
     {
-        int ObtenerPalabraIdPorKey(string key);
+        Palabra ObtenerPalabraPorKey(string key);
 
-        bool GuardarTraduccion(int idiomaId, int palabraId, string valor);
+        bool GuardarTraduccion(Traduccion traduccion);
 
-        bool EliminarTraduccion(int idiomaId, int palabraId);
+        bool EliminarTraduccion(Traduccion traduccion);
     }
 }

@@ -9,18 +9,18 @@ namespace REPOSITORIO
 
         List<TasaConversion> ObtenerTodas();
 
-        TasaConversion ObtenerPorParDeMonedas(int monedaBaseId, int monedaConversionId);
+        TasaConversion ObtenerPorParDeMonedas(Moneda monedaBase, Moneda monedaConversion);
 
         int InsertarYObtenerId(TasaConversion tasa);
 
         bool Actualizar(TasaConversion tasa);
 
-        bool ActualizarValorAutomatico(int id, decimal calculoConversion);
+        bool ActualizarValorAutomatico(TasaConversion tasa, decimal calculoConversion);
 
-        bool MarcarManual(int id, int usuarioId);
+        bool MarcarManual(TasaConversion tasa, Usuario usuario);
 
-        bool Liberar(int id);
+        bool Liberar(TasaConversion tasa);
 
-        bool Eliminar(int id);
+        bool Eliminar(TasaConversion tasa);
     }
 }

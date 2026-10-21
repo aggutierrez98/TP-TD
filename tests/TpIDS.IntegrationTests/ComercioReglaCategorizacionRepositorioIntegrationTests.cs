@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using DAL;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using REPOSITORIO;
@@ -25,13 +26,14 @@ namespace TpIDS.IntegrationTests
                 int comercioId1 = InsertarComercioTest(accesoDatos, "ComercioTestReglaAsignacion1");
                 int comercioId2 = InsertarComercioTest(accesoDatos, "ComercioTestReglaAsignacion2");
 
-                bool reemplazado = repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacionId, new List<int> { comercioId1, comercioId2 });
+                bool reemplazado = repositorio.ReemplazarComerciosDeReglaCategorizacion(Regla(reglaCategorizacionId), Comercios(comercioId1, comercioId2));
 
                 Assert.IsTrue(reemplazado);
-                List<int> asignados = repositorio.ObtenerComercioIdsPorReglaCategorizacion(reglaCategorizacionId);
+                List<int> asignados = repositorio.ObtenerComerciosPorReglaCategorizacion(Regla(reglaCategorizacionId)).Select(item => item.Id).ToList();
                 Assert.AreEqual(2, asignados.Count);
                 Assert.IsTrue(asignados.Contains(comercioId1));
                 Assert.IsTrue(asignados.Contains(comercioId2));
+                Assert.IsTrue(repositorio.ObtenerComerciosPorReglaCategorizacion(Regla(reglaCategorizacionId)).All(item => item.Nombre.StartsWith("ComercioTestReglaAsignacion")));
 
                 accesoDatos.RollbackTransactionScope();
             }
@@ -50,10 +52,10 @@ namespace TpIDS.IntegrationTests
                 int comercioIdA = InsertarComercioTest(accesoDatos, "ComercioTestReglaReemplazoA");
                 int comercioIdB = InsertarComercioTest(accesoDatos, "ComercioTestReglaReemplazoB");
 
-                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacionId, new List<int> { comercioIdA });
-                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacionId, new List<int> { comercioIdB });
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(Regla(reglaCategorizacionId), Comercios(comercioIdA));
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(Regla(reglaCategorizacionId), Comercios(comercioIdB));
 
-                List<int> asignados = repositorio.ObtenerComercioIdsPorReglaCategorizacion(reglaCategorizacionId);
+                List<int> asignados = repositorio.ObtenerComerciosPorReglaCategorizacion(Regla(reglaCategorizacionId)).Select(item => item.Id).ToList();
                 Assert.AreEqual(1, asignados.Count);
                 Assert.IsTrue(asignados.Contains(comercioIdB));
                 Assert.IsFalse(asignados.Contains(comercioIdA));
@@ -75,14 +77,24 @@ namespace TpIDS.IntegrationTests
                 int reglaBId = InsertarReglaCategorizacionTest(accesoDatos, usuarioId, categoriaId, "ReglaTestContarComercioB");
                 int comercioUsadoId = InsertarComercioTest(accesoDatos, "ComercioTestContarReglaUsado");
                 int comercioSinUsoId = InsertarComercioTest(accesoDatos, "ComercioTestContarReglaLibre");
-                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaAId, new List<int> { comercioUsadoId });
-                repositorio.ReemplazarComerciosDeReglaCategorizacion(reglaBId, new List<int> { comercioUsadoId });
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(Regla(reglaAId), Comercios(comercioUsadoId));
+                repositorio.ReemplazarComerciosDeReglaCategorizacion(Regla(reglaBId), Comercios(comercioUsadoId));
 
-                Assert.AreEqual(2, repositorio.ContarPorComercio(comercioUsadoId));
-                Assert.AreEqual(0, repositorio.ContarPorComercio(comercioSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorComercio(new BE.Comercio { Id = comercioUsadoId }));
+                Assert.AreEqual(0, repositorio.ContarPorComercio(new BE.Comercio { Id = comercioSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }
+        }
+
+        private static BE.ReglaCategorizacion Regla(int id)
+        {
+            return new BE.ReglaCategorizacion { Id = id };
+        }
+
+        private static List<BE.Comercio> Comercios(params int[] ids)
+        {
+            return ids.Select(id => new BE.Comercio { Id = id }).ToList();
         }
 
         private static int ObtenerUsuarioBasicoId(AccesoDatosSqlServer accesoDatos)

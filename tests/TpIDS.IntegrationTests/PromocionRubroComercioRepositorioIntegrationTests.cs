@@ -24,10 +24,10 @@ namespace TpIDS.IntegrationTests
                 int rubroComercioId1 = InsertarRubroComercioTest(accesoDatos, "RubroTestAsignacion1");
                 int rubroComercioId2 = InsertarRubroComercioTest(accesoDatos, "RubroTestAsignacion2");
 
-                bool reemplazado = repositorio.ReemplazarRubrosComercioDePromocion(promocionId, new List<int> { rubroComercioId1, rubroComercioId2 });
+                bool reemplazado = repositorio.ReemplazarRubrosComercioDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroComercioId1 }, new BE.RubroComercio { Id = rubroComercioId2 } });
 
                 Assert.IsTrue(reemplazado);
-                List<int> asignados = repositorio.ObtenerRubroComercioIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerRubrosComercioPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(2, asignados.Count);
                 Assert.IsTrue(asignados.Contains(rubroComercioId1));
                 Assert.IsTrue(asignados.Contains(rubroComercioId2));
@@ -47,10 +47,10 @@ namespace TpIDS.IntegrationTests
                 int rubroComercioIdA = InsertarRubroComercioTest(accesoDatos, "RubroTestReemplazoA");
                 int rubroComercioIdB = InsertarRubroComercioTest(accesoDatos, "RubroTestReemplazoB");
 
-                repositorio.ReemplazarRubrosComercioDePromocion(promocionId, new List<int> { rubroComercioIdA });
-                repositorio.ReemplazarRubrosComercioDePromocion(promocionId, new List<int> { rubroComercioIdB });
+                repositorio.ReemplazarRubrosComercioDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroComercioIdA } });
+                repositorio.ReemplazarRubrosComercioDePromocion(new BE.Promocion { Id = promocionId }, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroComercioIdB } });
 
-                List<int> asignados = repositorio.ObtenerRubroComercioIdsPorPromocion(promocionId);
+                List<int> asignados = repositorio.ObtenerRubrosComercioPorPromocion(new BE.Promocion { Id = promocionId }).ConvertAll(item => item.Id);
                 Assert.AreEqual(1, asignados.Count);
                 Assert.IsTrue(asignados.Contains(rubroComercioIdB));
                 Assert.IsFalse(asignados.Contains(rubroComercioIdA));
@@ -70,11 +70,11 @@ namespace TpIDS.IntegrationTests
                 int rubroSinUsoId = InsertarRubroComercioTest(accesoDatos, "RubroTestContarSinUso");
                 int promocionAId = InsertarPromocionTest(accesoDatos, "PromocionTestContarRubroA");
                 int promocionBId = InsertarPromocionTest(accesoDatos, "PromocionTestContarRubroB");
-                repositorio.ReemplazarRubrosComercioDePromocion(promocionAId, new List<int> { rubroUsadoId });
-                repositorio.ReemplazarRubrosComercioDePromocion(promocionBId, new List<int> { rubroUsadoId });
+                repositorio.ReemplazarRubrosComercioDePromocion(new BE.Promocion { Id = promocionAId }, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroUsadoId } });
+                repositorio.ReemplazarRubrosComercioDePromocion(new BE.Promocion { Id = promocionBId }, new List<BE.RubroComercio> { new BE.RubroComercio { Id = rubroUsadoId } });
 
-                Assert.AreEqual(2, repositorio.ContarPorRubroComercio(rubroUsadoId));
-                Assert.AreEqual(0, repositorio.ContarPorRubroComercio(rubroSinUsoId));
+                Assert.AreEqual(2, repositorio.ContarPorRubroComercio(new BE.RubroComercio { Id = rubroUsadoId }));
+                Assert.AreEqual(0, repositorio.ContarPorRubroComercio(new BE.RubroComercio { Id = rubroSinUsoId }));
 
                 accesoDatos.RollbackTransactionScope();
             }

@@ -29,10 +29,11 @@ namespace TpIDS
             CargarCategorias(null);
         }
 
-        // View-model plano para la grilla.
+        // View-model plano para la grilla. La grilla no autogenera columnas, asi que
+        // Categoria (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaCategoria
         {
-            public int Id { get; set; }
+            public Categoria Categoria { get; set; }
             public string Nombre { get; set; }
             public string Scope { get; set; }
             public bool EsPropia { get; set; }
@@ -42,9 +43,9 @@ namespace TpIDS
         {
             try
             {
-                int id = categoriaBLL.Crear(txtbNombreCategoria.Text);
+                Categoria creada = categoriaBLL.Crear(new Categoria { Nombre = txtbNombreCategoria.Text });
                 txtbNombreCategoria.Clear();
-                CargarCategorias(id);
+                CargarCategorias(creada.Id);
                 UiDialogHelper.MostrarInfo("FormCategories.Success.CategoryCreated");
             }
             catch (Exception ex)
@@ -68,10 +69,11 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = categoriaBLL.Actualizar(fila.Id, txtbNombreCategoria.Text);
+                fila.Categoria.Nombre = txtbNombreCategoria.Text;
+                bool actualizado = categoriaBLL.Actualizar(fila.Categoria);
                 if (actualizado)
                 {
-                    CargarCategorias(fila.Id);
+                    CargarCategorias(fila.Categoria.Id);
                     UiDialogHelper.MostrarInfo("FormCategories.Success.CategoryUpdated");
                 }
             }
@@ -107,7 +109,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = categoriaBLL.Eliminar(fila.Id);
+                bool eliminado = categoriaBLL.Eliminar(fila.Categoria);
                 if (eliminado)
                 {
                     txtbNombreCategoria.Clear();
@@ -162,8 +164,8 @@ namespace TpIDS
 
         private void CargarCategorias(int? categoriaSeleccionadaId)
         {
-            int usuarioActualId = sesion.GetUsuarioActualId().Value;
-            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuario(usuarioActualId);
+            int usuarioActualId = sesion.GetUsuarioActual().Id;
+            List<Categoria> categorias = categoriaBLL.ObtenerVisiblesParaUsuarioActual();
 
             dgvCategorias.DataSource = null;
             dgvCategorias.DataSource = categorias
@@ -182,7 +184,7 @@ namespace TpIDS
         {
             DataGridViewRow fila = dgvCategorias.Rows
                 .Cast<DataGridViewRow>()
-                .FirstOrDefault(item => item.DataBoundItem is FilaCategoria filaCategoria && filaCategoria.Id == id);
+                .FirstOrDefault(item => item.DataBoundItem is FilaCategoria filaCategoria && filaCategoria.Categoria.Id == id);
 
             if (fila == null)
             {
@@ -214,7 +216,7 @@ namespace TpIDS
             bool esPropia = categoria.Usuario != null && categoria.Usuario.Id == usuarioActualId;
             return new FilaCategoria
             {
-                Id = categoria.Id,
+                Categoria = categoria,
                 Nombre = categoria.Nombre,
                 Scope = categoria.EsGlobal ? ScopeGlobal : ScopePropia,
                 EsPropia = esPropia

@@ -1,0 +1,93 @@
+@startuml
+' Fuente: diagramas/NEG04-reglas-categorizacion/NEG04-reglas-categorizacion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN17 Modificar regla de categorización — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormReglasCategorizacion" as FormReglasCategorizacion
+control "ReglaCategorizacionBLL" as ReglaCategorizacionBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "CategoriaRepositorio\n:ICategoriaRepositorio" as ICategoriaRepositorio
+participant "ComercioRepositorio\n:IComercioRepositorio" as IComercioRepositorio
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "ReglaCategorizacionRepositorio\n:IReglaCategorizacionRepositorio" as IReglaCategorizacionRepositorio
+participant "ReglaCategorizacionDAL" as ReglaCategorizacionDAL
+participant "ComercioReglaCategorizacionRepositorio\n:IComercioReglaCategorizacionRepositorio" as IComercioReglaCategorizacionRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+note over FormReglasCategorizacion : El actor necesita ajustar una regla para que las sugerencias de categoría sean\nmás precisas.
+Actor -> FormReglasCategorizacion : selecciona la opción «Reglas de categorización» del menú «Finanzas».
+FormReglasCategorizacion --> Actor : presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas del\nactor.
+Actor -> FormReglasCategorizacion : selecciona la regla a modificar.
+FormReglasCategorizacion --> Actor : muestra en la sección «Datos de la regla» el nombre, la categoría y las palabras clave de\nla regla seleccionada, y marca los comercios asociados.
+Actor -> FormReglasCategorizacion : modifica los datos que desea cambiar.
+Actor -> FormReglasCategorizacion : presiona el botón «Actualizar regla».
+FormReglasCategorizacion --> Actor : aplica los cambios, limpia los campos de la sección «Datos de la regla» y actualiza el\nlistado con los datos modificados.
+FormReglasCategorizacion -> ReglaCategorizacionBLL ++ : Actualizar(regla: ReglaCategorizacion, comercios:\nIEnumerable<Comercio>)
+ReglaCategorizacionBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ReglaCategorizacionBLL -- : Usuario
+ReglaCategorizacionBLL -> ICategoriaRepositorio ++ : ObtenerPorId(id: int)
+ICategoriaRepositorio --> ReglaCategorizacionBLL -- : Categoria
+loop foreach (Comercio recibido in comercios)
+ReglaCategorizacionBLL -> IComercioRepositorio ++ : ObtenerPorId(id: int)
+IComercioRepositorio --> ReglaCategorizacionBLL -- : Comercio
+end
+ReglaCategorizacionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> ReglaCategorizacionBLL -- : IUnidadDeTrabajo
+ReglaCategorizacionBLL -> IReglaCategorizacionRepositorio ++ : ObtenerPorId(id: int)
+IReglaCategorizacionRepositorio -> ReglaCategorizacionDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+ReglaCategorizacionDAL --> IReglaCategorizacionRepositorio -- : ReglaCategorizacion
+IReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : ReglaCategorizacion
+ReglaCategorizacionBLL -> IReglaCategorizacionRepositorio ++ : Actualizar(reglaCategorizacion: ReglaCategorizacion)
+IReglaCategorizacionRepositorio -> ReglaCategorizacionDAL ++ : Actualizar(reglaCategorizacion: ReglaCategorizacion,\naccesoDatos: AccesoDatosSqlServer)
+ReglaCategorizacionDAL --> IReglaCategorizacionRepositorio -- : bool
+IReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : bool
+ReglaCategorizacionBLL -> IComercioReglaCategorizacionRepositorio ++ : ReemplazarComerciosDeReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion, comercios: IEnumerable<Comercio>)
+IComercioReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : bool
+ReglaCategorizacionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> ReglaCategorizacionBLL -- : void
+ReglaCategorizacionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> ReglaCategorizacionBLL -- : void
+ReglaCategorizacionBLL --> FormReglasCategorizacion -- : bool
+group Refrescar listado tras la operacion exitosa
+FormReglasCategorizacion -> ReglaCategorizacionBLL ++ : ObtenerParaUsuarioActual()
+ReglaCategorizacionBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ReglaCategorizacionBLL -- : Usuario
+ReglaCategorizacionBLL -> IReglaCategorizacionRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IReglaCategorizacionRepositorio -> ReglaCategorizacionDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ReglaCategorizacionDAL --> IReglaCategorizacionRepositorio -- : List<ReglaCategorizacion>
+IReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : List<ReglaCategorizacion>
+ReglaCategorizacionBLL --> FormReglasCategorizacion -- : List<ReglaCategorizacion>
+end
+FormReglasCategorizacion --> Actor : muestra el mensaje «Regla de categorización actualizada con éxito.».
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/ReglaCategorizacionBLL.cs:101 ReglaCategorizacionBLL.Actualizar
+' BLL/ReglaCategorizacionBLL.cs:42 ReglaCategorizacionBLL.ObtenerParaUsuarioActual
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ReglaCategorizacionDAL.cs:118 ReglaCategorizacionDAL.Actualizar
+' DAL/ReglaCategorizacionDAL.cs:22 ReglaCategorizacionDAL.ObtenerPorId
+' DAL/ReglaCategorizacionDAL.cs:51 ReglaCategorizacionDAL.ObtenerPorUsuario
+' REPOSITORIO/ICategoriaRepositorio.cs:8 ICategoriaRepositorio.ObtenerPorId
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:10 IComercioReglaCategorizacionRepositorio.ReemplazarComerciosDeReglaCategorizacion
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:10 IReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:14 IReglaCategorizacionRepositorio.Actualizar
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:8 IReglaCategorizacionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:23 ReglaCategorizacionRepositorio.ObtenerPorId
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:30 ReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:53 ReglaCategorizacionRepositorio.Actualizar
+' UI/FormReglasCategorizacion.cs:158 FormReglasCategorizacion.btnActualizarRegla_Click
+@enduml

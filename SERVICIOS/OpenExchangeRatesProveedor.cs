@@ -42,7 +42,7 @@ namespace SERVICIOS
             _tiempoMaximo = tiempoMaximo;
         }
 
-        public async Task<TasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken)
+        public async Task<ITasasCambioObtenidas> ObtenerTasasAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

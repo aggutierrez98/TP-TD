@@ -8,10 +8,10 @@ namespace BLL.Tests
     [TestClass]
     public sealed class AlcancePromocionTests
     {
-        private const int Galicia = 1;
-        private const int Macro = 2;
-        private const int VisaCredito = 10;
-        private const int MastercardCredito = 11;
+        private static readonly EntidadFinanciera Galicia = new EntidadFinanciera { Id = 1 };
+        private static readonly EntidadFinanciera Macro = new EntidadFinanciera { Id = 2 };
+        private static readonly MedioPago VisaCredito = new MedioPago { Id = 10 };
+        private static readonly MedioPago MastercardCredito = new MedioPago { Id = 11 };
         private const int Supermercados = 100;
         private const int Indumentaria = 101;
         private const int Carrefour = 1000;
@@ -30,7 +30,7 @@ namespace BLL.Tests
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, VisaCredito, "Black"));
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, null, null, null));
             Assert.IsTrue(AlcancePromocion.Vigente(promocion, new DateTime(2026, 3, 10)));
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 7, Bebidas));
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(7, Bebidas)));
         }
 
         // --- Y entre filtros, O dentro de uno ---
@@ -39,8 +39,8 @@ namespace BLL.Tests
         public void EntidadYMedioDePago_AplicaSoloSiCumpleAmbos()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.EntidadFinancieraIds.Add(Galicia);
-            promocion.MedioPagoIds.Add(VisaCredito);
+            promocion.EntidadesFinancieras.Add(Galicia);
+            promocion.MediosPago.Add(VisaCredito);
 
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, VisaCredito, null));
             Assert.IsFalse(AlcancePromocion.AplicaAPago(promocion, Macro, VisaCredito, null), "Visa de otra entidad no aplica.");
@@ -51,18 +51,18 @@ namespace BLL.Tests
         public void VariosMediosDePago_BastaConUno()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.MedioPagoIds.AddRange(new[] { VisaCredito, MastercardCredito });
+            promocion.MediosPago.AddRange(new[] { VisaCredito, MastercardCredito });
 
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, VisaCredito, null));
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Macro, MastercardCredito, null));
-            Assert.IsFalse(AlcancePromocion.AplicaAPago(promocion, Galicia, 99, null));
+            Assert.IsFalse(AlcancePromocion.AplicaAPago(promocion, Galicia, new MedioPago { Id = 99 }, null));
         }
 
         [TestMethod]
         public void Segmento_EsFiltroPropioYSeCombinaConLaEntidad()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.EntidadFinancieraIds.Add(Galicia);
+            promocion.EntidadesFinancieras.Add(Galicia);
             promocion.Segmentos.Add("Black");
 
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, VisaCredito, "black"), "El segmento no distingue mayusculas.");
@@ -77,7 +77,7 @@ namespace BLL.Tests
         public void MedioDePagoSinEntidad_AplicaAUnaVisaDeCualquierEntidad()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.MedioPagoIds.Add(VisaCredito);
+            promocion.MediosPago.Add(VisaCredito);
 
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, VisaCredito, null));
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Macro, VisaCredito, null));
@@ -97,7 +97,7 @@ namespace BLL.Tests
         public void EntidadSinMedioDePago_AplicaAcualquierMedioDeEsaEntidad()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.EntidadFinancieraIds.Add(Galicia);
+            promocion.EntidadesFinancieras.Add(Galicia);
 
             Assert.IsTrue(AlcancePromocion.AplicaAPago(promocion, Galicia, MastercardCredito, null));
             Assert.IsFalse(AlcancePromocion.AplicaAPago(promocion, null, MastercardCredito, null), "Sin entidad no cumple un filtro de entidades.");
@@ -109,7 +109,7 @@ namespace BLL.Tests
         public void SoloRubro_AplicaALosComerciosDeEseRubro()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.RubroComercioIds.Add(Supermercados);
+            promocion.RubrosComercio.Add(new RubroComercio { Id = Supermercados });
 
             Assert.IsTrue(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Carrefour, Supermercados)));
         }
@@ -118,7 +118,7 @@ namespace BLL.Tests
         public void SoloRubro_NoAplicaAUnComercioDeOtroRubro()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.RubroComercioIds.Add(Supermercados);
+            promocion.RubrosComercio.Add(new RubroComercio { Id = Supermercados });
 
             Assert.IsFalse(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Coto, Indumentaria)));
         }
@@ -127,7 +127,7 @@ namespace BLL.Tests
         public void SoloComercio_AplicaSoloAEseComercio()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ComercioIds.Add(Carrefour);
+            promocion.Comercios.Add(new Comercio { Id = Carrefour });
 
             Assert.IsTrue(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Carrefour, Supermercados)));
             Assert.IsFalse(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Coto, Supermercados)));
@@ -137,8 +137,8 @@ namespace BLL.Tests
         public void ComercioYRubro_SeCombinanConY()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ComercioIds.AddRange(new[] { Carrefour, Coto });
-            promocion.RubroComercioIds.Add(Supermercados);
+            promocion.Comercios.AddRange(new[] { new Comercio { Id = Carrefour }, new Comercio { Id = Coto } });
+            promocion.RubrosComercio.Add(new RubroComercio { Id = Supermercados });
 
             Assert.IsTrue(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Carrefour, Supermercados)));
             Assert.IsFalse(AlcancePromocion.AplicaAComercio(promocion, NuevoComercio(Coto, Indumentaria)), "Listado pero de otro rubro.");
@@ -149,7 +149,7 @@ namespace BLL.Tests
         public void ComercioSinRubroCargado_NoCumpleUnFiltroDeRubros()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.RubroComercioIds.Add(Supermercados);
+            promocion.RubrosComercio.Add(new RubroComercio { Id = Supermercados });
 
             Assert.IsFalse(AlcancePromocion.AplicaAComercio(promocion, new Comercio { Id = Carrefour }));
         }
@@ -160,64 +160,64 @@ namespace BLL.Tests
         public void SoloCategoriaExcluida_ParticipaTodoSalvoEsaCategoria()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.CategoriaExcluidaIds.Add(Carnes);
+            promocion.CategoriasExcluidas.Add(new CategoriaProducto { Id = Carnes });
 
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 1, Bebidas));
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 2, Carnes));
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(1, Bebidas)));
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(2, Carnes)));
         }
 
         [TestMethod]
         public void CategoriaIncluidaYProductoExcluido_ParticipanLasBebidasSalvoEseProducto()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.CategoriaIncluidaIds.Add(Bebidas);
-            promocion.ProductoExcluidoIds.Add(7);
+            promocion.CategoriasIncluidas.Add(new CategoriaProducto { Id = Bebidas });
+            promocion.ProductosExcluidos.Add(new Producto { Id = 7 });
 
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 8, Bebidas));
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 7, Bebidas), "El producto excluido queda afuera.");
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 9, Carnes), "Otra categoria no esta incluida.");
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(8, Bebidas)));
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(7, Bebidas)), "El producto excluido queda afuera.");
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(9, Carnes)), "Otra categoria no esta incluida.");
         }
 
         [TestMethod]
         public void ProductoIncluido_ParticipaSoloEseProducto()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ProductoIncluidoIds.Add(7);
+            promocion.ProductosIncluidos.Add(new Producto { Id = 7 });
 
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 7, Carnes));
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 8, Carnes));
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(7, Carnes)));
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(8, Carnes)));
         }
 
         [TestMethod]
         public void ProductoIncluidoYCategoriaIncluida_BastaConUnaInclusion()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ProductoIncluidoIds.Add(7);
-            promocion.CategoriaIncluidaIds.Add(Bebidas);
+            promocion.ProductosIncluidos.Add(new Producto { Id = 7 });
+            promocion.CategoriasIncluidas.Add(new CategoriaProducto { Id = Bebidas });
 
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 7, Carnes), "Coincide por producto.");
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 8, Bebidas), "Coincide por categoria.");
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 9, Carnes));
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(7, Carnes)), "Coincide por producto.");
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(8, Bebidas)), "Coincide por categoria.");
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(9, Carnes)));
         }
 
         [TestMethod]
         public void ProductoIncluidoConSuCategoriaExcluida_LaExclusionGana()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ProductoIncluidoIds.Add(7);
-            promocion.CategoriaExcluidaIds.Add(Carnes);
+            promocion.ProductosIncluidos.Add(new Producto { Id = 7 });
+            promocion.CategoriasExcluidas.Add(new CategoriaProducto { Id = Carnes });
 
-            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, 7, Carnes));
+            Assert.IsFalse(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(7, Carnes)));
         }
 
         [TestMethod]
         public void CategoriaIncluidaConProductoExcluidoDeOtraCategoria_NoAfectaALosDemas()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.CategoriaIncluidaIds.Add(Bebidas);
-            promocion.ProductoExcluidoIds.Add(99);
+            promocion.CategoriasIncluidas.Add(new CategoriaProducto { Id = Bebidas });
+            promocion.ProductosExcluidos.Add(new Producto { Id = 99 });
 
-            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, 8, Bebidas));
+            Assert.IsTrue(AlcancePromocion.AplicaAProducto(promocion, NuevoProducto(8, Bebidas)));
         }
 
         // --- Vigencia y dias ---
@@ -274,7 +274,7 @@ namespace BLL.Tests
         public void PromocionDeOtroComercio_NoAparece()
         {
             Promocion promocion = NuevaPromocion();
-            promocion.ComercioIds.Add(Carrefour);
+            promocion.Comercios.Add(new Comercio { Id = Carrefour });
 
             List<Promocion> resultado = AlcancePromocion.FiltrarPorComercio(
                 new List<Promocion> { promocion },
@@ -287,11 +287,11 @@ namespace BLL.Tests
         public void FiltrarPorComercio_ConservaSoloLasQueAplican()
         {
             Promocion propia = NuevaPromocion();
-            propia.ComercioIds.Add(Coto);
+            propia.Comercios.Add(new Comercio { Id = Coto });
             Promocion porRubro = NuevaPromocion();
-            porRubro.RubroComercioIds.Add(Supermercados);
+            porRubro.RubrosComercio.Add(new RubroComercio { Id = Supermercados });
             Promocion ajena = NuevaPromocion();
-            ajena.ComercioIds.Add(Carrefour);
+            ajena.Comercios.Add(new Comercio { Id = Carrefour });
 
             List<Promocion> resultado = AlcancePromocion.FiltrarPorComercio(
                 new List<Promocion> { propia, porRubro, ajena },
@@ -310,6 +310,11 @@ namespace BLL.Tests
                 VigenciaDesde = new DateTime(2026, 3, 1),
                 VigenciaHasta = new DateTime(2026, 3, 31)
             };
+        }
+
+        private static Producto NuevoProducto(int id, int categoriaId)
+        {
+            return new Producto { Id = id, CategoriaProducto = new CategoriaProducto { Id = categoriaId } };
         }
 
         private static Comercio NuevoComercio(int id, int rubroId)

@@ -1,0 +1,1406 @@
+@startuml N01.4-orientacion-financiera-clases
+title N01.4 · Obtener orientación financiera personalizada\nDiagrama de clases por proceso de negocio
+caption CUN76, CUN77, CUN87
+' Vista integrada de los participantes y miembros relevantes de los CU del proceso.
+' Las capas y firmas se obtienen del codigo C# actual; no se infieren desde las imagenes.
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 12
+skinparam packageFontSize 18
+skinparam packageFontStyle bold
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam classBorderColor #475569
+skinparam ArrowColor #64748B
+skinparam nodesep 25
+skinparam ranksep 45
+skinparam linetype ortho
+hide empty members
+top to bottom direction
+package "UI · Presentación" as L_UI #DBEAFE {
+  class FormAsistentePersonal #DBEAFE {
+    -btnEnviarMensajeAsistente_Click(sender: object, e: EventArgs): void
+  }
+  class FormConfiguracionUsuario #DBEAFE {
+    -CargarPerfilAsync(): Task
+  }
+  class FormPerfilInversor #DBEAFE {
+    -btnSiguiente_Click(sender: object, e: EventArgs): void
+  }
+  class UiDialogHelper #DBEAFE {
+    +MostrarError(messageKey: string): void
+    +MostrarWarning(messageKey: string): void
+    +Traducir(key: string): string
+  }
+  class UiExceptionHandler #DBEAFE {
+    +Mostrar(exception: Exception, actividad: string): void
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  FormAsistentePersonal -[hidden]right-> FormConfiguracionUsuario
+  FormConfiguracionUsuario -[hidden]right-> FormPerfilInversor
+  FormPerfilInversor -[hidden]right-> UiDialogHelper
+  UiDialogHelper -[hidden]right-> UiExceptionHandler
+}
+package "BLL · Lógica de negocio" as L_BLL #DCFCE7 {
+  class AlcancePromocion #DCFCE7 {
+    +AplicaAComercio(promocion: Promocion, comercio: Comercio): bool
+    +AplicaAPago(promocion: Promocion, entidadFinanciera:\nEntidadFinanciera, medioPago: MedioPago, segmento: string): bool
+    +AplicaAProducto(promocion: Promocion, producto: Producto): bool
+    +Vigente(promocion: Promocion, fecha: DateTime): bool
+  }
+  class AsistenteFinancieroBLL #DCFCE7 {
+    +EnviarMensajeAsync(pregunta: string): Task<RespuestaAsistente>
+    +ObtenerHistorial(): IReadOnlyList<ConsultaChatbot>
+  }
+  class BitacoraBLL #DCFCE7 {
+    +RegistrarFalloNegocio(actividad: string, informacion: string, origen:\nstring): void
+    ~RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  class CalculadorPerfilInversor #DCFCE7 {
+    ~Evaluar(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>): PerfilInversor
+  }
+  class CoincidenciaLocalProductos #DCFCE7 {
+    ~Buscar(descripcionItem: string, productos: IEnumerable<Producto>):\nList<CoincidenciaProducto>
+    ~Normalizar(texto: string): string
+  }
+  class CoincidenciaProducto #DCFCE7 {
+    +Producto: Producto
+    +Puntaje: double
+    +EsSemantica: bool
+  }
+  class CoincidenciaSemanticaProductos #DCFCE7 {
+    ~BuscarAsync(items: IEnumerable<ItemLista>, productos:\nIEnumerable<Producto>, cancellationToken: CancellationToken):\nTask<Dictionary<int, List<CoincidenciaProducto>>>
+  }
+  class ContinuacionPerfilInversor #DCFCE7 {
+    +Usuario: Usuario
+    +CreadaUtc: DateTime
+  }
+  class DistanciaGeografica #DCFCE7 {
+    +CalcularMetros(latitudOrigen: decimal, longitudOrigen: decimal,\nlatitudDestino: decimal, longitudDestino: decimal): double
+  }
+  class DistanciaZonaUsuario #DCFCE7 {
+    +Zona: ZonaUsuario
+    +DistanciaMetros: double
+    +EstaDentroDelRadio: bool
+  }
+  enum EstadoPorcentaje #DCFCE7 {
+    Ausente
+    Valido
+    Invalido
+  }
+  class ExtractorPorcentajeInversion #DCFCE7 {
+    ~Extraer(llamada: ILlamadaHerramientaAsistente, nombreHerramienta:\nstring): ResultadoPorcentaje
+  }
+  class GeneradorRecomendaciones #DCFCE7 {
+    +GenerarAsync(solicitud: SolicitudGeneracion, cancellationToken:\nCancellationToken): Task<ResultadoGeneracion>
+  }
+  interface IBitacoraBLL #DCFCE7 {
+    +RegistrarFalloNegocio(actividad: string, informacion: string, origen:\nstring): void
+    +RegistrarOperacionInterno(actividad: string, informacion: string,\norigen: string, unidad: IUnidadDeTrabajo): void
+  }
+  interface IGeneradorRecomendaciones #DCFCE7 {
+    +ComprasDisponible: bool
+    +InversionesDisponible: bool
+    +GenerarAsync(solicitud: SolicitudGeneracion, cancellationToken:\nCancellationToken): Task<ResultadoGeneracion>
+  }
+  interface IRecomendacionComprasBLL #DCFCE7 {
+    +CalcularAsync(usuario: Usuario, nombreLista: string,\ncancellationToken: System.Threading.CancellationToken):\nSystem.Threading.Tasks.Task<ResumenCompras>
+    +ObtenerUniversoReferencias(usuario: Usuario):\nIReadOnlyList<IReferenciaAsistente>
+  }
+  interface IRecomendacionInversionesBLL #DCFCE7 {
+    +CalcularAsync(usuario: Usuario, porcentaje: decimal?,\ncancellationToken: System.Threading.CancellationToken, perfil:\nPerfilInversor): System.Threading.Tasks.Task<ResumenInversiones>
+  }
+  class InstrumentoInversion #DCFCE7 {
+    +Dato: IDatoMercado
+    +Rendimiento30Dias: decimal?
+  }
+  class ItemCompra #DCFCE7 {
+    +Descripcion: string
+    +Cantidad: int
+    +NoEncontrado: bool
+    +Ofertas: List<OfertaCompra>
+  }
+  class LoteInversion #DCFCE7 {
+  }
+  class ManejadorExcepcionesBLL #DCFCE7 {
+    +ObtenerMensajeUsuarioKey(exception: Exception, actividad: string):\nstring
+  }
+  enum NivelInversion #DCFCE7 {
+    Negativo
+    Ajustado
+    Comodo
+    Alto
+  }
+  class OfertaCompra #DCFCE7 {
+    +ComercioId: int
+    +Producto: string
+    +Comercio: string
+    +PrecioUnitario: decimal
+    +Importe: decimal
+    +Moneda: string
+    +Zona: string
+    +DistanciaMetros: int?
+    +SinUbicacionFisica: bool
+    +SinTasa: bool
+    +TasaAArs: decimal?
+    +FechaTasa: DateTime?
+    +PrecioFinalArs: decimal?
+    +Promociones: List<PromocionCompra>
+  }
+  class PerfilInversorBLL #DCFCE7 {
+    +EvaluarCuestionario(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>): PerfilInversor
+    +GuardarMiPerfil(version: int, respuestas:\nIEnumerable<RespuestaPerfilInversor>): PerfilInversor
+    +GuardarPostRegistro(continuacion: ContinuacionPerfilInversor,\nversion: int, respuestas: IEnumerable<RespuestaPerfilInversor>):\nPerfilInversor
+    +ObtenerCantidadOpciones(pregunta: PreguntaPerfilInversor): int
+    +ObtenerMiPerfil(): PerfilInversor
+    +ObtenerPreguntas(): IReadOnlyList<PreguntaPerfilInversor>
+  }
+  class PrefiltroConsultasAsistente #DCFCE7 {
+    ~Evaluar(pregunta: string): ResultadoPrefiltro
+    ~Normalizar(texto: string): string
+  }
+  class PromocionCompra #DCFCE7 {
+    +Descripcion: string
+    +Fecha: DateTime
+    +Porcentaje: decimal
+    +TopeArs: decimal?
+    +MedioPago: string
+    +TipoMedioPago: string
+    +Segmento: string
+    +Cuenta: string
+    +Ahorro: decimal?
+    +PrecioFinal: decimal?
+  }
+  class RecomendacionComprasBLL #DCFCE7 {
+    +CalcularAsync(usuario: Usuario, nombreLista: string,\ncancellationToken: CancellationToken): Task<ResumenCompras>
+    +ObtenerUniversoReferencias(usuario: Usuario):\nIReadOnlyList<IReferenciaAsistente>
+  }
+  class RecomendacionInversionesBLL #DCFCE7 {
+    +CalcularAsync(usuario: Usuario, porcentaje: decimal?,\ncancellationToken: CancellationToken, perfil: PerfilInversor):\nTask<ResumenInversiones>
+  }
+  class RespuestaAsistente #DCFCE7 {
+    +Texto: string
+    +ClaveRechazo: string
+    +EsRechazo: bool
+    ~Rechazada(claveRechazo: string): RespuestaAsistente
+    ~Respondida(texto: string): RespuestaAsistente
+  }
+  class ResultadoGeneracion #DCFCE7 {
+    +Aceptada: bool
+    +SinAlternativas: bool
+    +Texto: string
+    ~NoConfiable(): ResultadoGeneracion
+    ~SinCandidatos(): ResultadoGeneracion
+    ~Valida(texto: string): ResultadoGeneracion
+  }
+  class ResultadoPorcentaje #DCFCE7 {
+    +Estado: EstadoPorcentaje
+    +Valor: decimal?
+    ~DeValor(valor: decimal): ResultadoPorcentaje
+  }
+  enum ResultadoPrefiltro #DCFCE7 {
+    Admitida
+    DemasiadoLarga
+    Inyeccion
+    TemaExcluido
+  }
+  enum ResultadoValidacionRespuesta #DCFCE7 {
+    Valida
+    RespuestaVacia
+    BloqueDeCodigo
+    ReferenciaNoPermitida
+  }
+  class ResumenCompras #DCFCE7 {
+    +SinZonas: bool
+    +ItemsOmitidos: int
+    +Items: List<ItemCompra>
+  }
+  class ResumenInversiones #DCFCE7 {
+    +SaldoMensual: decimal
+    +GastoMensual: decimal
+    +Porcentaje: decimal?
+    +Monto: decimal?
+    +Moneda: string
+    +Nivel: NivelInversion
+    +Perfil: NivelRiesgoInversor
+    +RiesgoEfectivo: NivelRiesgoInversor?
+    +FechaPerfilUtc: DateTime
+    +VersionPerfil: int
+    +MaximoMesesInmovilizacion: int
+    +MaximoDiasHabilesDisponibilidad: int?
+    +CandidatosSinCompatibilidad: List<string>
+    +Instrumentos: List<InstrumentoInversion>
+    +Inflacion: IDatoMercado
+    +FuentesFaltantes: List<string>
+    +UniversoReferencias: List<IReferenciaAsistente>
+  }
+  class SesionUsuarioExtensiones #DCFCE7 {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+  class SolicitudGeneracion #DCFCE7 {
+    +Categoria: CategoriaConsulta
+    +Usuario: Usuario
+    +Pregunta: string
+    +Historial: IReadOnlyList<IIntercambioChatbot>
+    +Idioma: IIdioma
+    +NombreLista: string
+    +Perfil: PerfilInversor
+    +Porcentaje: decimal?
+    +OmitirSiSinAlternativas: bool
+  }
+  class ValidadorRespuestaAsistente #DCFCE7 {
+    ~Validar(respuesta: string, universo:\nIEnumerable<IReferenciaAsistente>, contexto: IContextoAsistente):\nResultadoValidacionRespuesta
+  }
+  class ZonaUsuarioBLL #DCFCE7 {
+    +CalcularDistancias(zonas: IEnumerable<ZonaUsuario>, latitud: decimal,\nlongitud: decimal): List<DistanciaZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AlcancePromocion -[hidden]right-> AsistenteFinancieroBLL
+  AsistenteFinancieroBLL -[hidden]right-> BitacoraBLL
+  BitacoraBLL -[hidden]right-> CalculadorPerfilInversor
+  CalculadorPerfilInversor -[hidden]right-> CoincidenciaLocalProductos
+  CoincidenciaLocalProductos -[hidden]right-> CoincidenciaProducto
+  CoincidenciaProducto -[hidden]right-> CoincidenciaSemanticaProductos
+  CoincidenciaSemanticaProductos -[hidden]right-> ContinuacionPerfilInversor
+  ContinuacionPerfilInversor -[hidden]right-> DistanciaGeografica
+  DistanciaGeografica -[hidden]right-> DistanciaZonaUsuario
+  DistanciaZonaUsuario -[hidden]right-> EstadoPorcentaje
+  EstadoPorcentaje -[hidden]right-> ExtractorPorcentajeInversion
+  ExtractorPorcentajeInversion -[hidden]right-> GeneradorRecomendaciones
+  GeneradorRecomendaciones -[hidden]right-> IBitacoraBLL
+  IBitacoraBLL -[hidden]right-> IGeneradorRecomendaciones
+  IGeneradorRecomendaciones -[hidden]right-> IRecomendacionComprasBLL
+  AlcancePromocion -[hidden]down-> IRecomendacionInversionesBLL
+  IRecomendacionInversionesBLL -[hidden]right-> InstrumentoInversion
+  InstrumentoInversion -[hidden]right-> ItemCompra
+  ItemCompra -[hidden]right-> LoteInversion
+  LoteInversion -[hidden]right-> ManejadorExcepcionesBLL
+  ManejadorExcepcionesBLL -[hidden]right-> NivelInversion
+  NivelInversion -[hidden]right-> OfertaCompra
+  OfertaCompra -[hidden]right-> PerfilInversorBLL
+  PerfilInversorBLL -[hidden]right-> PrefiltroConsultasAsistente
+  PrefiltroConsultasAsistente -[hidden]right-> PromocionCompra
+  PromocionCompra -[hidden]right-> RecomendacionComprasBLL
+  RecomendacionComprasBLL -[hidden]right-> RecomendacionInversionesBLL
+  RecomendacionInversionesBLL -[hidden]right-> RespuestaAsistente
+  RespuestaAsistente -[hidden]right-> ResultadoGeneracion
+  ResultadoGeneracion -[hidden]right-> ResultadoPorcentaje
+  ResultadoPorcentaje -[hidden]right-> ResultadoPrefiltro
+  IRecomendacionInversionesBLL -[hidden]down-> ResultadoValidacionRespuesta
+  ResultadoValidacionRespuesta -[hidden]right-> ResumenCompras
+  ResumenCompras -[hidden]right-> ResumenInversiones
+  ResumenInversiones -[hidden]right-> SesionUsuarioExtensiones
+  SesionUsuarioExtensiones -[hidden]right-> SolicitudGeneracion
+  SolicitudGeneracion -[hidden]right-> ValidadorRespuestaAsistente
+  ValidadorRespuestaAsistente -[hidden]right-> ZonaUsuarioBLL
+}
+package "REPOSITORIO · Persistencia y contratos" as L_REPOSITORIO #FEF3C7 {
+  class ChatbotFinancieroRepositorio #FEF3C7 {
+    +ObtenerUnico(): ChatbotFinanciero
+  }
+  class ConsultaChatbotRepositorio #FEF3C7 {
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot): int
+    +ObtenerPorUsuario(usuario: Usuario): List<ConsultaChatbot>
+  }
+  interface IChatbotFinancieroRepositorio #FEF3C7 {
+    +ObtenerUnico(): ChatbotFinanciero
+  }
+  interface IConsultaChatbotRepositorio #FEF3C7 {
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot): int
+    +ObtenerPorUsuario(usuario: Usuario): List<ConsultaChatbot>
+  }
+  interface IMovimientoRepositorio #FEF3C7 {
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime): List<TotalPorMes>
+  }
+  interface IPerfilInversorRepositorio #FEF3C7 {
+    +Guardar(perfil: PerfilInversor): void
+    +ObtenerPorUsuario(usuario: Usuario): PerfilInversor
+  }
+  interface IProductoEmbeddingRepositorio #FEF3C7 {
+    +Guardar(embedding: ProductoEmbedding): void
+    +ObtenerTodos(): List<ProductoEmbedding>
+  }
+  interface IRecomendacionComprasRepositorio #FEF3C7 {
+    +ObtenerCuentasConMediosPorUsuario(usuario: Usuario):\nList<CuentaFinanciera>
+    +ObtenerItemsPendientesPorUsuario(usuario: Usuario): List<ItemLista>
+    +ObtenerOfertas(): List<ComercioProducto>
+    +ObtenerProductosConCategoria(): List<Producto>
+    +ObtenerPromocionesVigentesEntre(desde: DateTime, hasta: DateTime):\nList<Promocion>
+  }
+  interface ITasaConversionRepositorio #FEF3C7 {
+    +ObtenerTodas(): List<TasaConversion>
+  }
+  interface IUnidadDeTrabajo #FEF3C7 {
+    +ConsultasChatbot: IConsultaChatbotRepositorio
+    +PerfilesInversor: IPerfilInversorRepositorio
+    +ProductoEmbeddings: IProductoEmbeddingRepositorio
+    +Save(): void
+  }
+  interface IUnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface IUsuarioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Usuario
+  }
+  interface IZonaUsuarioRepositorio #FEF3C7 {
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+  class MonedaRepositorio #FEF3C7 {
+  }
+  class MovimientoRepositorio #FEF3C7 {
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime): List<TotalPorMes>
+  }
+  class PerfilInversorRepositorio #FEF3C7 {
+    +Guardar(perfil: PerfilInversor): void
+    +ObtenerPorUsuario(usuario: Usuario): PerfilInversor
+  }
+  class ProductoEmbeddingRepositorio #FEF3C7 {
+    +Guardar(embedding: ProductoEmbedding): void
+    +ObtenerTodos(): List<ProductoEmbedding>
+  }
+  class PromocionRepositorio #FEF3C7 {
+  }
+  class RecomendacionComprasRepositorio #FEF3C7 {
+    +ObtenerCuentasConMediosPorUsuario(usuario: Usuario):\nList<CuentaFinanciera>
+    +ObtenerItemsPendientesPorUsuario(usuario: Usuario): List<ItemLista>
+    +ObtenerOfertas(): List<ComercioProducto>
+    +ObtenerProductosConCategoria(): List<Producto>
+    +ObtenerPromocionesVigentesEntre(desde: DateTime, hasta: DateTime):\nList<Promocion>
+  }
+  class TasaConversionRepositorio #FEF3C7 {
+    +ObtenerTodas(): List<TasaConversion>
+  }
+  class UnidadDeTrabajoFactory #FEF3C7 {
+    +Crear(): IUnidadDeTrabajo
+  }
+  class UnidadDeTrabajoSqlServer #FEF3C7 {
+    +Save(): void
+  }
+  class UsuarioRepositorio #FEF3C7 {
+    +ObtenerPorId(id: int): Usuario
+  }
+  class ZonaUsuarioRepositorio #FEF3C7 {
+    +ObtenerPorUsuario(usuario: Usuario): List<ZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  ChatbotFinancieroRepositorio -[hidden]right-> ConsultaChatbotRepositorio
+  ConsultaChatbotRepositorio -[hidden]right-> IChatbotFinancieroRepositorio
+  IChatbotFinancieroRepositorio -[hidden]right-> IConsultaChatbotRepositorio
+  IConsultaChatbotRepositorio -[hidden]right-> IMovimientoRepositorio
+  IMovimientoRepositorio -[hidden]right-> IPerfilInversorRepositorio
+  IPerfilInversorRepositorio -[hidden]right-> IProductoEmbeddingRepositorio
+  IProductoEmbeddingRepositorio -[hidden]right-> IRecomendacionComprasRepositorio
+  IRecomendacionComprasRepositorio -[hidden]right-> ITasaConversionRepositorio
+  ITasaConversionRepositorio -[hidden]right-> IUnidadDeTrabajo
+  IUnidadDeTrabajo -[hidden]right-> IUnidadDeTrabajoFactory
+  IUnidadDeTrabajoFactory -[hidden]right-> IUsuarioRepositorio
+  IUsuarioRepositorio -[hidden]right-> IZonaUsuarioRepositorio
+  IZonaUsuarioRepositorio -[hidden]right-> MonedaRepositorio
+  MonedaRepositorio -[hidden]right-> MovimientoRepositorio
+  MovimientoRepositorio -[hidden]right-> PerfilInversorRepositorio
+  ChatbotFinancieroRepositorio -[hidden]down-> ProductoEmbeddingRepositorio
+  ProductoEmbeddingRepositorio -[hidden]right-> PromocionRepositorio
+  PromocionRepositorio -[hidden]right-> RecomendacionComprasRepositorio
+  RecomendacionComprasRepositorio -[hidden]right-> TasaConversionRepositorio
+  TasaConversionRepositorio -[hidden]right-> UnidadDeTrabajoFactory
+  UnidadDeTrabajoFactory -[hidden]right-> UnidadDeTrabajoSqlServer
+  UnidadDeTrabajoSqlServer -[hidden]right-> UsuarioRepositorio
+  UsuarioRepositorio -[hidden]right-> ZonaUsuarioRepositorio
+}
+package "DAL · Acceso a datos" as L_DAL #FFEDD5 {
+  class AccesoDatosSqlServer #FFEDD5 {
+  }
+  class ChatbotFinancieroDAL #FFEDD5 {
+    +ObtenerUnico(accesoDatos: AccesoDatosSqlServer): ChatbotFinanciero
+  }
+  class ConsultaChatbotDAL #FFEDD5 {
+    +InsertarYObtenerId(consultaChatbot: ConsultaChatbot, accesoDatos:\nAccesoDatosSqlServer): int
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ConsultaChatbot>
+  }
+  class MonedaDAL #FFEDD5 {
+  }
+  class MovimientoDAL #FFEDD5 {
+    +ObtenerTotalesPorMes(usuario: Usuario, desde: DateTime, hasta:\nDateTime, accesoDatos: AccesoDatosSqlServer): List<TotalPorMes>
+  }
+  class PerfilInversorDAL #FFEDD5 {
+    +Guardar(perfil: PerfilInversor, acceso: AccesoDatosSqlServer): void
+    +ObtenerPorUsuario(usuario: Usuario, acceso: AccesoDatosSqlServer):\nPerfilInversor
+  }
+  class ProductoEmbeddingDAL #FFEDD5 {
+    +Guardar(embedding: ProductoEmbedding, accesoDatos:\nAccesoDatosSqlServer): void
+    +ObtenerTodos(accesoDatos: AccesoDatosSqlServer):\nList<ProductoEmbedding>
+  }
+  class PromocionDAL #FFEDD5 {
+  }
+  class RecomendacionComprasDAL #FFEDD5 {
+    +ObtenerCuentasConMediosPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<CuentaFinanciera>
+    +ObtenerItemsPendientesPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ItemLista>
+    +ObtenerOfertas(accesoDatos: AccesoDatosSqlServer):\nList<ComercioProducto>
+    +ObtenerProductosConCategoria(accesoDatos: AccesoDatosSqlServer):\nList<Producto>
+    +ObtenerPromocionesVigentesEntre(desde: DateTime, hasta: DateTime,\naccesoDatos: AccesoDatosSqlServer): List<Promocion>
+  }
+  class TasaConversionDAL #FFEDD5 {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<TasaConversion>
+  }
+  class UsuarioDAL #FFEDD5 {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Usuario
+  }
+  class ZonaUsuarioDAL #FFEDD5 {
+    +ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer): List<ZonaUsuario>
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  AccesoDatosSqlServer -[hidden]right-> ChatbotFinancieroDAL
+  ChatbotFinancieroDAL -[hidden]right-> ConsultaChatbotDAL
+  ConsultaChatbotDAL -[hidden]right-> MonedaDAL
+  MonedaDAL -[hidden]right-> MovimientoDAL
+  MovimientoDAL -[hidden]right-> PerfilInversorDAL
+  PerfilInversorDAL -[hidden]right-> ProductoEmbeddingDAL
+  ProductoEmbeddingDAL -[hidden]right-> PromocionDAL
+  PromocionDAL -[hidden]right-> RecomendacionComprasDAL
+  RecomendacionComprasDAL -[hidden]right-> TasaConversionDAL
+  TasaConversionDAL -[hidden]right-> UsuarioDAL
+  UsuarioDAL -[hidden]right-> ZonaUsuarioDAL
+}
+package "BE · Entidades del negocio" as L_BE #F3E8FF {
+  class CategoriaProducto #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class ChatbotFinanciero #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class Comercio #F3E8FF {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  class ComercioProducto #F3E8FF {
+    +Comercio: Comercio
+    +Producto: Producto
+    +Moneda: Moneda
+    +Precio: decimal
+  }
+  class ConsultaChatbot #F3E8FF {
+    +Id: int
+    +ChatbotFinanciero: ChatbotFinanciero
+    +Usuario: Usuario
+    +Pregunta: string
+    +Respuesta: string
+    +Fecha: DateTime
+    +EsPregunta: bool
+  }
+  class CuentaFinanciera #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +EntidadFinanciera: EntidadFinanciera
+    +Alias: string
+    +Tipo: TipoCuentaFinanciera
+    +CredencialesCifradas: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  enum DiaSemana #F3E8FF {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+  class EntidadFinanciera #F3E8FF {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class ItemLista #F3E8FF {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class ListaDeCompras #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +FechaCreacion: DateTime
+    +ItemsLista: List<ItemLista>
+  }
+  class MedioPago #F3E8FF {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class MedioPagoEntidad #F3E8FF {
+    +Id: int
+    +EntidadFinanciera: EntidadFinanciera
+    +MedioPago: MedioPago
+    +Segmento: string
+  }
+  class Moneda #F3E8FF {
+    +Id: int
+    +Codigo: string
+    +Nombre: string
+  }
+  enum NivelRiesgoInversor #F3E8FF {
+    Bajo
+    Moderado
+    Alto
+  }
+  class PerfilInversor #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +VersionCuestionario: int
+    +FechaEvaluacionUtc: DateTime
+    +Capacidad: decimal
+    +Tolerancia: decimal
+    +Puntaje: decimal
+    +NivelRiesgo: NivelRiesgoInversor
+    +MotivosLimite: List<string>
+    +Respuestas: List<RespuestaPerfilInversor>
+  }
+  class PreguntaPerfilInversor #F3E8FF {
+    +Id: int
+  }
+  class Producto #F3E8FF {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class ProductoEmbedding #F3E8FF {
+    +Producto: Producto
+    +Modelo: string
+    +TextoFuente: string
+    +Vector: float[]
+    +FechaCalculo: DateTime
+  }
+  class Promocion #F3E8FF {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RespuestaPerfilInversor #F3E8FF {
+    +Pregunta: PreguntaPerfilInversor
+    +OpcionId: string
+  }
+  class RubroComercio #F3E8FF {
+    +Id: int
+    +Nombre: string
+  }
+  class TasaConversion #F3E8FF {
+    +Id: int
+    +MonedaBase: Moneda
+    +MonedaConversion: Moneda
+    +CalculoConversion: decimal
+    +FechaActualizacion: DateTime
+    +EsManual: bool
+    +ProtegidaPorUsuario: Usuario
+    +FechaProteccion: DateTime?
+  }
+  enum TipoCuentaFinanciera #F3E8FF {
+    BilleteraDigital
+    CuentaCorriente
+    CajaAhorro
+  }
+  enum TipoMedioPago #F3E8FF {
+    TarjetaCredito
+    TarjetaDebito
+    TarjetaPrepaga
+    CuentaBilleteraVirtual
+    CuentaDNI
+  }
+  class Usuario #F3E8FF {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+  class ZonaUsuario #F3E8FF {
+    +Id: int
+    +Usuario: Usuario
+    +Nombre: string
+    +Latitud: decimal
+    +Longitud: decimal
+    +RadioMetros: int
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaProducto -[hidden]right-> ChatbotFinanciero
+  ChatbotFinanciero -[hidden]right-> Comercio
+  Comercio -[hidden]right-> ComercioProducto
+  ComercioProducto -[hidden]right-> ConsultaChatbot
+  ConsultaChatbot -[hidden]right-> CuentaFinanciera
+  CuentaFinanciera -[hidden]right-> DiaSemana
+  DiaSemana -[hidden]right-> EntidadFinanciera
+  EntidadFinanciera -[hidden]right-> ItemLista
+  ItemLista -[hidden]right-> ListaDeCompras
+  ListaDeCompras -[hidden]right-> MedioPago
+  MedioPago -[hidden]right-> MedioPagoEntidad
+  MedioPagoEntidad -[hidden]right-> Moneda
+  Moneda -[hidden]right-> NivelRiesgoInversor
+  NivelRiesgoInversor -[hidden]right-> PerfilInversor
+  PerfilInversor -[hidden]right-> PreguntaPerfilInversor
+  CategoriaProducto -[hidden]down-> Producto
+  Producto -[hidden]right-> ProductoEmbedding
+  ProductoEmbedding -[hidden]right-> Promocion
+  Promocion -[hidden]right-> RespuestaPerfilInversor
+  RespuestaPerfilInversor -[hidden]right-> RubroComercio
+  RubroComercio -[hidden]right-> TasaConversion
+  TasaConversion -[hidden]right-> TipoCuentaFinanciera
+  TipoCuentaFinanciera -[hidden]right-> TipoMedioPago
+  TipoMedioPago -[hidden]right-> Usuario
+  Usuario -[hidden]right-> ZonaUsuario
+}
+package "SERVICIOS · Servicios transversales" as L_SERVICIOS #CFFAFE {
+  class GeminiAsistenteFinancieroService #CFFAFE {
+    +ObtenerLlamadaHerramientaAsync(solicitud: ISolicitudAsistente,\nherramienta: IHerramientaAsistente, cancellationToken:\nCancellationToken): Task<ILlamadaHerramientaAsistente>
+    +ObtenerRespuestaAsync(solicitud: ISolicitudAsistente): Task<string>
+  }
+  class GeminiClasificadorConsultas #CFFAFE {
+    +ClasificarAsync(pregunta: string, cancellationToken:\nCancellationToken): Task<CategoriaConsulta>
+  }
+  class GeminiServicioEmbeddings #CFFAFE {
+    +Modelo: string
+    +CalcularAsync(textos: IReadOnlyList<string>, cancellationToken:\nCancellationToken): Task<IReadOnlyList<float[]>>
+  }
+  class Idioma #CFFAFE {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+    +ObtenerTraduccion(key: string): string
+  }
+  class IdiomaService #CFFAFE {
+    +IdiomaActual: IIdioma
+    +GetInstance(): IdiomaService
+  }
+  class IntercambioChatbot #CFFAFE {
+    +Pregunta: string
+    +Respuesta: string
+  }
+  class LimiteUsoAsistente #CFFAFE {
+    +IntentarConsumir(usuario: IUsuarioAutenticado): bool
+  }
+  class ProveedorArgentinaDatos #CFFAFE {
+    +ObtenerCuentasRemuneradasAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+    +ObtenerFondosAsync(tipo: string, fecha: DateTime?, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+    +ObtenerInflacionAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+    +ObtenerPlazosFijosAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  class ProveedorCriptoYa #CFFAFE {
+    +ObtenerPreciosAsync(moneda: string, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+  }
+  class ProveedorMercadoData912 #CFFAFE {
+    +ObtenerCotizacionesAsync(cedears: bool, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+  }
+  class ReferenciaAsistente #CFFAFE {
+    +Tipo: TipoReferenciaAsistente
+    +Nombre: string
+    +EsTicker: bool
+  }
+  class Sesion #CFFAFE {
+    +HaySesionActiva(): bool
+  }
+  class SolicitudAsistente #CFFAFE {
+    +Categoria: CategoriaConsulta
+    +Pregunta: string
+    +Historial: IReadOnlyList<IIntercambioChatbot>
+    +Contexto: IContextoAsistente
+  }
+  class TotalPorMes #CFFAFE {
+    +Anio: int
+    +Mes: int
+    +TotalIngresos: decimal
+    +TotalEgresos: decimal
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  GeminiAsistenteFinancieroService -[hidden]right-> GeminiClasificadorConsultas
+  GeminiClasificadorConsultas -[hidden]right-> GeminiServicioEmbeddings
+  GeminiServicioEmbeddings -[hidden]right-> Idioma
+  Idioma -[hidden]right-> IdiomaService
+  IdiomaService -[hidden]right-> IntercambioChatbot
+  IntercambioChatbot -[hidden]right-> LimiteUsoAsistente
+  LimiteUsoAsistente -[hidden]right-> ProveedorArgentinaDatos
+  ProveedorArgentinaDatos -[hidden]right-> ProveedorCriptoYa
+  ProveedorCriptoYa -[hidden]right-> ProveedorMercadoData912
+  ProveedorMercadoData912 -[hidden]right-> ReferenciaAsistente
+  ReferenciaAsistente -[hidden]right-> Sesion
+  Sesion -[hidden]right-> SolicitudAsistente
+  SolicitudAsistente -[hidden]right-> TotalPorMes
+}
+package "ABSTRACCIONES · Contratos compartidos" as L_ABSTRACCIONES #F1F5F9 {
+  enum CategoriaConsulta #F1F5F9 {
+    Compras
+    Inversiones
+    FinanzasGenerales
+    FueraDeTema
+    Inyeccion
+  }
+  interface IAsistenteFinancieroService #F1F5F9 {
+    +ObtenerLlamadaHerramientaAsync(solicitud: ISolicitudAsistente,\nherramienta: IHerramientaAsistente, cancellationToken:\nCancellationToken): Task<ILlamadaHerramientaAsistente>
+    +ObtenerRespuestaAsync(solicitud: ISolicitudAsistente): Task<string>
+  }
+  interface IClasificadorConsultas #F1F5F9 {
+    +ClasificarAsync(pregunta: string, cancellationToken:\nCancellationToken): Task<CategoriaConsulta>
+  }
+  interface IContextoAsistente #F1F5F9 {
+    +DatosJson: string
+    +ReferenciasPermitidas: IReadOnlyList<IReferenciaAsistente>
+  }
+  interface IDatoMercado #F1F5F9 {
+    +Nombre: string
+    +Tipo: string
+    +Fuente: string
+    +Fecha: DateTime
+    +Precio: decimal?
+    +Volumen: decimal?
+    +Vcp: decimal?
+    +Tasa: decimal?
+    +TipoTasa: string
+    +Moneda: string
+    +MesesInmovilizacion: int?
+    +DiasHabilesDisponibilidad: int?
+    +RequierePreaviso: bool?
+    +RequierePermanencia: bool?
+    +FuenteCondiciones: string
+    +FechaDisponibilidadMaxima: DateTime?
+  }
+  interface IHerramientaAsistente #F1F5F9 {
+    +Nombre: string
+    +Descripcion: string
+    +ParametrosJson: string
+  }
+  interface IIdioma #F1F5F9 {
+    +Id: int
+    +Nombre: string
+    +Default: bool
+    +Traducciones: IList<ITraduccion>
+    +ObtenerTraduccion(key: string): string
+  }
+  interface IIntercambioChatbot #F1F5F9 {
+    +Pregunta: string
+    +Respuesta: string
+  }
+  interface ILimiteUsoAsistente #F1F5F9 {
+    +IntentarConsumir(usuario: IUsuarioAutenticado): bool
+  }
+  interface ILlamadaHerramientaAsistente #F1F5F9 {
+    +Nombre: string
+    +ArgumentosJson: string
+  }
+  interface IPalabra #F1F5F9 {
+    +Id: int
+    +Key: string
+  }
+  interface IProveedorArgentinaDatos #F1F5F9 {
+    +ObtenerCuentasRemuneradasAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+    +ObtenerFondosAsync(tipo: string, fecha: DateTime?, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+    +ObtenerInflacionAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+    +ObtenerPlazosFijosAsync(cancellationToken: CancellationToken):\nTask<IReadOnlyList<IDatoMercado>>
+  }
+  interface IProveedorCriptoYa #F1F5F9 {
+    +ObtenerPreciosAsync(moneda: string, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+  }
+  interface IProveedorMercadoData912 #F1F5F9 {
+    +ObtenerCotizacionesAsync(cedears: bool, cancellationToken:\nCancellationToken): Task<IReadOnlyList<IDatoMercado>>
+  }
+  interface IReferenciaAsistente #F1F5F9 {
+    +Tipo: TipoReferenciaAsistente
+    +Nombre: string
+    +EsTicker: bool
+  }
+  interface IServicioEmbeddings #F1F5F9 {
+    +Modelo: string
+    +CalcularAsync(textos: IReadOnlyList<string>, cancellationToken:\nCancellationToken): Task<IReadOnlyList<float[]>>
+  }
+  interface ISesion #F1F5F9 {
+    +HaySesionActiva(): bool
+  }
+  interface ISolicitudAsistente #F1F5F9 {
+    +Categoria: CategoriaConsulta
+    +Pregunta: string
+    +Historial: IReadOnlyList<IIntercambioChatbot>
+    +Contexto: IContextoAsistente
+  }
+  interface ITraduccion #F1F5F9 {
+    +Idioma: IIdioma
+    +Valor: string
+    +Palabra: IPalabra
+  }
+  interface IUsuarioAutenticado #F1F5F9 {
+    +Id: int
+    +Username: string
+  }
+  enum TipoReferenciaAsistente #F1F5F9 {
+    Comercio
+    Promocion
+    Cuenta
+    Instrumento
+  }
+  ' Enlaces ocultos de maquetacion; no representan relaciones del sistema.
+  CategoriaConsulta -[hidden]right-> IAsistenteFinancieroService
+  IAsistenteFinancieroService -[hidden]right-> IClasificadorConsultas
+  IClasificadorConsultas -[hidden]right-> IContextoAsistente
+  IContextoAsistente -[hidden]right-> IDatoMercado
+  IDatoMercado -[hidden]right-> IHerramientaAsistente
+  IHerramientaAsistente -[hidden]right-> IIdioma
+  IIdioma -[hidden]right-> IIntercambioChatbot
+  IIntercambioChatbot -[hidden]right-> ILimiteUsoAsistente
+  ILimiteUsoAsistente -[hidden]right-> ILlamadaHerramientaAsistente
+  ILlamadaHerramientaAsistente -[hidden]right-> IPalabra
+  IPalabra -[hidden]right-> IProveedorArgentinaDatos
+  IProveedorArgentinaDatos -[hidden]right-> IProveedorCriptoYa
+  IProveedorCriptoYa -[hidden]right-> IProveedorMercadoData912
+  IProveedorMercadoData912 -[hidden]right-> IReferenciaAsistente
+  IReferenciaAsistente -[hidden]right-> IServicioEmbeddings
+  CategoriaConsulta -[hidden]down-> ISesion
+  ISesion -[hidden]right-> ISolicitudAsistente
+  ISolicitudAsistente -[hidden]right-> ITraduccion
+  ITraduccion -[hidden]right-> IUsuarioAutenticado
+  IUsuarioAutenticado -[hidden]right-> TipoReferenciaAsistente
+}
+' Orden visual de las capas; los enlaces ocultos no son dependencias.
+FormAsistentePersonal -[hidden]down-> AlcancePromocion
+ResultadoValidacionRespuesta -[hidden]down-> ChatbotFinancieroRepositorio
+ProductoEmbeddingRepositorio -[hidden]down-> AccesoDatosSqlServer
+AccesoDatosSqlServer -[hidden]down-> CategoriaProducto
+Producto -[hidden]down-> GeminiAsistenteFinancieroService
+GeminiAsistenteFinancieroService -[hidden]down-> CategoriaConsulta
+AsistenteFinancieroBLL .[norank].> ConsultaChatbot
+AsistenteFinancieroBLL .[norank].> ExtractorPorcentajeInversion
+AsistenteFinancieroBLL .[norank].> IAsistenteFinancieroService
+AsistenteFinancieroBLL .[norank].> IBitacoraBLL
+AsistenteFinancieroBLL .[norank].> IChatbotFinancieroRepositorio
+AsistenteFinancieroBLL .[norank].> IClasificadorConsultas
+AsistenteFinancieroBLL .[norank].> IConsultaChatbotRepositorio
+AsistenteFinancieroBLL .[norank].> IGeneradorRecomendaciones
+AsistenteFinancieroBLL .[norank].> ILimiteUsoAsistente
+AsistenteFinancieroBLL .[norank].> IPerfilInversorRepositorio
+AsistenteFinancieroBLL .[norank].> ISesion
+AsistenteFinancieroBLL .[norank].> IUnidadDeTrabajo
+AsistenteFinancieroBLL .[norank].> IUnidadDeTrabajoFactory
+AsistenteFinancieroBLL .[norank].> IntercambioChatbot
+AsistenteFinancieroBLL .[norank].> PerfilInversor
+AsistenteFinancieroBLL .[norank].> PrefiltroConsultasAsistente
+AsistenteFinancieroBLL .[norank].> RespuestaAsistente
+AsistenteFinancieroBLL .[norank].> RespuestaPerfilInversor
+AsistenteFinancieroBLL .[norank].> SesionUsuarioExtensiones
+AsistenteFinancieroBLL .[norank].> SolicitudAsistente
+AsistenteFinancieroBLL .[norank].> SolicitudGeneracion
+BitacoraBLL .[norank].> ISesion
+BitacoraBLL .[norank].> IUnidadDeTrabajoFactory
+BitacoraBLL .[norank].|> IBitacoraBLL
+CalculadorPerfilInversor .[norank].> PerfilInversor
+CalculadorPerfilInversor .[norank].> PreguntaPerfilInversor
+CalculadorPerfilInversor .[norank].> RespuestaPerfilInversor
+ChatbotFinancieroDAL .[norank].> AccesoDatosSqlServer
+ChatbotFinancieroRepositorio .[norank].> AccesoDatosSqlServer
+ChatbotFinancieroRepositorio .[norank].> ChatbotFinancieroDAL
+ChatbotFinancieroRepositorio .[norank].|> IChatbotFinancieroRepositorio
+CoincidenciaLocalProductos .[norank].> CoincidenciaProducto
+CoincidenciaProducto -[norank]-> Producto : Producto
+CoincidenciaSemanticaProductos .[norank].> CoincidenciaProducto
+CoincidenciaSemanticaProductos .[norank].> IProductoEmbeddingRepositorio
+CoincidenciaSemanticaProductos .[norank].> IServicioEmbeddings
+CoincidenciaSemanticaProductos .[norank].> IUnidadDeTrabajoFactory
+CoincidenciaSemanticaProductos .[norank].> ProductoEmbedding
+Comercio -[norank]-> RubroComercio : RubroComercio
+ComercioProducto -[norank]-> Comercio : Comercio
+ComercioProducto -[norank]-> Moneda : Moneda
+ComercioProducto -[norank]-> Producto : Producto
+ConsultaChatbot -[norank]-> ChatbotFinanciero : ChatbotFinanciero
+ConsultaChatbot -[norank]-> Usuario : Usuario
+ConsultaChatbotDAL .[norank].> AccesoDatosSqlServer
+ConsultaChatbotRepositorio .[norank].> AccesoDatosSqlServer
+ConsultaChatbotRepositorio .[norank].> ConsultaChatbotDAL
+ConsultaChatbotRepositorio .[norank].|> IConsultaChatbotRepositorio
+ContinuacionPerfilInversor -[norank]-> Usuario : Usuario
+CuentaFinanciera -[norank]-> EntidadFinanciera : EntidadFinanciera
+CuentaFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+CuentaFinanciera -[norank]-> TipoCuentaFinanciera : Tipo
+CuentaFinanciera -[norank]-> Usuario : Usuario
+DistanciaZonaUsuario -[norank]-> ZonaUsuario : Zona
+EntidadFinanciera -[norank]-> "*" MedioPagoEntidad : MediosPagoEntidad
+ExtractorPorcentajeInversion .[norank].> ResultadoPorcentaje
+FormAsistentePersonal .[norank].> AsistenteFinancieroBLL
+FormAsistentePersonal .[norank].> UiDialogHelper
+FormAsistentePersonal .[norank].> UiExceptionHandler
+FormConfiguracionUsuario .[norank].> ISesion
+FormConfiguracionUsuario .[norank].> PerfilInversor
+FormConfiguracionUsuario .[norank].> PerfilInversorBLL
+FormConfiguracionUsuario .[norank].> UiDialogHelper
+FormConfiguracionUsuario .[norank].> UiExceptionHandler
+FormPerfilInversor .[norank].> ContinuacionPerfilInversor
+FormPerfilInversor .[norank].> PerfilInversor
+FormPerfilInversor .[norank].> PerfilInversorBLL
+FormPerfilInversor .[norank].> RespuestaPerfilInversor
+FormPerfilInversor .[norank].> UiDialogHelper
+FormPerfilInversor .[norank].> UiExceptionHandler
+GeminiAsistenteFinancieroService .[norank].|> IAsistenteFinancieroService
+GeminiClasificadorConsultas .[norank].|> IClasificadorConsultas
+GeminiServicioEmbeddings .[norank].|> IServicioEmbeddings
+GeneradorRecomendaciones .[norank].> IAsistenteFinancieroService
+GeneradorRecomendaciones .[norank].> IIdioma
+GeneradorRecomendaciones .[norank].> IRecomendacionComprasBLL
+GeneradorRecomendaciones .[norank].> IRecomendacionInversionesBLL
+GeneradorRecomendaciones .[norank].> ResultadoGeneracion
+GeneradorRecomendaciones .[norank].> SolicitudAsistente
+GeneradorRecomendaciones .[norank].> ValidadorRespuestaAsistente
+GeneradorRecomendaciones .[norank].|> IGeneradorRecomendaciones
+IContextoAsistente -[norank]-> "*" IReferenciaAsistente : ReferenciasPermitidas
+IIdioma -[norank]-> "*" ITraduccion : Traducciones
+IReferenciaAsistente -[norank]-> TipoReferenciaAsistente : Tipo
+ISolicitudAsistente -[norank]-> CategoriaConsulta : Categoria
+ISolicitudAsistente -[norank]-> IContextoAsistente : Contexto
+ISolicitudAsistente -[norank]-> "*" IIntercambioChatbot : Historial
+ITraduccion -[norank]-> IIdioma : Idioma
+ITraduccion -[norank]-> IPalabra : Palabra
+IUnidadDeTrabajo -[norank]-> IConsultaChatbotRepositorio : ConsultasChatbot
+IUnidadDeTrabajo -[norank]-> IPerfilInversorRepositorio : PerfilesInversor
+IUnidadDeTrabajo -[norank]-> IProductoEmbeddingRepositorio : ProductoEmbeddings
+Idioma -[norank]-> "*" ITraduccion : Traducciones
+Idioma .[norank].|> IIdioma
+IdiomaService -[norank]-> IIdioma : IdiomaActual
+IdiomaService .[norank].> IIdioma
+InstrumentoInversion -[norank]-> IDatoMercado : Dato
+IntercambioChatbot .[norank].|> IIntercambioChatbot
+ItemCompra -[norank]-> "*" OfertaCompra : Ofertas
+ItemLista -[norank]-> ListaDeCompras : ListaDeCompras
+LimiteUsoAsistente .[norank].|> ILimiteUsoAsistente
+ListaDeCompras -[norank]-> "*" ItemLista : ItemsLista
+ListaDeCompras -[norank]-> Usuario : Usuario
+LoteInversion .[norank].> IDatoMercado
+LoteInversion .[norank].> InstrumentoInversion
+MedioPago -[norank]-> TipoMedioPago : Tipo
+MedioPagoEntidad -[norank]-> EntidadFinanciera : EntidadFinanciera
+MedioPagoEntidad -[norank]-> MedioPago : MedioPago
+MonedaDAL .[norank].> AccesoDatosSqlServer
+MonedaRepositorio .[norank].> AccesoDatosSqlServer
+MonedaRepositorio .[norank].> MonedaDAL
+MovimientoDAL .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> AccesoDatosSqlServer
+MovimientoRepositorio .[norank].> MovimientoDAL
+MovimientoRepositorio .[norank].|> IMovimientoRepositorio
+OfertaCompra -[norank]-> "*" PromocionCompra : Promociones
+PerfilInversor -[norank]-> NivelRiesgoInversor : NivelRiesgo
+PerfilInversor -[norank]-> RespuestaPerfilInversor : Respuestas
+PerfilInversor -[norank]-> "*" RespuestaPerfilInversor : Respuestas
+PerfilInversor -[norank]-> Usuario : Usuario
+PerfilInversorBLL .[norank].> CalculadorPerfilInversor
+PerfilInversorBLL .[norank].> IBitacoraBLL
+PerfilInversorBLL .[norank].> IPerfilInversorRepositorio
+PerfilInversorBLL .[norank].> ISesion
+PerfilInversorBLL .[norank].> IUnidadDeTrabajo
+PerfilInversorBLL .[norank].> IUnidadDeTrabajoFactory
+PerfilInversorBLL .[norank].> PerfilInversor
+PerfilInversorBLL .[norank].> SesionUsuarioExtensiones
+PerfilInversorDAL .[norank].> AccesoDatosSqlServer
+PerfilInversorRepositorio .[norank].> AccesoDatosSqlServer
+PerfilInversorRepositorio .[norank].> PerfilInversorDAL
+PerfilInversorRepositorio .[norank].|> IPerfilInversorRepositorio
+Producto -[norank]-> CategoriaProducto : CategoriaProducto
+ProductoEmbedding -[norank]-> Producto : Producto
+ProductoEmbeddingDAL .[norank].> AccesoDatosSqlServer
+ProductoEmbeddingRepositorio .[norank].> AccesoDatosSqlServer
+ProductoEmbeddingRepositorio .[norank].> ProductoEmbeddingDAL
+ProductoEmbeddingRepositorio .[norank].|> IProductoEmbeddingRepositorio
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasExcluidas
+Promocion -[norank]-> "*" CategoriaProducto : CategoriasIncluidas
+Promocion -[norank]-> "*" Comercio : Comercios
+Promocion -[norank]-> "*" DiaSemana : DiasSemana
+Promocion -[norank]-> "*" EntidadFinanciera : EntidadesFinancieras
+Promocion -[norank]-> "*" MedioPago : MediosPago
+Promocion -[norank]-> "*" Producto : ProductosExcluidos
+Promocion -[norank]-> "*" Producto : ProductosIncluidos
+Promocion -[norank]-> "*" RubroComercio : RubrosComercio
+PromocionDAL .[norank].> AccesoDatosSqlServer
+PromocionRepositorio .[norank].> AccesoDatosSqlServer
+PromocionRepositorio .[norank].> PromocionDAL
+ProveedorArgentinaDatos .[norank].|> IProveedorArgentinaDatos
+ProveedorCriptoYa .[norank].|> IProveedorCriptoYa
+ProveedorMercadoData912 .[norank].|> IProveedorMercadoData912
+RecomendacionComprasBLL .[norank].> AlcancePromocion
+RecomendacionComprasBLL .[norank].> CoincidenciaLocalProductos
+RecomendacionComprasBLL .[norank].> CoincidenciaSemanticaProductos
+RecomendacionComprasBLL .[norank].> IRecomendacionComprasRepositorio
+RecomendacionComprasBLL .[norank].> ITasaConversionRepositorio
+RecomendacionComprasBLL .[norank].> IUsuarioRepositorio
+RecomendacionComprasBLL .[norank].> IZonaUsuarioRepositorio
+RecomendacionComprasBLL .[norank].> ItemCompra
+RecomendacionComprasBLL .[norank].> OfertaCompra
+RecomendacionComprasBLL .[norank].> PromocionCompra
+RecomendacionComprasBLL .[norank].> ReferenciaAsistente
+RecomendacionComprasBLL .[norank].> ResumenCompras
+RecomendacionComprasBLL .[norank].> ZonaUsuarioBLL
+RecomendacionComprasBLL .[norank].|> IRecomendacionComprasBLL
+RecomendacionComprasDAL .[norank].> AccesoDatosSqlServer
+RecomendacionComprasRepositorio .[norank].> AccesoDatosSqlServer
+RecomendacionComprasRepositorio .[norank].> PromocionRepositorio
+RecomendacionComprasRepositorio .[norank].> RecomendacionComprasDAL
+RecomendacionComprasRepositorio .[norank].|> IRecomendacionComprasRepositorio
+RecomendacionInversionesBLL .[norank].> CalculadorPerfilInversor
+RecomendacionInversionesBLL .[norank].> IMovimientoRepositorio
+RecomendacionInversionesBLL .[norank].> IProveedorArgentinaDatos
+RecomendacionInversionesBLL .[norank].> IProveedorCriptoYa
+RecomendacionInversionesBLL .[norank].> IProveedorMercadoData912
+RecomendacionInversionesBLL .[norank].> IUsuarioRepositorio
+RecomendacionInversionesBLL .[norank].> InstrumentoInversion
+RecomendacionInversionesBLL .[norank].> LoteInversion
+RecomendacionInversionesBLL .[norank].> ReferenciaAsistente
+RecomendacionInversionesBLL .[norank].> ResumenInversiones
+RecomendacionInversionesBLL .[norank].|> IRecomendacionInversionesBLL
+ReferenciaAsistente -[norank]-> TipoReferenciaAsistente : Tipo
+ReferenciaAsistente .[norank].|> IReferenciaAsistente
+RespuestaPerfilInversor -[norank]-> PreguntaPerfilInversor : Pregunta
+ResultadoPorcentaje -[norank]-> EstadoPorcentaje : Estado
+ResumenCompras -[norank]-> "*" ItemCompra : Items
+ResumenInversiones -[norank]-> IDatoMercado : Inflacion
+ResumenInversiones -[norank]-> "*" IReferenciaAsistente : UniversoReferencias
+ResumenInversiones -[norank]-> "*" InstrumentoInversion : Instrumentos
+ResumenInversiones -[norank]-> NivelInversion : Nivel
+ResumenInversiones -[norank]-> NivelRiesgoInversor : Perfil
+ResumenInversiones -[norank]-> NivelRiesgoInversor : RiesgoEfectivo
+Sesion .[norank].> IUsuarioAutenticado
+Sesion .[norank].|> ISesion
+SolicitudAsistente -[norank]-> CategoriaConsulta : Categoria
+SolicitudAsistente -[norank]-> IContextoAsistente : Contexto
+SolicitudAsistente -[norank]-> "*" IIntercambioChatbot : Historial
+SolicitudAsistente .[norank].|> ISolicitudAsistente
+SolicitudGeneracion -[norank]-> CategoriaConsulta : Categoria
+SolicitudGeneracion -[norank]-> IIdioma : Idioma
+SolicitudGeneracion -[norank]-> "*" IIntercambioChatbot : Historial
+SolicitudGeneracion -[norank]-> PerfilInversor : Perfil
+SolicitudGeneracion -[norank]-> Usuario : Usuario
+TasaConversion -[norank]-> Moneda : MonedaBase
+TasaConversion -[norank]-> Moneda : MonedaConversion
+TasaConversion -[norank]-> Usuario : ProtegidaPorUsuario
+TasaConversionDAL .[norank].> AccesoDatosSqlServer
+TasaConversionRepositorio .[norank].> AccesoDatosSqlServer
+TasaConversionRepositorio .[norank].> MonedaRepositorio
+TasaConversionRepositorio .[norank].> TasaConversionDAL
+TasaConversionRepositorio .[norank].> UsuarioRepositorio
+TasaConversionRepositorio .[norank].|> ITasaConversionRepositorio
+UiDialogHelper .[norank].> IdiomaService
+UiExceptionHandler .[norank].> ManejadorExcepcionesBLL
+UiExceptionHandler .[norank].> UiDialogHelper
+UnidadDeTrabajoFactory .[norank].|> IUnidadDeTrabajoFactory
+UnidadDeTrabajoSqlServer .[norank].> AccesoDatosSqlServer
+UnidadDeTrabajoSqlServer .[norank].> IConsultaChatbotRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IMovimientoRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IPerfilInversorRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IProductoEmbeddingRepositorio
+UnidadDeTrabajoSqlServer .[norank].> ITasaConversionRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IUsuarioRepositorio
+UnidadDeTrabajoSqlServer .[norank].> IZonaUsuarioRepositorio
+UnidadDeTrabajoSqlServer .[norank].|> IUnidadDeTrabajo
+Usuario .[norank].|> IUsuarioAutenticado
+UsuarioDAL .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> AccesoDatosSqlServer
+UsuarioRepositorio .[norank].> UsuarioDAL
+UsuarioRepositorio .[norank].|> IUsuarioRepositorio
+ValidadorRespuestaAsistente .[norank].> PrefiltroConsultasAsistente
+ZonaUsuario -[norank]-> Usuario : Usuario
+ZonaUsuarioBLL .[norank].> DistanciaGeografica
+ZonaUsuarioBLL .[norank].> DistanciaZonaUsuario
+ZonaUsuarioBLL .[norank].> IBitacoraBLL
+ZonaUsuarioBLL .[norank].> ISesion
+ZonaUsuarioBLL .[norank].> IUnidadDeTrabajoFactory
+ZonaUsuarioBLL .[norank].> IZonaUsuarioRepositorio
+ZonaUsuarioDAL .[norank].> AccesoDatosSqlServer
+ZonaUsuarioRepositorio .[norank].> AccesoDatosSqlServer
+ZonaUsuarioRepositorio .[norank].> ZonaUsuarioDAL
+ZonaUsuarioRepositorio .[norank].|> IZonaUsuarioRepositorio
+' Trazabilidad de cobertura: CUN76, CUN77, CUN87
+' Participante: DAL/AccesoDatosSqlServer.cs :: AccesoDatosSqlServer
+' Participante: BLL/AlcancePromocion.cs :: AlcancePromocion
+' Participante: BLL/AsistenteFinancieroBLL.cs :: AsistenteFinancieroBLL
+' Participante: BLL/BitacoraBLL.cs :: BitacoraBLL
+' Participante: BLL/CalculadorPerfilInversor.cs :: CalculadorPerfilInversor
+' Participante: ABSTRACCIONES/CategoriaConsulta.cs :: CategoriaConsulta
+' Participante: BE/CategoriaProducto.cs :: CategoriaProducto
+' Participante: BE/ChatbotFinanciero.cs :: ChatbotFinanciero
+' Participante: DAL/ChatbotFinancieroDAL.cs :: ChatbotFinancieroDAL
+' Participante: REPOSITORIO/ChatbotFinancieroRepositorio.cs :: ChatbotFinancieroRepositorio
+' Participante: BLL/CoincidenciaLocalProductos.cs :: CoincidenciaLocalProductos
+' Participante: BLL/CoincidenciaProducto.cs :: CoincidenciaProducto
+' Participante: BLL/CoincidenciaSemanticaProductos.cs :: CoincidenciaSemanticaProductos
+' Participante: BE/Comercio.cs :: Comercio
+' Participante: BE/ComercioProducto.cs :: ComercioProducto
+' Participante: BE/ConsultaChatbot.cs :: ConsultaChatbot
+' Participante: DAL/ConsultaChatbotDAL.cs :: ConsultaChatbotDAL
+' Participante: REPOSITORIO/ConsultaChatbotRepositorio.cs :: ConsultaChatbotRepositorio
+' Participante: BLL/ContinuacionPerfilInversor.cs :: ContinuacionPerfilInversor
+' Participante: BE/CuentaFinanciera.cs :: CuentaFinanciera
+' Participante: BE/DiaSemana.cs :: DiaSemana
+' Participante: BLL/DistanciaGeografica.cs :: DistanciaGeografica
+' Participante: BLL/DistanciaZonaUsuario.cs :: DistanciaZonaUsuario
+' Participante: BE/EntidadFinanciera.cs :: EntidadFinanciera
+' Participante: BLL/ExtractorPorcentajeInversion.cs :: EstadoPorcentaje
+' Participante: BLL/ExtractorPorcentajeInversion.cs :: ExtractorPorcentajeInversion
+' Participante: UI/FormAsistentePersonal.cs :: FormAsistentePersonal
+' Participante: UI/FormConfiguracionUsuario.cs :: FormConfiguracionUsuario
+' Participante: UI/FormPerfilInversor.cs :: FormPerfilInversor
+' Participante: SERVICIOS/GeminiAsistenteFinancieroService.cs :: GeminiAsistenteFinancieroService
+' Participante: SERVICIOS/GeminiClasificadorConsultas.cs :: GeminiClasificadorConsultas
+' Participante: SERVICIOS/GeminiServicioEmbeddings.cs :: GeminiServicioEmbeddings
+' Participante: BLL/GeneradorRecomendaciones.cs :: GeneradorRecomendaciones
+' Participante: ABSTRACCIONES/IAsistenteFinancieroService.cs :: IAsistenteFinancieroService
+' Participante: BLL/ContratosInternosBLL.cs :: IBitacoraBLL
+' Participante: REPOSITORIO/IChatbotFinancieroRepositorio.cs :: IChatbotFinancieroRepositorio
+' Participante: ABSTRACCIONES/IClasificadorConsultas.cs :: IClasificadorConsultas
+' Participante: REPOSITORIO/IConsultaChatbotRepositorio.cs :: IConsultaChatbotRepositorio
+' Participante: ABSTRACCIONES/IContextoAsistente.cs :: IContextoAsistente
+' Participante: ABSTRACCIONES/IDatoMercado.cs :: IDatoMercado
+' Participante: BLL/GeneradorRecomendaciones.cs :: IGeneradorRecomendaciones
+' Participante: ABSTRACCIONES/IHerramientaAsistente.cs :: IHerramientaAsistente
+' Participante: ABSTRACCIONES/IIdioma.cs :: IIdioma
+' Participante: ABSTRACCIONES/IIntercambioChatbot.cs :: IIntercambioChatbot
+' Participante: ABSTRACCIONES/ILimiteUsoAsistente.cs :: ILimiteUsoAsistente
+' Participante: ABSTRACCIONES/ILlamadaHerramientaAsistente.cs :: ILlamadaHerramientaAsistente
+' Participante: REPOSITORIO/IMovimientoRepositorio.cs :: IMovimientoRepositorio
+' Participante: ABSTRACCIONES/IPalabra.cs :: IPalabra
+' Participante: REPOSITORIO/IPerfilInversorRepositorio.cs :: IPerfilInversorRepositorio
+' Participante: REPOSITORIO/IProductoEmbeddingRepositorio.cs :: IProductoEmbeddingRepositorio
+' Participante: ABSTRACCIONES/ProveedoresMercado.cs :: IProveedorArgentinaDatos
+' Participante: ABSTRACCIONES/ProveedoresMercado.cs :: IProveedorCriptoYa
+' Participante: ABSTRACCIONES/ProveedoresMercado.cs :: IProveedorMercadoData912
+' Participante: BLL/ContratosInternosBLL.cs :: IRecomendacionComprasBLL
+' Participante: REPOSITORIO/IRecomendacionComprasRepositorio.cs :: IRecomendacionComprasRepositorio
+' Participante: BLL/ContratosInternosBLL.cs :: IRecomendacionInversionesBLL
+' Participante: ABSTRACCIONES/IReferenciaAsistente.cs :: IReferenciaAsistente
+' Participante: ABSTRACCIONES/IServicioEmbeddings.cs :: IServicioEmbeddings
+' Participante: ABSTRACCIONES/ISesion.cs :: ISesion
+' Participante: ABSTRACCIONES/ISolicitudAsistente.cs :: ISolicitudAsistente
+' Participante: REPOSITORIO/ITasaConversionRepositorio.cs :: ITasaConversionRepositorio
+' Participante: ABSTRACCIONES/ITraduccion.cs :: ITraduccion
+' Participante: REPOSITORIO/IUnidadDeTrabajo.cs :: IUnidadDeTrabajo
+' Participante: REPOSITORIO/IUnidadDeTrabajoFactory.cs :: IUnidadDeTrabajoFactory
+' Participante: ABSTRACCIONES/IUsuarioAutenticado.cs :: IUsuarioAutenticado
+' Participante: REPOSITORIO/IUsuarioRepositorio.cs :: IUsuarioRepositorio
+' Participante: REPOSITORIO/IZonaUsuarioRepositorio.cs :: IZonaUsuarioRepositorio
+' Participante: SERVICIOS/Idioma.cs :: Idioma
+' Participante: SERVICIOS/IdiomaService.cs :: IdiomaService
+' Participante: BLL/ResumenInversiones.cs :: InstrumentoInversion
+' Participante: SERVICIOS/IntercambioChatbot.cs :: IntercambioChatbot
+' Participante: BLL/ResumenCompras.cs :: ItemCompra
+' Participante: BE/ItemLista.cs :: ItemLista
+' Participante: SERVICIOS/LimiteUsoAsistente.cs :: LimiteUsoAsistente
+' Participante: BE/ListaDeCompras.cs :: ListaDeCompras
+' Participante: BLL/RecomendacionInversionesBLL.cs :: LoteInversion
+' Participante: BLL/ManejadorExcepcionesBLL.cs :: ManejadorExcepcionesBLL
+' Participante: BE/MedioPago.cs :: MedioPago
+' Participante: BE/MedioPagoEntidad.cs :: MedioPagoEntidad
+' Participante: BE/Moneda.cs :: Moneda
+' Participante: DAL/MonedaDAL.cs :: MonedaDAL
+' Participante: REPOSITORIO/MonedaRepositorio.cs :: MonedaRepositorio
+' Participante: DAL/MovimientoDAL.cs :: MovimientoDAL
+' Participante: REPOSITORIO/MovimientoRepositorio.cs :: MovimientoRepositorio
+' Participante: BLL/ResumenInversiones.cs :: NivelInversion
+' Participante: BE/PerfilInversor.cs :: NivelRiesgoInversor
+' Participante: BLL/ResumenCompras.cs :: OfertaCompra
+' Participante: BE/PerfilInversor.cs :: PerfilInversor
+' Participante: BLL/PerfilInversorBLL.cs :: PerfilInversorBLL
+' Participante: DAL/PerfilInversorDAL.cs :: PerfilInversorDAL
+' Participante: REPOSITORIO/PerfilInversorRepositorio.cs :: PerfilInversorRepositorio
+' Participante: BLL/PrefiltroConsultasAsistente.cs :: PrefiltroConsultasAsistente
+' Participante: BE/PerfilInversor.cs :: PreguntaPerfilInversor
+' Participante: BE/Producto.cs :: Producto
+' Participante: BE/ProductoEmbedding.cs :: ProductoEmbedding
+' Participante: DAL/ProductoEmbeddingDAL.cs :: ProductoEmbeddingDAL
+' Participante: REPOSITORIO/ProductoEmbeddingRepositorio.cs :: ProductoEmbeddingRepositorio
+' Participante: BE/Promocion.cs :: Promocion
+' Participante: BLL/ResumenCompras.cs :: PromocionCompra
+' Participante: DAL/PromocionDAL.cs :: PromocionDAL
+' Participante: REPOSITORIO/PromocionRepositorio.cs :: PromocionRepositorio
+' Participante: SERVICIOS/ProveedorArgentinaDatos.cs :: ProveedorArgentinaDatos
+' Participante: SERVICIOS/ProveedorCriptoYa.cs :: ProveedorCriptoYa
+' Participante: SERVICIOS/ProveedorMercadoData912.cs :: ProveedorMercadoData912
+' Participante: BLL/RecomendacionComprasBLL.cs :: RecomendacionComprasBLL
+' Participante: DAL/RecomendacionComprasDAL.cs :: RecomendacionComprasDAL
+' Participante: REPOSITORIO/RecomendacionComprasRepositorio.cs :: RecomendacionComprasRepositorio
+' Participante: BLL/RecomendacionInversionesBLL.cs :: RecomendacionInversionesBLL
+' Participante: SERVICIOS/ReferenciaAsistente.cs :: ReferenciaAsistente
+' Participante: BLL/RespuestaAsistente.cs :: RespuestaAsistente
+' Participante: BE/PerfilInversor.cs :: RespuestaPerfilInversor
+' Participante: BLL/GeneradorRecomendaciones.cs :: ResultadoGeneracion
+' Participante: BLL/ExtractorPorcentajeInversion.cs :: ResultadoPorcentaje
+' Participante: BLL/PrefiltroConsultasAsistente.cs :: ResultadoPrefiltro
+' Participante: BLL/ValidadorRespuestaAsistente.cs :: ResultadoValidacionRespuesta
+' Participante: BLL/ResumenCompras.cs :: ResumenCompras
+' Participante: BLL/ResumenInversiones.cs :: ResumenInversiones
+' Participante: BE/RubroComercio.cs :: RubroComercio
+' Participante: SERVICIOS/Sesion.cs :: Sesion
+' Participante: BLL/SesionUsuarioExtensiones.cs :: SesionUsuarioExtensiones
+' Participante: SERVICIOS/SolicitudAsistente.cs :: SolicitudAsistente
+' Participante: BLL/GeneradorRecomendaciones.cs :: SolicitudGeneracion
+' Participante: BE/TasaConversion.cs :: TasaConversion
+' Participante: DAL/TasaConversionDAL.cs :: TasaConversionDAL
+' Participante: REPOSITORIO/TasaConversionRepositorio.cs :: TasaConversionRepositorio
+' Participante: BE/TipoCuentaFinanciera.cs :: TipoCuentaFinanciera
+' Participante: BE/TipoMedioPago.cs :: TipoMedioPago
+' Participante: ABSTRACCIONES/TipoReferenciaAsistente.cs :: TipoReferenciaAsistente
+' Participante: SERVICIOS/TotalPorMes.cs :: TotalPorMes
+' Participante: UI/UiDialogHelper.cs :: UiDialogHelper
+' Participante: UI/UiExceptionHandler.cs :: UiExceptionHandler
+' Participante: REPOSITORIO/UnidadDeTrabajoFactory.cs :: UnidadDeTrabajoFactory
+' Participante: REPOSITORIO/UnidadDeTrabajoSqlServer.cs :: UnidadDeTrabajoSqlServer
+' Participante: BE/Usuario.cs :: Usuario
+' Participante: DAL/UsuarioDAL.cs :: UsuarioDAL
+' Participante: REPOSITORIO/UsuarioRepositorio.cs :: UsuarioRepositorio
+' Participante: BLL/ValidadorRespuestaAsistente.cs :: ValidadorRespuestaAsistente
+' Participante: BE/ZonaUsuario.cs :: ZonaUsuario
+' Participante: BLL/ZonaUsuarioBLL.cs :: ZonaUsuarioBLL
+' Participante: DAL/ZonaUsuarioDAL.cs :: ZonaUsuarioDAL
+' Participante: REPOSITORIO/ZonaUsuarioRepositorio.cs :: ZonaUsuarioRepositorio
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:13 IAsistenteFinancieroService.ObtenerRespuestaAsync
+' ABSTRACCIONES/IAsistenteFinancieroService.cs:14 IAsistenteFinancieroService.ObtenerLlamadaHerramientaAsync
+' ABSTRACCIONES/IClasificadorConsultas.cs:12 IClasificadorConsultas.ClasificarAsync
+' ABSTRACCIONES/IIdioma.cs:15 IIdioma.ObtenerTraduccion
+' ABSTRACCIONES/ILimiteUsoAsistente.cs:7 ILimiteUsoAsistente.IntentarConsumir
+' ABSTRACCIONES/IServicioEmbeddings.cs:16 IServicioEmbeddings.CalcularAsync
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' ABSTRACCIONES/ProveedoresMercado.cs:10 IProveedorMercadoData912.ObtenerCotizacionesAsync
+' ABSTRACCIONES/ProveedoresMercado.cs:15 IProveedorArgentinaDatos.ObtenerFondosAsync
+' ABSTRACCIONES/ProveedoresMercado.cs:16 IProveedorArgentinaDatos.ObtenerPlazosFijosAsync
+' ABSTRACCIONES/ProveedoresMercado.cs:17 IProveedorArgentinaDatos.ObtenerCuentasRemuneradasAsync
+' ABSTRACCIONES/ProveedoresMercado.cs:18 IProveedorArgentinaDatos.ObtenerInflacionAsync
+' ABSTRACCIONES/ProveedoresMercado.cs:23 IProveedorCriptoYa.ObtenerPreciosAsync
+' BLL/AlcancePromocion.cs:14 AlcancePromocion.AplicaAComercio
+' BLL/AlcancePromocion.cs:30 AlcancePromocion.AplicaAPago
+' BLL/AlcancePromocion.cs:39 AlcancePromocion.AplicaAProducto
+' BLL/AlcancePromocion.cs:54 AlcancePromocion.Vigente
+' BLL/AsistenteFinancieroBLL.cs:85 AsistenteFinancieroBLL.ObtenerHistorial
+' BLL/AsistenteFinancieroBLL.cs:93 AsistenteFinancieroBLL.EnviarMensajeAsync
+' BLL/BitacoraBLL.cs:36 BitacoraBLL.RegistrarFalloNegocio
+' BLL/BitacoraBLL.cs:50 BitacoraBLL.RegistrarOperacionInterno
+' BLL/CalculadorPerfilInversor.cs:16 CalculadorPerfilInversor.Evaluar
+' BLL/CoincidenciaLocalProductos.cs:30 CoincidenciaLocalProductos.Buscar
+' BLL/CoincidenciaLocalProductos.cs:53 CoincidenciaLocalProductos.Normalizar
+' BLL/CoincidenciaSemanticaProductos.cs:29 CoincidenciaSemanticaProductos.BuscarAsync
+' BLL/ContratosInternosBLL.cs:11 IRecomendacionInversionesBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:19 IRecomendacionComprasBLL.CalcularAsync
+' BLL/ContratosInternosBLL.cs:20 IRecomendacionComprasBLL.ObtenerUniversoReferencias
+' BLL/ContratosInternosBLL.cs:29 IBitacoraBLL.RegistrarFalloNegocio
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/DistanciaGeografica.cs:12 DistanciaGeografica.CalcularMetros
+' BLL/ExtractorPorcentajeInversion.cs:26 ResultadoPorcentaje.DeValor
+' BLL/ExtractorPorcentajeInversion.cs:35 ExtractorPorcentajeInversion.Extraer
+' BLL/GeneradorRecomendaciones.cs:18 IGeneradorRecomendaciones.GenerarAsync
+' BLL/GeneradorRecomendaciones.cs:59 ResultadoGeneracion.Valida
+' BLL/GeneradorRecomendaciones.cs:61 ResultadoGeneracion.NoConfiable
+' BLL/GeneradorRecomendaciones.cs:63 ResultadoGeneracion.SinCandidatos
+' BLL/GeneradorRecomendaciones.cs:97 GeneradorRecomendaciones.GenerarAsync
+' BLL/ManejadorExcepcionesBLL.cs:8 ManejadorExcepcionesBLL.ObtenerMensajeUsuarioKey
+' BLL/PerfilInversorBLL.cs:14 PerfilInversorBLL.ObtenerPreguntas
+' BLL/PerfilInversorBLL.cs:16 PerfilInversorBLL.ObtenerCantidadOpciones
+' BLL/PerfilInversorBLL.cs:22 PerfilInversorBLL.EvaluarCuestionario
+' BLL/PerfilInversorBLL.cs:40 PerfilInversorBLL.ObtenerMiPerfil
+' BLL/PerfilInversorBLL.cs:47 PerfilInversorBLL.GuardarMiPerfil
+' BLL/PerfilInversorBLL.cs:53 PerfilInversorBLL.GuardarPostRegistro
+' BLL/PrefiltroConsultasAsistente.cs:53 PrefiltroConsultasAsistente.Evaluar
+' BLL/PrefiltroConsultasAsistente.cs:77 PrefiltroConsultasAsistente.Normalizar
+' BLL/RecomendacionComprasBLL.cs:115 RecomendacionComprasBLL.ObtenerUniversoReferencias
+' BLL/RecomendacionComprasBLL.cs:32 RecomendacionComprasBLL.CalcularAsync
+' BLL/RecomendacionInversionesBLL.cs:32 RecomendacionInversionesBLL.CalcularAsync
+' BLL/RespuestaAsistente.cs:23 RespuestaAsistente.Respondida
+' BLL/RespuestaAsistente.cs:28 RespuestaAsistente.Rechazada
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' BLL/ValidadorRespuestaAsistente.cs:29 ValidadorRespuestaAsistente.Validar
+' BLL/ZonaUsuarioBLL.cs:153 ZonaUsuarioBLL.CalcularDistancias
+' DAL/ChatbotFinancieroDAL.cs:18 ChatbotFinancieroDAL.ObtenerUnico
+' DAL/ConsultaChatbotDAL.cs:25 ConsultaChatbotDAL.ObtenerPorUsuario
+' DAL/ConsultaChatbotDAL.cs:61 ConsultaChatbotDAL.InsertarYObtenerId
+' DAL/MovimientoDAL.cs:239 MovimientoDAL.ObtenerTotalesPorMes
+' DAL/PerfilInversorDAL.cs:14 PerfilInversorDAL.ObtenerPorUsuario
+' DAL/PerfilInversorDAL.cs:44 PerfilInversorDAL.Guardar
+' DAL/ProductoEmbeddingDAL.cs:13 ProductoEmbeddingDAL.ObtenerTodos
+' DAL/ProductoEmbeddingDAL.cs:50 ProductoEmbeddingDAL.Guardar
+' DAL/RecomendacionComprasDAL.cs:13 RecomendacionComprasDAL.ObtenerItemsPendientesPorUsuario
+' DAL/RecomendacionComprasDAL.cs:131 RecomendacionComprasDAL.ObtenerPromocionesVigentesEntre
+' DAL/RecomendacionComprasDAL.cs:165 RecomendacionComprasDAL.ObtenerCuentasConMediosPorUsuario
+' DAL/RecomendacionComprasDAL.cs:48 RecomendacionComprasDAL.ObtenerProductosConCategoria
+' DAL/RecomendacionComprasDAL.cs:76 RecomendacionComprasDAL.ObtenerOfertas
+' DAL/TasaConversionDAL.cs:55 TasaConversionDAL.ObtenerTodas
+' DAL/UsuarioDAL.cs:26 UsuarioDAL.ObtenerPorId
+' DAL/ZonaUsuarioDAL.cs:52 ZonaUsuarioDAL.ObtenerPorUsuario
+' REPOSITORIO/ChatbotFinancieroRepositorio.cs:22 ChatbotFinancieroRepositorio.ObtenerUnico
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:23 ConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ConsultaChatbotRepositorio.cs:28 ConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IChatbotFinancieroRepositorio.cs:7 IChatbotFinancieroRepositorio.ObtenerUnico
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:10 IConsultaChatbotRepositorio.InsertarYObtenerId
+' REPOSITORIO/IConsultaChatbotRepositorio.cs:8 IConsultaChatbotRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IMovimientoRepositorio.cs:21 IMovimientoRepositorio.ObtenerTotalesPorMes
+' REPOSITORIO/IPerfilInversorRepositorio.cs:7 IPerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/IPerfilInversorRepositorio.cs:8 IPerfilInversorRepositorio.Guardar
+' REPOSITORIO/IProductoEmbeddingRepositorio.cs:11 IProductoEmbeddingRepositorio.Guardar
+' REPOSITORIO/IProductoEmbeddingRepositorio.cs:8 IProductoEmbeddingRepositorio.ObtenerTodos
+' REPOSITORIO/IRecomendacionComprasRepositorio.cs:13 IRecomendacionComprasRepositorio.ObtenerItemsPendientesPorUsuario
+' REPOSITORIO/IRecomendacionComprasRepositorio.cs:16 IRecomendacionComprasRepositorio.ObtenerProductosConCategoria
+' REPOSITORIO/IRecomendacionComprasRepositorio.cs:20 IRecomendacionComprasRepositorio.ObtenerOfertas
+' REPOSITORIO/IRecomendacionComprasRepositorio.cs:23 IRecomendacionComprasRepositorio.ObtenerPromocionesVigentesEntre
+' REPOSITORIO/IRecomendacionComprasRepositorio.cs:27 IRecomendacionComprasRepositorio.ObtenerCuentasConMediosPorUsuario
+' REPOSITORIO/ITasaConversionRepositorio.cs:10 ITasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IUsuarioRepositorio.cs:9 IUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/IZonaUsuarioRepositorio.cs:10 IZonaUsuarioRepositorio.ObtenerPorUsuario
+' REPOSITORIO/MovimientoRepositorio.cs:55 MovimientoRepositorio.ObtenerTotalesPorMes
+' REPOSITORIO/PerfilInversorRepositorio.cs:12 PerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/PerfilInversorRepositorio.cs:13 PerfilInversorRepositorio.Guardar
+' REPOSITORIO/ProductoEmbeddingRepositorio.cs:23 ProductoEmbeddingRepositorio.ObtenerTodos
+' REPOSITORIO/ProductoEmbeddingRepositorio.cs:28 ProductoEmbeddingRepositorio.Guardar
+' REPOSITORIO/RecomendacionComprasRepositorio.cs:26 RecomendacionComprasRepositorio.ObtenerItemsPendientesPorUsuario
+' REPOSITORIO/RecomendacionComprasRepositorio.cs:31 RecomendacionComprasRepositorio.ObtenerProductosConCategoria
+' REPOSITORIO/RecomendacionComprasRepositorio.cs:36 RecomendacionComprasRepositorio.ObtenerOfertas
+' REPOSITORIO/RecomendacionComprasRepositorio.cs:41 RecomendacionComprasRepositorio.ObtenerPromocionesVigentesEntre
+' REPOSITORIO/RecomendacionComprasRepositorio.cs:48 RecomendacionComprasRepositorio.ObtenerCuentasConMediosPorUsuario
+' REPOSITORIO/TasaConversionRepositorio.cs:30 TasaConversionRepositorio.ObtenerTodas
+' REPOSITORIO/UnidadDeTrabajoFactory.cs:5 UnidadDeTrabajoFactory.Crear
+' REPOSITORIO/UnidadDeTrabajoSqlServer.cs:287 UnidadDeTrabajoSqlServer.Save
+' REPOSITORIO/UsuarioRepositorio.cs:24 UsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/ZonaUsuarioRepositorio.cs:30 ZonaUsuarioRepositorio.ObtenerPorUsuario
+' SERVICIOS/GeminiAsistenteFinancieroService.cs:40 GeminiAsistenteFinancieroService.ObtenerRespuestaAsync
+' SERVICIOS/GeminiAsistenteFinancieroService.cs:60 GeminiAsistenteFinancieroService.ObtenerLlamadaHerramientaAsync
+' SERVICIOS/GeminiClasificadorConsultas.cs:58 GeminiClasificadorConsultas.ClasificarAsync
+' SERVICIOS/GeminiServicioEmbeddings.cs:54 GeminiServicioEmbeddings.CalcularAsync
+' SERVICIOS/Idioma.cs:29 Idioma.ObtenerTraduccion
+' SERVICIOS/IdiomaService.cs:24 IdiomaService.GetInstance
+' SERVICIOS/LimiteUsoAsistente.cs:44 LimiteUsoAsistente.IntentarConsumir
+' SERVICIOS/ProveedorArgentinaDatos.cs:24 ProveedorArgentinaDatos.ObtenerFondosAsync
+' SERVICIOS/ProveedorArgentinaDatos.cs:42 ProveedorArgentinaDatos.ObtenerPlazosFijosAsync
+' SERVICIOS/ProveedorArgentinaDatos.cs:58 ProveedorArgentinaDatos.ObtenerCuentasRemuneradasAsync
+' SERVICIOS/ProveedorArgentinaDatos.cs:79 ProveedorArgentinaDatos.ObtenerInflacionAsync
+' SERVICIOS/ProveedorCriptoYa.cs:15 ProveedorCriptoYa.ObtenerPreciosAsync
+' SERVICIOS/ProveedorMercadoData912.cs:20 ProveedorMercadoData912.ObtenerCotizacionesAsync
+' SERVICIOS/Sesion.cs:89 Sesion.HaySesionActiva
+' UI/FormAsistentePersonal.cs:61 FormAsistentePersonal.btnEnviarMensajeAsistente_Click
+' UI/FormConfiguracionUsuario.cs:67 FormConfiguracionUsuario.CargarPerfilAsync
+' UI/FormPerfilInversor.cs:259 FormPerfilInversor.btnSiguiente_Click
+' UI/UiDialogHelper.cs:20 UiDialogHelper.MostrarWarning
+' UI/UiDialogHelper.cs:30 UiDialogHelper.MostrarError
+' UI/UiDialogHelper.cs:54 UiDialogHelper.Traducir
+' UI/UiExceptionHandler.cs:9 UiExceptionHandler.Mostrar
+@enduml

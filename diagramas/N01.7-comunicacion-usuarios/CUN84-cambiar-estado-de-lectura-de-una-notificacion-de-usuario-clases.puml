@@ -1,0 +1,166 @@
+@startuml
+' Fuente: diagramas/NEG20-notificaciones/NEG20-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN84 Cambiar estado de lectura de una notificación de usuario — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionNotificaciones {
+    -dgvNotificaciones_CellValueChanged(sender: object, e: DataGridViewCellEventArgs):\nvoid
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class NotificacionBLL {
+    +MarcarLeida(recibida: Notificacion, leida: bool): bool
+  }
+  class "BitacoraBLL" as IBitacoraBLL <<IBitacoraBLL>> {
+    +RegistrarOperacionInterno(actividad: string, informacion: string, origen: string,\nunidad: IUnidadDeTrabajo): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+NotificacionBLL -[hidden]right-> IBitacoraBLL
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "UnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory <<IUnidadDeTrabajoFactory>> {
+    +Crear(): IUnidadDeTrabajo
+  }
+  interface INotificacionRepositorio {
+    +ObtenerPorId(id: int): Notificacion
+    +Actualizar(notificacion: Notificacion): bool
+  }
+  class NotificacionRepositorio {
+    +ObtenerPorId(id: int): Notificacion
+    +Actualizar(notificacion: Notificacion): bool
+  }
+  class "RecordatorioCompraRepositorio" as IRecordatorioCompraRepositorio <<IRecordatorioCompraRepositorio>> {
+    +ObtenerPorId(id: int): RecordatorioCompra
+    +Actualizar(recordatorio: RecordatorioCompra): bool
+  }
+  class "RecordatorioInversionRepositorio" as IRecordatorioInversionRepositorio <<IRecordatorioInversionRepositorio>> {
+    +ObtenerPorId(id: int): RecordatorioInversion
+    +Actualizar(recordatorio: RecordatorioInversion): bool
+  }
+  class "UnidadDeTrabajoSqlServer" as IUnidadDeTrabajo <<IUnidadDeTrabajo>> {
+    +Save(): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IUnidadDeTrabajoFactory -[hidden]right-> INotificacionRepositorio
+IUnidadDeTrabajoFactory -[hidden]down-> NotificacionRepositorio
+NotificacionRepositorio -[hidden]right-> IRecordatorioCompraRepositorio
+NotificacionRepositorio -[hidden]down-> IRecordatorioInversionRepositorio
+IRecordatorioInversionRepositorio -[hidden]right-> IUnidadDeTrabajo
+package "DAL" as L_DAL {
+  class NotificacionDAL {
+    +ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer): Notificacion
+    +Actualizar(notificacion: Notificacion, accesoDatos: AccesoDatosSqlServer): bool
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class ItemLista {
+    +Id: int
+    +ListaDeCompras: ListaDeCompras
+    +Descripcion: string
+    +Cantidad: int
+    +Comprado: bool
+  }
+  class Notificacion {
+    +Id: int
+    +Usuario: Usuario
+    +Mensaje: string
+    +Fecha: DateTime
+    +Leida: bool
+    +TipoAutomatico: TipoNotificacionAutomatica?
+    +FechaJornada: DateTime?
+    +ClaveEjemplo: string
+  }
+  class Promocion {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RecordatorioCompra {
+    +ItemLista: ItemLista
+    +Promocion: Promocion
+    +FechaVencimiento: DateTime?
+  }
+  class RecordatorioInversion {
+  }
+  enum TipoNotificacionAutomatica {
+    Compras
+    Inversiones
+    Movimientos
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+ItemLista -[hidden]right-> Notificacion
+ItemLista -[hidden]down-> Promocion
+Promocion -[hidden]right-> RecordatorioCompra
+Promocion -[hidden]down-> RecordatorioInversion
+RecordatorioInversion -[hidden]right-> TipoNotificacionAutomatica
+RecordatorioInversion -[hidden]down-> Usuario
+FormGestionNotificaciones ..> NotificacionBLL : usa
+NotificacionRepositorio ..> NotificacionDAL : usa
+NotificacionBLL ..> IBitacoraBLL : usa
+NotificacionBLL ..> INotificacionRepositorio : usa
+NotificacionBLL ..> IRecordatorioCompraRepositorio : usa
+NotificacionBLL ..> IRecordatorioInversionRepositorio : usa
+NotificacionBLL ..> IUnidadDeTrabajo : usa
+NotificacionBLL ..> IUnidadDeTrabajoFactory : usa
+NotificacionRepositorio ..|> INotificacionRepositorio
+NotificacionBLL ..> Notificacion : datos
+Notificacion --> Usuario : Usuario
+Notificacion --> TipoNotificacionAutomatica : TipoAutomatico
+RecordatorioCompra --> ItemLista : ItemLista
+RecordatorioCompra --> Promocion : Promocion
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/NotificacionBLL.cs:156 NotificacionBLL.MarcarLeida
+' DAL/NotificacionDAL.cs:219 NotificacionDAL.ObtenerPorId
+' DAL/NotificacionDAL.cs:347 NotificacionDAL.Actualizar
+' REPOSITORIO/INotificacionRepositorio.cs:17 INotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/INotificacionRepositorio.cs:25 INotificacionRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:16 IRecordatorioCompraRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:8 IRecordatorioCompraRepositorio.ObtenerPorId
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:16 IRecordatorioInversionRepositorio.Actualizar
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:8 IRecordatorioInversionRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/NotificacionRepositorio.cs:46 NotificacionRepositorio.ObtenerPorId
+' REPOSITORIO/NotificacionRepositorio.cs:87 NotificacionRepositorio.Actualizar
+' UI/FormGestionNotificaciones.cs:164 FormGestionNotificaciones.dgvNotificaciones_CellValueChanged
+@enduml

@@ -20,6 +20,7 @@ Leer siempre:
 2. Respetar la matriz obligatoria de dependencias entre proyectos sin excepciones ad hoc.
 3. Mantener la regla de uso: la UI puede conocer `SERVICIOS` y `BE`, pero los flujos funcionales deben entrar por `BLL`.
 4. Si se toca un `.csproj`, se mueve codigo entre proyectos o hay dudas sobre la capa correcta, ejecutar `powershell -NoProfile -ExecutionPolicy Bypass -File .agents\\scripts\\verify-architecture-dependencies.ps1`.
+   Si se cambian firmas entre capas, ABSTRACCIONES o entidades BE, ejecutar tambien `.agents\\scripts\\verify-contratos-capas.ps1` (regla "Contratos entre clases" de `.agents/02-architecture-7-layers.md`).
 5. Tratar cualquier violacion de la matriz como bloqueante.
 6. Cerrar la tarea solo despues de que la guardia y el build queden en verde.
 
@@ -30,7 +31,10 @@ Leer siempre:
 - agregar una referencia `BLL -> DAL`
 - invocar `DAL` directamente desde `UI`
 - invocar `DAL` directamente desde `BLL`
-- usar `ABSTRACCIONES` para alojar implementaciones concretas
+- usar `ABSTRACCIONES` para alojar implementaciones concretas: solo admite interfaces y enums (ni DTOs, ni excepciones, ni atributos)
+- recibir IDs (`int xxxId`, `List<int> xxxIds`) en firmas no privadas de `BLL`, `REPOSITORIO`, `DAL`, `SERVICIOS` o `ABSTRACCIONES` en lugar de la entidad; unica excepcion `ObtenerPorId(int id)` en `REPOSITORIO`/`DAL`
+- armar entidades cascaron `new X { Id = ... }` en `BLL` o exponer FKs `int xxxId` en `BE`
+- leer `ConfigurationManager` fuera de `SERVICIOS` y `DAL` (incluido `CompositionRoot`)
 - crear bypasses a `BLL` para resolver casos de uso desde `UI`
 
 ## Related

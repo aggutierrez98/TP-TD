@@ -1,79 +1,516 @@
 @startuml
-title G07 - Diagrama de clases parcial - Capa UI
+title G07 - Diagrama de clases por capa - UI y host CRONS
 skinparam backgroundColor white
-skinparam classBackgroundColor white
-skinparam classBorderColor black
-skinparam packageStyle rectangle
-skinparam classAttributeIconSize 0
 skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam classBackgroundColor #F7FBF8
+skinparam classBorderColor #40734E
+skinparam ArrowColor #61746B
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 12
+skinparam nodesep 35
+skinparam ranksep 50
 hide empty members
 
-package "ABSTRACCIONES" <<Frame>> {
-  interface IObservador
+' Vista parcial: tipos de nivel superior y miembros no privados; sin controles Designer ni implementaciones anidadas.
+' Las firmas y propiedades se extraen del codigo C# vigente. Los tipos externos se conservan en las firmas.
+package "Asistente e inversiones" as P0 {
+  'UI/FormAsistentePersonal.Designer.cs
+  'UI/FormAsistentePersonal.cs
+  class "FormAsistentePersonal" as UI_FormAsistentePersonal {
+    ~FormAsistentePersonal()
+  }
+}
+package "CRONS - tareas programadas" as P1 {
+  'CRONS/Tareas/ActualizarTasas.cs
+  class "ActualizarTasas" as CRONS_ActualizarTasas {
+    ~SalidaCorrecta : int
+    ~SalidaFallidaRegistrada : int
+    ~SalidaErrorInesperado : int
+    ~EjecutarAsync(cancellationToken : CancellationToken) : Task<int>
+    ~CodigoDeSalida(resultado : ResultadoEjecucionActualizacionTasas) : int
+  }
+  'CRONS/Despachador.cs
+  class "Despachador" as CRONS_Despachador {
+    ~SalidaErrorInesperado : int
+    ~Despachador(tareas : IDictionary<string, Func<CancellationToken, Task<int>>>, error : TextWriter)
+    ~EjecutarAsync(args : string[], cancellationToken : CancellationToken) : Task<int>
+  }
+  'CRONS/EjecucionGenerador.cs
+  class "EjecucionGenerador" as CRONS_EjecucionGenerador {
+    ~SalidaCorrecta : int
+    ~SalidaFallasRegistradas : int
+    ~SalidaErrorFatal : int
+    ~EjecutarAsync(corrida : Func<CancellationToken, Task<ResultadoCorridaNotificaciones>>, salida : TextWriter,\nerror : TextWriter, cancellationToken : CancellationToken) : Task<int>
+  }
+  'CRONS/Tareas/GenerarNotificaciones.cs
+  class "GenerarNotificaciones" as CRONS_GenerarNotificaciones {
+    ~EjecutarAsync(cancellationToken : CancellationToken) : Task<int>
+  }
+  'CRONS/Program.cs
+  class "Program" as CRONS_Program {
+  }
+}
+package "Comercios y promociones" as P2 {
+  'UI/FormDetalleComercio.Designer.cs
+  'UI/FormDetalleComercio.cs
+  class "FormDetalleComercio" as UI_FormDetalleComercio {
+    ~FormDetalleComercio(comercio : Comercio, nombreComercio : string)
+  }
+  'UI/FormGestionCategoriasProducto.Designer.cs
+  'UI/FormGestionCategoriasProducto.cs
+  class "FormGestionCategoriasProducto" as UI_FormGestionCategoriasProducto {
+    ~FormGestionCategoriasProducto()
+  }
+  'UI/FormGestionComercios.Designer.cs
+  'UI/FormGestionComercios.cs
+  class "FormGestionComercios" as UI_FormGestionComercios {
+    ~FormGestionComercios()
+  }
+  'UI/FormGestionProductos.Designer.cs
+  'UI/FormGestionProductos.cs
+  class "FormGestionProductos" as UI_FormGestionProductos {
+    ~FormGestionProductos()
+  }
+  'UI/FormGestionPromociones.Designer.cs
+  'UI/FormGestionPromociones.cs
+  class "FormGestionPromociones" as UI_FormGestionPromociones {
+    ~FormGestionPromociones()
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormSeleccionarUbicacionComercio.Designer.cs
+  'UI/FormSeleccionarUbicacionComercio.cs
+  class "FormSeleccionarUbicacionComercio" as UI_FormSeleccionarUbicacionComercio {
+    ~FormSeleccionarUbicacionComercio(latitudInicial : decimal?, longitudInicial : decimal?, busquedaUbicaciones :\nIBusquedaUbicacionesService)
+    ~LatitudSeleccionada : decimal?
+    ~LongitudSeleccionada : decimal?
+    ~Actualizar(observado : IObservado) : void
+    #OnFormClosed(e : FormClosedEventArgs) : void
+  }
+}
+package "Finanzas personales" as P3 {
+  'UI/FormBalanceGeneral.Designer.cs
+  'UI/FormBalanceGeneral.cs
+  class "FormBalanceGeneral" as UI_FormBalanceGeneral {
+    ~FormBalanceGeneral()
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormDashboardAnaliticas.Designer.cs
+  'UI/FormDashboardAnaliticas.cs
+  class "FormDashboardAnaliticas" as UI_FormDashboardAnaliticas {
+    ~FormDashboardAnaliticas()
+    ~Actualizar(observado : IObservado) : void
+    ~CalcularColumnas(anchoDisponible : int) : int
+    ~CalcularTamanoTarjeta(anchoDisponible : int) : Size
+  }
+  'UI/FormDetalleEntidadFinanciera.Designer.cs
+  'UI/FormDetalleEntidadFinanciera.cs
+  class "FormDetalleEntidadFinanciera" as UI_FormDetalleEntidadFinanciera {
+    ~FormDetalleEntidadFinanciera(entidadFinanciera : EntidadFinanciera, nombreEntidad : string)
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormGestionCategorias.Designer.cs
+  'UI/FormGestionCategorias.cs
+  class "FormGestionCategorias" as UI_FormGestionCategorias {
+    ~FormGestionCategorias()
+  }
+  'UI/FormGestionCuentasFinancieras.Designer.cs
+  'UI/FormGestionCuentasFinancieras.cs
+  class "FormGestionCuentasFinancieras" as UI_FormGestionCuentasFinancieras {
+    ~FormGestionCuentasFinancieras()
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormListaDeCompras.Designer.cs
+  'UI/FormListaDeCompras.cs
+  class "FormListaDeCompras" as UI_FormListaDeCompras {
+    ~FormListaDeCompras()
+  }
+  'UI/FormMovimientos.Designer.cs
+  'UI/FormMovimientos.cs
+  class "FormMovimientos" as UI_FormMovimientos {
+    ~FormMovimientos()
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormSeleccionarTarjetaDashboard.Designer.cs
+  'UI/FormSeleccionarTarjetaDashboard.cs
+  class "FormSeleccionarTarjetaDashboard" as UI_FormSeleccionarTarjetaDashboard {
+    ~FormSeleccionarTarjetaDashboard()
+    ~TipoSeleccionado : TipoTarjetaDashboard?
+  }
+}
+package "Idiomas y presentacion" as P4 {
+  'UI/Tema/FinanzappPaleta.cs
+  class "FinanzappPaleta" as UI_FinanzappPaleta {
+    ~Fondo : Color
+    ~Verde : Color
+    ~VerdeAcento : Color
+    ~Texto : Color
+    ~GrisVioleta : Color
+    ~VerdeOscuro : Color
+    ~VerdeSuave : Color
+    ~Borde : Color
+    ~Deshabilitado : Color
+    ~FondoMdi : Color
+    ~FilaAlterna : Color
+    ~Alerta : Color
+    ~AlertaSuave : Color
+    ~TextoSecundario : Color
+    ~Crear() : KryptonCustomPaletteBase
+  }
+  'UI/FormGestionIdiomas.Designer.cs
+  'UI/FormGestionIdiomas.cs
+  class "FormGestionIdiomas" as UI_FormGestionIdiomas {
+    ~FormGestionIdiomas()
+  }
+  'UI/FormTraducibleBase.cs
+  class "FormTraducibleBase" as UI_FormTraducibleBase {
+    #MaximizadoEnAreaMdi : bool
+    #OnLoad(e : EventArgs) : void
+    #OnShown(e : EventArgs) : void
+    #OnFormClosed(e : FormClosedEventArgs) : void
+    #WndProc(m : Message) : void
+    #MaximizarEnAreaMdi() : void
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/IdiomaFormHelper.cs
+  class "IdiomaFormHelper" as UI_IdiomaFormHelper {
+    ~Aplicar(form : Form, idioma : IIdioma) : void
+    ~Aplicar(control : Control, idioma : IIdioma) : void
+    ~AplicarDataGridView(grilla : DataGridView, idioma : IIdioma) : void
+  }
+  'UI/OpcionTraducible.cs
+  class "OpcionTraducible" as UI_OpcionTraducible {
+    ~OpcionTraducible(clave : string, valor : object)
+    ~Clave : string
+    ~Valor : object
+    ~Texto : string
+    ~ToString() : string
+  }
+  'UI/Tema/TemaFinanzapp.cs
+  class "TemaFinanzapp" as UI_TemaFinanzapp {
+    ~Aplicar() : void
+    ~TematizarAreaMdi(contenedor : Form) : void
+    ~TematizarBarraProgreso(barra : KryptonProgressBar) : void
+    ~TematizarGrilla(grilla : DataGridView) : void
+    ~Tematizar(raiz : Control) : void
+  }
+}
+package "Infraestructura" as P5 {
+  'UI/ArchivoPdf.cs
+  class "ArchivoPdf" as UI_ArchivoPdf {
+    ~Guardar(destino : string, contenido : byte[]) : void
+  }
+  'UI/Tema/CheckBoxAccesible.cs
+  class "CheckBoxAccesible" as UI_CheckBoxAccesible {
+    #CreateAccessibilityInstance() : AccessibleObject
+  }
+  'UI/Tema/DateTimePickerAccesible.cs
+  class "DateTimePickerAccesible" as UI_DateTimePickerAccesible {
+    #CreateAccessibilityInstance() : AccessibleObject
+  }
+  'UI/EtiquetasFinanzas.cs
+  class "EtiquetasFinanzas" as UI_EtiquetasFinanzas {
+    ~ClaveTodosLosDias : string
+    ~ClaveTipoMedioPago(tipo : TipoMedioPago) : string
+    ~ClaveTipoCuentaFinanciera(tipo : TipoCuentaFinanciera) : string
+    ~ClaveDiaSemana(dia : DiaSemana) : string
+    ~TiposMedioPago : IEnumerable<TipoMedioPago>
+    ~TiposCuentaFinanciera : IEnumerable<TipoCuentaFinanciera>
+  }
+  'UI/FormGestionEntidadesFinancieras.Designer.cs
+  'UI/FormGestionEntidadesFinancieras.cs
+  class "FormGestionEntidadesFinancieras" as UI_FormGestionEntidadesFinancieras {
+    ~FormGestionEntidadesFinancieras()
+  }
+  'UI/FormGestionMediosPago.Designer.cs
+  'UI/FormGestionMediosPago.cs
+  class "FormGestionMediosPago" as UI_FormGestionMediosPago {
+    ~FormGestionMediosPago()
+  }
+  'UI/FormPrincipal.Designer.cs
+  'UI/FormPrincipal.cs
+  class "FormPrincipal" as UI_FormPrincipal {
+    ~FormPrincipal()
+    ~Actualizar(observado : IObservado) : void
+    #OnFormClosed(e : FormClosedEventArgs) : void
+  }
+  'UI/FormReglasCategorizacion.Designer.cs
+  'UI/FormReglasCategorizacion.cs
+  class "FormReglasCategorizacion" as UI_FormReglasCategorizacion {
+    ~FormReglasCategorizacion()
+  }
+  'UI/LayoutHelper.cs
+  class "LayoutHelper" as UI_LayoutHelper {
+    ~CentrarConAnchoMaximo(bloque : Control, anchoMaximo : int) : void
+  }
+  'UI/Program.cs
+  class "Program" as CRONS_Program {
+    ~Main() : void
+  }
+  'UI/Tema/RadioButtonAccesible.cs
+  class "RadioButtonAccesible" as UI_RadioButtonAccesible {
+    #CreateAccessibilityInstance() : AccessibleObject
+    #IsInputKey(keyData : Keys) : bool
+  }
+  'UI/CoordinadorBusquedaUbicacion.cs
+  class "ResultadoCoordinado" as UI_ResultadoCoordinado {
+    ~Tipo : TipoResultadoBusqueda
+    ~Coincidencias : IReadOnlyList<IResultadoBusquedaUbicacion>
+    ~Estado : EstadoBusquedaUbicacion?
+    ~De(tipo : TipoResultadoBusqueda) : ResultadoCoordinado
+    ~ConCoincidencias(coincidencias : IReadOnlyList<IResultadoBusquedaUbicacion>) : ResultadoCoordinado
+    ~ConError(estado : EstadoBusquedaUbicacion) : ResultadoCoordinado
+  }
+  'UI/CoordinadorBusquedaUbicacion.cs
+  enum "TipoResultadoBusqueda" as UI_TipoResultadoBusqueda {
+    Ignorada
+    Descartada
+    Cancelada
+    Coincidencias
+    SinCoincidencias
+    Error
+  }
+  'UI/UiDialogHelper.cs
+  class "UiDialogHelper" as UI_UiDialogHelper {
+    ~MostrarInfo(messageKey : string) : void
+    ~MostrarInfoConTitulo(messageKey : string, titleKey : string) : void
+    ~MostrarWarning(messageKey : string) : void
+    ~MostrarWarningConTitulo(messageKey : string, titleKey : string) : void
+    ~MostrarError(messageKey : string) : void
+    ~MostrarErrorConTitulo(messageKey : string, titleKey : string) : void
+    ~Confirmar(messageKey : string) : DialogResult
+    ~Confirmar(messageKey : string, titleKey : string, icon : MessageBoxIcon) : DialogResult
+    ~Traducir(key : string) : string
+    ~TraducirSiExiste(keyOrText : string) : string
+  }
+  'UI/UiExceptionHandler.cs
+  class "UiExceptionHandler" as UI_UiExceptionHandler {
+    ~Mostrar(exception : Exception, actividad : string) : void
+  }
+}
+package "Monedas y tasas" as P6 {
+  'UI/FormActualizacionTasas.Designer.cs
+  'UI/FormActualizacionTasas.cs
+  class "FormActualizacionTasas" as UI_FormActualizacionTasas {
+    ~FormActualizacionTasas()
+    ~Actualizar(observado : ABSTRACCIONES.IObservado) : void
+  }
+  'UI/FormGestionMonedas.Designer.cs
+  'UI/FormGestionMonedas.cs
+  class "FormGestionMonedas" as UI_FormGestionMonedas {
+    ~FormGestionMonedas()
+  }
+}
+package "Notificaciones" as P7 {
+  'UI/ActualizadorContadorNotificaciones.cs
+  class "ActualizadorContadorNotificaciones" as UI_ActualizadorContadorNotificaciones {
+    ~ActualizadorContadorNotificaciones(sesion : Func<int?>, consultar : Func<Task<int>>, publicar : Action<int>,\nfallo : Action<Exception>)
+    ~ActualizarAsync(trasLectura : bool) : Task
+    ~Detener() : void
+  }
+  'UI/FormDetalleNotificacion.cs
+  class "FormDetalleNotificacion" as UI_FormDetalleNotificacion {
+    ~FormDetalleNotificacion(notificacion : Notificacion)
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormGestionNotificaciones.Designer.cs
+  'UI/FormGestionNotificaciones.cs
+  class "FormGestionNotificaciones" as UI_FormGestionNotificaciones {
+    ~FormGestionNotificaciones()
+  }
+  'UI/FormMisNotificaciones.Designer.cs
+  'UI/FormMisNotificaciones.cs
+  class "FormMisNotificaciones" as UI_FormMisNotificaciones {
+    ~FormMisNotificaciones()
+    ~TextoTipo(n : Notificacion) : string
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/Tema/MenuNotificacionesItem.cs
+  class "MenuNotificacionesItem" as UI_MenuNotificacionesItem {
+    ~ActualizarCantidad(valor : int) : void
+    ~GetPreferredSize(constrainingSize : Size) : Size
+    #OnPaint(e : PaintEventArgs) : void
+  }
+  'UI/VistaPreviaNotificacion.cs
+  class "VistaPreviaNotificacion" as UI_VistaPreviaNotificacion {
+    ~MaximoCaracteres : int
+    ~Resumir(mensaje : string, maximo : int) : string
+    ~ParaCuadroDeTexto(mensaje : string) : string
+    ~ClaveTipo(notificacion : Notificacion) : string
+  }
+}
+package "Perfil inversor" as P8 {
+  'UI/FormPerfilInversor.cs
+  class "FormPerfilInversor" as UI_FormPerfilInversor {
+    ~FormPerfilInversor(continuacion : ContinuacionPerfilInversor)
+    ~Actualizar(observado : IObservado) : void
+    #OnFormClosing(e : FormClosingEventArgs) : void
+    #OnFormClosed(e : FormClosedEventArgs) : void
+  }
+}
+package "Ubicacion y zonas" as P9 {
+  'UI/CoordinadorBusquedaUbicacion.cs
+  class "CoordinadorBusquedaUbicacion" as UI_CoordinadorBusquedaUbicacion {
+    ~CoordinadorBusquedaUbicacion(servicio : IBusquedaUbicacionesService)
+    ~EnCurso : bool
+    ~Version : int
+    ~BuscarAsync(consulta : IConsultaUbicacion) : Task<ResultadoCoordinado>
+    ~Invalidar() : void
+    ~Detener() : void
+  }
+  'UI/FormMisZonas.Designer.cs
+  'UI/FormMisZonas.cs
+  class "FormMisZonas" as UI_FormMisZonas {
+    ~FormMisZonas()
+    ~Actualizar(observado : IObservado) : void
+    #OnFormClosed(e : FormClosedEventArgs) : void
+  }
+}
+package "Usuarios y auditoria" as P10 {
+  'UI/FormBackup.Designer.cs
+  'UI/FormBackup.cs
+  class "FormBackup" as UI_FormBackup {
+    ~FormBackup()
+  }
+  'UI/FormBitacora.Designer.cs
+  'UI/FormBitacora.cs
+  class "FormBitacora" as UI_FormBitacora {
+    ~FormBitacora()
+  }
+  'UI/FormConfiguracionUsuario.Designer.cs
+  'UI/FormConfiguracionUsuario.cs
+  class "FormConfiguracionUsuario" as UI_FormConfiguracionUsuario {
+    ~FormConfiguracionUsuario()
+    ~FormConfiguracionUsuario(sesion : ISesion, servicioIdioma : IObservado)
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormContingenciaIntegridad.Designer.cs
+  'UI/FormContingenciaIntegridad.cs
+  class "FormContingenciaIntegridad" as UI_FormContingenciaIntegridad {
+    ~FormContingenciaIntegridad(falla : ExcepcionIntegridad)
+    ~Actualizar(observado : IObservado) : void
+  }
+  'UI/FormGestionPermisos.Designer.cs
+  'UI/FormGestionPermisos.cs
+  class "FormGestionPermisos" as UI_FormGestionPermisos {
+    ~FormGestionPermisos()
+  }
+  'UI/FormGestionUsuarios.Designer.cs
+  'UI/FormGestionUsuarios.cs
+  class "FormGestionUsuarios" as UI_FormGestionUsuarios {
+    ~FormGestionUsuarios()
+    ~FormGestionUsuarios(autorizacion : IAutorizacion, sesion : ISesion)
+  }
+  'UI/FormHistorialUsuario.Designer.cs
+  'UI/FormHistorialUsuario.cs
+  class "FormHistorialUsuario" as UI_FormHistorialUsuario {
+    ~FormHistorialUsuario(usuario : BE.Usuario)
+  }
+  'UI/FormLogin.Designer.cs
+  'UI/FormLogin.cs
+  class "FormLogin" as UI_FormLogin {
+    ~FormLogin()
+  }
+  'UI/FormRegistro.Designer.cs
+  'UI/FormRegistro.cs
+  class "FormRegistro" as UI_FormRegistro {
+    ~FormRegistro()
+  }
+  'UI/PasswordTextBox.Designer.cs
+  'UI/PasswordTextBox.cs
+  class "PasswordTextBox" as UI_PasswordTextBox {
+    ~PasswordTextBox()
+    ~Text : string
+    ~Clear() : void
+  }
 }
 
-package "UI (TpIDS)" {
+UI_FormActualizacionTasas --|> UI_FormTraducibleBase
+UI_FormAsistentePersonal --|> UI_FormTraducibleBase
+UI_FormBackup --|> UI_FormTraducibleBase
+UI_FormBalanceGeneral --> UI_DateTimePickerAccesible : dtpDesdeBalance
+UI_FormBalanceGeneral --> UI_DateTimePickerAccesible : dtpHastaBalance
+UI_FormBalanceGeneral --|> UI_FormTraducibleBase
+UI_FormBitacora --> UI_CheckBoxAccesible : chkbFechaDesdeBitacora
+UI_FormBitacora --> UI_CheckBoxAccesible : chkbFechaHastaBitacora
+UI_FormBitacora --> UI_CheckBoxAccesible : chkbSoloTecnicaBitacora
+UI_FormBitacora --> UI_DateTimePickerAccesible : dtpFechaDesdeBitacora
+UI_FormBitacora --> UI_DateTimePickerAccesible : dtpFechaHastaBitacora
+UI_FormBitacora --|> UI_FormTraducibleBase
+UI_FormConfiguracionUsuario --|> UI_FormTraducibleBase
+UI_FormContingenciaIntegridad --|> UI_FormTraducibleBase
+UI_FormDashboardAnaliticas --|> UI_FormTraducibleBase
+UI_FormDetalleComercio --|> UI_FormTraducibleBase
+UI_FormDetalleEntidadFinanciera --|> UI_FormTraducibleBase
+UI_FormDetalleNotificacion --|> UI_FormTraducibleBase
+UI_FormGestionCategorias --|> UI_FormTraducibleBase
+UI_FormGestionCategoriasProducto --|> UI_FormTraducibleBase
+UI_FormGestionComercios --|> UI_FormTraducibleBase
+UI_FormGestionCuentasFinancieras --|> UI_FormTraducibleBase
+UI_FormGestionEntidadesFinancieras --|> UI_FormTraducibleBase
+UI_FormGestionIdiomas --> UI_CheckBoxAccesible : chkbIdiomaDefault
+UI_FormGestionIdiomas --|> UI_FormTraducibleBase
+UI_FormGestionMediosPago --|> UI_FormTraducibleBase
+UI_FormGestionMonedas --|> UI_FormTraducibleBase
+UI_FormGestionNotificaciones --|> UI_FormTraducibleBase
+UI_FormGestionPermisos --|> UI_FormTraducibleBase
+UI_FormGestionProductos --|> UI_FormTraducibleBase
+UI_FormGestionPromociones --> "*" UI_CheckBoxAccesible : _checksDias
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaDomingo
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaJueves
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaLunes
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaMartes
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaMiercoles
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaSabado
+UI_FormGestionPromociones --> UI_CheckBoxAccesible : chkbDiaViernes
+UI_FormGestionPromociones --> UI_DateTimePickerAccesible : dtpVigenciaDesdePromocion
+UI_FormGestionPromociones --> UI_DateTimePickerAccesible : dtpVigenciaHastaPromocion
+UI_FormGestionPromociones --|> UI_FormTraducibleBase
+UI_FormGestionUsuarios --> UI_CheckBoxAccesible : chkbUsuarioActivo
+UI_FormGestionUsuarios --|> UI_FormTraducibleBase
+UI_FormHistorialUsuario --|> UI_FormTraducibleBase
+UI_FormListaDeCompras --|> UI_FormTraducibleBase
+UI_FormLogin --> UI_PasswordTextBox : txtbPassword
+UI_FormLogin --|> UI_FormTraducibleBase
+UI_FormMisNotificaciones --> UI_CheckBoxAccesible : chkbDesdeNotificaciones
+UI_FormMisNotificaciones --> UI_CheckBoxAccesible : chkbHastaNotificaciones
+UI_FormMisNotificaciones --> UI_DateTimePickerAccesible : dtpDesdeNotificaciones
+UI_FormMisNotificaciones --> UI_DateTimePickerAccesible : dtpHastaNotificaciones
+UI_FormMisNotificaciones --|> UI_FormTraducibleBase
+UI_FormMisZonas --> UI_CoordinadorBusquedaUbicacion : _coordinadorBusqueda
+UI_FormMisZonas --|> UI_FormTraducibleBase
+UI_FormMovimientos --> UI_CheckBoxAccesible : chkbFechaDesdeMovimientos
+UI_FormMovimientos --> UI_CheckBoxAccesible : chkbFechaHastaMovimientos
+UI_FormMovimientos --> UI_DateTimePickerAccesible : dtpFechaDesdeMovimientos
+UI_FormMovimientos --> UI_DateTimePickerAccesible : dtpFechaHastaMovimientos
+UI_FormMovimientos --> UI_DateTimePickerAccesible : dtpFechaMovimiento
+UI_FormMovimientos --|> UI_FormTraducibleBase
+UI_FormPerfilInversor --|> UI_FormTraducibleBase
+UI_FormPrincipal --> UI_ActualizadorContadorNotificaciones : actualizadorNotificaciones
+UI_FormPrincipal --> UI_MenuNotificacionesItem : mnuMisNotificaciones
+UI_FormPrincipal --|> UI_FormTraducibleBase
+UI_FormRegistro --> UI_PasswordTextBox : txtbPassword
+UI_FormRegistro --|> UI_FormTraducibleBase
+UI_FormReglasCategorizacion --|> UI_FormTraducibleBase
+UI_FormSeleccionarTarjetaDashboard --|> UI_FormTraducibleBase
+UI_FormSeleccionarUbicacionComercio --> UI_CoordinadorBusquedaUbicacion : _coordinadorBusqueda
+UI_FormSeleccionarUbicacionComercio --|> UI_FormTraducibleBase
 
-  class Program <<static>> {
-    +Main() : void
-  }
-
-  class FormTraducibleBase {
-    +Actualizar(observado : IObservado) : void
-  }
-
-  ' --- Pantallas ---
-  class FormLogin
-  class FormRegistro
-  class FormPrincipal
-  class FormGestionUsuarios
-  class FormGestionPermisos
-  class FormGestionIdiomas
-  class FormGestionCategorias
-  class FormMovimientos
-  class FormConfiguracionUsuario
-  class FormHistorialUsuario
-  class FormBitacora
-  class FormBackup
-  class FormContingenciaIntegridad
-
-  ' --- Controles / helpers ---
-  class PasswordTextBox
-  class IdiomaFormHelper <<static>>
-  class OpcionTraducible
-  class UiDialogHelper <<static>>
-  class UiExceptionHandler <<static>>
-}
-
-FormTraducibleBase ..|> IObservador
-
-FormLogin --|> FormTraducibleBase
-FormRegistro --|> FormTraducibleBase
-FormPrincipal --|> FormTraducibleBase
-FormGestionUsuarios --|> FormTraducibleBase
-FormGestionPermisos --|> FormTraducibleBase
-FormGestionIdiomas --|> FormTraducibleBase
-FormGestionCategorias --|> FormTraducibleBase
-FormMovimientos --|> FormTraducibleBase
-FormConfiguracionUsuario --|> FormTraducibleBase
-FormHistorialUsuario --|> FormTraducibleBase
-FormBitacora --|> FormTraducibleBase
-FormBackup --|> FormTraducibleBase
-FormContingenciaIntegridad --|> FormTraducibleBase
-
-FormTraducibleBase ..> IdiomaFormHelper : Aplicar(this, idiomaActual)
-Program ..> FormLogin 
-Program ..> FormContingenciaIntegridad 
-FormLogin ..> FormPrincipal 
-FormLogin ..> FormRegistro 
-FormPrincipal ..> FormMovimientos 
-FormPrincipal ..> FormGestionCategorias 
-FormPrincipal ..> FormGestionUsuarios 
-FormPrincipal ..> FormGestionPermisos 
-FormPrincipal ..> FormGestionIdiomas 
-FormPrincipal ..> FormBitacora 
-FormPrincipal ..> FormBackup 
-FormPrincipal ..> FormConfiguracionUsuario 
-FormGestionUsuarios ..> FormHistorialUsuario 
-
+' --- Enlaces ocultos de layout; no representan relaciones del sistema ---
+P0 -[hidden]right-> P1
+P1 -[hidden]right-> P2
+P0 -[hidden]down-> P3
+P3 -[hidden]right-> P4
+P1 -[hidden]down-> P4
+P4 -[hidden]right-> P5
+P2 -[hidden]down-> P5
+P3 -[hidden]down-> P6
+P6 -[hidden]right-> P7
+P4 -[hidden]down-> P7
+P7 -[hidden]right-> P8
+P5 -[hidden]down-> P8
+P6 -[hidden]down-> P9
+P9 -[hidden]right-> P10
+P7 -[hidden]down-> P10
 @enduml

@@ -1,0 +1,149 @@
+@startuml
+' Fuente: diagramas/NEG15-promociones/NEG15-promociones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN64 Consultar promociones — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormGestionPromociones {
+    -CargarPromociones(promocionSeleccionadaId: int?): void
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class PromocionBLL {
+    +Buscar(texto: string, recibido: Comercio): List<Promocion>
+  }
+  class AlcancePromocion {
+    +FiltrarPorComercio(promociones: IEnumerable<Promocion>, comercio: Comercio):\nList<Promocion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+PromocionBLL -[hidden]right-> AlcancePromocion
+package "REPOSITORIO" as L_REPOSITORIO {
+  class "ComercioRepositorio" as IComercioRepositorio <<IComercioRepositorio>> {
+    +ObtenerPorId(id: int): Comercio
+  }
+  interface IPromocionRepositorio {
+    +ObtenerTodas(): List<Promocion>
+  }
+  class PromocionRepositorio {
+    +ObtenerTodas(): List<Promocion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IComercioRepositorio -[hidden]right-> IPromocionRepositorio
+IComercioRepositorio -[hidden]down-> PromocionRepositorio
+package "DAL" as L_DAL {
+  class PromocionDAL {
+    +ObtenerTodas(accesoDatos: AccesoDatosSqlServer): List<Promocion>
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  class CategoriaProducto {
+    +Id: int
+    +Nombre: string
+  }
+  class Comercio {
+    +Id: int
+    +RubroComercio: RubroComercio
+    +Nombre: string
+    +Direccion: string
+    +Localidad: string
+    +Provincia: string
+    +Latitud: decimal?
+    +Longitud: decimal?
+  }
+  enum DiaSemana {
+    Lunes
+    Martes
+    Miercoles
+    Jueves
+    Viernes
+    Sabado
+    Domingo
+  }
+  class EntidadFinanciera {
+    +Id: int
+    +Nombre: string
+    +MediosPagoEntidad: List<MedioPagoEntidad>
+  }
+  class MedioPago {
+    +Id: int
+    +Tipo: TipoMedioPago
+    +Marca: string
+  }
+  class Producto {
+    +Id: int
+    +CategoriaProducto: CategoriaProducto
+    +Nombre: string
+  }
+  class Promocion {
+    +Id: int
+    +Descripcion: string
+    +Descuento: decimal
+    +TopeDescuento: decimal?
+    +VigenciaDesde: DateTime
+    +VigenciaHasta: DateTime
+    +DiasSemana: List<DiaSemana>
+    +Comercios: List<Comercio>
+    +RubrosComercio: List<RubroComercio>
+    +EntidadesFinancieras: List<EntidadFinanciera>
+    +MediosPago: List<MedioPago>
+    +Segmentos: List<string>
+    +ProductosIncluidos: List<Producto>
+    +ProductosExcluidos: List<Producto>
+    +CategoriasIncluidas: List<CategoriaProducto>
+    +CategoriasExcluidas: List<CategoriaProducto>
+  }
+  class RubroComercio {
+    +Id: int
+    +Nombre: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+CategoriaProducto -[hidden]right-> Comercio
+CategoriaProducto -[hidden]down-> DiaSemana
+DiaSemana -[hidden]right-> EntidadFinanciera
+DiaSemana -[hidden]down-> MedioPago
+MedioPago -[hidden]right-> Producto
+MedioPago -[hidden]down-> Promocion
+Promocion -[hidden]right-> RubroComercio
+FormGestionPromociones ..> PromocionBLL : usa
+PromocionRepositorio ..> PromocionDAL : usa
+PromocionBLL ..> AlcancePromocion : usa
+PromocionBLL ..> IComercioRepositorio : usa
+PromocionBLL ..> IPromocionRepositorio : usa
+PromocionRepositorio ..|> IPromocionRepositorio
+PromocionBLL ..> Promocion : datos
+Comercio --> RubroComercio : RubroComercio
+Producto --> CategoriaProducto : CategoriaProducto
+Promocion --> "*" DiaSemana : DiasSemana
+Promocion --> "*" Comercio : Comercios
+Promocion --> "*" RubroComercio : RubrosComercio
+Promocion --> "*" EntidadFinanciera : EntidadesFinancieras
+Promocion --> "*" MedioPago : MediosPago
+Promocion --> "*" Producto : ProductosIncluidos
+Promocion --> "*" Producto : ProductosExcluidos
+Promocion --> "*" CategoriaProducto : CategoriasIncluidas
+Promocion --> "*" CategoriaProducto : CategoriasExcluidas
+' BLL/AlcancePromocion.cs:23 AlcancePromocion.FiltrarPorComercio
+' BLL/PromocionBLL.cs:42 PromocionBLL.Buscar
+' DAL/PromocionDAL.cs:52 PromocionDAL.ObtenerTodas
+' REPOSITORIO/IComercioRepositorio.cs:8 IComercioRepositorio.ObtenerPorId
+' REPOSITORIO/IPromocionRepositorio.cs:10 IPromocionRepositorio.ObtenerTodas
+' REPOSITORIO/PromocionRepositorio.cs:34 PromocionRepositorio.ObtenerTodas
+' UI/FormGestionPromociones.cs:315 FormGestionPromociones.CargarPromociones
+@enduml

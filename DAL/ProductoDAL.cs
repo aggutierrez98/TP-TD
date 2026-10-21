@@ -136,7 +136,7 @@ namespace DAL
             }
         }
 
-        public bool Eliminar(int id, AccesoDatosSqlServer accesoDatos = null)
+        public bool Eliminar(Producto producto, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 DELETE FROM Producto
@@ -149,7 +149,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, id)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, producto.Id)
                 };
 
                 return accesoDatos.Write(query, parametros) > 0;
@@ -163,7 +163,7 @@ namespace DAL
             }
         }
 
-        public int ContarPorCategoria(int categoriaProductoId, AccesoDatosSqlServer accesoDatos = null)
+        public int ContarPorCategoria(CategoriaProducto categoria, AccesoDatosSqlServer accesoDatos = null)
         {
             const string query = @"
                 SELECT COUNT(*) AS Total
@@ -177,7 +177,7 @@ namespace DAL
             {
                 List<SqlParameter> parametros = new List<SqlParameter>
                 {
-                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoriaProductoId)
+                    accesoDatos.CreateParameter("@Id", SqlDbType.Int, categoria.Id)
                 };
 
                 DataTable dataTable = accesoDatos.Read(query, parametros);

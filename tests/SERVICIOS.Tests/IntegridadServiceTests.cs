@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using ABSTRACCIONES;
+using BE;
 using SERVICIOS;
 
 namespace SERVICIOS.Tests

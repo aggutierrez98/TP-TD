@@ -16,7 +16,7 @@ namespace ABSTRACCIONES
 
         void Quitar(IPermiso permiso);
 
-        bool Contiene(int id);
+        bool Contiene(IPermiso permiso);
 
         IList<IPermiso> ObtenerPermisosHoja();
     }

@@ -37,7 +37,7 @@ namespace SERVICIOS
             _configuracion = configuracion ?? (clave => ConfigurationManager.AppSettings[clave]);
         }
 
-        public Task<string> ObtenerRespuestaAsync(SolicitudAsistente solicitud)
+        public Task<string> ObtenerRespuestaAsync(ISolicitudAsistente solicitud)
         {
             if (solicitud == null || string.IsNullOrWhiteSpace(solicitud.Pregunta))
             {
@@ -57,7 +57,7 @@ namespace SERVICIOS
             }
         }
 
-        public async Task<LlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(SolicitudAsistente solicitud, HerramientaAsistente herramienta, CancellationToken cancellationToken)
+        public async Task<ILlamadaHerramientaAsistente> ObtenerLlamadaHerramientaAsync(ISolicitudAsistente solicitud, IHerramientaAsistente herramienta, CancellationToken cancellationToken)
         {
             string apiKey = _configuracion("GeminiApiKey");
             if (string.IsNullOrWhiteSpace(apiKey)) throw new ExcepcionTecnica("Error.Assistant.ApiKeyMissing");

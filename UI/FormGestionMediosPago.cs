@@ -25,9 +25,10 @@ namespace TpIDS
 
         // View-model plano para bindear la grilla. Tipo queda como enum: la celda se
         // traduce en dgvMediosPago_CellFormatting (se re-traduce sola al cambiar el idioma).
+        // La grilla no autogenera columnas, asi que MedioPago (la entidad que se pasa al BLL) no se muestra.
         private sealed class FilaMedioPago
         {
-            public int Id { get; set; }
+            public MedioPago MedioPago { get; set; }
             public TipoMedioPago Tipo { get; set; }
             public string Marca { get; set; }
         }
@@ -65,7 +66,7 @@ namespace TpIDS
 
                 if (medioPagoSeleccionadoId.HasValue)
                 {
-                    SeleccionarFila<FilaMedioPago>(dgvMediosPago, fila => fila.Id == medioPagoSeleccionadoId.Value);
+                    SeleccionarFila<FilaMedioPago>(dgvMediosPago, fila => fila.MedioPago.Id == medioPagoSeleccionadoId.Value);
                 }
                 else
                 {
@@ -81,7 +82,7 @@ namespace TpIDS
 
         private static FilaMedioPago ProyectarFilaMedioPago(MedioPago medioPago)
         {
-            return new FilaMedioPago { Id = medioPago.Id, Tipo = medioPago.Tipo, Marca = medioPago.Marca };
+            return new FilaMedioPago { MedioPago = medioPago, Tipo = medioPago.Tipo, Marca = medioPago.Marca };
         }
 
         private void btnAgregarMedioPago_Click(object sender, EventArgs e)
@@ -94,7 +95,7 @@ namespace TpIDS
 
             try
             {
-                MedioPago creado = medioPagoBLL.Crear(tipo, txtbMarcaMedioPago.Text);
+                MedioPago creado = medioPagoBLL.Crear(new MedioPago { Tipo = tipo, Marca = txtbMarcaMedioPago.Text });
                 LimpiarFormulario();
                 CargarMediosPago(creado.Id);
                 UiDialogHelper.MostrarInfo("FormPaymentMethodManagement.Success.Created");
@@ -121,11 +122,13 @@ namespace TpIDS
 
             try
             {
-                bool actualizado = medioPagoBLL.Actualizar(fila.Id, tipo, txtbMarcaMedioPago.Text);
+                fila.MedioPago.Tipo = tipo;
+                fila.MedioPago.Marca = txtbMarcaMedioPago.Text;
+                bool actualizado = medioPagoBLL.Actualizar(fila.MedioPago);
                 if (actualizado)
                 {
                     LimpiarFormulario();
-                    CargarMediosPago(fila.Id);
+                    CargarMediosPago(fila.MedioPago.Id);
                     UiDialogHelper.MostrarInfo("FormPaymentMethodManagement.Success.Updated");
                 }
             }
@@ -156,7 +159,7 @@ namespace TpIDS
 
             try
             {
-                bool eliminado = medioPagoBLL.Eliminar(fila.Id);
+                bool eliminado = medioPagoBLL.Eliminar(fila.MedioPago);
                 if (eliminado)
                 {
                     LimpiarFormulario();

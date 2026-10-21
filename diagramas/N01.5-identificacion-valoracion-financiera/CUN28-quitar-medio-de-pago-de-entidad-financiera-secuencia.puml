@@ -1,0 +1,81 @@
+@startuml
+' Fuente: diagramas/NEG06-entidades-financieras/NEG06-entidades-financieras-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN28 Quitar medio de pago de entidad financiera — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormDetalleEntidadFinanciera" as FormDetalleEntidadFinanciera
+control "EntidadFinancieraBLL" as EntidadFinancieraBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "MedioPagoEntidadRepositorio\n:IMedioPagoEntidadRepositorio" as IMedioPagoEntidadRepositorio
+participant "MedioPagoEntidadDAL" as MedioPagoEntidadDAL
+participant "CuentaFinancieraRepositorio\n:ICuentaFinancieraRepositorio" as ICuentaFinancieraRepositorio
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+participant "EntidadFinancieraRepositorio\n:IEntidadFinancieraRepositorio" as IEntidadFinancieraRepositorio
+note over FormDetalleEntidadFinanciera : El actor desea que una entidad financiera deje de ofrecer un medio de pago.
+Actor -> FormDetalleEntidadFinanciera : selecciona la opción «Entidades financieras» del menú «Operador».
+FormDetalleEntidadFinanciera --> Actor : presenta la pantalla «Gestión de entidades financieras» con el listado de entidades\nregistradas.
+Actor -> FormDetalleEntidadFinanciera : selecciona del listado la entidad correspondiente.
+Actor -> FormDetalleEntidadFinanciera : presiona el botón «Ver detalle».
+FormDetalleEntidadFinanciera --> Actor : presenta la ventana «Detalle de la entidad financiera» con los medios de pago que la\nentidad ofrece, indicando su «Tipo», «Marca» y «Segmento».
+Actor -> FormDetalleEntidadFinanciera : selecciona el medio de pago a quitar.
+Actor -> FormDetalleEntidadFinanciera : presiona el botón «Quitar».
+FormDetalleEntidadFinanciera --> Actor : solicita confirmación mediante el mensaje «Se quitará el medio de pago seleccionado de la\nentidad. ¿Desea continuar?», titulado «Confirmar baja».
+alt El actor confirma la operacion
+Actor -> FormDetalleEntidadFinanciera : confirma la baja.
+FormDetalleEntidadFinanciera -> EntidadFinancieraBLL ++ : QuitarMedioPagoEntidad(medioPagoEntidad: MedioPagoEntidad)
+EntidadFinancieraBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> EntidadFinancieraBLL -- : IUnidadDeTrabajo
+EntidadFinancieraBLL -> IMedioPagoEntidadRepositorio ++ : ObtenerPorId(id: int)
+IMedioPagoEntidadRepositorio -> MedioPagoEntidadDAL ++ : ObtenerPorId(id: int, accesoDatos: AccesoDatosSqlServer)
+MedioPagoEntidadDAL --> IMedioPagoEntidadRepositorio -- : MedioPagoEntidad
+IMedioPagoEntidadRepositorio --> EntidadFinancieraBLL -- : MedioPagoEntidad
+EntidadFinancieraBLL -> ICuentaFinancieraRepositorio ++ : ContarPorMedioPagoEntidad(medio: MedioPagoEntidad)
+ICuentaFinancieraRepositorio --> EntidadFinancieraBLL -- : int
+EntidadFinancieraBLL -> IMedioPagoEntidadRepositorio ++ : Eliminar(medioPagoEntidad: MedioPagoEntidad)
+IMedioPagoEntidadRepositorio -> MedioPagoEntidadDAL ++ : Eliminar(medioPagoEntidad: MedioPagoEntidad, accesoDatos:\nAccesoDatosSqlServer)
+MedioPagoEntidadDAL --> IMedioPagoEntidadRepositorio -- : bool
+IMedioPagoEntidadRepositorio --> EntidadFinancieraBLL -- : bool
+EntidadFinancieraBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> EntidadFinancieraBLL -- : void
+EntidadFinancieraBLL --> FormDetalleEntidadFinanciera -- : bool
+group Refrescar listado tras la operacion exitosa
+FormDetalleEntidadFinanciera -> EntidadFinancieraBLL ++ : ObtenerMediosPagoEntidad(entidad: EntidadFinanciera)
+EntidadFinancieraBLL -> IEntidadFinancieraRepositorio ++ : ObtenerPorId(id: int)
+IEntidadFinancieraRepositorio --> EntidadFinancieraBLL -- : EntidadFinanciera
+EntidadFinancieraBLL --> FormDetalleEntidadFinanciera -- : List<MedioPagoEntidad>
+end
+FormDetalleEntidadFinanciera --> Actor : quita el medio de pago, actualiza el listado de la entidad sin ese medio e informa el\nresultado.
+else El actor cancela la confirmacion
+Actor -> FormDetalleEntidadFinanciera : Cancelar la operacion
+FormDetalleEntidadFinanciera --> Actor : Conservar datos, sin invocar la baja
+end
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/EntidadFinancieraBLL.cs:211 EntidadFinancieraBLL.QuitarMedioPagoEntidad
+' BLL/EntidadFinancieraBLL.cs:36 EntidadFinancieraBLL.ObtenerMediosPagoEntidad
+' DAL/MedioPagoEntidadDAL.cs:202 MedioPagoEntidadDAL.Eliminar
+' DAL/MedioPagoEntidadDAL.cs:23 MedioPagoEntidadDAL.ObtenerPorId
+' REPOSITORIO/ICuentaFinancieraRepositorio.cs:22 ICuentaFinancieraRepositorio.ContarPorMedioPagoEntidad
+' REPOSITORIO/IEntidadFinancieraRepositorio.cs:9 IEntidadFinancieraRepositorio.ObtenerPorId
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:21 IMedioPagoEntidadRepositorio.Eliminar
+' REPOSITORIO/IMedioPagoEntidadRepositorio.cs:8 IMedioPagoEntidadRepositorio.ObtenerPorId
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:27 MedioPagoEntidadRepositorio.ObtenerPorId
+' REPOSITORIO/MedioPagoEntidadRepositorio.cs:76 MedioPagoEntidadRepositorio.Eliminar
+' UI/FormDetalleEntidadFinanciera.cs:155 FormDetalleEntidadFinanciera.btnQuitarMedioPagoEntidad_Click
+@enduml

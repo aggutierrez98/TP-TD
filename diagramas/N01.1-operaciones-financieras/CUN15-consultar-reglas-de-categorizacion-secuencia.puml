@@ -1,0 +1,51 @@
+@startuml
+' Fuente: diagramas/NEG04-reglas-categorizacion/NEG04-reglas-categorizacion-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN15 Consultar reglas de categorización — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Usuario, Operador o Administrador" as Actor
+boundary "FormReglasCategorizacion" as FormReglasCategorizacion
+control "ReglaCategorizacionBLL" as ReglaCategorizacionBLL
+control "SesionUsuarioExtensiones" as SesionUsuarioExtensiones
+participant "ReglaCategorizacionRepositorio\n:IReglaCategorizacionRepositorio" as IReglaCategorizacionRepositorio
+participant "ReglaCategorizacionDAL" as ReglaCategorizacionDAL
+participant "ComercioReglaCategorizacionRepositorio\n:IComercioReglaCategorizacionRepositorio" as IComercioReglaCategorizacionRepositorio
+note over FormReglasCategorizacion : El actor desea conocer las reglas con las que el sistema le sugiere categorías\npara sus movimientos.
+Actor -> FormReglasCategorizacion : selecciona la opción «Reglas de categorización» del menú «Finanzas».
+FormReglasCategorizacion -> ReglaCategorizacionBLL ++ : ObtenerParaUsuarioActual()
+ReglaCategorizacionBLL -> SesionUsuarioExtensiones ++ : ObtenerUsuarioActual(sesion: ISesion)
+SesionUsuarioExtensiones --> ReglaCategorizacionBLL -- : Usuario
+ReglaCategorizacionBLL -> IReglaCategorizacionRepositorio ++ : ObtenerPorUsuario(usuario: Usuario)
+IReglaCategorizacionRepositorio -> ReglaCategorizacionDAL ++ : ObtenerPorUsuario(usuario: Usuario, accesoDatos:\nAccesoDatosSqlServer)
+ReglaCategorizacionDAL --> IReglaCategorizacionRepositorio -- : List<ReglaCategorizacion>
+IReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : List<ReglaCategorizacion>
+ReglaCategorizacionBLL --> FormReglasCategorizacion -- : List<ReglaCategorizacion>
+opt Al seleccionar una regla
+FormReglasCategorizacion -> ReglaCategorizacionBLL ++ : ObtenerComerciosPorRegla(regla: ReglaCategorizacion)
+ReglaCategorizacionBLL -> IComercioReglaCategorizacionRepositorio ++ : ObtenerComerciosPorReglaCategorizacion(reglaCategorizacion:\nReglaCategorizacion)
+IComercioReglaCategorizacionRepositorio --> ReglaCategorizacionBLL -- : List<Comercio>
+ReglaCategorizacionBLL --> FormReglasCategorizacion -- : List<Comercio>
+end
+FormReglasCategorizacion --> Actor : presenta la pantalla «Gestión de reglas de categorización» con el listado de reglas del\nactor
+Actor -> FormReglasCategorizacion : selecciona una regla del listado.
+FormReglasCategorizacion --> Actor : muestra en la sección «Datos de la regla» el nombre, la categoría y las palabras clave de\nla regla seleccionada, y marca en «Comercios asociados (opcional):» los comercios\nasociados a ella.
+' BLL/ReglaCategorizacionBLL.cs:42 ReglaCategorizacionBLL.ObtenerParaUsuarioActual
+' BLL/ReglaCategorizacionBLL.cs:47 ReglaCategorizacionBLL.ObtenerComerciosPorRegla
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/ReglaCategorizacionDAL.cs:51 ReglaCategorizacionDAL.ObtenerPorUsuario
+' REPOSITORIO/IComercioReglaCategorizacionRepositorio.cs:8 IComercioReglaCategorizacionRepositorio.ObtenerComerciosPorReglaCategorizacion
+' REPOSITORIO/IReglaCategorizacionRepositorio.cs:10 IReglaCategorizacionRepositorio.ObtenerPorUsuario
+' REPOSITORIO/ReglaCategorizacionRepositorio.cs:30 ReglaCategorizacionRepositorio.ObtenerPorUsuario
+' UI/FormReglasCategorizacion.cs:68 FormReglasCategorizacion.CargarReglas
+@enduml

@@ -1,0 +1,74 @@
+@startuml
+' Fuente: diagramas/NEG20-notificaciones/NEG20-notificaciones-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN82 Crear notificación manual para un usuario — Secuencia
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide footbox
+autonumber
+skinparam maxMessageSize 560
+actor "Operador o Administrador" as Actor
+boundary "FormGestionNotificaciones" as FormGestionNotificaciones
+control "NotificacionBLL" as NotificacionBLL
+participant "UnidadDeTrabajoFactory\n:IUnidadDeTrabajoFactory" as IUnidadDeTrabajoFactory
+participant "UsuarioRepositorio\n:IUsuarioRepositorio" as IUsuarioRepositorio
+participant "NotificacionRepositorio\n:INotificacionRepositorio" as INotificacionRepositorio
+participant "NotificacionDAL" as NotificacionDAL
+control "BitacoraBLL\n:IBitacoraBLL" as IBitacoraBLL
+participant "UnidadDeTrabajoSqlServer\n:IUnidadDeTrabajo" as IUnidadDeTrabajo
+participant "RecordatorioCompraRepositorio\n:IRecordatorioCompraRepositorio" as IRecordatorioCompraRepositorio
+participant "RecordatorioInversionRepositorio\n:IRecordatorioInversionRepositorio" as IRecordatorioInversionRepositorio
+note over FormGestionNotificaciones : El actor desea comunicar un aviso a un usuario.
+Actor -> FormGestionNotificaciones : selecciona en el campo «Usuario destino:» de la sección «Nueva notificación» el usuario\nque recibirá el aviso.
+Actor -> FormGestionNotificaciones : escribe el texto de la notificación en el campo «Mensaje:».
+Actor -> FormGestionNotificaciones : selecciona el botón «Agregar».
+FormGestionNotificaciones -> NotificacionBLL ++ : CrearManual(recibida: Notificacion)
+NotificacionBLL -> IUnidadDeTrabajoFactory ++ : Crear()
+IUnidadDeTrabajoFactory --> NotificacionBLL -- : IUnidadDeTrabajo
+NotificacionBLL -> IUsuarioRepositorio ++ : ObtenerPorId(id: int)
+IUsuarioRepositorio --> NotificacionBLL -- : Usuario
+NotificacionBLL -> INotificacionRepositorio ++ : InsertarYObtenerId(notificacion: Notificacion)
+INotificacionRepositorio -> NotificacionDAL ++ : InsertarYObtenerId(notificacion: Notificacion, accesoDatos:\nAccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : int
+INotificacionRepositorio --> NotificacionBLL -- : int
+NotificacionBLL -> IBitacoraBLL ++ : RegistrarOperacionInterno(actividad: string, informacion:\nstring, origen: string, unidad: IUnidadDeTrabajo)
+IBitacoraBLL --> NotificacionBLL -- : void
+NotificacionBLL -> IUnidadDeTrabajo ++ : Save()
+IUnidadDeTrabajo --> NotificacionBLL -- : void
+NotificacionBLL --> FormGestionNotificaciones -- : Notificacion
+group Refrescar listado tras la operacion exitosa
+FormGestionNotificaciones -> NotificacionBLL ++ : ObtenerTodas()
+NotificacionBLL -> INotificacionRepositorio ++ : ObtenerTodas()
+INotificacionRepositorio -> NotificacionDAL ++ : ObtenerTodas(accesoDatos: AccesoDatosSqlServer)
+NotificacionDAL --> INotificacionRepositorio -- : List<Notificacion>
+INotificacionRepositorio --> NotificacionBLL -- : List<Notificacion>
+NotificacionBLL -> IRecordatorioCompraRepositorio ++ : ObtenerTodas()
+IRecordatorioCompraRepositorio --> NotificacionBLL -- : List<RecordatorioCompra>
+NotificacionBLL -> IRecordatorioInversionRepositorio ++ : ObtenerTodas()
+IRecordatorioInversionRepositorio --> NotificacionBLL -- : List<RecordatorioInversion>
+NotificacionBLL --> FormGestionNotificaciones -- : List<Notificacion>
+end
+FormGestionNotificaciones --> Actor : registra la notificación como no leída, limpia el campo «Mensaje:», actualiza el listado\nincluyendo la nueva notificación e informa el resultado.
+' BLL/ContratosInternosBLL.cs:31 IBitacoraBLL.RegistrarOperacionInterno
+' BLL/NotificacionBLL.cs:105 NotificacionBLL.CrearManual
+' BLL/NotificacionBLL.cs:94 NotificacionBLL.ObtenerTodas
+' DAL/NotificacionDAL.cs:284 NotificacionDAL.ObtenerTodas
+' DAL/NotificacionDAL.cs:315 NotificacionDAL.InsertarYObtenerId
+' REPOSITORIO/INotificacionRepositorio.cs:21 INotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/INotificacionRepositorio.cs:23 INotificacionRepositorio.InsertarYObtenerId
+' REPOSITORIO/IRecordatorioCompraRepositorio.cs:12 IRecordatorioCompraRepositorio.ObtenerTodas
+' REPOSITORIO/IRecordatorioInversionRepositorio.cs:12 IRecordatorioInversionRepositorio.ObtenerTodas
+' REPOSITORIO/IUnidadDeTrabajo.cs:97 IUnidadDeTrabajo.Save
+' REPOSITORIO/IUnidadDeTrabajoFactory.cs:5 IUnidadDeTrabajoFactory.Crear
+' REPOSITORIO/IUsuarioRepositorio.cs:9 IUsuarioRepositorio.ObtenerPorId
+' REPOSITORIO/NotificacionRepositorio.cs:60 NotificacionRepositorio.ObtenerTodas
+' REPOSITORIO/NotificacionRepositorio.cs:82 NotificacionRepositorio.InsertarYObtenerId
+' UI/FormGestionNotificaciones.cs:100 FormGestionNotificaciones.btnAgregarNotificacion_Click
+@enduml

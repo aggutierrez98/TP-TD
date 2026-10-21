@@ -1,0 +1,110 @@
+@startuml
+' Fuente: diagramas/NEG18-perfil-inversor/NEG18-perfil-inversor-casos-de-uso.json
+' Proyeccion por caso de uso; firmas contrastadas contra el codigo fuente.
+title CUN76 Consultar mi perfil inversor — Clases involucradas
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam defaultFontSize 13
+skinparam ArrowColor #3E3A4E
+skinparam ParticipantBackgroundColor #E4F4E9
+skinparam ParticipantBorderColor #3E3A4E
+skinparam ClassBackgroundColor #E4F4E9
+skinparam ClassBorderColor #3E3A4E
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+package "UI" as L_UI {
+  class FormConfiguracionUsuario {
+    -CargarPerfilAsync(): Task
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BLL" as L_BLL {
+  class PerfilInversorBLL {
+    +ObtenerMiPerfil(): PerfilInversor
+  }
+  class SesionUsuarioExtensiones {
+    ~ObtenerUsuarioActual(sesion: ISesion): Usuario
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+PerfilInversorBLL -[hidden]right-> SesionUsuarioExtensiones
+package "REPOSITORIO" as L_REPOSITORIO {
+  interface IPerfilInversorRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): PerfilInversor
+  }
+  class PerfilInversorRepositorio {
+    +ObtenerPorUsuario(usuario: Usuario): PerfilInversor
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+IPerfilInversorRepositorio -[hidden]right-> PerfilInversorRepositorio
+package "DAL" as L_DAL {
+  class PerfilInversorDAL {
+    +ObtenerPorUsuario(usuario: Usuario, acceso: AccesoDatosSqlServer): PerfilInversor
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "SERVICIOS" as L_SERVICIOS {
+  class "Sesion" as ISesion <<ISesion>> {
+    +HaySesionActiva(): bool
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+package "BE" as L_BE {
+  enum NivelRiesgoInversor {
+    Bajo
+    Moderado
+    Alto
+  }
+  class PerfilInversor {
+    +Id: int
+    +Usuario: Usuario
+    +VersionCuestionario: int
+    +FechaEvaluacionUtc: DateTime
+    +Capacidad: decimal
+    +Tolerancia: decimal
+    +Puntaje: decimal
+    +NivelRiesgo: NivelRiesgoInversor
+    +MotivosLimite: List<string>
+    +Respuestas: List<RespuestaPerfilInversor>
+  }
+  class RespuestaPerfilInversor {
+    +Pregunta: PreguntaPerfilInversor
+    +OpcionId: string
+  }
+  class Usuario {
+    +Id: int
+    +Username: string
+    +PasswordHash: string
+    +Activo: bool
+    +IntentosFallidos: int
+    +Bloqueado: bool
+    +BloqueadoHasta: DateTime?
+    +DVH: string
+  }
+}
+' Enlaces ocultos: solo distribucion visual, no relaciones de dominio.
+NivelRiesgoInversor -[hidden]right-> PerfilInversor
+NivelRiesgoInversor -[hidden]down-> RespuestaPerfilInversor
+RespuestaPerfilInversor -[hidden]right-> Usuario
+FormConfiguracionUsuario ..> PerfilInversorBLL : usa
+PerfilInversorRepositorio ..> PerfilInversorDAL : usa
+PerfilInversorBLL ..> IPerfilInversorRepositorio : usa
+PerfilInversorBLL ..> ISesion : usa
+PerfilInversorBLL ..> SesionUsuarioExtensiones : usa
+PerfilInversorRepositorio ..|> IPerfilInversorRepositorio
+PerfilInversorBLL ..> PerfilInversor : datos
+PerfilInversor --> Usuario : Usuario
+PerfilInversor --> NivelRiesgoInversor : NivelRiesgo
+PerfilInversor --> "*" RespuestaPerfilInversor : Respuestas
+' ABSTRACCIONES/ISesion.cs:15 ISesion.HaySesionActiva
+' BLL/PerfilInversorBLL.cs:40 PerfilInversorBLL.ObtenerMiPerfil
+' BLL/SesionUsuarioExtensiones.cs:12 SesionUsuarioExtensiones.ObtenerUsuarioActual
+' DAL/PerfilInversorDAL.cs:14 PerfilInversorDAL.ObtenerPorUsuario
+' REPOSITORIO/IPerfilInversorRepositorio.cs:7 IPerfilInversorRepositorio.ObtenerPorUsuario
+' REPOSITORIO/PerfilInversorRepositorio.cs:12 PerfilInversorRepositorio.ObtenerPorUsuario
+' UI/FormConfiguracionUsuario.cs:67 FormConfiguracionUsuario.CargarPerfilAsync
+@enduml

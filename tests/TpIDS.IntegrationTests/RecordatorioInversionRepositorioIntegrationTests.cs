@@ -65,7 +65,7 @@ namespace TpIDS.IntegrationTests
                     Leida = false
                 });
 
-                System.Collections.Generic.List<BE.RecordatorioInversion> propios = repositorio.ObtenerPorUsuario(usuarioId);
+                System.Collections.Generic.List<BE.RecordatorioInversion> propios = repositorio.ObtenerPorUsuario(new BE.Usuario { Id = usuarioId });
 
                 Assert.IsTrue(propios.Any(item => item.Id == idPropio));
                 Assert.IsFalse(propios.Any(item => item.Id == idAjeno));
@@ -158,7 +158,7 @@ namespace TpIDS.IntegrationTests
                     Leida = false
                 });
 
-                bool eliminado = repositorio.Eliminar(id);
+                bool eliminado = repositorio.Eliminar(repositorio.ObtenerPorId(id));
 
                 Assert.IsTrue(eliminado);
                 Assert.IsNull(repositorio.ObtenerPorId(id));
