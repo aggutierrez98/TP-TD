@@ -17,10 +17,7 @@ $sqlPath = Join-Path $repoRoot "script_bd.sql"
 $markerStart = "-- BEGIN AUTO-GENERATED I18N BASE SEED"
 $markerEnd = "-- END AUTO-GENERATED I18N BASE SEED"
 $idiomaBaseNombre = "Espa$([char]0x00F1)ol"
-$seedPathResolverScript = ".agents\skills\translation-base-seed-sync\scripts\emit-seed-json-sqlcmd-path.ps1"
-$publicSeedJsonPath = "C:\Users\Public\Documents\TpIDS\SqlSeed\base.es.json"
 $idiomaInglesNombre = "English"
-$publicSeedInglesJsonPath = "C:\Users\Public\Documents\TpIDS\SqlSeed\base.in.json"
 
 function Find-ControlText {
     param(
@@ -196,32 +193,22 @@ $sqlLines.Add("-- SOURCE OF TRUTH: translation-seeds/base.es.json")
 $sqlLines.Add("-- Si ejecuta desde SSMS en SQLCMD Mode, cambie RepoRoot por la ruta absoluta del repo en su maquina.")
 $sqlLines.Add("-- Con setup-database.ps1 deje RepoRoot = . : el wrapper lo reemplaza solo.")
 $sqlLines.Add(':setvar RepoRoot "."')
-$sqlLines.Add("-- Formas soportadas de ejecutar este script: SSMS 19/22 en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.")
-$sqlLines.Add("-- OJO: NO ejecutarlo directo con sqlcmd ODBC 15.x: al llegar a la linea !! corta en silencio (exit 0) y la BD queda sin traducciones.")
-$sqlLines.Add("-- El helper prepara una copia publica UTF-16LE del JSON para que OPENROWSET preserve Unicode y no dependa de permisos sobre el perfil del usuario.")
-$sqlLines.Add('!! powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepoRoot)\' + $seedPathResolverScript + '" -RepoRoot "$(RepoRoot)" -OutputFile "NUL"')
-$sqlLines.Add("GO")
+$sqlLines.Add("-- Formas soportadas de ejecutar este script: SSMS en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.")
+$sqlLines.Add("-- Los JSON se leen directo de translation-seeds\ con BULK INSERT en UTF-8 (CODEPAGE 65001): sin copias ni helpers.")
+$sqlLines.Add("-- El servicio de SQL Server debe poder leer la carpeta del repo.")
 $sqlLines.Add("DECLARE @IdiomaBaseId INT;")
 $idiomaBaseNombreSql = Escape-SqlLiteral $idiomaBaseNombre
 $sqlLines.Add("INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'$idiomaBaseNombreSql', 1);")
 $sqlLines.Add("SET @IdiomaBaseId = SCOPE_IDENTITY();")
 $sqlLines.Add("")
-$publicSeedJsonPathSql = Escape-SqlLiteral $publicSeedJsonPath
-$sqlLines.Add("DECLARE @RutaTraduccionesBase NVARCHAR(4000) = N'$publicSeedJsonPathSql';")
-$sqlLines.Add("DECLARE @TraduccionesBaseJson NVARCHAR(MAX);")
-$sqlLines.Add("DECLARE @SqlCargaJson NVARCHAR(MAX);")
+$sqlLines.Add("CREATE TABLE #SeedJson (Contenido NVARCHAR(MAX) NULL);")
 $sqlLines.Add("")
-$sqlLines.Add("SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn")
-$sqlLines.Add("FROM OPENROWSET(")
-$sqlLines.Add("    BULK ''' + REPLACE(@RutaTraduccionesBase, '''', '''''') + ''',")
-$sqlLines.Add("    SINGLE_NCLOB")
-$sqlLines.Add(") AS JsonFile;';")
+$sqlLines.Add("DECLARE @TraduccionesBaseJson NVARCHAR(MAX);")
 $sqlLines.Add("")
 $sqlLines.Add("BEGIN TRY")
-$sqlLines.Add("    EXEC sys.sp_executesql")
-$sqlLines.Add("        @SqlCargaJson,")
-$sqlLines.Add("        N'@JsonOut NVARCHAR(MAX) OUTPUT',")
-$sqlLines.Add("        @JsonOut = @TraduccionesBaseJson OUTPUT;")
+$sqlLines.Add("    BULK INSERT #SeedJson FROM '`$(RepoRoot)\translation-seeds\base.es.json'")
+$sqlLines.Add("    WITH (CODEPAGE = '65001', DATAFILETYPE = 'char', FIELDTERMINATOR = '|~|~|', ROWTERMINATOR = '|~|~|');")
+$sqlLines.Add("    SELECT TOP (1) @TraduccionesBaseJson = Contenido FROM #SeedJson;")
 $sqlLines.Add("END TRY")
 $sqlLines.Add("BEGIN CATCH")
 $sqlLines.Add("    THROW 50000, 'No se pudo leer translation-seeds/base.es.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;")
@@ -270,21 +257,14 @@ $idiomaInglesNombreSql = Escape-SqlLiteral $idiomaInglesNombre
 $sqlLines.Add("INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'$idiomaInglesNombreSql', 0);")
 $sqlLines.Add("SET @IdiomaInglesId = SCOPE_IDENTITY();")
 $sqlLines.Add("")
-$publicSeedInglesJsonPathSql = Escape-SqlLiteral $publicSeedInglesJsonPath
-$sqlLines.Add("DECLARE @RutaTraduccionesIngles NVARCHAR(4000) = N'$publicSeedInglesJsonPathSql';")
+$sqlLines.Add("TRUNCATE TABLE #SeedJson;")
+$sqlLines.Add("")
 $sqlLines.Add("DECLARE @TraduccionesInglesJson NVARCHAR(MAX);")
 $sqlLines.Add("")
-$sqlLines.Add("SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn")
-$sqlLines.Add("FROM OPENROWSET(")
-$sqlLines.Add("    BULK ''' + REPLACE(@RutaTraduccionesIngles, '''', '''''') + ''',")
-$sqlLines.Add("    SINGLE_NCLOB")
-$sqlLines.Add(") AS JsonFile;';")
-$sqlLines.Add("")
 $sqlLines.Add("BEGIN TRY")
-$sqlLines.Add("    EXEC sys.sp_executesql")
-$sqlLines.Add("        @SqlCargaJson,")
-$sqlLines.Add("        N'@JsonOut NVARCHAR(MAX) OUTPUT',")
-$sqlLines.Add("        @JsonOut = @TraduccionesInglesJson OUTPUT;")
+$sqlLines.Add("    BULK INSERT #SeedJson FROM '`$(RepoRoot)\translation-seeds\base.in.json'")
+$sqlLines.Add("    WITH (CODEPAGE = '65001', DATAFILETYPE = 'char', FIELDTERMINATOR = '|~|~|', ROWTERMINATOR = '|~|~|');")
+$sqlLines.Add("    SELECT TOP (1) @TraduccionesInglesJson = Contenido FROM #SeedJson;")
 $sqlLines.Add("END TRY")
 $sqlLines.Add("BEGIN CATCH")
 $sqlLines.Add("    THROW 50004, 'No se pudo leer translation-seeds/base.in.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;")
@@ -302,6 +282,8 @@ $sqlLines.Add("INNER JOIN dbo.Palabra p ON p.[Key] = j.[key] COLLATE DATABASE_DE
 $sqlLines.Add("WHERE j.[type] IN (1, 2) AND TRY_CAST(j.[value] AS NVARCHAR(300)) IS NOT NULL;")
 $sqlLines.Add("")
 
+$sqlLines.Add("DROP TABLE #SeedJson;")
+$sqlLines.Add("")
 $sqlLines.Add($markerEnd)
 $sqlBlock = ($sqlLines -join [Environment]::NewLine)
 

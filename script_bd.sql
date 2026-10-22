@@ -1177,30 +1177,21 @@ GO
 -- Si ejecuta desde SSMS en SQLCMD Mode, cambie RepoRoot por la ruta absoluta del repo en su maquina.
 -- Con setup-database.ps1 deje RepoRoot = . : el wrapper lo reemplaza solo.
 :setvar RepoRoot "."
--- Formas soportadas de ejecutar este script: SSMS 19/22 en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.
--- OJO: NO ejecutarlo directo con sqlcmd ODBC 15.x: al llegar a la linea !! corta en silencio (exit 0) y la BD queda sin traducciones.
--- El helper prepara una copia publica UTF-16LE del JSON para que OPENROWSET preserve Unicode y no dependa de permisos sobre el perfil del usuario.
-!! powershell -NoProfile -ExecutionPolicy Bypass -File "$(RepoRoot)\.agents\skills\translation-base-seed-sync\scripts\emit-seed-json-sqlcmd-path.ps1" -RepoRoot "$(RepoRoot)" -OutputFile "NUL"
-GO
+-- Formas soportadas de ejecutar este script: SSMS en SQLCMD Mode, o .\setup-database.ps1 desde la raiz del repo.
+-- Los JSON se leen directo de translation-seeds\ con BULK INSERT en UTF-8 (CODEPAGE 65001): sin copias ni helpers.
+-- El servicio de SQL Server debe poder leer la carpeta del repo.
 DECLARE @IdiomaBaseId INT;
 INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'Español', 1);
 SET @IdiomaBaseId = SCOPE_IDENTITY();
 
-DECLARE @RutaTraduccionesBase NVARCHAR(4000) = N'C:\Users\Public\Documents\TpIDS\SqlSeed\base.es.json';
-DECLARE @TraduccionesBaseJson NVARCHAR(MAX);
-DECLARE @SqlCargaJson NVARCHAR(MAX);
+CREATE TABLE #SeedJson (Contenido NVARCHAR(MAX) NULL);
 
-SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn
-FROM OPENROWSET(
-    BULK ''' + REPLACE(@RutaTraduccionesBase, '''', '''''') + ''',
-    SINGLE_NCLOB
-) AS JsonFile;';
+DECLARE @TraduccionesBaseJson NVARCHAR(MAX);
 
 BEGIN TRY
-    EXEC sys.sp_executesql
-        @SqlCargaJson,
-        N'@JsonOut NVARCHAR(MAX) OUTPUT',
-        @JsonOut = @TraduccionesBaseJson OUTPUT;
+    BULK INSERT #SeedJson FROM '$(RepoRoot)\translation-seeds\base.es.json'
+    WITH (CODEPAGE = '65001', DATAFILETYPE = 'char', FIELDTERMINATOR = '|~|~|', ROWTERMINATOR = '|~|~|');
+    SELECT TOP (1) @TraduccionesBaseJson = Contenido FROM #SeedJson;
 END TRY
 BEGIN CATCH
     THROW 50000, 'No se pudo leer translation-seeds/base.es.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;
@@ -1248,20 +1239,14 @@ DECLARE @IdiomaInglesId INT;
 INSERT INTO dbo.Idioma (Nombre, [Default]) VALUES (N'English', 0);
 SET @IdiomaInglesId = SCOPE_IDENTITY();
 
-DECLARE @RutaTraduccionesIngles NVARCHAR(4000) = N'C:\Users\Public\Documents\TpIDS\SqlSeed\base.in.json';
+TRUNCATE TABLE #SeedJson;
+
 DECLARE @TraduccionesInglesJson NVARCHAR(MAX);
 
-SET @SqlCargaJson = N'SELECT @JsonOut = BulkColumn
-FROM OPENROWSET(
-    BULK ''' + REPLACE(@RutaTraduccionesIngles, '''', '''''') + ''',
-    SINGLE_NCLOB
-) AS JsonFile;';
-
 BEGIN TRY
-    EXEC sys.sp_executesql
-        @SqlCargaJson,
-        N'@JsonOut NVARCHAR(MAX) OUTPUT',
-        @JsonOut = @TraduccionesInglesJson OUTPUT;
+    BULK INSERT #SeedJson FROM '$(RepoRoot)\translation-seeds\base.in.json'
+    WITH (CODEPAGE = '65001', DATAFILETYPE = 'char', FIELDTERMINATOR = '|~|~|', ROWTERMINATOR = '|~|~|');
+    SELECT TOP (1) @TraduccionesInglesJson = Contenido FROM #SeedJson;
 END TRY
 BEGIN CATCH
     THROW 50004, 'No se pudo leer translation-seeds/base.in.json desde SQL Server. Verifique la ruta, los permisos del servicio y el acceso del servidor al archivo.', 1;
@@ -1277,6 +1262,8 @@ SELECT p.Id, @IdiomaInglesId, TRY_CAST(j.[value] AS NVARCHAR(300))
 FROM OPENJSON(@TraduccionesInglesJson) j
 INNER JOIN dbo.Palabra p ON p.[Key] = j.[key] COLLATE DATABASE_DEFAULT
 WHERE j.[type] IN (1, 2) AND TRY_CAST(j.[value] AS NVARCHAR(300)) IS NOT NULL;
+
+DROP TABLE #SeedJson;
 
 -- END AUTO-GENERATED I18N BASE SEED
 GO

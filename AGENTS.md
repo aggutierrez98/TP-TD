@@ -77,6 +77,7 @@ Viven en el repo bajo `.agents/skills/`. Las validadas en build fallan la compil
 
 | Skill | Que resuelve | Cuando cargarla | Ruta |
 |-------|--------------|-----------------|------|
+| `publicar-diagramas-google-docs` | Prepara PNG de PlantUML y publica faltantes en Google Docs, con carga manual a Drive y MCP nativos antes de One | Al preparar o publicar diagramas en Google Docs o retomar una carpeta de Drive | [SKILL.md](.agents/skills/publicar-diagramas-google-docs/SKILL.md) |
 | `architecture-dependency-guard` | Matriz exacta de dependencias entre UI, BLL, REPOSITORIO, DAL, BE, SERVICIOS y ABSTRACCIONES. Validada en build | Al mover clases entre capas o tocar referencias entre proyectos | [SKILL.md](.agents/skills/architecture-dependency-guard/SKILL.md) |
 | `composition-root-guard` | Disciplina de composicion/inyeccion: los BLL se construyen solo desde `CompositionRoot`, sin `new XxxBLL()` fuera del root ni ctores por defecto, y ninguno actua como Service Locator. Validada en build. Complementa a `architecture-dependency-guard` | Al dar de alta o modificar un BLL o servicio transversal | [SKILL.md](.agents/skills/composition-root-guard/SKILL.md) |
 | `winforms-build-verification` | Obliga a compilar `TpIDS.sln` con MSBuild antes de dar una tarea por terminada | Al cerrar cualquier cambio de codigo | [SKILL.md](.agents/skills/winforms-build-verification/SKILL.md) |

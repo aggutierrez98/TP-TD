@@ -1,5 +1,12 @@
 # Tasks
 
+## 9. Skill de publicacion PlantUML a Google Docs (alcance aprobado)
+
+- [x] 9.1 Crear skill y referencias con destinos genericos, pausa de carga manual, prioridad de MCP nativos y fallback One, reanudacion sin duplicados y verificacion remota. Contrato y protocolo disponibles; la nueva skill no se probo escribiendo en servicios externos.
+- [x] 9.2 Implementar preparacion local de PNG/manifiesto y planificador/verificador de inserciones con deteccion de ambiguedades, revision y ajuste a pagina. Includes/macros expandidos antes de omitir leyendas; slots genericos; conservacion de existentes y verificacion de fuente, centrado y dimensiones. Geometrias especiales de seccion/tabla requieren resolucion explicita.
+- [x] 9.3 Verificar con escenarios offline (tecnico, negocio, duplicados, reejecucion y errores) y renderizado real de distintos tipos; registrar evidencia sin editar documentos externos. 10/10 tests Node y 4/4 Python; evaluacion en seco de tres escenarios con skill y referencia sin skill. Dos defectos reproducidos en rojo y corregidos en verde (slots genericos y dimensiones). Render real de secuencia, clases, componentes e include con leyenda, con revision visual sin leyendas y fuentes preservadas. Gate `powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests/tools/run-tests.ps1 -IncludeIntegration`: exit 0, TRX unitarios 1279/1279 e integracion 265/265, cero fallos; MSBuild TpIDS.sln Debug /t:Build /m: exit 0, guards incluidos. UI no ejecutada: esta entrega solo modifica tooling de skills.
+- [x] 9.4 Integrar descubrimiento en AGENTS/skill central, actualizar registro de skills y validar OpenSpec y diff. Skill enlazada en ambos puntos; registro local `.atl/skill-registry.md` regenerado e incluye su ruta. `openspec validate actualizar-diagramas-tp --strict` y `git diff --check` con exit 0.
+
 ## 8. Clases integradas por negocio N01.1-N01.7 (correccion aprobada)
 
 - [x] 8.1 Integrar y contrastar clases, operaciones y relaciones de los CU asignados; crear siete fuentes `<proceso>-clases.puml` en sus carpetas N01.*, con paquetes y colores por capa. Firmas extraidas del arbol sintactico C# vigente; tipos y contratos deduplicados por nombre real, incluyendo colaboradores de las llamadas participantes.

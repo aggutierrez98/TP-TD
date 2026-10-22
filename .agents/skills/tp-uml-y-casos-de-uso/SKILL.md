@@ -19,6 +19,11 @@ trabajo concreto en dos subskills.
 
 ## Subskills que orquesta
 
+Para preparar PNG y publicarlos en Google Docs con carga manual a Drive, cargar
+[`publicar-diagramas-google-docs`](../publicar-diagramas-google-docs/SKILL.md).
+Aplica a cualquier tipo de diagrama, incluidos requisitos tecnicos T0X; conserva
+imagenes existentes y prioriza MCP nativos antes del fallback One.
+
 Cargar la subskill que corresponda segun el artefacto a producir:
 
 1. **PlantUML (UML2)** — para todo `.puml`:

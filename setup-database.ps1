@@ -6,13 +6,9 @@ param(
 )
 
 # Crea la base del sistema ejecutando script_bd.sql SIN necesitar SQL Server
-# Management Studio. Existe porque el sqlcmd ODBC 15.x (el que instala SQL Server
-# 2019/Express) deja de procesar el script en silencio, con exit code 0, al
-# encontrar la linea "!!" del seed de traducciones: la BD queda creada pero sin
-# idioma ni traducciones y la app muere en el login con Error.Language.DefaultNotFound.
-# Este wrapper ejecuta ese helper desde PowerShell, quita la linea "!!" de una
-# copia temporal del script y verifica al final que las traducciones quedaron cargadas.
-# El flujo por SSMS en SQLCMD Mode sigue funcionando igual que siempre.
+# Management Studio: reemplaza RepoRoot por la ruta de este repo en una copia temporal
+# del script y verifica al final que las traducciones quedaron cargadas.
+# El flujo por SSMS en SQLCMD Mode sigue funcionando igual.
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = $PSScriptRoot
@@ -20,11 +16,6 @@ $RepoRoot = $PSScriptRoot
 $scriptPath = Join-Path $RepoRoot "script_bd.sql"
 if (-not (Test-Path -LiteralPath $scriptPath)) {
     throw "No se encontro script_bd.sql en $RepoRoot."
-}
-
-$seedHelper = Join-Path $RepoRoot ".agents\skills\translation-base-seed-sync\scripts\emit-seed-json-sqlcmd-path.ps1"
-if (-not (Test-Path -LiteralPath $seedHelper)) {
-    throw "No se encontro el helper de seed i18n: $seedHelper"
 }
 
 # script_bd.sql BORRA y recrea la base: si ya existe, exigir confirmacion explicita.
@@ -35,13 +26,6 @@ if ($LASTEXITCODE -ne 0) {
 
 if ("$existe".Trim() -eq "1" -and -not $Force) {
     throw "La base '$DatabaseName' ya existe en $SqlServer y este script la BORRA y recrea desde cero. Ejecute con -Force para confirmar."
-}
-
-# El helper copia translation-seeds\base.es.json y base.in.json a una carpeta publica legible por
-# la cuenta de servicio de SQL Server (lo que haria la linea "!!" del script).
-& powershell -NoProfile -ExecutionPolicy Bypass -File $seedHelper -RepoRoot $RepoRoot -OutputFile "NUL"
-if ($LASTEXITCODE -ne 0) {
-    throw "emit-seed-json-sqlcmd-path.ps1 finalizo con codigo $LASTEXITCODE."
 }
 
 $tempScript = Join-Path ([System.IO.Path]::GetTempPath()) ("tpids-setup-db-{0}.sql" -f ([System.Guid]::NewGuid().ToString("N")))
@@ -55,10 +39,6 @@ try {
 
     $escapedRepoRoot = $RepoRoot.Replace('"', '""')
     $content = $content.Replace(':setvar RepoRoot "."', (':setvar RepoRoot "{0}"' -f $escapedRepoRoot))
-    $content = [regex]::Replace(
-        $content,
-        '(?m)^\s*!!.*$',
-        '-- (linea !! removida: setup-database.ps1 ejecuta el helper de seed directamente)')
 
     Set-Content -LiteralPath $tempScript -Value $content -Encoding UTF8
 

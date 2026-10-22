@@ -6,6 +6,7 @@ Los diagramas del TP (`diagramas/`) y el Word de la catedra quedaron atrasados r
 
 ## What Changes
 
+- Se incorpora la skill `publicar-diagramas-google-docs` aprobada por el usuario: preparacion local de PNG de cualquier tipo de PlantUML, carga manual a Drive y publicacion verificable en secciones tecnicas, de negocio u otras. Prioriza MCP nativos de Docs/Drive y usa One como fallback por operacion.
 - Se actualizan G07 (clases por capa) y G08 (DER integrado) contra el codigo y la base actuales, incluidos los cambios ya identificados por `desacoplar-producto-de-comercio` y `gestion-promociones`.
 - Se actualiza G00 (modelo de dominio): la relacion Comercio-Producto pasa a N:M con precio y moneda.
 - Se verifican los DER contra la base SQL Server real, no solo contra `script_bd.sql`.
@@ -29,4 +30,4 @@ Los diagramas del TP (`diagramas/`) y el Word de la catedra quedaron atrasados r
 - `diagramas/G00-*`, `G07-*`, `G08-*` y, segun la decision del usuario, `T02`, `T04`, `T05`, `T06`.
 - Siete carpetas `diagramas/N01.*` con los pares de diagramas CUN06-CUN87 y sus SVG.
 - Documento externo `C:\Users\agust\Desktop\Trabajo Final TD Gutierrez.docx` (fuera del repo).
-- Sin cambios de codigo.
+- Sin cambios de codigo productivo; herramientas de desarrollo bajo `.agents/skills/publicar-diagramas-google-docs/`.

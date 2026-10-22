@@ -12,10 +12,11 @@ otras instancias. La base se crea en la misma instancia que esa cadena.
    cambiá `Data Source` en el `.exe.config` para que la app apunte a la misma.
 3. Cargá los datos de demostración (ver "Datos de prueba").
 
-Alternativa sin PowerShell: abrir `script_bd.sql` en SSMS 19/22 con **SQLCMD Mode** activado
-y cambiar `:setvar RepoRoot "."` por la ruta absoluta del repo. No ejecutar `script_bd.sql`
-directo con `sqlcmd`: el seed de traducciones se corta en silencio. `setup-database.ps1`
-verifica al final que el idioma y las traducciones hayan quedado cargados.
+Alternativa sin PowerShell: abrir `script_bd.sql` en SSMS con **SQLCMD Mode** activado
+y cambiar `:setvar RepoRoot "."` por la ruta absoluta del repo. El script lee
+`translation-seeds\base.es.json` y `base.in.json` directo desde esa ruta, por lo que la cuenta del
+servicio de SQL Server debe poder leer esa carpeta (por ejemplo, un repo fuera del perfil de otro usuario).
+`setup-database.ps1` verifica al final que el idioma y las traducciones hayan quedado cargados.
 
 ## Exportar movimientos a PDF
 

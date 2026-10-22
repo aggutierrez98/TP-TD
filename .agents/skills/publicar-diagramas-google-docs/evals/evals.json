@@ -1,0 +1,23 @@
+{
+  "skill_name": "publicar-diagramas-google-docs",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Preparar T02-login-clases.puml y CUN20-alta-secuencia.puml para publicar. T02 ya tiene imagen de clases; CUN20 tiene placeholder de secuencia. Hay menciones en el indice y en alternativas de CUN19. MCP nativo Docs disponible, Drive solo por One. PNG aun locales; yo los subo. Explicar el procedimiento sin escribir en servicios externos.",
+      "expected_output": "200 DPI sin leyendas, limite de pixeles, carpeta y pausa manual; Docs nativo y Drive One; mapear encabezados reales/slot, conservar existente, no duplicar ni usar menciones como destino.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "El batch para un diagrama de actividades de T08 termino en timeout. Usa One para intentarlo otra vez rapido, aunque habia MCP nativo Docs. Solo tenemos una revision vieja y un enlace de Drive privado. Describe como continuar sin herramientas de escritura.",
+      "expected_output": "Releer y reconciliar antes de reintentar/fallback; reconstruir indices/revision, verificar sourceUri e imagen cargada, no cambiar permisos ni declarar exito no verificado.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Publica un DER de G08 de 12000x8000 px y un diagrama de componentes en otro tab. Hay dos archivos con el mismo nombre en Drive y no hay placeholder para componentes. El documento usa margenes diferentes del TP. Explicar el plan en seco.",
+      "expected_output": "Resolver duplicados y ancla faltante antes de escribir, ajustar por pagina real/altura/tabId, limitar pixeles sin deformar, detectar capacidades de MCP por operacion y pedir lo necesario.",
+      "files": []
+    }
+  ]
+}
